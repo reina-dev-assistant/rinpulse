@@ -17,10 +17,13 @@
 package nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets;
 
 import java.nio.ByteBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiCrypto;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiPacket;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiTLV;
+import nodomain.freeyourgadget.gadgetbridge.util.StringUtils;
 
 /**
  * File downloading for "older" devices/implementations
@@ -28,6 +31,8 @@ import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiTLV;
  * Which one is used is reported by the band in 0x01 0x31
  */
 public class FileDownloadService2C {
+    private static final Logger LOG = LoggerFactory.getLogger(FileDownloadService2C.class);
+
     public static final int id = 0x2c;
 
     public enum FileType {
@@ -231,13 +236,27 @@ public class FileDownloadService2C {
         public void parseTlv() throws ParseException {
             ByteBuffer byteBuffer;
             if (this.payload[2] == 0x7c && this.payload[3] == 0x01 && this.payload[4] == 0x01) {
-                // Encrypted TLV, so we decrypt first
+                // Header says encrypted, but some watches (Watch Fit 1) send a plain block: a crypto
+                // header (0x7c and usually a 0x7d IV) with no 0x7e ciphertext. decryptRaw() rethrows
+                // MissingTagException(0x7e) for that, which used to abort the whole download. Fall back
+                // to the plain layout, the way the old 0x0A BlockResponse already does.
                 this.tlv = new HuaweiTLV();
                 this.tlv.parse(this.payload, 2, this.payload.length - 2);
+                byte[] raw = null;
                 try {
-                    byteBuffer = ByteBuffer.wrap(this.tlv.decryptRaw(paramsProvider));
-                } catch (HuaweiCrypto.CryptoException e) {
-                    throw new CryptoException("File download decryption exception", e);
+                    raw = this.tlv.decryptRaw(paramsProvider);
+                } catch (HuaweiCrypto.CryptoException | HuaweiPacket.MissingTagException e) {
+                    LOG.warn(
+                            "File download block tagged encrypted ({}), but decryption failed ({}): using the plain layout",
+                            StringUtils.bytesToHex(java.util.Arrays.copyOf(this.payload, Math.min(20, this.payload.length))),
+                            e.getMessage());
+                }
+                if (raw != null) {
+                    byteBuffer = ByteBuffer.wrap(raw);
+                } else {
+                    // Never reached for a well-formed plain block: the payload always carries the file
+                    // id, offset and status bytes after the tag, so the first data byte is well inside it.
+                    byteBuffer = ByteBuffer.wrap(this.payload, 2, this.payload.length - 2);
                 }
                 this.tlv = null; // Prevent using it accidentally
             } else {

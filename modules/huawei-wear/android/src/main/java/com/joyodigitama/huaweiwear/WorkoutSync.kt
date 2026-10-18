@@ -78,6 +78,8 @@ internal class WorkoutSync(
         continue
       }
       val listed = count.workoutNumbers
+      // Split only for an error answer: the window really was too large for the watch. That is GB's
+      // own reading of 0x7f, and halving is the answer for it.
       if (count.error != null) {
         log("Workout: error ${count.error} on the count for ${range.start}..${range.end}")
         split(queue, range)
@@ -87,10 +89,16 @@ internal class WorkoutSync(
         log("Workout: 0 workouts in ${range.start}..${range.end}")
         continue
       }
+      // A stale `count` is NOT a reason to split. The Watch Fit 1 answers a long window with
+      // `count 100` while it lists 101 well-formed containers (every one carries 0x06/0x07/0x08, or
+      // the parser would have thrown). Splitting on that disagreement halves the window, meets the
+      // same stale count again and ends up discarding every workout. The listed containers are the
+      // data; the extra entry is a workout the watch has not closed yet.
       if (count.count.toInt() != listed.size) {
-        log("Workout: count ${count.count} does not match ${listed.size} entries in ${range.start}..${range.end}")
-        split(queue, range)
-        continue
+        log(
+          "Workout: count ${count.count} does not match ${listed.size} entries in ${range.start}..${range.end}; " +
+            "using the ${listed.size} the watch listed",
+        )
       }
 
       // GB: sorted by workout number, the timestamp based sync state depends on it.
@@ -100,9 +108,17 @@ internal class WorkoutSync(
     }
   }
 
+  /**
+   * [MAX_SMALLER_TIMESLOT_DEPTH] levels are all the watch gets. Past that the window is skipped
+   * instead of aborting the sync: one window the watch keeps refusing must not cost every workout.
+   */
   private fun split(queue: ArrayDeque<Range>, range: Range) {
     if (range.depth >= MAX_SMALLER_TIMESLOT_DEPTH) {
-      throw WearException(ErrorCodes.PROTOCOL, "Workout: asked for a smaller timeslot too many times, giving up on ${range.start}..${range.end}")
+      log(
+        "Workout: ${range.start}..${range.end} still refused after $MAX_SMALLER_TIMESLOT_DEPTH splits; " +
+          "skipping this window instead of failing the sync",
+      )
+      return
     }
     val half = range.start + (range.end - range.start) / 2
     log("Workout: retrying ${range.start}..${range.end} as ${range.start}..$half and ${half + 1}..${range.end}")
