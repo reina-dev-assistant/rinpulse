@@ -1,0 +1,269 @@
+{
+  "settings": {
+    "title": "Bersepeda",
+    "ftp": {
+      "title": "FTP",
+      "body": "FTP adalah daya terbesar yang bisa kamu tahan sekitar satu jam. Zona daya, IF, TSS, dan beban gowes dihitung dari angka ini.",
+      "label": "FTP (watt)",
+      "hint": "Antara {{min}} dan {{max}} W. Kosongkan kalau belum tahu.",
+      "invalid": "FTP harus antara {{min}} dan {{max}} W.",
+      "clear": "Hapus FTP",
+      "unset": "FTP belum diatur, jadi zona daya, IF, dan TSS tidak dihitung.",
+      "tip": "Belum tahu FTP-mu? Setelah gowes keras 20 menit, detail gowes menyarankan angkanya dan kamu tinggal menekan Pakai."
+    },
+    "zones": {
+      "title": "Zona daya",
+      "body": "Tujuh zona Coggan dari FTP {{ftp}} W.",
+      "empty": "Isi FTP untuk melihat batas zona dayamu.",
+      "range": "{{from}}-{{to}} W",
+      "from": "{{from}} W ke atas",
+      "to": "sampai {{to}} W"
+    },
+    "weight": {
+      "title": "Berat badan",
+      "body": "W/kg memakai berat badan di profilmu ({{kg}} kg).",
+      "action": "Ubah di profil"
+    }
+  },
+  "ebike": {
+    "label": "Sepeda listrik (e-bike)",
+    "hint": "Dipakai untuk jenis aktivitas di Strava (EBikeRide)."
+  },
+  "header": {
+    "avgSpeed": "Kecepatan rata-rata"
+  },
+  "section": {
+    "splits": "Split 5 km",
+    "laps": "Lap dari perangkat",
+    "climbs": "Tanjakan",
+    "power": "Daya",
+    "powerZones": "Zona daya",
+    "powerCurve": "Kurva daya",
+    "ftp": "Perkiraan FTP",
+    "cadence": "Kadens",
+    "efficiency": "Efisiensi aerobik",
+    "load": "Beban gowes"
+  },
+  "unit": {
+    "kmh": "km/j",
+    "km": "km",
+    "m": "m",
+    "w": "W",
+    "wkg": "W/kg",
+    "rpm": "rpm",
+    "bpm": "bpm",
+    "kcal": "kcal",
+    "kj": "kJ",
+    "vam": "m/j"
+  },
+  "value": {
+    "percent": "{{value}}%",
+    "gainLoss": "+{{gain}} / -{{loss}}"
+  },
+  "summary": {
+    "a11y": "Ringkasan gowes",
+    "distance": "Jarak",
+    "movingTime": "Waktu bergerak",
+    "time": "Waktu",
+    "elapsed": "Total {{time}}",
+    "elapsedStopped": "Total {{elapsed}}, berhenti {{stopped}}",
+    "avgMovingSpeed": "Kecepatan rata-rata",
+    "avgSpeed": "Kecepatan (timer)",
+    "overall": "Keseluruhan {{value}} km/j",
+    "maxSpeed": "Kecepatan maks",
+    "elevation": "Elevasi",
+    "grade": "Kemiringan rata-rata",
+    "maxGrade": "maks {{value}}%",
+    "calories": "Kalori",
+    "caloriesPerHour": "{{value}} kcal/j",
+    "heartRate": "Detak jantung",
+    "maxHr": "maks {{value}} bpm",
+    "cadence": "Kadens",
+    "maxCadence": "maks {{value}} rpm",
+    "power": "Daya rata-rata",
+    "normalizedPower": "NP {{value}} W",
+    "maxPower": "Daya maks",
+    "wkg": "W/kg",
+    "wkgNp": "NP {{value}} W/kg",
+    "how": "Cara angka dihitung",
+    "explain": "Kecepatan rata-rata (timer) memakai waktu timer perangkat, kecepatan bergerak membuang waktu berhenti, dan keseluruhan memakai waktu total. Kecepatan maks adalah rata-rata 3 detik tercepat. Kadens rata-rata tidak menghitung detik saat meluncur (0 rpm), seperti di Garmin.",
+    "calorieSource": {
+      "power": "Kalori dari daya (kerja mekanis)",
+      "hr": "Kalori dari detak jantung",
+      "met": "Kalori perkiraan dari kecepatan (MET)",
+      "device": "Kalori dari perangkat"
+    },
+    "speedSource": {
+      "sensor": "Kecepatan dari sensor roda.",
+      "gps": "Kecepatan dari GPS.",
+      "power": "Kecepatan diperkirakan dari daya.",
+      "none": "Tidak ada data kecepatan."
+    }
+  },
+  "speedEstimate": "Tidak ada sensor roda atau GPS di gowes ini, jadi kecepatan dan jarak diperkirakan dari daya dan bisa meleset dari kenyataan.",
+  "splits": {
+    "km": "Km",
+    "speed": "Kec.",
+    "hr": "HR",
+    "power": "Daya",
+    "cad": "Kad",
+    "gain": "Naik",
+    "a11yRow": "Split sampai kilometer {{km}}, {{speed}} kilometer per jam",
+    "a11yHint": "Memindahkan penanda di grafik dan peta",
+    "note": "Kecepatan tiap split dihitung dari waktu bergerak."
+  },
+  "laps": {
+    "lap": "Lap",
+    "time": "Waktu",
+    "dist": "Jarak",
+    "speed": "Kec.",
+    "hr": "HR",
+    "power": "Daya",
+    "cad": "Kad",
+    "a11yRow": "Lap {{n}}, {{time}}"
+  },
+  "climbs": {
+    "category": {
+      "hc": "HC",
+      "1": "Kat. 1",
+      "2": "Kat. 2",
+      "3": "Kat. 3",
+      "4": "Kat. 4",
+      "none": "Ringan"
+    },
+    "title": "Tanjakan {{n}}",
+    "gain": "+{{value}} m",
+    "line": "{{length}} km, kemiringan rata-rata {{avg}}%, maks {{max}}%",
+    "time": "Waktu",
+    "vam": "VAM",
+    "speed": "Kecepatan",
+    "power": "Daya",
+    "hr": "Detak jantung",
+    "a11yRow": "Tanjakan {{n}}, {{length}} kilometer, naik {{gain}} meter, kemiringan rata-rata {{grade}} persen",
+    "a11yHint": "Memindahkan penanda ke awal tanjakan",
+    "note": "Tanjakan minimal 500 m dengan kemiringan rata-rata 3% atau lebih, dicari dari profil elevasi. Kategori mengikuti skor Garmin ClimbPro: panjang (m) dikali kemiringan (%). VAM adalah meter naik per jam."
+  },
+  "power": {
+    "avg": "Rata-rata",
+    "np": "NP",
+    "max": "Maks",
+    "if": "IF",
+    "tss": "TSS",
+    "vi": "VI",
+    "work": "Kerja",
+    "wkg": "W/kg",
+    "ftp": "FTP dipakai",
+    "balance": "Keseimbangan kiri / kanan",
+    "balanceValue": "{{left}}% / {{right}}%",
+    "balanceA11y": "Keseimbangan pedal: kiri {{left}} persen, kanan {{right}} persen",
+    "noFtp": "FTP belum diatur, jadi IF, TSS, dan zona daya belum dihitung.",
+    "setFtp": "Atur FTP",
+    "how": "Cara angka dihitung",
+    "explain": "NP (Normalized Power) adalah daya yang setara secara fisiologis kalau kamu mengayuh stabil: gowes yang naik turun dihitung lebih berat dari daya rata-ratanya. IF = NP dibagi FTP. TSS = jam gowes dikali IF kuadrat dikali 100, jadi satu jam tepat di FTP bernilai 100. VI = NP dibagi daya rata-rata; makin dekat 1,00 makin stabil kayuhanmu. W/kg memakai berat badan di profilmu.",
+    "profileLink": "Ubah berat badan"
+  },
+  "powerZones": {
+    "ftp": "FTP {{ftp}} W",
+    "range": "{{from}}-{{to}} W",
+    "from": "{{from}} W ke atas",
+    "to": "sampai {{to}} W",
+    "zone": "Z{{n}} {{name}}",
+    "a11yRow": "Zona {{n}}, {{name}}, {{range}}, {{time}}, {{percent}} persen",
+    "name": {
+      "z1": "Pemulihan aktif",
+      "z2": "Daya tahan",
+      "z3": "Tempo",
+      "z4": "Ambang",
+      "z5": "VO2 max",
+      "z6": "Anaerobik",
+      "z7": "Neuromuskular"
+    },
+    "note": "Tujuh zona Coggan dari FTP-mu. Detik meluncur dihitung di zona 1."
+  },
+  "curve": {
+    "mine": "Gowes ini",
+    "allTime": "Terbaik sepanjang masa",
+    "a11y": "Kurva daya terbaik untuk tiap durasi, dari 1 detik sampai {{max}}",
+    "record": "Terbaik sepanjang masa",
+    "best": "Terbaik {{value}} W",
+    "wkg": "{{value}} W/kg",
+    "none": "Gowes ini terlalu pendek untuk kurva daya.",
+    "duration": {
+      "sec": "{{value}} dtk",
+      "min": "{{value}} mnt",
+      "hour": "{{value}} j"
+    },
+    "key": {
+      "5": "5 detik",
+      "60": "1 menit",
+      "300": "5 menit",
+      "1200": "20 menit",
+      "3600": "60 menit"
+    },
+    "note": "Daya rata-rata terbaik untuk tiap durasi dalam gowes ini. Garis putus-putus adalah terbaikmu dari gowes yang sudah tersimpan di JoyoFit.",
+    "watts": "{{value}} W",
+    "a11yRow": "{{name}}, {{value}} watt"
+  },
+  "ftpSuggestion": {
+    "value": "{{value}} W",
+    "body": "Perkiraan FTP 95% dari 20 menit terbaik ({{best}} W).",
+    "current": "FTP kamu sekarang {{value}} W.",
+    "unset": "FTP kamu belum diatur.",
+    "use": "Pakai",
+    "hint": "Ini hanya saran. FTP-mu tidak berubah sebelum kamu menekan Pakai."
+  },
+  "cadence": {
+    "pedalling": "Mengayuh",
+    "coasting": "Meluncur",
+    "band": {
+      "coasting": "Meluncur (0)",
+      "range": "{{from}}-{{to}}",
+      "open": "{{from}}+"
+    },
+    "a11yRow": "Kadens {{band}} rpm, {{time}}, {{percent}} persen",
+    "note": "Waktu di tiap rentang kadens. Meluncur adalah detik bergerak dengan kadens nol; kadens rata-rata tidak menghitungnya.",
+    "timeShare": "{{time}}, {{percent}}"
+  },
+  "hr": {
+    "pwhr": "Pw:Hr {{value}}%",
+    "pahr": "Pa:Hr {{value}}%",
+    "halves": "Efisiensi paruh pertama {{first}}, paruh kedua {{second}}",
+    "good": "Di bawah 5%: dasar aerobikmu bagus, detak jantung stabil untuk tenaga yang sama.",
+    "drift": "Di atas 5%: detak jantung naik untuk tenaga yang sama, tanda lelah, panas, atau kurang minum.",
+    "better": "Efisiensi paruh kedua malah lebih baik, biasanya karena pemanasan yang panjang.",
+    "how": "Cara angka dihitung",
+    "explainPower": "Pw:Hr membandingkan daya NP dengan detak jantung di paruh pertama dan kedua gowes (setelah pemanasan 10 menit). Persen yang turun adalah selisih efisiensinya: di bawah 5% artinya dasar aerobik yang baik, lebih dari itu detak jantung melayang naik.",
+    "explainSpeed": "Pa:Hr membandingkan kecepatan dengan detak jantung di paruh pertama dan kedua gowes (setelah pemanasan 10 menit). Persen yang turun adalah selisih efisiensinya: di bawah 5% artinya dasar aerobik yang baik, lebih dari itu detak jantung melayang naik."
+  },
+  "load": {
+    "thisRide": "Gowes ini",
+    "basis": {
+      "tss": "Dari daya (TSS)",
+      "hr": "Dari detak jantung (TRIMP)"
+    },
+    "trimp": "TRIMP",
+    "tss": "TSS",
+    "tssTrimp": "TSS setara {{value}} TRIMP",
+    "hrTrimp": "Dari detak jantung {{value}} TRIMP",
+    "last7": "7 hari terakhir",
+    "weeklyAverage": "Rata-rata mingguan",
+    "verdictLine": "{{verdict}} {{ratio}}",
+    "ratio": "{{percent}}% dari rata-rata mingguanmu",
+    "verdict": {
+      "under": "Rendah",
+      "steady": "Stabil",
+      "high": "Tinggi",
+      "spike": "Melonjak"
+    },
+    "how": "Cara angka dihitung",
+    "explainTss": "Gowes dengan daya dan FTP dinilai dari TSS: 100 TSS (satu jam di FTP) setara 240 TRIMP, skala yang sama dengan lari dan latihan lain. 7 hari terakhir dijumlahkan sampai gowes ini; rata-rata mingguan adalah rata-rata 28 hari sebelumnya.",
+    "explainHr": "Tanpa daya atau FTP, gowes dinilai dari menit di tiap zona detak jantung (TRIMP Edwards). Isi FTP di Pengaturan Bersepeda untuk beban dari daya. 7 hari terakhir dijumlahkan sampai gowes ini; rata-rata mingguan adalah rata-rata 28 hari sebelumnya.",
+    "a11y": "Beban gowes: {{verdict}}",
+    "verdictText": {
+      "under": "Lebih ringan dari minggu biasamu.",
+      "steady": "Sesuai dengan minggu biasamu.",
+      "high": "Lebih berat dari minggu biasamu.",
+      "spike": "Lonjakan besar dari minggu biasamu. Sisipkan beberapa hari santai."
+    }
+  }
+}

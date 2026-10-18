@@ -1,4 +1,4 @@
-import { buildNights } from '@/features/sleep/nights';
+import { buildNights, sleepByDay } from '@/features/sleep/nights';
 import { BASE_SLEEP_NEED_SEC, sleepDebtSec, sleepNeedSec } from '@/features/today/readiness';
 import type { SleepSegment } from '@/wear';
 
@@ -23,11 +23,16 @@ export interface SleepNeedTonight {
   nights: number;
 }
 
-/** Seconds actually asleep per night (naps left out) of the last `DEBT_NIGHTS` days, newest first. */
+/**
+ * Seconds actually asleep per day (night plus that day's naps) of the last `DEBT_NIGHTS` days, newest first. A day with
+ * only a nap has no night on record and is left out, like a night the watch did not record.
+ */
 export function recentNightsAsleep(segments: readonly SleepSegment[], nowSec: number): number[] {
-  return buildNights(segments, [])
-    .filter((n) => !n.nap && n.end > nowSec - DEBT_NIGHTS * DAY_SEC && n.end <= nowSec)
-    .map((n) => n.asleepSeconds);
+  const recent = buildNights(segments, []).filter((n) => n.end > nowSec - DEBT_NIGHTS * DAY_SEC && n.end <= nowSec);
+  return [...sleepByDay(recent).entries()]
+    .filter(([, day]) => day.hasNight)
+    .sort((a, b) => b[0] - a[0])
+    .map(([, day]) => day.asleepSeconds);
 }
 
 export function sleepNeedTonight(input: { todayStrain: number | null; nightsAsleepSec: readonly number[] }): SleepNeedTonight {

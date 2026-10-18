@@ -31,7 +31,7 @@ internal class P2pController(
   private val scope: CoroutineScope,
 ) {
   private val appContext = context.applicationContext
-  private val metrics = HealthMetricsStore(syncStore)
+  private val metrics = HealthMetricsStore(syncStore) { link.handle()?.address }
 
   @Volatile
   private var stack: P2pStack? = null

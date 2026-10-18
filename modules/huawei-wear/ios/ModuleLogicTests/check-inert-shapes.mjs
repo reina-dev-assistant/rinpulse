@@ -25,6 +25,7 @@ const sources = {
   WatchAlarms: 'HuaweiWearPhone.types',
   SafetyStatus: 'HuaweiWearExtras.types',
   SosRelayTest: 'HuaweiWearExtras.types',
+  AgpsStatus: 'HuaweiWearExtras.types',
   CycleOverview: 'HuaweiWearExtras.types',
   ActivityGoalsStatus: 'HuaweiWearDiet.types',
   BodyMetrics: 'HuaweiWearDiet.types',

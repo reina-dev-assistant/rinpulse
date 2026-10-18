@@ -1,8 +1,10 @@
 package com.joyodigitama.huaweiwear
 
 import android.content.Context
+import android.database.DatabaseErrorHandler
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
+import android.util.Log
 import java.io.File
 import org.json.JSONArray
 
@@ -92,6 +94,7 @@ internal class SyncStore(context: Context) {
       file.path,
       null,
       SQLiteDatabase.OPEN_READWRITE or SQLiteDatabase.CREATE_IF_NECESSARY or SQLiteDatabase.ENABLE_WRITE_AHEAD_LOGGING,
+      KEEP_CORRUPT_FILE,
     )
     try {
       // The framework default is 2.5 s. JS may hold the file briefly (its own migration), so wait longer.
@@ -143,41 +146,43 @@ internal class SyncStore(context: Context) {
       if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
     }
 
-  /** `upsertDevice` of the old JS queries: keeps `last_sync` of an existing row. */
+  /**
+   * `upsertDevice` of the old JS queries: keeps `last_sync` of an existing row, and its alias, primary flag, switches and
+   * `added_at`. A new row is primary when no watch is ([WatchSql.UPSERT_DEVICE]).
+   */
   fun upsertDevice(address: String, name: String, productModel: String?, softwareVersion: String?) {
-    db().execSQL(
-      """INSERT INTO device (address, name, product_model, software_version, last_sync)
-         VALUES (?, ?, ?, ?, NULL)
-         ON CONFLICT(address) DO UPDATE SET
-           name = excluded.name,
-           product_model = excluded.product_model,
-           software_version = excluded.software_version""",
-      arrayOf(address, name, productModel, softwareVersion),
-    )
+    db().execSQL(WatchSql.UPSERT_DEVICE, arrayOf(address, name, productModel, softwareVersion))
   }
 
-  /** Persists one sync in a single transaction and advances `device.last_sync` to `result.to`. */
+  /** `(address, last_sync)` of the watches with `bg_sync = 1`; empty on a phone that never set it, which is the single-watch case. */
+  fun bgSyncWatches(): List<Pair<String, Long?>> =
+    db().rawQuery(WatchSql.SELECT_BG_SYNC_WATCHES, null).use { cursor ->
+      val out = ArrayList<Pair<String, Long?>>(cursor.count)
+      while (cursor.moveToNext()) out.add(cursor.getString(0) to (if (cursor.isNull(1)) null else cursor.getLong(1)))
+      out
+    }
+
+  /** False when the user switched `tracks_health` off for [address]; read on every sync. A watch with no row tracks health. */
+  fun tracksHealth(address: String): Boolean =
+    db().rawQuery(WatchSql.SELECT_TRACKS_HEALTH, arrayOf(address)).use { cursor ->
+      !cursor.moveToFirst() || cursor.isNull(0) || cursor.getInt(0) != 0
+    }
+
+  /** A sync of a watch that stores no health rows still counts as a sync. */
+  fun touchLastSync(address: String, sec: Long) {
+    db().execSQL(WatchSql.UPDATE_LAST_SYNC, arrayOf(sec, address))
+  }
+
+  /**
+   * Persists one sync in a single transaction and advances `device.last_sync` to `result.to`; every row carries [address]
+   * in `device` and the triggers of migration 14 decide against another watch's rows.
+   */
   fun save(address: String, result: SyncResult): SyncSummary {
     val db = db()
     db.beginTransaction()
     try {
-      val sample = db.compileStatement(
-        """INSERT INTO step_samples
-             (timestamp, steps, calories, distance, heart_rate, spo2, resting_heart_rate)
-           VALUES (?, ?, ?, ?, ?, ?, ?)
-           ON CONFLICT(timestamp) DO UPDATE SET
-             steps = excluded.steps,
-             calories = excluded.calories,
-             distance = excluded.distance,
-             heart_rate = excluded.heart_rate,
-             spo2 = excluded.spo2,
-             resting_heart_rate = excluded.resting_heart_rate,
-             imported = 0""",
-      )
-      val segment = db.compileStatement(
-        """INSERT INTO sleep_segments (start, end, type, stage) VALUES (?, ?, ?, ?)
-           ON CONFLICT(start, type) DO UPDATE SET end = excluded.end, stage = excluded.stage, imported = 0""",
-      )
+      val sample = db.compileStatement(WatchSql.UPSERT_STEP_SAMPLE)
+      val segment = db.compileStatement(WatchSql.UPSERT_SLEEP_SEGMENT)
       try {
         for (s in result.samples) {
           sample.clearBindings()
@@ -188,6 +193,7 @@ internal class SyncStore(context: Context) {
           s.heartRate?.let { sample.bindLong(5, it.toLong()) } ?: sample.bindNull(5)
           s.spo2?.let { sample.bindLong(6, it.toLong()) } ?: sample.bindNull(6)
           s.restingHeartRate?.let { sample.bindLong(7, it.toLong()) } ?: sample.bindNull(7)
+          sample.bindString(8, address)
           sample.executeInsert()
         }
         for (s in result.sleep) {
@@ -196,6 +202,7 @@ internal class SyncStore(context: Context) {
           segment.bindLong(2, s.end)
           segment.bindLong(3, s.type.toLong())
           s.stage?.let { segment.bindString(4, it) } ?: segment.bindNull(4)
+          segment.bindString(5, address)
           segment.executeInsert()
         }
       } finally {
@@ -204,12 +211,11 @@ internal class SyncStore(context: Context) {
       }
       for (s in result.sleepScores) {
         db.execSQL(
-          """INSERT INTO sleep_scores (start, end, score, efficiency) VALUES (?, ?, ?, ?)
-             ON CONFLICT(start) DO UPDATE SET end = excluded.end, score = excluded.score, efficiency = excluded.efficiency""",
-          arrayOf<Any?>(s.start, s.end, s.score, s.efficiency),
+          WatchSql.UPSERT_SLEEP_SCORE,
+          arrayOf<Any?>(s.start, s.end, s.score, s.efficiency, address),
         )
       }
-      db.execSQL("UPDATE device SET last_sync = ? WHERE address = ?", arrayOf(result.to, address))
+      db.execSQL(WatchSql.UPDATE_LAST_SYNC, arrayOf(result.to, address))
       db.setTransactionSuccessful()
     } finally {
       db.endTransaction()
@@ -230,5 +236,13 @@ internal class SyncStore(context: Context) {
     const val DATABASE_NAME = "joyofit.db"
     const val MIGRATIONS_ASSET = "joyofit-db-migrations.json"
     const val BUSY_TIMEOUT_MS = 10_000
+    private const val TAG = "SyncStore"
+
+    /**
+     * The framework's default handler deletes the database file and its WAL when this connection meets corruption, while the JS
+     * connection (expo-sqlite, its own SQLite) still holds the file and writes into the deleted one. This one only says so: the
+     * JS repair (`src/db/recovery`) keeps a copy of the damaged file and rebuilds the database from what can be read.
+     */
+    val KEEP_CORRUPT_FILE = DatabaseErrorHandler { db -> Log.e(TAG, "Corruption reported by sqlite on ${db.path}; the file is left for the repair") }
   }
 }

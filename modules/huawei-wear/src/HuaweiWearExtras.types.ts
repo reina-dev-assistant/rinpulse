@@ -90,3 +90,60 @@ export interface CycleOverview {
   /** The watch reports ExpandCapability 265, so the easy-pregnancy switch is sent. */
   easyPregnancySwitch: boolean;
 }
+
+/** What the last satellite-data (A-GPS) attempt came to; the strings are the native `AgpsOutcome` codes. */
+export type AgpsOutcome =
+  | 'none'
+  /** The watch pulled the whole file and closed the transfer. */
+  | 'delivered'
+  /** Downloaded to the phone while no watch was connected; goes out when the watch asks. */
+  | 'stored'
+  /** The watch did not answer the phone's question, or never came to fetch what was ready. */
+  | 'watch_silent'
+  | 'no_network'
+  | 'download_failed'
+  | 'invalid_file'
+  /** The watch asked for a kind of data only the watch maker's own app prepares; it was answered "failed". */
+  | 'unsupported'
+  | 'watch_refused'
+  | 'timeout'
+  | 'cancelled'
+  | 'busy'
+  | 'link_lost';
+
+/** What is happening right now: nothing, asking the watch, downloading, ready and waiting for the watch, or sending. */
+export type AgpsPhase = 'idle' | 'asking' | 'downloading' | 'waiting' | 'sending';
+
+/** The satellite-data row of the Watch tab (`getAgps`). Times are unix milliseconds, 0 when never. */
+export interface AgpsStatus {
+  /** A watch is connected now. */
+  linked: boolean;
+  phase: AgpsPhase;
+  /** The newest download on the phone. */
+  cachedAt: number;
+  cachedSize: number;
+  cachedSource: string;
+  /** The last delivery to the watch being looked at. */
+  deliveredAt: number;
+  deliveredSize: number;
+  deliveredSource: string;
+  /** When the delivered data stops being good (7 days after it was made). */
+  expiresAt: number;
+  /** The last time the watch asked for data, the download version it named (-1: never) and the names of the kinds it wants. */
+  lastAskAt: number;
+  lastAskVersion: number;
+  lastAskTags: string;
+  outcome: AgpsOutcome;
+  /** Why the last attempt did not deliver; empty when it did. */
+  error: string;
+  attemptAt: number;
+  /** An automatic retry is not allowed before this time; 0 when nothing waits. */
+  retryAt: number;
+  failures: number;
+}
+
+/** What `refreshAgps` came to. */
+export interface AgpsRefreshResult {
+  outcome: AgpsOutcome;
+  message: string;
+}

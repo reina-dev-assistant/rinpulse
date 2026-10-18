@@ -1,0 +1,57 @@
+{
+  "map": {
+    "label": "Peta gowes",
+    "labelOffCourse": "Peta gowes, kamu keluar dari rute",
+    "unavailable": "Peta belum ada di versi aplikasi ini.",
+    "loadFailed": "Peta gagal dimuat.",
+    "recenter": "Ikuti posisi-mu lagi",
+    "attributionLabel": "Sumber data peta, membuka openstreetmap.org",
+    "online": "Peta online, butuh sinyal",
+    "stream": "Peta streaming, butuh sinyal"
+  },
+  "section": {
+    "title": "Peta offline",
+    "intro": "Unduh daerah tempat kamu biasa gowes. Petanya tetap jalan tanpa sinyal, dan tersimpan di ponsel-mu.",
+    "storage": "Ruang kosong {{free}}. Peta terpasang {{used}}.",
+    "storageNone": "Ruang kosong {{free}}. Belum ada peta terpasang.",
+    "cellular": "Kamu sedang pakai data seluler. Satu peta bisa ratusan MB, sebaiknya unduh lewat Wi-Fi.",
+    "catalogLoading": "Memuat daftar peta",
+    "catalogFailed": "Daftar peta belum bisa dimuat. Peta yang sudah terpasang tetap bisa dipakai.",
+    "catalogOffline": "Kamu sedang offline. Peta yang sudah terpasang tetap bisa dipakai.",
+    "empty": "Belum ada peta yang bisa diunduh.",
+    "licenseTitle": "Lisensi data",
+    "licenseNote": "Peta berasal dari data OpenStreetMap dan skema OpenMapTiles. Berkas peta yang kamu unduh dibagikan dengan lisensi ODbL.",
+    "licenseLink": "Baca lisensi ODbL"
+  },
+  "row": {
+    "installed": "Terpasang, versi {{date}}",
+    "updatable": "Ada versi baru ({{date}}), {{size}}",
+    "available": "{{size}}",
+    "progress": "{{done}} dari {{size}}",
+    "paused": "Dijeda, {{done}} dari {{size}}",
+    "verifying": "Memeriksa berkas",
+    "progressLabel": "Mengunduh {{name}}"
+  },
+  "action": {
+    "download": "Unduh",
+    "update": "Perbarui",
+    "delete": "Hapus",
+    "pause": "Jeda",
+    "resume": "Lanjutkan",
+    "cancel": "Batal",
+    "retry": "Coba lagi"
+  },
+  "download": {
+    "failed": {
+      "noSpace": "Ruang penyimpanan kurang. Butuh {{need}} kosong, tersisa {{free}}.",
+      "noSpaceShort": "Ruang penyimpanan kurang untuk peta ini. Kosongkan sebagian lalu coba lagi.",
+      "network": "Unduhan terputus. Cek koneksi-mu lalu coba lagi.",
+      "corrupt": "Berkas peta rusak atau tidak lengkap. Coba unduh lagi."
+    }
+  },
+  "confirm": {
+    "deleteTitle": "Hapus peta {{name}}?",
+    "deleteMessage": "Berkasnya ({{size}}) dihapus dari ponsel-mu. Kamu bisa mengunduhnya lagi kapan saja.",
+    "deleteAction": "Hapus peta"
+  }
+}

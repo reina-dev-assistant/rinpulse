@@ -18,8 +18,15 @@ import { authClient } from '@/cloud/auth';
 import { APP_BUILD } from '@/cloud/build';
 import { CLOUD_CONFIGURED } from '@/cloud/config';
 import { loadOverview, type CloudOverview } from '@/cloud/overview';
+import { forgetRecordSync, syncRecords } from '@/cloud/recordSync';
+import { restoreHealthWindow } from '@/cloud/healthSync';
+import { rogoCall } from '@/cloud/rogo';
+import { isSyncPaused, pauseSync, resumeSync } from '@/cloud/syncGate';
 import { onUnmeteredNetwork, readSyncSettings, writeAutoSync, writeWifiOnly, type SyncSettings } from '@/cloud/syncSettings';
+import { syncStrength } from '@/cloud/strengthSync';
 import { runUpload } from '@/cloud/uploader';
+import { pushWatchKcal } from '@/cloud/watchKcal';
+import { flushWorkoutDeletes } from '@/features/workouts/deleteWorkout';
 import {
   bindAccount,
   fetchCloudWorkoutStatus,
@@ -32,13 +39,21 @@ import {
 import { releaseFamilyDevice } from '@/features/family/device';
 import { cloudLog } from '@/cloud/log';
 import { syncGear } from '@/features/gear/sync';
-import { forgetCloudWorkouts, resetCloudCursors, setCloudState } from '@/db/cloud';
+import { syncCoach } from '@/features/coach/sync';
+import { adoptAccount, forgetCloudWorkouts, getCloudValue, resetCloudCursors, setCloudState } from '@/db/cloud';
+import { accountSwitchOf, deleteAllLocalData, keepApart } from '@/db/localData';
 import { errorMessage } from '@/format';
 import { t } from '@/i18n';
+import { AccountSwitchDialog, type SwitchChoice } from '@/features/settings/AccountSwitchDialog';
 import { useWatch } from '@/state/WatchProvider';
 
 /** Wait this long after a local sync (or app start) so bursts of events become one upload. */
 const UPLOAD_DEBOUNCE_MS = 2_000;
+
+/** `cloud_state` key prefix of "this account's history was restored onto this phone"; one per account id. */
+const RESTORE_DONE_PREFIX = 'restore_done:';
+/** How far back the first sync of an account restores steps and sleep. */
+const RESTORE_DAYS = 90;
 
 export interface CloudContextValue {
   /** The cloud server URL is set in this build. */
@@ -57,6 +72,13 @@ export interface CloudContextValue {
    * and coming back to the app or "Sync now" asks again, so a fresh purchase is picked up.
    */
   locked: boolean;
+  /**
+   * The account is JoyoRogo Pro (the cloud accepts uploads); false for a free account, null while that is not known yet
+   * (not signed in, or neither a sync nor the cloud status has answered).
+   */
+  pro: boolean | null;
+  /** History of the account is being restored onto this phone (first sync only); `total` is null until known. Null otherwise. */
+  restoring: { done: number; total: number | null } | null;
   /** Last sign-in or sync failure. */
   error: string | null;
   /** Unix seconds of the last finished sync. */
@@ -96,7 +118,11 @@ export interface CloudContextValue {
    * deleted (the Apple sheet was closed, or it failed: `error` says why).
    */
   deleteAccount: () => Promise<boolean>;
-  signOut: () => Promise<void>;
+  /**
+   * Signs out and keeps everything on this phone, unless `deleteLocalData`: then the session is closed first and
+   * `deleteAllLocalData` runs after (`useAccountDialogs` only asks for it after the person chose it). A failed sign-out deletes nothing.
+   */
+  signOut: (options?: { deleteLocalData?: boolean }) => Promise<void>;
   /** Runs a sync now, whatever the Wi-Fi only setting says (the caller has asked the person). */
   syncNow: () => Promise<void>;
 }
@@ -120,7 +146,7 @@ export function useCloud(): CloudContextValue {
  */
 export function CloudProvider({ children }: { children: ReactNode }) {
   const db = useSQLiteContext();
-  const { dataVersion } = useWatch();
+  const { dataVersion, dataChanged } = useWatch();
   const session = authClient.useSession();
   const signedIn = session.data?.user != null;
   const user = session.data?.user;
@@ -141,6 +167,13 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const settingsRef = useRef(settings);
   const running = useRef<Promise<void> | null>(null);
   const again = useRef(false);
+  const restoreRun = useRef<Promise<void> | null>(null);
+  const [restoring, setRestoring] = useState<{ done: number; total: number | null } | null>(null);
+  // A different account signed in on a phone that holds the previous account's data: sync stays paused until the person answers.
+  const [accountSwitch, setAccountSwitch] = useState<{ previousEmail: string | null } | null>(null);
+  const [switchChoice, setSwitchChoice] = useState<SwitchChoice | null>(null);
+  // Deleting local data or settling an account switch is under way: nothing may resume sync meanwhile.
+  const holdingSync = useRef(false);
 
   const refresh = useCallback(async () => {
     setOverview(await loadOverview(db, APP_BUILD));
@@ -181,6 +214,70 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (!signedIn) markLocked(false);
   }, [signedIn, markLocked]);
 
+  /** True (and the dialog shown, sync paused) when `accountId` is not the account this phone's data belongs to. */
+  const reviewAccount = useCallback(
+    async (accountId: string): Promise<boolean> => {
+      const found = await accountSwitchOf(db, accountId);
+      if (found) {
+        pauseSync();
+        setAccountSwitch({ previousEmail: found.previousEmail });
+      }
+      return found !== null;
+    },
+    [db],
+  );
+
+  // Ask as soon as an account is known, even when no sync would run (automatic sync off, no cloud URL): the choice must not wait for one.
+  const accountId = user?.id;
+  useEffect(() => {
+    if (!accountId) {
+      setAccountSwitch(null);
+      if (!holdingSync.current) resumeSync();
+      return;
+    }
+    let live = true;
+    reviewAccount(accountId).then(
+      (blocked) => {
+        if (live && !blocked && !holdingSync.current) resumeSync();
+      },
+      (e) => cloudLog(`account check failed: ${errorMessage(e)}`, 'error'),
+    );
+    return () => {
+      live = false;
+    };
+  }, [accountId, reviewAccount]);
+
+  /**
+   * The first sync of an account on this phone also restores its recent steps and sleep (`restoreHealthWindow`), in the
+   * background: the sync of everything else does not wait for it. It waits for Wi-Fi when "Wi-Fi only" is on and is tried
+   * again at the next sync; the account is flagged only once it finished.
+   */
+  const restoreIfFirst = useCallback(
+    (id: string) => {
+      if (restoreRun.current) return;
+      const flag = `${RESTORE_DONE_PREFIX}${id}`;
+      restoreRun.current = (async () => {
+        try {
+          if ((await getCloudValue(db, flag)) !== null) return;
+          if (settingsRef.current.wifiOnly && !(await onUnmeteredNetwork())) return;
+          setRestoring({ done: 0, total: null });
+          const restored = await restoreHealthWindow(db, {
+            days: RESTORE_DAYS,
+            onProgress: (done, total) => setRestoring({ done, total }),
+          });
+          await setCloudState(db, { [flag]: String(Date.now()) });
+          if (restored.steps + restored.sleep > 0) dataChanged();
+        } catch (e) {
+          cloudLog(`restore from the cloud failed: ${errorMessage(e)}`, 'error');
+        } finally {
+          setRestoring(null);
+          restoreRun.current = null;
+        }
+      })();
+    },
+    [db, dataChanged],
+  );
+
   const syncNow = useCallback((): Promise<void> => {
     if (!CLOUD_CONFIGURED) {
       setError(t('common:errors.cloudUrlMissing'));
@@ -197,11 +294,28 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         do {
           again.current = false;
           const account = userRef.current;
-          if (!account) return;
+          if (!account || isSyncPaused()) return;
+          // Before anything is bound or sent: another account's phone data is never adopted without asking.
+          if (await reviewAccount(account.id)) return;
           await bindAccount(db, account.id, account.email);
+          // Workouts deleted on this phone that the account has not heard about yet go first, so the pull below cannot restore them (never throws).
+          await flushWorkoutDeletes(db);
+          // A manual sync or one that follows an account choice: the watch workouts' energy for JoyoRogo's diary (idempotent, never throws).
+          await pushWatchKcal(db, account.id);
           await pullWorkouts(db);
           // Gear is small and a free account only reads it; a failure here must not fail the workouts' sync.
           await syncGear(db).catch((e) => cloudLog(`gear sync failed: ${errorMessage(e)}`, 'error'));
+          // The Coach plan: read by every signed-in account, written by Pro; same rule, same isolation.
+          await syncCoach(db).catch((e) => cloudLog(`coach sync failed: ${errorMessage(e)}`, 'error'));
+          // Strength history: read by every signed-in account, written by Pro; after the workouts pull so a logged workout finds its watch row.
+          await syncStrength(db).catch((e) => cloudLog(`strength sync failed: ${errorMessage(e)}`, 'error'));
+          // Preferences, templates, routes and health records; reading is open to every account, writing is Pro.
+          const records = await syncRecords(db).catch((e) => {
+            cloudLog(`record sync failed: ${errorMessage(e)}`, 'error');
+            return 'local-only' as const;
+          });
+          if (records !== 'local-only' && (records.quota || records.full)) setError(t('settings:cloud.recordsFull'));
+          restoreIfFirst(account.id);
           const pushed = await pushWorkouts(db, setProgress);
           await runUpload(db);
           if (pushed.quota) setError(pushed.quota);
@@ -222,7 +336,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     })();
     running.current = run;
     return run;
-  }, [db, refresh, refreshStatus, markLocked]);
+  }, [db, refresh, refreshStatus, markLocked, reviewAccount, restoreIfFirst]);
 
   /** A run nobody asked for: only when automatic sync is on, and on Wi-Fi or Ethernet when "Wi-Fi only" is. */
   const autoSyncNow = useCallback(async () => {
@@ -246,6 +360,34 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     });
     return () => subscription.remove();
   }, [signedIn, autoSyncNow]);
+
+  /**
+   * The energy of the watch's workouts goes to JoyoRogo's diary on its own track, not only inside `syncNow`: that run is skipped
+   * for an account without the Pro cloud (`locked`) and stops at the first failure of an earlier step, and neither may keep a
+   * workout out of the diary. Same settings as the other automatic sync: off with "Automatic sync" off, and on mobile data with
+   * "Wi-Fi only" on. Never throws; what it sent or failed to send is shown in Settings, Koneksi, JoyoRogo.
+   */
+  const pushDiary = useCallback(async () => {
+    const { autoSync, wifiOnly } = settingsRef.current;
+    const account = userRef.current;
+    if (!account || !autoSync || (wifiOnly && !(await onUnmeteredNetwork()))) return;
+    await flushWorkoutDeletes(db);
+    await pushWatchKcal(db, account.id);
+  }, [db]);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    const timer = setTimeout(() => void pushDiary(), UPLOAD_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [signedIn, dataVersion, pushDiary]);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void pushDiary();
+    });
+    return () => subscription.remove();
+  }, [signedIn, pushDiary]);
 
   const changeSettings = useCallback((next: SyncSettings) => {
     settingsRef.current = next;
@@ -279,6 +421,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     try {
       if (running.current) await running.current;
       await wipeCloudData(db);
+      await rogoCall<unknown>('sync/wipe', { ns: 'fit' });
+      await forgetRecordSync(db);
       return true;
     } catch (e) {
       setError(errorMessage(e));
@@ -340,6 +484,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     try {
       await resetCloudCursors(db);
       await forgetCloudWorkouts(db);
+      await forgetRecordSync(db);
       await setCloudState(db, { user_id: null, email: null, last_sync_at: null, last_error: null });
       await refresh();
     } catch {
@@ -348,16 +493,80 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     return true;
   }, [db, refresh]);
 
-  const signOut = useCallback(async () => {
-    setError(null);
-    try {
-      // Family monitoring needs the session to revoke this phone's tokens, so it goes first; it never blocks signing out.
-      await releaseFamilyDevice().catch(() => {});
-      await authClient.signOut();
-    } catch (e) {
-      setError(errorMessage(e));
-    }
-  }, []);
+  const signOut = useCallback(
+    async ({ deleteLocalData = false }: { deleteLocalData?: boolean } = {}) => {
+      setError(null);
+      if (deleteLocalData) {
+        holdingSync.current = true;
+        pauseSync();
+      }
+      try {
+        if (deleteLocalData) {
+          // Nothing may still be writing rows when they are deleted, or a sync still be sending them.
+          again.current = false;
+          await Promise.all([running.current, restoreRun.current]);
+        }
+        // Family monitoring needs the session to revoke this phone's tokens, so it goes first; it never blocks signing out.
+        await releaseFamilyDevice().catch(() => {});
+        await authClient.signOut();
+        if (deleteLocalData) {
+          await deleteAllLocalData(db);
+          dataChanged();
+          await refresh().catch(() => {});
+        }
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        if (deleteLocalData) {
+          holdingSync.current = false;
+          resumeSync();
+        }
+      }
+    },
+    [db, dataChanged, refresh],
+  );
+
+  /** The answer to the account switch dialog. A failure leaves the dialog open (sync still paused) with the error shown in Settings. */
+  const resolveSwitch = useCallback(
+    async (choice: SwitchChoice) => {
+      const account = userRef.current;
+      if (!account) return;
+      setError(null);
+      setSwitchChoice(choice);
+      holdingSync.current = true;
+      try {
+        again.current = false;
+        await Promise.all([running.current, restoreRun.current]);
+        if (choice === 'delete') {
+          await deleteAllLocalData(db);
+          await adoptAccount(db, account.id, account.email);
+        } else {
+          await keepApart(db, account.id, account.email);
+        }
+        setAccountSwitch(null);
+        holdingSync.current = false;
+        resumeSync();
+        dataChanged();
+        await refresh().catch(() => {});
+        void syncNow();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        holdingSync.current = false;
+        setSwitchChoice(null);
+      }
+    },
+    [db, dataChanged, refresh, syncNow],
+  );
+
+  /** Backing out of the account switch dialog: the new account is signed out again, the old data stays on the phone. */
+  const leaveSwitch = useCallback(async () => {
+    setAccountSwitch(null);
+    await signOut();
+  }, [signOut]);
+
+  // Pro is known once a sync or the cloud status has answered.
+  const pro = !signedIn ? null : locked ? false : cloudWorkouts ? cloudWorkouts.unlocked : null;
 
   const value = useMemo<CloudContextValue>(
     () => ({
@@ -368,6 +577,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       uploading,
       progress,
       locked,
+      pro,
+      restoring,
       error: error ?? overview?.state.lastError ?? null,
       lastSyncAt: overview?.state.lastSyncAt ?? null,
       pendingRows: overview?.pendingRows ?? null,
@@ -398,6 +609,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       uploading,
       progress,
       locked,
+      pro,
+      restoring,
       error,
       cloudWorkouts,
       settings,
@@ -415,5 +628,16 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <CloudContext.Provider value={value}>{children}</CloudContext.Provider>;
+  return (
+    <CloudContext.Provider value={value}>
+      {children}
+      <AccountSwitchDialog
+        visible={signedIn && accountSwitch !== null}
+        previousEmail={accountSwitch?.previousEmail ?? null}
+        choice={switchChoice}
+        onChoose={(choice) => void resolveSwitch(choice)}
+        onSignOut={() => void leaveSwitch()}
+      />
+    </CloudContext.Provider>
+  );
 }

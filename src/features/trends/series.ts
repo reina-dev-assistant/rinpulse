@@ -3,7 +3,7 @@ import { sleepNeedSec } from '@/features/today/readiness';
 import { recovery } from '@/features/today/recovery';
 import { startOfLocalDay } from '@/features/today/stats';
 import type { DayStrain } from '@/features/today/strain';
-import type { Night } from '@/features/sleep/nights';
+import { sleepByDay, type Night } from '@/features/sleep/nights';
 
 /** One value per day, aligned with the day list; null where the day has no data (never filled in). */
 export type DaySeries = (number | null)[];
@@ -84,11 +84,10 @@ export interface SleepSeries {
 export function sleepSeries(days: readonly number[], nights: readonly Night[], strain: readonly DayStrain[]): SleepSeries {
   const index = indexByDay(days);
   const hours: DaySeries = days.map(() => null);
-  for (const night of nights) {
-    if (night.nap) continue;
-    const i = index.get(startOfLocalDay(night.end));
-    if (i === undefined) continue;
-    hours[i] = (hours[i] ?? 0) + night.asleepSeconds / 3600;
+  for (const [day, sleep] of sleepByDay(nights)) {
+    const i = index.get(day);
+    if (i === undefined || !sleep.hasNight) continue;
+    hours[i] = sleep.asleepSeconds / 3600;
   }
   const strainByDay = new Map(strain.map((d) => [d.day, d.strain]));
   return {

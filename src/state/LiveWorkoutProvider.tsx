@@ -2,10 +2,13 @@ import { useEventListener } from 'expo';
 import { useRootNavigationState, useRouter } from 'expo-router';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import Storage from 'expo-sqlite/kv-store';
+import { useSQLiteContext } from 'expo-sqlite';
 import { Alert, AppState, PermissionsAndroid, Platform } from 'react-native';
 
 import { t } from '@/i18n';
+import { rememberedWatch } from '@/features/device/rememberedWatch';
 import { isActive } from '@/features/live/liveWorkout';
+import { useWatch } from '@/state/WatchProvider';
 import { HuaweiWear, type LiveWorkout } from '@/wear';
 
 /** Set once the location explanation was shown, so the dialog does not come back on every launch. */
@@ -45,12 +48,16 @@ export function LiveWorkoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // The watch asks for the phone's GPS during outdoor workouts; that needs precise location. Explain it once before
-  // Android's dialog; Settings > Phone and calls can ask again.
+  // Android's dialog; Settings > Phone and calls can ask again. Only with a watch in the picture: a phone that never had one
+  // (a strength-only install) is not asked about a watch's GPS, and the question comes with the first pairing instead.
+  const db = useSQLiteContext();
+  const linked = useWatch().device !== null;
   useEffect(() => {
     // Android only: iOS asks for location itself (the system prompt, when-in-use) the first time the watch wants the phone's GPS.
     if (Platform.OS !== 'android') return;
     const fine = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
     void (async () => {
+      if (!(await rememberedWatch(db))) return;
       if (await PermissionsAndroid.check(fine)) return;
       if ((await Storage.getItem(GPS_EXPLAINED_KEY)) === '1') return;
       await Storage.setItem(GPS_EXPLAINED_KEY, '1');
@@ -59,7 +66,7 @@ export function LiveWorkoutProvider({ children }: { children: ReactNode }) {
         { text: t('common:gps.continue'), onPress: () => void PermissionsAndroid.request(fine) },
       ]);
     })();
-  }, []);
+  }, [db, linked]);
 
   const activeId = isActive(live) ? live.id : null;
   useEffect(() => {

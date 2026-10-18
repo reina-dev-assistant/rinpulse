@@ -67,8 +67,11 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('server/bun.lock') }}
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'server/bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
+      # The ride relay imports the wire protocol from ../src/features/ride; esbuild reads the root tsconfig (extends expo) for those files.
+      - run: bun install --frozen-lockfile
+        working-directory: .
       - run: bun install --frozen-lockfile
       - run: bunx tsc --noEmit
       - run: bunx vitest run
@@ -100,7 +103,7 @@ jobs:
       - run: bun run build
 
   kotlin:
-    name: Kotlin unit tests (huawei-wear)
+    name: Kotlin (unit tests, NewApi lint)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -126,7 +129,11 @@ jobs:
       - run: bun install --frozen-lockfile
       # android/ is generated (gitignored); the module tests need the Gradle project.
       - run: bunx expo prebuild -p android --no-install
-      - run: ./gradlew :huawei-wear:testDebugUnitTest
+      - run: ./gradlew :huawei-wear:testDebugUnitTest :ble-sensors:testDebugUnitTest :replay-encoder:testDebugUnitTest
+        working-directory: android
+      # NewApi only (modules/newapi-lint.gradle): a call newer than minSdk 29 outside a Build.VERSION.SDK_INT check
+      # compiles and then throws NoSuchMethodError on an older phone. Findings print to the log.
+      - run: ./gradlew :huawei-wear:lintDebug :ble-sensors:lintDebug :replay-encoder:lintDebug
         working-directory: android
 
   swift-protocol:
@@ -209,3 +216,11 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Inert shapes vs TypeScript declarations
         run: node modules/huawei-wear/ios/ModuleLogicTests/check-inert-shapes.mjs "$RUNNER_TEMP/shapes.json"
+      # The sensor module's pure logic (GATT plan table, reconnect backoff); the CoreBluetooth and CoreLocation files cannot build on Linux.
+      - name: Sensor logic tests (ble-sensors)
+        working-directory: modules/ble-sensors/ios/SensorLogicTests
+        run: swift test
+      # The replay encoder's pure logic (config, frame timing, fit rectangles); the AVFoundation and ImageIO files cannot build on Linux.
+      - name: Encoder logic tests (replay-encoder)
+        working-directory: modules/replay-encoder/ios/EncoderLogicTests
+        run: swift test

@@ -11,16 +11,19 @@ import HuaweiProtocol
 public final class HealthMetricsStore: HealthMetricsStoring, @unchecked Sendable {
     private let store: SyncStore
     private let nowSec: @Sendable () -> Int64
+    /// The connected watch (`device.address`) at the time of each call; rows are attributed to it and the fetch cursor is its own. nil binds NULL.
+    private let address: @Sendable () -> String?
 
-    public init(store: SyncStore, nowSec: @escaping @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970) }) {
+    public init(store: SyncStore, address: @escaping @Sendable () -> String? = { nil }, nowSec: @escaping @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970) }) {
         self.store = store
+        self.address = address
         self.nowSec = nowSec
     }
 
     public func lastFetchTimestamp(_ type: String) -> Int64 {
         do {
             return try store.read { db in
-                try db.query("SELECT MAX(last_ts) FROM health_metrics WHERE type = ?", [.text(type)]) { $0.isNull(0) ? Int64(0) : $0.int64(0) * 1000 }.first ?? 0
+                try db.query("SELECT MAX(last_ts) FROM health_metrics WHERE type = ? AND device IS ?", [.text(type), .string(address())]) { $0.isNull(0) ? Int64(0) : $0.int64(0) * 1000 }.first ?? 0
             }
         } catch {
             return 0
@@ -29,19 +32,20 @@ public final class HealthMetricsStore: HealthMetricsStoring, @unchecked Sendable
 
     public func persist(_ rows: [DictionaryRow]) throws {
         if rows.isEmpty { return }
+        let device = address()
         try store.read { db in
             try db.transaction {
                 let statement = try db.prepare(
                     """
-                    INSERT INTO health_metrics (type, ts, last_ts, value, values_json) VALUES (?, ?, ?, ?, ?)
-                    ON CONFLICT(type, ts) DO UPDATE SET last_ts = excluded.last_ts, value = excluded.value, values_json = excluded.values_json
+                    INSERT INTO health_metrics (type, ts, last_ts, value, values_json, device) VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(type, ts) DO UPDATE SET last_ts = excluded.last_ts, value = excluded.value, values_json = excluded.values_json, device = excluded.device
                     """
                 )
                 for r in rows {
                     statement.reset()
                     try statement.bind([
                         .text(r.type), .int(r.timestamp / 1000), .int(max(r.lastTimestamp, r.timestamp) / 1000),
-                        r.value.map { .double($0) } ?? .null, .text(r.valuesJson),
+                        r.value.map { .double($0) } ?? .null, .text(r.valuesJson), .string(device),
                     ])
                     while try statement.step() {}
                 }

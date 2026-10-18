@@ -40,9 +40,22 @@
     "figure": {
       "time": "Time",
       "distance": "Distance",
+      "pace": "Pace",
+      "paceValue": "{{pace}} /km",
+      "speed": "Speed",
+      "speedValue": "{{kmh}} km/h",
+      "elevation": "Elev gain",
       "energy": "Energy",
       "avgHr": "Avg HR",
       "maxHr": "Max HR"
+    },
+    "map": {
+      "alt": "Route map of {{title}}",
+      "start": "Start",
+      "finish": "Finish",
+      "hint": "Simplified line. The first and last 200 m are not shown.",
+      "show": "Show map",
+      "showHint": "Simplified route, first and last 200 m cut."
     }
   },
   "comments": {
@@ -62,7 +75,9 @@
     "private": "This profile is private.",
     "posts": "Posts",
     "followers": "Followers",
-    "following": "Following"
+    "following": "Following",
+    "shareMaps": "Route map on posts",
+    "shareMapsHint": "Workouts with GPS show a route map. The line is simplified and the first and last 200 m are cut."
   },
   "groups": {
     "memberCount_one": "{{count}} member",
@@ -118,8 +133,8 @@
     "hintGroup": "Only people who share a JoyoRogo group with you.",
     "hintPublic": "Anyone on JoyoRogo. Your JoyoRogo profile has to be public.",
     "includeHr": "Heart-rate data",
-    "includeRoute": "Route",
-    "includeRouteHint": "Shows where you started and finished.",
+    "includeRoute": "Show map",
+    "includeRouteHint": "The line is simplified and the first and last 200 m are cut, same as on stickers. Switched off, the route is not sent at all.",
     "includeComparison": "Comparison with earlier workouts",
     "note": "Everyone you share with sees the summary. The full analysis (map, charts, splits, zones, best efforts and more) is visible to JoyoRogo Pro members and to you.",
     "post": "Post"

@@ -1,0 +1,44 @@
+{
+  "pager": {
+    "position": "Slide {{n}} dari {{total}}"
+  },
+  "slides": {
+    "title": "Slide",
+    "hint": "Pilih slide yang ikut dan atur urutannya. Threads menerima maksimal {{max}} gambar per posting.",
+    "empty": "Latihan ini belum punya data untuk dibuat slide.",
+    "limit": "Threads menerima maksimal {{max}} gambar per posting. Matikan satu slide dulu.",
+    "moveUp": "Naikkan slide {{name}}",
+    "moveDown": "Turunkan slide {{name}}"
+  },
+  "route": {
+    "show": {
+      "label": "Tampilkan rute",
+      "hint": "Matikan untuk memakai angka saja, tanpa peta rute."
+    }
+  },
+  "name": {
+    "label": "Tampilkan namamu",
+    "hint": "Nama depanmu ikut tampil di slide."
+  },
+  "caption": {
+    "title": "Teks postingan",
+    "label": "Teks postingan",
+    "counter": "{{n}} dari {{max}} karakter",
+    "question": "Pertanyaan untuk pembaca",
+    "noQuestion": "Tanpa pertanyaan",
+    "hashtag": {
+      "label": "Tagar #JoyoFit",
+      "hint": "Ditaruh di baris terakhir teks."
+    }
+  },
+  "branding": "Logo JoyoFit selalu ada di slide Threads, juga untuk akun Pro.",
+  "actions": {
+    "share": "Bagikan ke Threads",
+    "saveOpen": "Simpan semua dan buka Threads",
+    "copy": "Salin teks",
+    "saveOpenHint": "Teks juga tersalin: tempel di Threads kalau kolom teksnya kosong. Kalau Threads tidak menerima semua gambar sekaligus, pakai tombol simpan: gambar masuk ke foto kamu, teks tersalin, lalu tombol foto di Threads memilih semuanya."
+  },
+  "progress": {
+    "title": "Menyiapkan gambar {{n}}/{{total}}"
+  }
+}

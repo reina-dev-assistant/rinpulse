@@ -1,0 +1,176 @@
+{
+  "title": "Routines",
+  "duplicateName": "{{name}} (copy)",
+  "unit": {
+    "kg": "{{value}} kg"
+  },
+  "toast": {
+    "duplicated": "Routine duplicated",
+    "copied": "Copied to your routines"
+  },
+  "move": {
+    "title": "Move to folder",
+    "noFolder": "No folder"
+  },
+  "confirmDelete": {
+    "title": "Delete {{name}}?",
+    "message": "The routine is removed. Workouts you already logged with it stay in your history.",
+    "confirm": "Delete routine"
+  },
+  "row": {
+    "removedExercise": "Removed exercise",
+    "summaryMore": "{{names}} +{{count}}",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} sets",
+    "open": "Preview {{name}}",
+    "start": "Start {{name}}"
+  },
+  "folder": {
+    "toggle_one": "{{name}}, {{count}} routine",
+    "toggle_other": "{{name}}, {{count}} routines",
+    "menu": "Options for folder {{name}}",
+    "newRoutineHere": "New routine in this folder",
+    "rename": "Rename folder",
+    "delete": "Delete folder",
+    "empty": "This folder is empty. Move a routine here from its preview, or add a new one.",
+    "newTitle": "New folder",
+    "newConfirm": "Create folder",
+    "renameTitle": "Rename folder",
+    "renameConfirm": "Save name",
+    "namePlaceholder": "Folder name",
+    "confirmDelete": {
+      "title": "Delete folder {{name}}?",
+      "message": "The routines inside are kept and move out of the folder.",
+      "confirm": "Delete folder"
+    }
+  },
+  "home": {
+    "startEmpty": "Start empty workout",
+    "retry": "Try again",
+    "error": "Could not read your routines: {{error}}",
+    "myRoutines": "My routines",
+    "newRoutine": "New routine",
+    "newFolder": "New folder",
+    "empty": {
+      "title": "No routines yet",
+      "body": "A routine is a workout you repeat: the exercises, sets and reps ready to go. Make one, or copy a starter routine below."
+    },
+    "noFolder": "No folder",
+    "starters": "Starter routines",
+    "startersHint": "Ready-made workouts. Start one as it is, or copy it to your routines to change it.",
+    "recent": "Recent workouts",
+    "recentEmpty": "Your finished workouts show up here.",
+    "untitled": "Workout",
+    "recentMeta_one": "{{date}}, {{count}} set, {{duration}}",
+    "recentMeta_other": "{{date}}, {{count}} sets, {{duration}}",
+    "links": {
+      "history": "History",
+      "exercises": "Exercises",
+      "muscles": "Muscle volume",
+      "settings": "Settings"
+    }
+  },
+  "sheet": {
+    "close": "Close preview",
+    "exerciseCount_one": "{{count}} exercise",
+    "exerciseCount_other": "{{count}} exercises",
+    "summaryReps": "{{sets}} × {{reps}}",
+    "summaryRepsWeight": "{{sets}} × {{reps}}, {{weight}}",
+    "summarySeconds": "{{sets}} × {{seconds}} s",
+    "superset": "Superset",
+    "start": "Start workout",
+    "copy": "Copy to my routines",
+    "edit": "Edit routine",
+    "duplicate": "Duplicate",
+    "moveToFolder": "Move to folder",
+    "moveUp": "Move up in the list",
+    "moveDown": "Move down in the list",
+    "delete": "Delete routine"
+  },
+  "editor": {
+    "titleNew": "New routine",
+    "titleEdit": "Edit routine",
+    "missing": {
+      "title": "Routine not found",
+      "body": "It may have been deleted on another device."
+    },
+    "name": "Name",
+    "namePlaceholder": "For example Push day",
+    "folder": "Folder",
+    "note": "Note",
+    "notePlaceholder": "Anything to remember about this routine",
+    "exercises": "Exercises",
+    "exercisesEmpty": "No exercises yet. Add the first one below.",
+    "addExercise": "Add exercise",
+    "addSet": "Add set",
+    "superset": "Superset",
+    "exerciseMenu": "Options for {{name}}",
+    "exerciseNote": "Note for this exercise",
+    "exerciseNoteLabel": "Note for {{name}}",
+    "setType": "Set type",
+    "setTypeLabel": "Type of set {{number}} of {{name}}",
+    "weightLabel": "Weight of set {{number}} of {{name}}, kg",
+    "repsLabel": "Repetitions of set {{number}} of {{name}}",
+    "secondsLabel": "Seconds of set {{number}} of {{name}}",
+    "removeSet": "Remove set {{number}} of {{name}}",
+    "col": {
+      "set": "Set",
+      "kg": "kg",
+      "reps": "Reps",
+      "seconds": "Seconds"
+    },
+    "rest": {
+      "label": "Rest between sets",
+      "default": "Default, {{value}} s",
+      "seconds": "{{value}} s",
+      "less": "Shorter rest for {{name}}",
+      "more": "Longer rest for {{name}}"
+    },
+    "menu": {
+      "replace": "Replace exercise",
+      "superset": "Superset with the next one",
+      "splitSuperset": "Split from the next one",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "defaultRest": "Use the default rest",
+      "remove": "Remove exercise"
+    },
+    "problem": {
+      "name": "Give the routine a name.",
+      "exercises": "Add at least one exercise."
+    },
+    "saveError": "Could not save: {{error}}",
+    "save": "Save routine",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "discard": {
+      "title": "Discard changes?",
+      "message": "You have changes in this routine that are not saved.",
+      "confirm": "Discard",
+      "keep": "Keep editing"
+    }
+  },
+  "import": {
+    "title": "Your JoyoRogo history",
+    "offer_one": "You logged {{count}} workout in JoyoRogo. Bring it into JoyoFit?",
+    "offer_other": "You logged {{count}} workouts in JoyoRogo. Bring them into JoyoFit?",
+    "offerRoutines_one": "You saved {{count}} routine in JoyoRogo. Bring it into JoyoFit?",
+    "offerRoutines_other": "You saved {{count}} routines in JoyoRogo. Bring them into JoyoFit?",
+    "note": "Your history stays read-only in JoyoRogo and nothing is deleted there.",
+    "action": {
+      "import": "Import",
+      "notNow": "Not now",
+      "askLater": "Ask again in 30 days",
+      "never": "Do not ask again",
+      "retry": "Try again",
+      "done": "Done"
+    },
+    "progress": "Importing {{done}} of {{total}}",
+    "progressUnknown": "Importing {{done}}",
+    "success": {
+      "title": "Imported from JoyoRogo",
+      "body": "Workouts: {{workouts}}, routines: {{routines}}"
+    },
+    "error": "The import did not finish. Check your connection and try again. What was already imported is kept."
+  }
+}

@@ -31,6 +31,8 @@ public final class HrvSpot: @unchecked Sendable {
         public let endMs: Int64
         public let beats: [RriBeat]
         public let packets: Int
+        /// The watch that measured (`device.address`): the reading is attributed to it.
+        public let address: String
     }
 
     private static let logFirstPackets = 5
@@ -157,7 +159,7 @@ public final class HrvSpot: @unchecked Sendable {
             events.hrvProgress(secondsLeft: 0, beats: snapshot.beats.filter { $0.sqi != 0 }.count)
             log(summary(snapshot.beats, snapshot.packets, endMs - startMs))
             await finish(session: session, subscription: subscription, opened: opened)
-            return Collected(startMs: startMs, endMs: endMs, beats: snapshot.beats, packets: snapshot.packets)
+            return Collected(startMs: startMs, endMs: endMs, beats: snapshot.beats, packets: snapshot.packets, address: h.address)
         } catch {
             await finish(session: session, subscription: subscription, opened: opened)
             throw error
@@ -203,8 +205,8 @@ public final class HrvSpot: @unchecked Sendable {
                         try db.run("INSERT OR REPLACE INTO rri_samples (ts_ms, rri, sqi) VALUES (?, ?, ?)", [.int(tsMs), .int(Int64(beat.rri)), .int(Int64(beat.sqi))])
                     }
                     try db.run(
-                        "INSERT OR REPLACE INTO hrv_readings (start, end, source, rmssd, sdnn, mean_rr, beats) VALUES (?, ?, 'spot', ?, ?, ?, ?)",
-                        [.int(reading.start), .int(reading.end), .double(reading.rmssd), .double(reading.sdnn), .double(reading.meanRr), .int(Int64(reading.beats))]
+                        "INSERT OR REPLACE INTO hrv_readings (start, end, source, rmssd, sdnn, mean_rr, beats, device) VALUES (?, ?, 'spot', ?, ?, ?, ?, ?)",
+                        [.int(reading.start), .int(reading.end), .double(reading.rmssd), .double(reading.sdnn), .double(reading.meanRr), .int(Int64(reading.beats)), .text(collected.address)]
                     )
                 }
             }

@@ -4,9 +4,11 @@ Written 2026-10-17. Three workflows in `.github/workflows/`. The repo is public,
 
 | Workflow | Runs on | Needs secrets | Does |
 | --- | --- | --- | --- |
-| `ci.yml` | pull requests, pushes to `master`, manual | none (safe for forks, read-only token) | jobs in parallel: app (`tsc`, `bun test ./src/`, `check-api.mjs`, `packages/hwt` tests + types), server (`tsc`, vitest), site (typecheck + build), Kotlin unit tests (`:huawei-wear:testDebugUnitTest` after `expo prebuild`), Swift tests for `HuaweiProtocol` and `ModuleLogicTests` (Swift 6.4.1 on Ubuntu) plus `check-inert-shapes.mjs` |
+| `ci.yml` | pull requests, pushes to `master`, manual | none (safe for forks, read-only token) | jobs in parallel: app (`tsc`, `bun test ./src/`, `check-api.mjs`, `packages/hwt` tests + types), server (`tsc`, vitest), site (typecheck + build), Kotlin (unit tests of the three modules after `expo prebuild`, then Android Lint `NewApi` only, see below), Swift tests for `HuaweiProtocol` and `ModuleLogicTests` (Swift 6.4.1 on Ubuntu) plus `check-inert-shapes.mjs` |
 | `release-android.yml` | **manual only** (`workflow_dispatch`) | yes, environment `release` | ubuntu, JDK 17, Bun, Gradle cache: `scripts/build-release.sh --play` (AAB + forbidden-permission guard) and/or `scripts/build-release.sh` (sideload APK); artifacts; optional Play upload |
 | `release-ios.yml` | **manual only** | yes, environment `release` | `scripts/ios/mac-build.sh` on `macos-latest`: expo prebuild, pods, `xcodebuild archive` + export, IPA checks, optional TestFlight upload |
+
+Android Lint `NewApi` (`./gradlew :huawei-wear:lintDebug :ble-sensors:lintDebug :replay-encoder:lintDebug`, config in `modules/newapi-lint.gradle`, applied by each module) fails the job on a call to an API newer than `minSdk` 29 that is not behind a `Build.VERSION.SDK_INT` check. Without it that kind of call compiles and works on the developer's phone and throws `NoSuchMethodError` on an older one (`PackageManager.ResolveInfoFlags.of`, API 33, crashed the notification app chooser on Android 12). Only `NewApi` is on, so unrelated lint findings never block a build; each finding is printed to the job log with its file and line.
 
 The release workflows are ready but never fire by themselves. Tag triggers (`v*`) are commented out at the top of each file; uncomment them to build on tags (the `release` approval below still applies).
 

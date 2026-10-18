@@ -15,6 +15,7 @@ import {
 } from '@/db/queries';
 import { errorMessage } from '@/format';
 import { startOfLocalDay } from '@/features/today/stats';
+import { withRideLoad } from '@/features/cycling/load';
 import { strainFromLoads, zoneThresholds, type DayStrain } from '@/features/today/strain';
 import { dayBounds, dayStarts } from '@/features/trends/series';
 import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
@@ -75,9 +76,9 @@ export function useTodayData(dataVersion: number): TodayState {
         listSleepScores(db),
         listHrvReadingsSince(db, dayStart - (HISTORY_DAYS + 1) * 86400),
       ]).then(
-        ([samples, loads, resting, sleep, latestHeart, sleepScores, hrv]) => {
+        async ([samples, loads, resting, sleep, latestHeart, sleepScores, hrv]) => {
+          const strain = await withRideLoad(db, strainFromLoads(loads), nowSec);
           if (!cancelled) {
-            const strain = strainFromLoads(loads);
             setState({ data: { dayStart, nowSec, samples, maxHr, strain, resting, sleep, sleepScores, latestHeart, hrv }, error: null });
           }
         },

@@ -1,0 +1,57 @@
+{
+  "map": {
+    "label": "Ride map",
+    "labelOffCourse": "Ride map, you are off the route",
+    "unavailable": "The map is not in this version of the app.",
+    "loadFailed": "The map could not load.",
+    "recenter": "Follow your position again",
+    "attributionLabel": "Map data sources, opens openstreetmap.org",
+    "online": "Online map, needs signal",
+    "stream": "Streaming map, needs signal"
+  },
+  "section": {
+    "title": "Offline maps",
+    "intro": "Download the areas where you usually ride. The map keeps working with no signal and stays on your phone.",
+    "storage": "{{free}} free. Maps installed: {{used}}.",
+    "storageNone": "{{free}} free. No maps installed yet.",
+    "cellular": "You are on mobile data. One map can be hundreds of MB, so download over Wi-Fi if you can.",
+    "catalogLoading": "Loading the map list",
+    "catalogFailed": "The map list could not load. Maps you already installed still work.",
+    "catalogOffline": "You are offline. Maps you already installed still work.",
+    "empty": "No maps are available to download yet.",
+    "licenseTitle": "Data licence",
+    "licenseNote": "Maps are built from OpenStreetMap data and the OpenMapTiles schema. The map files you download are shared under the ODbL licence.",
+    "licenseLink": "Read the ODbL licence"
+  },
+  "row": {
+    "installed": "Installed, version {{date}}",
+    "updatable": "New version available ({{date}}), {{size}}",
+    "available": "{{size}}",
+    "progress": "{{done}} of {{size}}",
+    "paused": "Paused, {{done}} of {{size}}",
+    "verifying": "Checking the file",
+    "progressLabel": "Downloading {{name}}"
+  },
+  "action": {
+    "download": "Download",
+    "update": "Update",
+    "delete": "Delete",
+    "pause": "Pause",
+    "resume": "Resume",
+    "cancel": "Cancel",
+    "retry": "Try again"
+  },
+  "download": {
+    "failed": {
+      "noSpace": "Not enough storage. This needs {{need}} free, you have {{free}}.",
+      "noSpaceShort": "Not enough storage for this map. Free some space and try again.",
+      "network": "The download was interrupted. Check your connection and try again.",
+      "corrupt": "The map file is damaged or incomplete. Try downloading it again."
+    }
+  },
+  "confirm": {
+    "deleteTitle": "Delete the {{name}} map?",
+    "deleteMessage": "The file ({{size}}) is removed from your phone. You can download it again any time.",
+    "deleteAction": "Delete map"
+  }
+}

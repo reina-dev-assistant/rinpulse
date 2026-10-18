@@ -303,9 +303,12 @@ export interface MaplibreStyle {
   layers: MaplibreLayer[];
 }
 
-/** MapLibre GL style JSON with the same layers and colours as the RN renderer. */
-export function maplibreStyle(theme: MapTheme): MaplibreStyle {
-  const p = paletteFor(theme);
+/**
+ * MapLibre GL style JSON with the same layers and colours as the RN renderer. `palette` replaces the theme's colours (the
+ * bike computer's high-contrast ride palettes); the layers and their ids stay the same.
+ */
+export function maplibreStyle(theme: MapTheme, palette?: MapPalette): MaplibreStyle {
+  const p = palette ?? paletteFor(theme);
   const src = 'openmaptiles';
   const layers: MaplibreLayer[] = [];
 

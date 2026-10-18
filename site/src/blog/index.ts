@@ -8,6 +8,7 @@
 //   3. delete its `verify` list once every item has been checked against the build
 //   4. bun run build (rewrites seo-lastmod.json), then deploy.
 import type { Post } from "./types.ts";
+import { coach } from "./posts/coach.ts";
 import { bagikanLatihan } from "./posts/bagikan-latihan-ke-joyorogo.ts";
 import { kartuBagikan } from "./posts/kartu-bagikan.ts";
 import { panduanAwal } from "./posts/panduan-awal.ts";
@@ -17,6 +18,7 @@ import { stravaFit } from "./posts/strava-file-fit.ts";
 import { tidurHrvCuaca } from "./posts/tidur-hrv-cuaca.ts";
 
 export const POSTS: readonly Post[] = [
+  coach,
   social,
   bagikanLatihan,
   panduanAwal,

@@ -15,7 +15,7 @@ import { energyWord } from '@/features/fitness/energy';
 import { formatHm, formatRecovery, sourceLabel } from '@/features/fitness/format';
 import { Paragraphs } from '@/features/fitness/Paragraphs';
 import { Sparkline } from '@/features/fitness/Sparkline';
-import { useFitnessData } from '@/features/fitness/useFitnessData';
+import type { FitnessData } from '@/features/fitness/useFitnessData';
 import type { NightHrvAvailability } from '@/features/today/nightHrv';
 import { fmtInt, useLocale, useTranslation } from '@/i18n';
 import { spacing, useColors } from '@/theme';
@@ -24,12 +24,11 @@ const SIZE = 92;
 const STROKE = 8;
 
 /** Today cards: Energi Tubuh, recovery time and the sleep tonight needs, with a way into the Kebugaran screen. */
-export function FitnessTodayCards({ dataVersion, availability }: { dataVersion: number; availability: NightHrvAvailability | null }) {
+export function FitnessTodayCards({ data, availability }: { data: FitnessData | null; availability: NightHrvAvailability | null }) {
   const { t } = useTranslation('health');
   const locale = useLocale();
   const router = useRouter();
   const colors = useColors();
-  const { data } = useFitnessData(dataVersion, 'today');
   const daily = useMemo(() => (data ? computeDailyFitness(data, availability) : null), [data, availability, locale]);
 
   if (!daily) return <Skeleton width="100%" height={220} radius="card" />;

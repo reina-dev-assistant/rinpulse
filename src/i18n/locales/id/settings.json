@@ -1,72 +1,38 @@
 {
   "screens": {
-    "sync": "Jam & sinkron",
+    "sync": "Sinkron & latar belakang",
     "notifications": "Notifikasi & panggilan",
     "notificationApps": "Aplikasi notifikasi",
     "weather": "Cuaca",
     "safety": "Keselamatan",
-    "health": "Kesehatan & cloud",
+    "health": "Health Connect",
     "strava": "Strava",
+    "koneksi": "Koneksi AI",
+    "joyorogo": "JoyoRogo",
     "importHuawei": "Impor dari Huawei Health",
     "importAppleHealth": "Impor dari Apple Health",
     "importFit": "Impor file FIT",
-    "profile": "Profil dan target",
+    "profile": "Profil tubuh",
     "meals": "Makanan di jam",
     "goals": "Target & pengingat",
-    "cycle": "Siklus",
+    "cycle": "Siklus haid",
     "courses": "Rute lari",
-    "advanced": "Lanjutan",
+    "advanced": "Tentang & lanjutan",
     "log": "Log",
     "about": "Tentang",
-    "appearance": "Tampilan"
+    "appearance": "Tampilan & bahasa",
+    "healthIos": "Apple Health",
+    "gear": "Sepatu & perlengkapan",
+    "importAll": "Impor data",
+    "akun": "Akun"
   },
   "index": {
-    "groups": {
-      "watch": "Di jam",
-      "you": "Kamu dan datamu",
-      "app": "Aplikasi",
-      "advanced": "Lanjutan"
-    },
     "title": "Pengaturan",
     "rows": {
-      "sync": {
-        "title": "Latar belakang dan sinkron",
-        "subtitle": "Tetap terhubung, interval sinkron"
-      },
-      "notifications": {
-        "title": "Notifikasi dan panggilan",
-        "subtitleIos": "Notifikasi iPhone di jam, cari ponsel, panggilan",
-        "subtitle": "Teruskan notifikasi, cari ponsel, kontrol panggilan"
-      },
       "notificationApps": {
         "title": "Aplikasi notifikasi",
         "subtitleIos": "Dipilih di Pengaturan iPhone",
         "subtitle": "Pilih aplikasi yang boleh mengirim notifikasi ke jam"
-      },
-      "weather": {
-        "title": "Cuaca",
-        "subtitle": "Lokasi, satuan, interval pembaruan"
-      },
-      "safety": {
-        "title": "Keselamatan",
-        "subtitle": "Deteksi jatuh, SMS SOS, laporan tidur"
-      },
-      "meals": {
-        "title": "Makanan di jam",
-        "subtitle": "Catatan makan JoyoRogo dan target kalori di jam"
-      },
-      "goals": {
-        "title": "Target dan pengingat",
-        "subtitle": "Langkah, kalori, olahraga, berdiri, pengingat ring"
-      },
-      "health": {
-        "titleIos": "Apple Health dan cloud",
-        "title": "Health Connect dan cloud",
-        "subtitle": "Bagikan data ke aplikasi lain, cadangkan"
-      },
-      "strava": {
-        "title": "Strava",
-        "subtitle": "Kirim latihan dari jam ke Strava, gratis"
       },
       "importHuawei": {
         "title": "Impor dari Huawei Health",
@@ -80,32 +46,12 @@
         "title": "Impor file FIT",
         "subtitle": "Gowes atau lari dari iGPSPORT, Garmin, Wahoo, dan lainnya"
       },
-      "profile": {
-        "title": "Profil dan target",
-        "subtitle": "Tinggi, berat, target langkah harian"
-      },
-      "cycle": {
-        "title": "Siklus",
-        "subtitle": "Catatan haid, perkiraan, kalender di jam"
-      },
-      "family": {
-        "title": "Keluarga"
-      },
       "guide": {
-        "title": "Panduan awal",
-        "subtitle": "Pasangkan jam, izin, JoyoRogo"
-      },
-      "appearance": {
-        "title": "Tampilan",
-        "subtitle": "Tema: Classic, Sport, Ocean"
+        "title": "Panduan penyiapan"
       },
       "log": {
         "title": "Log",
         "subtitle": "Lalu lintas dan kejadian jam"
-      },
-      "advanced": {
-        "title": "Eksperimental",
-        "subtitle": "Tautan Bluetooth LE, rute lari"
       },
       "about": {
         "title": "Tentang"
@@ -117,7 +63,7 @@
     "version": "Versi",
     "license": "Lisensi",
     "privacyTitle": "Privasi",
-    "privacy": "Data jam tetap di ponsel ini, di joyofit.db, sampai kamu masuk ke cloud. Cuaca, kalau dinyalakan, mengirim koordinat yang sudah dibulatkan ke Open-Meteo. Kebijakan privasi: fit.joyorogo.com/privasi"
+    "privacy": "Data jam tetap di ponsel ini, di joyofit.db, sampai kamu masuk ke cloud. Dengan Pro, data siklus (bisa dimatikan), pengaturan, template stiker, dan rute tersimpan juga ikut akunmu di cloud. Keluar tidak menghapus data di ponsel tanpa kamu pilih. Cuaca, kalau dinyalakan, mengirim koordinat yang sudah dibulatkan ke Open-Meteo. Kebijakan privasi: fit.joyorogo.com/privasi"
   },
   "advanced": {
     "bleDenied": "Izin perangkat sekitar ditolak: jam dicoba di alamat yang sudah dipasangkan tanpa pemindaian.",
@@ -201,7 +147,7 @@
     "lockedLink": "Latihanmu tetap di ponsel ini. Sinkron cloud adalah keuntungan JoyoRogo Pro. Yang sudah ada di cloud tetap bisa dibaca dan dipulihkan ke ponsel baru.",
     "locked": "Latihanmu tetap di ponsel ini. Sinkron cloud adalah keuntungan JoyoRogo Pro (dapatkan Pro di JoyoRogo). Yang sudah ada di cloud tetap bisa dibaca dan dipulihkan ke ponsel baru.",
     "uploading": "Mengunggah {{done}} dari {{total}}",
-    "refused_other": "{{n}} latihan tidak bisa diunggah. Akan dicoba lagi setelah update aplikasi berikutnya.",
+    "refused_other": "{{n}} latihan tidak bisa diunggah. Akan dicoba lagi besok, atau lebih cepat setelah update aplikasi.",
     "refusedError": "Kesalahan terakhir: {{error}}",
     "labels": {
       "account": "Akun",
@@ -220,13 +166,22 @@
     "deleteWarning": "Menghapus akun JoyoRogo kamu (yang dipakai JoyoRogo) beserta semua isinya di cloud: catatan makan JoyoRogo, grup, foto, dan data yang dicadangkan JoyoFit. Tidak bisa dibatalkan; kamu keluar dari kedua aplikasi. Data di ponsel ini tetap ada.",
     "deleteApple": "Apple akan meminta konfirmasi dulu.",
     "deletePermanently": "Hapus permanen",
-    "keepAccount": "Pertahankan akun",
     "deleteAccount": "Hapus akun JoyoRogo",
     "mobileTitle": "Sinkron lewat data seluler?",
     "mobileMessage": "Hanya Wi-Fi sedang nyala dan ponsel ini tidak tersambung Wi-Fi. Sinkron sekarang bisa memakai banyak data seluler kalau ada latihan yang menunggu.",
     "wipeTitle": "Hapus data cloud?",
     "wipeMessage": "Menghapus latihan, langkah, dan tidurmu dari cloud. Data di ponsel ini dan akunmu tetap ada, dan sinkron otomatis dimatikan supaya tidak ada yang diunggah lagi sampai kamu menyalakannya kembali.",
-    "details": "Sinkron cloud adalah bagian dari JoyoRogo Pro. Dengan akun Pro, setiap latihan diunggah ke akun JoyoRogo kamu sebagai satu file terkompresi: jalur GPS, detak jantung, kecepatan, kadensi, daya, dan analisis yang ditampilkan aplikasi, sehingga aman kalau ponsel hilang, tampil di web JoyoRogo, dan dipulihkan ke ponsel baru setelah kamu masuk. Langkah, detak jantung, SpO2, tidur, dan alamat Bluetooth jam masuk ke cloud JoyoFit dengan akun yang sama. Tanpa Pro tidak ada yang diunggah dan latihanmu tetap di ponsel ini. Selama kamu masuk, aplikasi juga membaca dari cloud: mengunduh latihan yang belum ada di ponsel ini, dan menghapus yang sudah kamu hapus dari cloud di tempat lain. JoyoFit juga bertukar makanan, berat badan, dan skor harian dengan JoyoRogo. Hapus data cloud menghapus latihan, langkah, dan tidurmu dari cloud dan menyimpan data di ponsel ini serta akunmu; Hapus akun JoyoRogo menghapus akun dan semua yang lain (detail di fit.joyorogo.com/privasi)."
+    "details": "Sinkron cloud adalah bagian dari JoyoRogo Pro. Dengan akun Pro, setiap latihan diunggah ke akun JoyoRogo kamu sebagai satu file terkompresi: jalur GPS, detak jantung, kecepatan, kadensi, daya, dan analisis yang ditampilkan aplikasi, sehingga aman kalau ponsel hilang, tampil di web JoyoRogo, dan dipulihkan ke ponsel baru setelah kamu masuk. Langkah, detak jantung, SpO2, tidur, dan alamat Bluetooth jam masuk ke cloud JoyoFit dengan akun yang sama. Tanpa Pro tidak ada yang diunggah dan latihanmu tetap di ponsel ini. Selama kamu masuk, aplikasi juga membaca dari cloud: mengunduh latihan yang belum ada di ponsel ini, dan menghapus yang sudah kamu hapus dari cloud di tempat lain. JoyoFit juga bertukar makanan, berat badan, dan skor harian dengan JoyoRogo. Dengan Pro, pengaturan yang ikut akun (profil, target, tema, bahasa, cuaca, kalender siklus), template stiker, rute tersimpan, HRV, skor tidur, metrik kesehatan, dan data siklus juga ikut akun, supaya beberapa HP menampilkan hal yang sama; data siklus bisa dimatikan lewat saklar Sinkron data siklus, yang menghapus salinannya di cloud. Pairing jam, kunci jam, dan pengaturan tiap HP tidak ikut. Hapus data cloud menghapus latihan, langkah, tidur, dan data yang ikut akun dari cloud dan menyimpan data di ponsel ini serta akunmu; Hapus akun JoyoRogo menghapus akun dan semua yang lain (detail di fit.joyorogo.com/privasi).",
+    "onlyHere": "Data ini hanya di HP ini. Pro menyimpannya di cloud.",
+    "proSyncs": "Ikut cloud: latihan, langkah, tidur, perlengkapan, rencana pelatih, angkat beban, pengaturan, template stiker, rute, dan data kesehatan. Tidak ikut: pairing jam, koneksi Health Connect atau Apple Health, dan pengaturan tiap HP (Hanya Wi-Fi, sinkron otomatis, izin).",
+    "pairingNote": "Riwayat tampil di sini, tapi jam harus dipasangkan sendiri di HP ini. Pairing jam tidak ikut cloud.",
+    "restoring": "Memulihkan data dari cloud...",
+    "restoringProgress": "Memulihkan data dari cloud... {{done}} dari {{total}}",
+    "cycleSync": "Sinkron data siklus",
+    "cycleSyncHint": "Data siklus adalah data kesehatan dan hanya sinkron untuk Pro. Kalau dimatikan, salinannya di cloud dihapus.",
+    "firstSignInHint": "Data yang sudah ada di HP ini ikut ke akun pertama yang kamu masuki.",
+    "signInAgainHint": "Data di HP ini milik {{email}}. Kalau kamu masuk dengan akun lain, kamu ditanya dulu mau diapakan data itu.",
+    "recordsFull": "Penyimpanan cloud akunmu penuh (50 MB untuk pengaturan, rute, template, dan data kesehatan). Beberapa perubahan baru tetap di HP ini; hapus rute atau template yang tidak dipakai lalu sinkron lagi."
   },
   "goals": {
     "errors": {
@@ -554,7 +509,7 @@
     "nothing": "tidak ada",
     "unsynced_other": "{{count}} makanan yang dicatat di jam akan ditulis ke JoyoRogo saat aplikasi membacanya berikutnya.",
     "pushNow": "Kirim sekarang",
-    "details": "Catatan makan JoyoRogo dan target kalori kamu mengisi kartu kalori di jam. JoyoFit membacanya saat dibuka, setelah tiap sinkron, dan saat jam tersambung, lalu mengirimnya lagi saat jam meminta atau mencatat makanan sendiri. Saat aplikasi ditutup, layanan latar belakang menjawab dari hari terakhir yang tersimpan; ia tidak bisa membaca JoyoRogo saat itu karena sesi masuk hanya disimpan untuk aplikasi. Sejauh ini belum diuji di Fit 4 Pro. Selama kamu masuk, aplikasi juga mengirim Recovery, Strain, dan Tidur harianmu ke catatan JoyoRogo supaya berdampingan dengan makananmu."
+    "details": "Catatan makan JoyoRogo dan target kalori kamu mengisi kartu kalori di jam. JoyoFit membacanya saat dibuka, setelah tiap sinkron, dan saat jam tersambung, lalu mengirimnya lagi saat jam meminta atau mencatat makanan sendiri. Saat aplikasi ditutup, layanan latar belakang menjawab dari hari terakhir yang tersimpan; ia tidak bisa membaca JoyoRogo saat itu karena sesi masuk hanya disimpan untuk aplikasi. Sejauh ini belum diuji di Fit 4 Pro. Selama kamu masuk, aplikasi juga mengirim Recovery, Strain, dan Tidur harianmu ke catatan JoyoRogo supaya berdampingan dengan makananmu, plus ukuran tubuh hari ini yang sudah dihitung (jam tidur, detak jantung istirahat, HRV, VO2max, status latihan, waktu pemulihan). Yang belum bisa dihitung tidak dikirim."
   },
   "signIn": {
     "label": "Masuk dengan JoyoRogo",
@@ -629,6 +584,25 @@
     "compatible": "Kompatibel dengan Strava",
     "legal": "Kompatibel dengan Strava. JoyoFit tidak dibuat, disponsori, atau didukung oleh Strava. Yang kamu kirim mengikuti pengaturan privasi Strava kamu; kamu bisa menghapus JoyoFit kapan saja di Strava lewat Settings, My Apps."
   },
+  "joyorogo": {
+    "title": "Kalori olahraga ke JoyoRogo",
+    "intro": "Kalori latihan dari jam, rekaman ponsel, dan angkat beban dikirim ke buku harian JoyoRogo sebagai kalori terbakar. Latihan yang sama yang JoyoRogo baca dari Health Connect atau Apple Health tidak dihitung dua kali.",
+    "signedOut": "Masuk dengan akun JoyoRogo (Pengaturan, akun) agar kalori olahragamu terkirim ke JoyoRogo.",
+    "labels": {
+      "lastSent": "Terakhir terkirim",
+      "sent": "Sudah terkirim",
+      "waiting": "Menunggu dikirim",
+      "error": "Kesalahan terakhir"
+    },
+    "never": "Belum ada",
+    "sent_other": "{{n}} latihan",
+    "waiting_other": "{{n}} latihan",
+    "nothingWaiting": "Tidak ada",
+    "errorValue": "{{message}} ({{when}})",
+    "waitingHint": "Dikirim saat sinkron berikutnya. Latihan 30 hari terakhir ikut terkirim; yang sudah ada di JoyoRogo tidak digandakan.",
+    "autoSyncOff": "Sinkron otomatis mati. Tekan Kirim sekarang untuk mengirim.",
+    "sendNow": "Kirim sekarang"
+  },
   "weather": {
     "conditions": {
       "SUNNY": "Cerah",
@@ -686,5 +660,79 @@
     "details": "Mengirim cuaca saat ini dan prakiraan, setiap tersambung dan pada interval yang dipilih. Data berasal dari Open-Meteo; hanya koordinat yang dibulatkan sekitar 1 km yang dikirim.",
     "detailsIos": "Ponsel ini: memakai perkiraan lokasimu saat aplikasi terbuka. Saat jam meminta di latar belakang, iOS tidak memberi aplikasi posisi baru, jadi posisi terakhir dipakai ulang.",
     "detailsAndroid": "Ponsel ini: memakai lokasi kasar yang terakhir diketahui. Di latar belakang Android mungkin tidak memberi yang baru, jadi posisi terakhir dipakai ulang."
+  },
+  "hub": {
+    "groups": {
+      "watch": "Jam",
+      "body": "Target & tubuh",
+      "connections": "Koneksi",
+      "app": "Aplikasi"
+    },
+    "account": {
+      "signedOut": "Belum masuk",
+      "signedOutHint": "Masuk untuk sinkron cloud dan Strava.",
+      "signedIn": "Akun JoyoRogo",
+      "pro": "Pro aktif, sinkron cloud nyala",
+      "free": "Gratis, sinkron cloud butuh Pro",
+      "valuePro": "Pro"
+    },
+    "connectWatch": {
+      "title": "Sambungkan jam",
+      "subtitle": "Opsional. Pasang jam Huawei atau Honor untuk langkah, tidur, dan detak jantung."
+    },
+    "connected": "Terhubung"
+  },
+  "account": {
+    "signOutTitle": "Keluar dari JoyoRogo?",
+    "signOutMessage": "Data di ponsel ini tetap ada. Sinkron cloud berhenti sampai kamu masuk lagi.",
+    "deleteTitle": "Hapus akun JoyoRogo?",
+    "photo": {
+      "title": "Foto profil",
+      "change": "Ubah foto",
+      "remove": "Hapus foto",
+      "askTitle": "Pilih foto dari galeri",
+      "askBody": "Pilih foto dari galeri untuk foto profilmu. Foto dikirim ke akun JoyoRogo-mu dan terlihat oleh orang lain di feed dan grup.",
+      "continue": "Lanjut",
+      "removeTitle": "Hapus foto profil?",
+      "removeBody": "Foto yang kamu unggah dihapus dari akun JoyoRogo-mu. Kalau akunmu sebelumnya memakai foto Google, foto itu dipakai lagi; kalau tidak, yang tampil inisial namamu.",
+      "updated": "Foto profil diperbarui.",
+      "removed": "Foto profil dihapus.",
+      "denied": "JoyoFit tidak bisa membuka galeri. Izinkan akses foto di pengaturan, lalu coba lagi.",
+      "openSettings": "Buka pengaturan",
+      "error": {
+        "process": "Foto tidak bisa disiapkan: {{error}}",
+        "empty": "Foto kosong setelah diproses.",
+        "upload": "Foto belum terkirim: {{error}}",
+        "remove": "Foto belum terhapus: {{error}}"
+      }
+    }
+  },
+  "signOut": {
+    "emptyMessage": "Sinkron cloud berhenti sampai kamu masuk lagi.",
+    "offerTitle": "Hapus data dari HP ini?",
+    "offerMessage": "Semua datamu sudah ada di cloud. Data tetap tersimpan di sana dan kembali saat kamu masuk lagi. Pengaturan lain di HP ini tidak berubah.",
+    "offerDelete": "Hapus dari HP ini",
+    "keep": "Simpan di HP",
+    "warnTitle": "Data ini hanya ada di HP ini",
+    "warnFree": "Akun gratis tidak menyimpan data ke cloud, jadi latihan, langkah, tidur, dan catatanmu hanya ada di HP ini.",
+    "warnPending": "Sebagian datamu belum terunggah ke cloud, jadi hanya ada di HP ini.",
+    "warnUnsynced": "Sinkron terakhir belum selesai, jadi belum pasti semua datamu ada di cloud.",
+    "warnAmount": "Belum terunggah: {{amount}}.",
+    "warnDelete": "Kalau dihapus, data itu hilang dan tidak bisa dikembalikan.",
+    "warnDeleteLabel": "Hapus, tidak bisa dibatalkan",
+    "pending": {
+      "workouts_other": "{{n}} latihan",
+      "rows_other": "{{n}} baris langkah dan tidur",
+      "strength_other": "{{n}} catatan angkat beban",
+      "records_other": "{{n}} catatan lain (pengaturan, template, rute, kesehatan)"
+    }
+  },
+  "accountSwitch": {
+    "title": "Akun lain di HP ini",
+    "message": "HP ini masih menyimpan data {{previous}}. Sinkron dijeda sampai kamu memilih. Simpan terpisah: data lama tetap di HP ini dan tidak pernah diunggah ke akun baru. Hapus: data lama hilang dari HP ini, lalu data akun baru dipulihkan.",
+    "previousUnknown": "akun sebelumnya",
+    "keep": "Simpan terpisah",
+    "delete": "Hapus data lama dari HP ini",
+    "signOut": "Keluar lagi"
   }
 }

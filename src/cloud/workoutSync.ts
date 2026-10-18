@@ -10,6 +10,7 @@ import { buildWorkoutDoc, gzipDoc, readWorkoutDoc } from '@/cloud/workoutDoc';
 import { loadStoredWorkout } from '@/cloud/workoutAnalysis';
 import { clearFailure, parseFailures, partitionPending, recordFailure, type WorkoutFailures } from '@/cloud/workoutFailures';
 import { deleteLocalWorkout, restoreWorkout } from '@/cloud/workoutStore';
+import { wipeStrengthCloud } from '@/cloud/strengthSync';
 import {
   adoptAccount,
   forgetCloudWorkouts,
@@ -24,6 +25,8 @@ import {
 } from '@/db/cloud';
 import { errorMessage } from '@/format';
 import { ANALYSIS_ENGINE_REV } from '@/features/workouts/analysis/engineRev';
+import { isWorkoutDeleted, recordRemoteDeletion } from '@/features/workouts/deleteCore';
+import { purgeDeletedWorkouts } from '@/features/workouts/purgeDeleted';
 
 /**
  * JoyoRogo cloud workouts (Pro): one gzip document per workout, uploaded one at a time with progress kept per
@@ -108,9 +111,13 @@ async function applyChange(db: SQLiteDatabase, item: ChangeItem, report: PullRep
   if (item.deletedAt !== null) {
     // The tombstone is authoritative: a delete made on the web or on another phone.
     await deleteLocalWorkout(db, item.start);
+    // The watch's history must not bring it back on this phone either.
+    await recordRemoteDeletion(db, item.start);
     if (local) report.deleted += 1;
     return;
   }
+  // Deleted on this phone, and the cloud has not heard yet (offline, or the retry is still waiting): never restore it.
+  if (await isWorkoutDeleted(db, item.start)) return;
   // The phone is the source of its own data: a workout it has is never overwritten, whatever version the cloud holds.
   if (local) return;
   const bytes = await getWorkoutBlob(item.start);
@@ -178,6 +185,7 @@ async function saveFailures(db: SQLiteDatabase, failures: WorkoutFailures): Prom
  */
 export async function pushWorkouts(db: SQLiteDatabase, onProgress: (progress: UploadProgress) => void): Promise<PushReport> {
   const report: PushReport = { uploaded: 0, refused: 0, deleted: 0, quota: null };
+  await purgeDeletedWorkouts(db);
   let failures = parseFailures(await getCloudValue(db, WORKOUT_FAILED_KEY), APP_BUILD);
   const { todo } = partitionPending(await listPendingWorkouts(db, ANALYSIS_ENGINE_REV), failures);
   if (todo.length === 0) return report;
@@ -225,6 +233,7 @@ export async function pushWorkouts(db: SQLiteDatabase, onProgress: (progress: Up
       if (!(error instanceof CloudHttpError) || error instanceof CloudLockedError) throw error;
       if (error.status === 410) {
         await deleteLocalWorkout(db, pending.start);
+        await recordRemoteDeletion(db, pending.start);
         report.deleted += 1;
         cloudLog(`workout ${pending.start} was deleted from the cloud; deleted here too`);
       } else if (error.status === 413 && error.code === 'quota') {
@@ -255,13 +264,14 @@ export async function bindAccount(db: SQLiteDatabase, userId: string, email: str
 }
 
 /**
- * "Delete cloud data": removes the account's workouts from JoyoRogo and its steps, sleep, devices and imports from the
- * JoyoFit cloud. The account and this phone's data stay. What the phone remembered of the cloud is cleared after each
- * step that succeeded, so a failure half way never leaves it claiming workouts the cloud no longer has.
+ * "Delete cloud data": removes the account's workouts and strength records from JoyoRogo and its steps, sleep, devices and
+ * imports from the JoyoFit cloud. The account and this phone's data stay. What the phone remembered of the cloud is cleared
+ * after each step that succeeded, so a failure half way never leaves it claiming workouts the cloud no longer has.
  */
 export async function wipeCloudData(db: SQLiteDatabase): Promise<void> {
   await rogoCall<unknown>('watchWorkout/wipe', {});
   await forgetCloudWorkouts(db);
+  await wipeStrengthCloud(db);
   await cloudRequest<{ deleted: boolean }>('DELETE', '/v1/data');
   await resetCloudCursors(db);
   cloudLog('deleted the cloud data of this account');

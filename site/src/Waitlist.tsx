@@ -451,7 +451,7 @@ export function IphonePage() {
                     },
                     {
                       title: "Pasang JoyoFit",
-                      body: "Ketuk Pasang di TestFlight, lalu pasangkan jammu di tab Watch.",
+                      body: "Ketuk Pasang di TestFlight, lalu pasangkan jam-mu di tab Watch.",
                     },
                   ]}
                 />

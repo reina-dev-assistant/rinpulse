@@ -186,7 +186,7 @@ altitude is present), start time, longitude, latitude (degrees, plus altitude), 
 15 / 19-byte records `(time delta s, ?, lon delta f32, lat delta f32, ?, ?, pause[, altitude i16, ?])`. GB's loop
 leaves out a final record that would end exactly at the end of the file.
 
-### AGPS / ephemeris (service `1F` + file service `1C`; `Ephemeris.kt`, `EphemerisDownload.kt`; UNVERIFIED on the Fit 4 Pro)
+### AGPS / ephemeris (service `1F` + file service `1C`; Android `Ephemeris.kt`, `EphemerisDownload.kt`; iOS `Ephemeris.swift`, `AgpsWire.swift`, `AgpsSource.swift`; UNVERIFIED on the Fit 4 Pro)
 
 Without it an outdoor workout sits on "Locating..." until the watch finds the satellites unaided. The watch drives; the source is
 Gadgetbridge `HuaweiEphemerisManager`. Log lines carry `AGPS:`.
@@ -200,12 +200,17 @@ Gadgetbridge `HuaweiEphemerisManager`. Log lines carry `AGPS:`.
 | 5 | watch | `1C/01 {02 type, 03 product}` file list; `1C/02` consult (`01` protocol, `03` transfer size, `04` max data, `06` type); `1C/03 {01 name}` file info; `1C/04 {01 name, 02 offset, 03 len}` data request; `1C/06 {01 result}` done |
 | 6 | phone | `1C/01 {01 "a;b"}`; `1C/02 {7F 100000}`; `1C/03 {02 size i32, 03 CRC16 (init 0) i16}`; `1C/04 {7F, 02 sha256hex(address) + name, 03 offset}` then `1C/05` frames `index byte + bytes` (each encrypted, up to max data per request); `1C/06 {7F 100000}`; `100001` for anything refused |
 
-Served: version 0 only (`https://gllto.glpals.com/7day/v6/latest/lto.dat`, the public Broadcom LTO file, saved as `gpslocation.dat`;
-a plain GET with no app identification and no credentials; 6 h cache). The phone always fetches this fixed address, whatever URL the
-watch names. Every other download version (1, 2 and 3, with tags such as `HW_AGNSS`, `HW_PGNSS_PRED`, `HW_PGNSS_TRANS`, `HW_RSMC_*`,
-`HW_PRECSION_ION`) names a source run by the watch maker. JoyoFit does not contact those: it answers state 4 (failed) and the watch
-carries on without that data. The watch's consult tag and URLs are logged to logcat (tag `JoyoFit`, `AGPS: consult tag=...`) and kept out
-of the shareable support log.
+Served: version 0 only (`https://gllto.glpals.com/7day/v6/latest/lto.dat`, the public Broadcom LTO file, saved as `gpslocation.dat`; a plain GET
+with no app identification and no credentials; about 115 KB, header `FF CA DE`, valid 7 days; 6 h phone copy), and only when the watch's consult
+names version 0. The phone always fetches this fixed address, whatever URL the watch names. Versions 1 to 3 (tags `HW_AGNSS`, `HW_PGNSS_*`,
+`MTK_EPO_*`, `HW_RSMC_*`, `HW_PRECSION_ION`) name data that only the watch maker's app prepares: they are answered state 4 (failed) and the watch
+carries on without; nothing else is offered in their place (the watch does not validate files). The phone can also start the exchange itself
+("Perbarui sekarang"): it sends `1F/02` with no op 1 before it. The Fit 4 Pro answers `7f 118001` with no `0x81` container (no request open on its side);
+the update has to be started on the watch (Settings > Workout settings > Location Services > Satellite updates). The watch's consult version and tag
+names are kept (`getAgps().lastAskVersion`, `lastAskTags`: tag names only); the full tag and URLs go to the platform console only (Android logcat
+tag `JoyoFit`, iOS unified log category `JoyoFit`; line `AGPS: consult tag=...`). The two platforms send the same bytes (the iOS `1C/05` frames are
+`HuaweiPacket.serializeFileChunk1c`, GB `serializeFileChunk1c`); on iOS the stored file name uses the peripheral identifier in place of the watch's
+Bluetooth address. Policy, safety rules, sources and why Huawei's servers are not used: [docs/agps.md](../docs/agps.md).
 
 ### Live workout (`LiveWorkout.kt`, `LiveWorkoutCodec.kt`; as Huawei Health 17.0.8.300 behaves, UNVERIFIED on the Fit 4 Pro)
 

@@ -41,7 +41,7 @@ export function bandOf(percent: number): RecoveryBand {
 /** Why there is no reading for today, from what is known about night HRV on this watch. */
 function missingText(readings: readonly HrvReadingRow[], availability: NightHrvAvailability | null | undefined): string {
   if (availability && availability.state !== 'available') {
-    return availability.state === 'off' || availability.state === 'waiting'
+    return availability.state === 'off' || availability.state === 'waiting' || availability.state === 'no-watch'
       ? t('today:recovery.offWaiting', { message: availability.message, detail: availability.detail })
       : t('today:recovery.unavailable', { message: availability.message });
   }

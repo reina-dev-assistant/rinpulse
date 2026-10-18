@@ -78,6 +78,8 @@ public final class WearRuntime: @unchecked Sendable {
     public private(set) var workoutLink: WorkoutLink!
     /// Family monitoring, monitored side: the daily summary for the watcher, uploaded after every background watch sync.
     public private(set) var family: FamilyUploader!
+    /// Satellite data (A-GPS) for the watch: the watch's 0x1F / 0x1C exchange, the phone copy kept fresh after every sync, "update now".
+    public private(set) var ephemeris: EphemerisLink!
 
     /// Called after every stored sync (the HealthKit export hooks in here).
     public var onSyncComplete: (@Sendable (SyncSummary) -> Void)?
@@ -122,7 +124,11 @@ public final class WearRuntime: @unchecked Sendable {
         familySecrets: SecretStore = MemorySecretStore(),
         familySend: @escaping FamilySend = FamilyNetwork.send,
         familyBackground: FamilyBackgroundUploading? = nil,
-        familyDirectory: URL = FamilyUploader.defaultDirectory()
+        familyDirectory: URL = FamilyUploader.defaultDirectory(),
+        agpsDefaults: UserDefaults? = nil,
+        agpsSource: AgpsSource? = nil,
+        agpsCache: AgpsCache? = nil,
+        agpsOnline: @escaping @Sendable () -> Bool = AgpsReachability.isOnline
     ) {
         self.settings = settings
         self.syncStore = syncStore
@@ -181,6 +187,13 @@ public final class WearRuntime: @unchecked Sendable {
             settings: FamilySettings(defaults: familyDefaults, secrets: familySecrets), store: syncStore, events: fanOut,
             battery: { [weak self] in self?.status.battery }, send: familySend, background: familyBackground, directory: familyDirectory, now: now
         )
+        let agpsStore = AgpsStore(defaults: agpsDefaults)
+        ephemeris = EphemerisLink(
+            link: link, events: fanOut, settings: settings, store: agpsStore,
+            source: agpsSource ?? EphemerisLink.networkSource(store: agpsStore, events: fanOut, cache: agpsCache ?? EphemerisCache(), isOnline: agpsOnline),
+            isOnline: agpsOnline
+        )
+        linkObservers.add(ephemeris)
     }
 
     // MARK: events
@@ -218,6 +231,7 @@ public final class WearRuntime: @unchecked Sendable {
         lock.locked { _status.lastSyncSec = summary.to }
         onSyncComplete?(summary)
         sleepReport?.onSyncComplete(summary)
+        ephemeris?.onSyncCycle()
         currentListeners().forEach { $0.syncComplete(summary) }
     }
 

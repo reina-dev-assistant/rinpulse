@@ -3,6 +3,7 @@ import { authClient } from '@/cloud/auth';
 import { JOYOROGO_URL } from '@/cloud/config';
 import { getLocale, t } from '@/i18n';
 import type { WorkoutAnalysis } from '@/features/workouts/analysis/types';
+import type { SportKind } from '@/features/social/feedRoute';
 
 /**
  * Minimal client for JoyoRogo's oRPC API (`packages/api` in the joyorogo repo, mounted at `<server>/rpc`).
@@ -117,16 +118,52 @@ export interface RogoWeightEntry {
 /** JoyoFit's readiness word, as `fitness.upsertScores` accepts it. */
 export type RogoReadiness = 'Primed' | 'Balanced' | 'Strained' | 'Run down';
 
+/** Values of the `hrvStatus` field of `fitness.upsertScores` (JoyoFit's HRV status against the personal range). */
+export type RogoHrvStatus = 'balanced' | 'unbalanced' | 'low';
+
+/** Values of the `trainingStatus` field of `fitness.upsertScores` (JoyoFit's acute : chronic load status). */
+export type RogoTrainingStatus = 'productive' | 'maintaining' | 'recovery' | 'overreaching' | 'detraining';
+
+/**
+ * The daily body metrics of `fitness.upsertScores`, every one optional: a metric JoyoFit has not computed is left out (never
+ * zero), and JoyoRogo keeps what it stored for it. Only today's entry carries them.
+ *  - sleepHours 0..24: hours asleep of the night that ended that day (naps left out).
+ *  - restingHr integer bpm 25..220: the watch's resting heart rate of the day.
+ *  - hrvMs 1..500: average overnight RMSSD of the night that ended that day.
+ *  - hrvStatus: the last 7 nights against the personal range.
+ *  - vo2max 10..90 ml/kg/min: the watch's value or JoyoFit's estimate.
+ *  - trainingStatus and loadRatio 0..10: the 7-day : 28-day load ratio and its band.
+ *  - recoveryHours integer 0..240: recovery time still left.
+ */
+export interface RogoScoreMetrics {
+  sleepHours?: number;
+  restingHr?: number;
+  hrvMs?: number;
+  hrvStatus?: RogoHrvStatus;
+  vo2max?: number;
+  trainingStatus?: RogoTrainingStatus;
+  loadRatio?: number;
+  recoveryHours?: number;
+}
+
 /**
  * One day of scores for `fitness.upsertScores`. `date` is `YYYY-MM-DD`; a score that is left out keeps what JoyoRogo has
- * stored for that day. Ranges: recoveryPct 0..100, strain 0..21, sleepPct 0..300.
+ * stored for that day. Ranges: recoveryPct 0..100, strain 0..21, sleepPct 0..300, activeKcal 0..20000. Past days carry strain
+ * and activeKcal only; today's entry also carries the {@link RogoScoreMetrics} JoyoFit has computed for it.
  */
-export interface RogoScoreDay {
+export interface RogoScoreDay extends RogoScoreMetrics {
   date: string;
   recoveryPct?: number;
   strain?: number;
   sleepPct?: number;
   readiness?: RogoReadiness;
+  /**
+   * The watch's all-day active energy of that day in whole kcal: the day's sum of the watch-recorded per-minute samples'
+   * calories (small calories / 1000), the amount written to Health Connect as ActiveCaloriesBurned. JoyoRogo counts it in
+   * Sisa (as exercise credit) and keeps the larger of the stored and the sent value, since a day's total only grows. Left
+   * out when the day has no samples or the total is 0 (never 0 for "no data"), in which case JoyoRogo keeps what it stored.
+   */
+  activeKcal?: number;
 }
 
 /** `post.visibility`: `publik` is the public feed, `grup` only people who share a group with the author. */
@@ -152,6 +189,8 @@ export interface RogoPost {
   kcal: number | null;
   durationMin: number | null;
   stats?: Record<string, number | string | null>;
+  /** A workout post's route as a Google encoded polyline (precision 5), trimmed and simplified by JoyoRogo; only present when a map is to be shown (never inside `stats`). */
+  mapLine?: string;
   caption: string | null;
   visibility: RogoVisibility;
   /** ISO timestamp. */
@@ -174,6 +213,8 @@ export interface RogoSocialProfile {
   followerCount: number;
   followingCount: number;
   postCount: number;
+  /** The account switch "Peta rute di postingan": off hides the maps of all of the account's posts, for everyone. */
+  shareMaps: boolean;
 }
 
 /** `social.publicProfile`; a private profile comes back with `publicProfile: false`, no `stats` and no posts. */
@@ -211,6 +252,16 @@ export interface RogoWatchStats {
   startedAt: number;
   /** 1 when `social.workoutDetail` has a heart-rate series or a route for the post. */
   hasDetail: 0 | 1;
+  /** `run`, `walk`, `ride`, `swim` or `other`; null on posts made before JoyoRogo stored it. */
+  sportKind: SportKind | null;
+  /** Moving time in seconds; null on older posts or when the post has no analysis. */
+  movingSec: number | null;
+  /** Elevation gain in metres; null on older posts or without elevation data. */
+  elevGainM: number | null;
+  /** 1 when the post has a stored route map (`mapLine` is sent only while `showMap` is 1 and the author's account allows maps). */
+  hasMap: 0 | 1;
+  /** The author's per-post "Tampilkan peta" switch. */
+  showMap: 0 | 1;
 }
 
 /** Heart rate as `post_workout_detail.hr_json`: one reading per `intervalSec`, null where the watch had none. */
@@ -237,6 +288,8 @@ export interface RogoWatchPostInput {
   detail?: { hr?: RogoHrSeries | null; route?: RogoRoute | null; analysis?: WorkoutAnalysis | null };
   caption?: string;
   visibility: RogoVisibility;
+  /** "Tampilkan peta": default on. The line others get is trimmed 200 m at both ends and simplified by JoyoRogo. */
+  showMap?: boolean;
 }
 
 /** `social.workoutDetail`: what the viewer may see of a watch post's detail. `locked` means the viewer is not Pro. */
@@ -279,6 +332,41 @@ export interface RogoGroupDetail {
   members: RogoGroupMember[];
 }
 
+/** `mcpConnection.info`: the AI connector's address and whether the account is Pro (an AI app can only read data once it is). */
+export interface RogoMcpInfo {
+  url: string;
+  unlocked: boolean;
+}
+
+/** An AI app connected to the account (`mcpConnection.list`), newest first. `name` is what the app calls itself, so `redirectHosts` say where it really is. */
+export interface RogoMcpConnection {
+  clientId: string;
+  name: string;
+  redirectHosts: string[];
+  /** Data scopes the person agreed to: `profile:read`, `food:read`, `weight:read`, `workouts:read`, `recovery:read`. */
+  scopes: string[];
+  /** Epoch milliseconds. */
+  connectedAt: number;
+  /** Epoch milliseconds; null when the app never read anything. */
+  lastUsedAt: number | null;
+  calls30d: number;
+}
+
+export type RogoMcpOutcome = 'ok' | 'error' | 'not_pro' | 'rate_limited' | 'scope';
+
+/** One read an AI app made (`mcpConnection.activity`), newest first. `args` is JSON text with the date range or id, never data. */
+export interface RogoMcpActivity {
+  id: string;
+  clientId: string;
+  clientName: string | null;
+  tool: string;
+  args: string | null;
+  outcome: RogoMcpOutcome;
+  ms: number;
+  /** Epoch milliseconds. */
+  createdAt: number;
+}
+
 /** Procedures JoyoFit calls. */
 export const rogo = {
   foodDay: (date: string) => rogoCall<RogoFoodDay>('food/listByDate', { date }),
@@ -291,8 +379,22 @@ export const rogo = {
   /** Writes one item to the diary (a meal the watch quick-logged). */
   addFood: (input: { date: string; meal: RogoMeal; name: string; kcal: number }) =>
     rogoCall<RogoFoodItem>('food/add', { ...input, source: 'manual' }),
-  /** Stores the day's Recovery / Strain / Sleep for JoyoRogo's diary. JoyoRogo answers 404 until it is deployed with the `fitness` router. */
+  /** Stores the day's Recovery / Strain / Sleep and body metrics (sleep hours, resting HR, HRV, VO2max, training status, recovery time) for JoyoRogo's diary and its AI connector. JoyoRogo answers 404 until it is deployed with the `fitness` router. */
   pushScores: (days: RogoScoreDay[]) => rogoCall<{ saved: number }>('fitness/upsertScores', { days }),
+  avatar: {
+    /** Replaces the profile photo; the answer is the new server-relative `/avatar/...` path. */
+    upload: (input: { imageBase64: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp' }) =>
+      rogoCall<{ image: string }>('avatar/upload', input),
+    /** Removes an uploaded photo; the answer is the account's image after that: the Google photo it had before, or null. */
+    remove: () => rogoCall<{ image: string | null }>('avatar/remove', {}),
+  },
+  mcp: {
+    info: () => rogoCall<RogoMcpInfo>('mcpConnection/info', {}),
+    list: () => rogoCall<RogoMcpConnection[]>('mcpConnection/list', {}),
+    /** Cuts the app off at once. */
+    revoke: (clientId: string) => rogoCall<{ revoked: boolean }>('mcpConnection/revoke', { clientId }),
+    activity: (limit = 20) => rogoCall<RogoMcpActivity[]>('mcpConnection/activity', { limit }),
+  },
   group: {
     list: () => rogoCall<RogoGroup[]>('group/list', {}),
     join: (code: string) => rogoCall<{ groupId: string }>('group/join', { code }),
@@ -314,5 +416,9 @@ export const rogo = {
     createWatchPost: (input: RogoWatchPostInput) =>
       rogoCall<{ id: string; visibility: RogoVisibility }>('social/createWatchPost', input),
     workoutDetail: (postId: string) => rogoCall<RogoWorkoutDetail>('social/workoutDetail', { postId }),
+    /** The author's per-post "Tampilkan peta" switch, for a post whose `stats.hasMap` is 1 (NOT_FOUND otherwise). */
+    setPostMap: (postId: string, show: boolean) => rogoCall<{ showMap: 0 | 1 }>('social/setPostMap', { postId, show }),
+    /** Account feed settings; `shareMaps` is "Peta rute di postingan". */
+    updateProfile: (input: { shareMaps?: boolean }) => rogoCall<{ ok: true }>('social/updateProfile', input),
   },
 };

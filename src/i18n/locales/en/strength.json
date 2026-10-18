@@ -1,0 +1,291 @@
+{
+  "title": "Strength training",
+  "removedExercise": "Removed exercise",
+  "defaultName": {
+    "morning": "Morning workout",
+    "afternoon": "Afternoon workout",
+    "evening": "Evening workout",
+    "night": "Night workout"
+  },
+  "unit": {
+    "kg": "{{value}} kg",
+    "sec": "{{value}} s",
+    "reps_one": "{{value}} rep",
+    "reps_other": "{{value}} reps"
+  },
+  "previous": {
+    "weightBy": "{{weight}} x {{amount}}"
+  },
+  "setType": {
+    "normal": "Normal",
+    "warmup": "Warm-up",
+    "drop": "Drop set",
+    "failure": "To failure"
+  },
+  "setTypeShort": {
+    "normal": "N",
+    "warmup": "W",
+    "drop": "D",
+    "failure": "F"
+  },
+  "table": {
+    "set": "Set",
+    "previous": "Previous",
+    "kg": "kg",
+    "reps": "Reps",
+    "time": "Time",
+    "rpe": "RPE",
+    "dash": "-",
+    "setLabel": "Set {{label}}, {{type}}. Tap to change",
+    "usePrevious": "Use {{value}} from last time",
+    "noPrevious": "No earlier data",
+    "weightField": "Weight of set {{label}}, kg",
+    "repsField": "Reps of set {{label}}",
+    "secondsField": "Time of set {{label}}, seconds",
+    "rpeField": "RPE of set {{label}}",
+    "doneField": "Set {{label}} done"
+  },
+  "exercise": {
+    "openInfo": "How to do {{name}}",
+    "menu": "{{name}} menu",
+    "superset": "Superset {{letter}}",
+    "restChip": "Rest {{value}}",
+    "noteAdd": "Add a note",
+    "noteEdit": "Edit note",
+    "addSet": "Add set"
+  },
+  "info": {
+    "equipment": "Equipment: {{equipment}}",
+    "muscles": "Muscles",
+    "steps": "How to do it",
+    "mistakes": "Common mistakes",
+    "custom": "This is your own exercise, so only its muscles are recorded."
+  },
+  "menu": {
+    "replace": "Replace exercise",
+    "note": "Exercise note",
+    "rest": "Rest timer",
+    "superset": "Make a superset",
+    "supersetWith": "Superset with",
+    "leaveSuperset": "Leave superset",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove exercise",
+    "workoutNote": "Workout notes",
+    "settings": "Settings",
+    "discard": "Discard workout",
+    "deleteWorkout": "Delete workout"
+  },
+  "setMenu": {
+    "title": "Set type",
+    "delete": "Delete set"
+  },
+  "rpe": {
+    "title": "RPE",
+    "hint": "How hard the set was, from 6 (easy) to 10 (nothing left).",
+    "clear": "Clear RPE"
+  },
+  "rest": {
+    "off": "Off",
+    "left": "Rest, {{value}} left",
+    "minus": "Subtract {{value}} seconds",
+    "plus": "Add {{value}} seconds",
+    "minusShort": "-{{value}}",
+    "plusShort": "+{{value}}",
+    "skip": "Skip",
+    "over": "Rest is over, on to the next set",
+    "title": "Rest timer: {{name}}",
+    "custom": "Custom",
+    "customTitle": "Custom rest",
+    "customLabel": "Seconds",
+    "save": "Save for this exercise",
+    "saveHint": "This exercise will always use that time.",
+    "useDefault": "Use the default"
+  },
+  "notification": {
+    "channel": "Strength rest timer",
+    "title": "Rest is over",
+    "body": "Time for the next set.",
+    "bodyNamed": "Time for the next set: {{name}}.",
+    "askTitle": "Tell you when rest is over?",
+    "askMessage": "If the screen is off or you are in another app, JoyoFit can send a notification when the rest timer ends.",
+    "askConfirm": "Yes, notify me",
+    "askCancel": "No thanks"
+  },
+  "toast": {
+    "needValue": "Enter reps or time first.",
+    "saveFailed": "The workout was not saved. Try again."
+  },
+  "banner": {
+    "title": "Workout in progress",
+    "titlePaused": "Workout paused",
+    "progress": "{{done}} of {{total}} sets",
+    "label": "Workout in progress, {{time}}, {{progress}}. Tap to open"
+  },
+  "active": {
+    "loading": "Getting your workout ready",
+    "minimize": "Minimize, the workout keeps going",
+    "closeEdit": "Close",
+    "nameLabel": "Workout name",
+    "editing": "Editing workout, {{done}} sets logged",
+    "progress": "{{done}}/{{total}} sets",
+    "pausedClock": "Paused {{time}}",
+    "pause": "Pause",
+    "resume": "Resume",
+    "finish": "Finish",
+    "save": "Save",
+    "more": "More options",
+    "emptyTitle": "No exercises yet",
+    "emptyBody": "Add your first exercise to start logging sets.",
+    "addExercise": "Add exercise",
+    "notes": "Notes",
+    "notesHint": "Add a note for this workout"
+  },
+  "hr": {
+    "searching": "Looking for strap",
+    "waiting": "Waiting for heartbeat",
+    "searchingA11y": "Looking for the heart rate strap",
+    "waitingA11y": "Strap connected, no heart rate yet",
+    "chipA11y": "Heart rate {{bpm}} bpm",
+    "chipA11yZone": "Heart rate {{bpm}} bpm, zone {{zone}}: {{label}}",
+    "zoneShort": "Z{{zone}}",
+    "bluetoothOff": "Bluetooth is off, so the heart rate strap is not connected. The workout is still logged with estimated calories.",
+    "ask": {
+      "title": "Use your heart rate strap?",
+      "body": "{{name}} is paired. JoyoFit needs Bluetooth permission to connect to it. Your heart rate is then recorded and the workout calories are worked out from it.",
+      "continue": "Continue",
+      "skip": "Skip"
+    },
+    "denied": {
+      "body": "Bluetooth permission was not granted, so the heart rate strap cannot connect. The workout is still logged with estimated calories. You can allow it in the app settings.",
+      "action": "Open settings"
+    },
+    "session": {
+      "title": "Strength training",
+      "text": "Recording heart rate from the strap"
+    }
+  },
+  "discard": {
+    "title": "Discard this workout?",
+    "message": "Every set you logged will be lost.",
+    "confirm": "Discard workout",
+    "cancel": "Keep going"
+  },
+  "finish": {
+    "partialTitle": "Finish workout?",
+    "partialMessage_one": "{{count}} set is not done and will not be saved.",
+    "partialMessage_other": "{{count}} sets are not done and will not be saved.",
+    "partialConfirm": "Finish",
+    "keepGoing": "Keep working",
+    "nothingTitle": "No sets done yet",
+    "nothingMessage": "Tick at least one set as done to save the workout, or discard it.",
+    "nothingDiscard": "Discard workout"
+  },
+  "edit": {
+    "noSetsTitle": "No sets left",
+    "noSetsMessage": "A workout without sets cannot be saved. Delete this workout?",
+    "leaveTitle": "Discard changes?",
+    "leaveMessage": "Changes you have not saved will be lost.",
+    "leaveConfirm": "Discard changes"
+  },
+  "conflict": {
+    "title": "A workout is in progress",
+    "message": "You still have an unfinished workout. Continue it, or discard it and start the new one?",
+    "startNew": "Discard and start new",
+    "continue": "Continue it"
+  },
+  "picker": {
+    "close": "Close",
+    "titleOne": "Choose an exercise",
+    "titleMulti": "Add exercises",
+    "new": "New exercise",
+    "search": "Search exercises",
+    "mine": "My exercises",
+    "recent": "Recent",
+    "all": "All exercises",
+    "emptyTitle": "Nothing matches",
+    "emptyBody": "Change the search or filters, or create your own exercise.",
+    "add_one": "Add {{count}} exercise",
+    "add_other": "Add {{count}} exercises",
+    "pickSome": "Pick exercises",
+    "inWorkout": "Already in this workout",
+    "edit": "Edit {{name}}",
+    "formNew": "New exercise",
+    "formEdit": "Edit exercise",
+    "formName": "Name",
+    "formMuscles": "Main muscles",
+    "formEquipment": "Equipment",
+    "formTimed": "Counted in time",
+    "formTimedHint": "For planks and other holds: you enter seconds, not reps.",
+    "deleteTitle": "Delete this exercise?",
+    "deleteMessage": "Workouts that used it keep their history."
+  },
+  "pr": {
+    "weight": "Heaviest weight",
+    "e1rm": "Estimated 1RM",
+    "volume": "Best set volume",
+    "reps": "Most reps",
+    "time": "Longest time"
+  },
+  "summary": {
+    "title": "Workout summary",
+    "missingTitle": "Workout not found",
+    "missingBody": "This workout may have been deleted.",
+    "toHome": "Go to strength",
+    "freshTitle": "Workout complete",
+    "freshBody": "{{name}} is saved.",
+    "freshRecords_one": "{{name}} is saved, with {{count}} new record.",
+    "freshRecords_other": "{{name}} is saved, with {{count}} new records.",
+    "duration": "Duration",
+    "volume": "Volume",
+    "sets": "Sets",
+    "warmupSets": "+{{count}} warm-up",
+    "reps": "Reps",
+    "exercises": "Exercises",
+    "kcal": "Energy",
+    "kcalWatch": "from the watch",
+    "kcalEstimate": "estimated (MET)",
+    "kcalHr": "from heart rate",
+    "watch": "From the watch",
+    "strap": "From the heart rate strap",
+    "strapFrom": "Recorded by {{name}}.",
+    "avgHr": "Average heart rate",
+    "maxHr": "Max heart rate",
+    "bpm": "bpm",
+    "minHr": "Min heart rate",
+    "strain": "Strain",
+    "records": "New records",
+    "recordLine": "{{kind}}: {{value}} (was {{previous}})",
+    "rpe": "RPE {{value}}",
+    "repeat": "Repeat",
+    "saveRoutine": "Save as routine",
+    "routineTitle": "Save routine",
+    "routineName": "Routine name",
+    "routineSaved": "Routine saved",
+    "deleteTitle": "Delete this workout?",
+    "deleteMessage": "This workout is removed from your history and from the workout list.",
+    "kcalWeightHint": "Calories were estimated with a body weight of {{kg}} kg because yours is not set. Add it in Profile for a closer estimate.",
+    "kcalWeightAction": "Set body weight"
+  },
+  "settings": {
+    "title": "Strength settings",
+    "restTitle": "Rest timer",
+    "defaultRest": "Default rest",
+    "defaultRestHint": "Used when an exercise has no time of its own.",
+    "restLess": "15 seconds less",
+    "restMore": "15 seconds more",
+    "autoRest": "Start automatically",
+    "autoRestHint": "The timer starts when you tick a set done.",
+    "screenTitle": "Screen and columns",
+    "keepAwake": "Keep screen on",
+    "keepAwakeHint": "While the logger is open.",
+    "showRpe": "Show RPE",
+    "showRpeHint": "A column to note how hard each set was.",
+    "shareTitle": "Sharing",
+    "autoStrava": "Upload to Strava automatically",
+    "autoStravaHint": "Finished workouts are sent as Weight Training once Strava is linked.",
+    "savedRest": "Rest saved per exercise",
+    "savedRestEmpty": "None yet. Choose \"Save for this exercise\" in an exercise's rest timer menu.",
+    "clearRest": "Clear saved rest of {{name}}"
+  }
+}

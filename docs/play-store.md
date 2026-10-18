@@ -46,13 +46,14 @@ Other permissions in the Play build and why (the manifest of `dist/joyofit-play-
 |---|---|
 | `BLUETOOTH_CONNECT` (`BLUETOOTH`, `BLUETOOTH_ADMIN` up to Android 11) | Connect to the Huawei/Honor watch you already paired |
 | `BLUETOOTH_SCAN` (declared `neverForLocation`) | "Scan nearby devices" on the Watch tab lists Huawei and Honor watches in range so one can be connected without pairing it in Android Bluetooth settings first (Android 12+ only; a scan only lists, nothing connects or binds). Asked when the button is tapped; no location permission is used for it |
-| `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE` | Keep the watch connection alive in the background (Settings, Background) |
+| `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE` | Keep the watch connection alive in the background (Settings, Background); keep a heart rate strap or cycling sensor connected during a workout recorded on the phone |
+| `FOREGROUND_SERVICE_LOCATION` | Record the GPS of an outdoor workout started on the phone while the screen is off (a foreground service with an ongoing notification, only while that workout runs) |
 | `POST_NOTIFICATIONS` | The service notification and the optional morning summary |
 | `RECEIVE_BOOT_COMPLETED`, `WAKE_LOCK` | Restart the watch connection after a reboot or update; stay awake during a sync |
 | `VIBRATE` | Find my phone |
 | `READ_PHONE_STATE` | Show that the phone is ringing on the watch (optional switch) |
 | `ANSWER_PHONE_CALLS` | The watch's accept and reject buttons (optional switch) |
-| `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` | Weather for the phone's position (coarse); phone GPS for outdoor workouts the watch records (precise). Foreground only; no background location |
+| `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` | Weather for the phone's position (coarse); phone GPS for outdoor workouts the watch records and for outdoor workouts recorded on the phone (precise). Used only while the app is open or while a recording's foreground service runs; no `ACCESS_BACKGROUND_LOCATION` |
 | `INTERNET`, `ACCESS_NETWORK_STATE` | Weather (Open-Meteo), optional JoyoFit cloud and JoyoRogo, satellite-assist downloads for the watch |
 | `android.permission.health.WRITE_*` (steps, distance, active calories, heart rate, resting heart rate, oxygen saturation, sleep, exercise) | Write watch data to Health Connect. No read permission |
 | `USE_BIOMETRIC`, `USE_FINGERPRINT` | Added by the `androidx.biometric` library inside `expo-secure-store`. Normal permissions; JoyoFit never asks for biometrics |
@@ -121,7 +122,7 @@ Required assets (Main store listing):
 | Asset | Spec | Source |
 |---|---|---|
 | App icon | 512 x 512 PNG, 32-bit, up to 1 MB | `assets/icon.png` resized, or `scripts/build-icons.ts` |
-| Feature graphic | 1024 x 500 PNG or JPG | make one: logo on the paper background `#F9F6F1` with "Jammu. Datamu. HP-mu." |
+| Feature graphic | 1024 x 500 PNG or JPG | make one: logo on the paper background `#F9F6F1` with "Jam-mu. Datamu. HP-mu." |
 | Phone screenshots | 2 to 8; PNG or JPG up to 8 MB; each side 320 to 3840 px; the long side at most 2x the short side. Capture at the phone's native size (about 1080 x 2400) | see below |
 | 7-inch and 10-inch tablet screenshots | optional; skip | |
 
@@ -170,6 +171,7 @@ Yang bisa dilakukan:
 Privasi:
 • Data jam disimpan di HP. Tidak ada iklan, tidak ada analitik, data tidak dijual.
 • Cloud JoyoFit bersifat opsional dan baru aktif setelah kamu masuk dengan akun JoyoRogo. Data cloud bisa dihapus lewat permintaan email.
+• Koneksi AI (opsional, Pro): hanya bila kamu menyambungkan Claude, ChatGPT, atau aplikasi MCP lain, datamu dibaca (hanya-baca) saat kamu bertanya di sana. Bisa diputus kapan saja di Pengaturan, Koneksi AI. Rute GPS dan data Strava tidak pernah dibagikan.
 • Kebijakan privasi: https://fit.joyorogo.com/privasi
 
 Catatan:
@@ -212,6 +214,7 @@ What it does:
 Privacy:
 • Watch data is stored on your phone. No ads, no analytics, your data is not sold.
 • The JoyoFit cloud is optional and only starts after you sign in with a JoyoRogo account. Cloud data can be deleted by email request.
+• AI connection (optional, Pro): only if you connect Claude, ChatGPT or another MCP app is your data read (read-only), when you ask a question there. Disconnect any time in Settings, Koneksi AI. GPS routes and Strava data are never shared.
 • Privacy policy: https://fit.joyorogo.com/privasi
 
 Notes:
@@ -268,12 +271,13 @@ JoyoFit keeps watch data on the device by default. Google counts data as *collec
 | Data type | Collected | Shared | Purpose | Optional | Encrypted in transit | Deletion |
 |---|---|---|---|---|---|---|
 | Health info: heart rate, SpO2, sleep | Yes (JoyoFit cloud) | No | App functionality (backup) | Yes: only after signing in to the cloud | Yes (HTTPS) | Yes, on request by email |
-| Fitness info: steps, distance, calories, workouts, daily scores | Yes (JoyoFit cloud; scores also to JoyoRogo) | No | App functionality | Yes | Yes | Yes, on request |
+| Fitness info: steps, distance, calories, workouts, daily scores and body metrics (sleep hours, resting heart rate, HRV, VO2max, training status, recovery time) | Yes (JoyoFit cloud; scores and body metrics also to JoyoRogo) | No | App functionality | Yes | Yes | Yes, on request |
 | Precise location: workout GPS tracks | Yes (JoyoFit cloud, full-precision track points) | No | App functionality | Yes | Yes | Yes, on request |
 | Approximate location: weather position rounded to ~1 km | Yes (sent to Open-Meteo) | **Yes**, with Open-Meteo (weather provider) | App functionality | Yes: weather is off by default | Yes | Not stored by us; Open-Meteo's own policy applies |
 | Name, Email address, User IDs | Yes (JoyoRogo sign-in; the cloud keys rows by the user id) | No | Account management, app functionality | Yes | Yes | Yes, on request |
 | Device or other IDs: the watch's Bluetooth address | Yes (JoyoFit cloud) | No | App functionality | Yes | Yes | Yes, on request |
 | Food and meals (JoyoRogo link: calories logged on the watch) | Yes, to JoyoRogo while signed in | No | App functionality | Yes | Yes | Yes, via JoyoRogo's deletion |
+| Health and fitness info, food, weight (optional AI connection, JoyoRogo Pro) | Read from JoyoRogo's server by the AI app the user connects (Claude, ChatGPT or another MCP app), only when the user asks a question there; read-only; GPS routes and Strava data excluded | **Yes**, with the AI provider the user chose, started by the user | App functionality (user-initiated) | Yes: off until the user connects an app, revocable at once in Settings, Koneksi AI | Yes | JoyoRogo keeps a 90-day audit log (tool and dates, not the data); the provider's own terms apply to what it received. Whether Play classifies this user-initiated transfer as sharing: confirm in the Console [INFERENCE: not checked] |
 
 Answers to the other questions:
 
@@ -343,6 +347,17 @@ Video (unlisted YouTube link, 1 to 2 minutes, record the screen plus a short cli
 3. Send a notification or ring the phone from the watch (find my phone) while JoyoFit is closed; show it reaching the watch / the phone ringing.
 4. Reopen the app, switch the setting off: the notification disappears.
 
+### Foreground service: `location` (workouts recorded on the phone)
+
+Branch `sensors` adds `RecordingService` (`modules/ble-sensors`), type `location|connectedDevice`. Declaration for `FOREGROUND_SERVICE_LOCATION` (and the sensor half of `FOREGROUND_SERVICE_CONNECTED_DEVICE`):
+
+> When the user starts an outdoor workout (run, walk, ride, hike) on the phone, JoyoFit records the route, distance and pace from the phone's GPS and, if the
+> user paired them, the heart rate, speed, cadence and power of Bluetooth sensors. The workout has to keep recording while the screen is off and the phone is
+> in a pocket or on a bike mount, so it runs as a foreground service with an ongoing notification (time, distance, heart rate). The service starts only when the
+> user taps Start and stops when the workout is finished or discarded. It is never started in the background.
+
+Video: Workouts, Rekam latihan, Lari, allow location, Mulai; lock the screen; show the notification counting; unlock, Selesai, show the saved route.
+
 ### Notification listener (prominent disclosure)
 
 Notification access is a special permission the user grants in Android settings, and the app shows an in-app disclosure first. The disclosure text (shown
@@ -356,7 +371,7 @@ that the user is shown the disclosure above and must grant access in system sett
 
 ### Location
 
-No background location. Foreground only: coarse for the weather position (optional, off by default), precise for the phone GPS during outdoor workouts the watch starts.
+No background location permission. Coarse for the weather position (optional, off by default), precise for the phone GPS during outdoor workouts the watch starts and for outdoor workouts recorded on the phone (the latter keeps running with the screen off inside the `location` foreground service above, started from the foreground by the user's tap).
 JoyoFit explains the GPS use in a dialog before the first Android location prompt (and Settings, Notifications and calls, "Phone GPS for outdoor workouts" asks again). Declare in
 the Data safety form as in section 7. The declared reason: "Location is used for weather on the watch and to give the watch the phone's GPS during workouts."
 

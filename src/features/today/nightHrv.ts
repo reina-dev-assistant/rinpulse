@@ -20,12 +20,14 @@ export interface NightHrvInput {
   nightRowsSinceSetup: number;
   /** There is a night HRV row anywhere in the readings window. */
   anyNightRowInHistory: boolean;
+  /** This phone has never had a watch: the "turn on Automatic stress" advice would be about a switch that does not exist. */
+  noWatch?: boolean;
 }
 
 export type NightHrvAvailability =
   | { state: 'available' }
   | {
-      state: 'ios' | 'unsupported' | 'off' | 'none-recorded' | 'waiting';
+      state: 'ios' | 'unsupported' | 'off' | 'none-recorded' | 'waiting' | 'no-watch';
       message: string;
       detail: string;
     };
@@ -36,6 +38,9 @@ export type NightHrvAvailability =
  */
 export function nightHrvAvailability(input: NightHrvInput): NightHrvAvailability {
   if (input.anyNightRowInHistory) return { state: 'available' };
+  if (input.noWatch) {
+    return { state: 'no-watch', message: t('today:nightHrv.noWatch.message'), detail: t('today:nightHrv.noWatch.detail') };
+  }
   if (input.platform === 'ios') {
     return {
       state: 'ios',

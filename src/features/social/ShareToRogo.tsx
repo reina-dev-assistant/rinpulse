@@ -35,7 +35,7 @@ interface Props {
 
 /**
  * "Share to JoyoRogo" for a workout and the composer it opens: a caption, who may see it, and whether the heart-rate
- * data, the route and the comparison with earlier workouts go along. Free for everyone to share; JoyoRogo decides who may view the detail. Renders nothing for
+ * data, the route (the post's map, "Tampilkan peta", on by default when the workout has GPS) and the comparison with earlier workouts go along. Free for everyone to share; JoyoRogo decides who may view the detail. Renders nothing for
  * a workout that may not be shared (see `canShareToRogo`).
  */
 export function ShareToRogoButton({ workout, points, analysis, analysisPending }: Props) {

@@ -12,6 +12,7 @@ import { CloudStep } from '@/features/onboarding/steps/CloudStep';
 import { AccountStep } from '@/features/onboarding/steps/AccountStep';
 import { DoneStep } from '@/features/onboarding/steps/DoneStep';
 import { PairStep } from '@/features/onboarding/steps/PairStep';
+import { PhoneStep } from '@/features/onboarding/steps/PhoneStep';
 import { BackgroundStep, HealthStep, NotificationsStep, WeatherStep } from '@/features/onboarding/steps/PermissionSteps';
 import { ProStep } from '@/features/onboarding/steps/ProStep';
 import { SyncStep } from '@/features/onboarding/steps/SyncStep';
@@ -24,6 +25,7 @@ import { spacing, useColors } from '@/theme';
 
 const BODIES: Record<StepId, () => ReactElement> = {
   welcome: () => <WelcomeStep />,
+  phone: () => <PhoneStep />,
   unbind: () => <UnbindStep />,
   pair: () => <PairStep />,
   sync: () => <SyncStep />,

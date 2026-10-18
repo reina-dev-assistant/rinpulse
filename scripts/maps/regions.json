@@ -1,0 +1,53 @@
+{
+  "attribution": "Contains information from OpenStreetMap (ODbL). Map data (c) OpenMapTiles, CC-BY 4.0.",
+  "licenseUrl": "https://www.openstreetmap.org/copyright",
+  "profile": {
+    "minzoom": 0,
+    "maxzoom": 14,
+    "excludeLayers": ["aerodrome_label", "housenumber", "mountain_peak", "place", "poi", "transportation_name", "water_name"]
+  },
+  "regions": [
+    {
+      "id": "bali",
+      "name": { "id": "Bali", "en": "Bali" },
+      "bbox": [114.40, -8.92, 115.74, -8.04],
+      "geofabrik": "asia/indonesia/nusa-tenggara",
+      "notes": "Bali is not in the Java extract; it sits in Geofabrik's Nusa Tenggara extract (176 MB). Bbox includes Nusa Penida, Lembongan and Ceningan."
+    },
+    {
+      "id": "diy",
+      "name": { "id": "DI Yogyakarta", "en": "Yogyakarta (DIY)" },
+      "bbox": [110.00, -8.22, 110.85, -7.52],
+      "geofabrik": "asia/indonesia/java",
+      "notes": "Cut from the Java extract. Overlaps the Jawa Tengah box on purpose: a rider near Magelang or Klaten needs both."
+    },
+    {
+      "id": "jawa-barat",
+      "name": { "id": "Jawa Barat, Banten, Jakarta", "en": "West Java, Banten, Jakarta" },
+      "bbox": [105.05, -7.85, 108.90, -5.55],
+      "geofabrik": "asia/indonesia/java",
+      "notes": "Cut from the Java extract. Densest region (Jabodetabek, Bandung): expect the largest file per square km."
+    },
+    {
+      "id": "jawa-tengah",
+      "name": { "id": "Jawa Tengah dan DIY", "en": "Central Java and Yogyakarta" },
+      "bbox": [108.50, -8.25, 111.75, -5.70],
+      "geofabrik": "asia/indonesia/java",
+      "notes": "Cut from the Java extract; includes DI Yogyakarta, so DIY riders need only this one."
+    },
+    {
+      "id": "jawa-timur",
+      "name": { "id": "Jawa Timur dan Madura", "en": "East Java and Madura" },
+      "bbox": [110.90, -8.85, 114.70, -6.70],
+      "geofabrik": "asia/indonesia/java",
+      "notes": "Cut from the Java extract."
+    },
+    {
+      "id": "jawa",
+      "name": { "id": "Seluruh Pulau Jawa", "en": "All of Java" },
+      "bbox": [105.05, -8.90, 114.70, -5.55],
+      "geofabrik": "asia/indonesia/java",
+      "notes": "Not built and not published: the three regional builds measured 183 + 160 + 130 MB (with overlap), so one file would be about 430 MB, over wrangler's 300 MiB put limit and a heavy download on mobile data. Use the three regions."
+    }
+  ]
+}

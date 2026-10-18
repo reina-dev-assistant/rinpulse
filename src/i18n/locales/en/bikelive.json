@@ -1,0 +1,35 @@
+{
+  "switch": {
+    "label": "Share location",
+    "hint": "Anyone you give the link to can see your position and speed during this ride, without an account. The link is only created when the ride starts, stops working as soon as the ride ends or you turn this off, and the data is deleted within 24 hours."
+  },
+  "consent": {
+    "title": "Share your location?",
+    "message": "This link shows your position, track and speed live to anyone who has it. You can stop it any time: the link stops working when the ride ends or when you turn this off.",
+    "confirm": "Continue"
+  },
+  "link": {
+    "title": "Link to share",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "share": "Share",
+    "shareMessage": "Follow my ride live: {{url}}"
+  },
+  "status": {
+    "idle": "The link is created when the ride starts.",
+    "starting": "Waiting for signal to create the link.",
+    "waiting": "Link ready. Waiting for the first position.",
+    "live": "Sharing your location. Last sent at {{time}}.",
+    "offline_one": "No signal. {{count}} point waiting, sent as soon as you are connected.",
+    "offline_other": "No signal. {{count}} points waiting, sent as soon as you are connected.",
+    "ended": "Ride finished. The link no longer works.",
+    "error": {
+      "not-signed-in": "Sign in to your JoyoRogo account first to share your location.",
+      "not-configured": "The JoyoFit server is not set up, so your location cannot be shared yet.",
+      "unauthorized": "The server rejected the link key. Turn this off and on again to create a new link.",
+      "expired": "The link expired because nothing was sent for a long time. Turn this off and on again to create a new link.",
+      "session-full": "The link is full. Turn this off and on again to create a new link.",
+      "rejected": "The server rejected the request. Try turning this off and on again."
+    }
+  }
+}

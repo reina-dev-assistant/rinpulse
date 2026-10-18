@@ -1,0 +1,79 @@
+{
+  "entry": {
+    "button": "Putar ulang",
+    "a11y": "Putar ulang rute latihan sebagai video"
+  },
+  "title": "Putar ulang",
+  "unit": {
+    "km": "km",
+    "kmh": "km/j",
+    "bpm": "bpm",
+    "m": "m",
+    "w": "W",
+    "pace": "/km"
+  },
+  "effort": {
+    "400m": "400 m",
+    "1k": "1 km",
+    "1mi": "1 mil",
+    "5k": "5 km",
+    "10k": "10 km",
+    "half": "21 km"
+  },
+  "callout": {
+    "pr": "Rekor {{effort}}",
+    "climb": "Tanjakan"
+  },
+  "summary": {
+    "distance": "Jarak",
+    "elevation": "Kenaikan elevasi",
+    "time": "Waktu"
+  },
+  "ui": {
+    "player": "Pemutar ulang latihan",
+    "play": "Putar",
+    "pause": "Jeda",
+    "restart": "Ulangi",
+    "speed": "Kecepatan {{speed}}x",
+    "speedLabel": "Kecepatan",
+    "theme": {
+      "label": "Tema",
+      "dark": "Gelap",
+      "light": "Terang"
+    },
+    "showName": {
+      "label": "Tampilkan namaku",
+      "hint": "Nama dari akun JoyoRogo-mu muncul di kartu ringkasan. Secara bawaan tidak ada nama."
+    },
+    "loadingMap": "Menyiapkan peta {{done}}/{{total}}",
+    "offline": "Peta belum bisa dimuat, jadi rutemu digambar di latar polos.",
+    "noRoute": "Latihan ini tidak punya rute GPS, jadi belum bisa diputar ulang.",
+    "tooShort": "Rutemu terlalu pendek untuk diputar ulang dengan privasi rute menyala. Matikan privasi rute untuk melihatnya.",
+    "caption": "Putar ulang latihanku di JoyoFit",
+    "length": "Durasi video sekitar {{seconds}} detik"
+  },
+  "export": {
+    "button": "Buat video",
+    "preparing": "Menyiapkan video",
+    "progress": "Membuat video {{percent}}%",
+    "cancel": "Batal",
+    "cancelled": "Pembuatan video dibatalkan.",
+    "done": "Videonya sudah jadi",
+    "size": "{{size}} MB, 1080 x 1920, {{fps}} fps",
+    "save": "Simpan",
+    "instagram": "Instagram",
+    "share": "Lainnya",
+    "saved": "Video tersimpan di foto kamu",
+    "photosDialog": {
+      "save": "JoyoFit menambahkan video ini ke foto kamu. Foto yang sudah ada tidak dibaca. Setelah ini HP kamu akan meminta izin.",
+      "instagram": "Instagram membuka video dari galeri foto kamu, jadi JoyoFit menyimpan video ini di sana dulu. Setelah ini HP kamu akan meminta izin."
+    },
+    "errors": {
+      "unsupported": "HP ini belum bisa membuat video MP4.",
+      "render": "Tidak bisa membuat video: {{error}}",
+      "save": "Tidak bisa menyimpan video: {{error}}",
+      "share": "Tidak bisa membagikan video: {{error}}",
+      "saveUnavailable": "Menyimpan ke galeri butuh Android 11 atau lebih baru. Pakai Lainnya untuk membagikan videonya."
+    }
+  }
+}

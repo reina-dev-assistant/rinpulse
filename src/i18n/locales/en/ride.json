@@ -1,0 +1,84 @@
+{
+  "title": "Ride on the web",
+  "notificationTitle": "Ride on the web",
+  "entry": {
+    "title": "Ride on the web",
+    "hint": "Indoor cycling on a big screen. Your phone bridges the sensors, the game runs in the browser.",
+    "action": "Ride on the web"
+  },
+  "join": {
+    "title": "Join the game",
+    "steps": "Open {{url}} in a laptop or TV browser and type the 6 digit code shown there. Or scan its QR with the phone camera and JoyoFit opens right away.",
+    "codeLabel": "Code from the screen",
+    "codePlaceholder": "000000",
+    "action": "Join",
+    "fromLink": "The code from the QR is filled in. Check it matches the screen, then tap Join.",
+    "account": "Needs a JoyoRogo account signed in to JoyoFit. Free, no Pro needed.",
+    "ride": "Joining gets an indoor ride recording ready on your phone. It saves like any ride, with the game's distance and climb."
+  },
+  "error": {
+    "notSignedIn": "Sign in to JoyoRogo first to use Ride on the web.",
+    "notConfigured": "This build has no JoyoFit server set up.",
+    "notFound": "Code not found or expired. A code lasts 10 minutes, ask for a new one on the screen.",
+    "taken": "Another phone already uses this room.",
+    "rateLimited": "Too many tries. Wait a moment, then try again.",
+    "network": "Could not reach the server. Check your connection.",
+    "busy": "Another recording is running. Finish it first, then join.",
+    "prepare": "The recording could not get ready. Check Bluetooth permission and your sensors.",
+    "replaced": "Another phone took over this room.",
+    "expired": "The room closed after sitting idle for too long.",
+    "policy": "The server closed the connection because of the data it received.",
+    "lost": "The connection dropped and has not come back.",
+    "notSignedInAction": "Sign in"
+  },
+  "status": {
+    "title": "Status",
+    "room": "Room {{code}}",
+    "connection": "Connection",
+    "connected": "Connected",
+    "connecting": "Connecting...",
+    "reconnecting": "Reconnecting (attempt {{count}})",
+    "lost": "Disconnected",
+    "ended": "Closed",
+    "game": "Game in the browser",
+    "gameOn_other": "{{count}} screens connected",
+    "gameOn_one": "{{count}} screen connected",
+    "gameWaiting": "Waiting for the game to open",
+    "sensors": "Sensors",
+    "sensorsNone": "No sensor data yet",
+    "hr": "{{value}} bpm",
+    "cad": "{{value}} rpm",
+    "latency": "Latency",
+    "latencyValue": "{{ms}} ms"
+  },
+  "lobby": {
+    "title": "Ready to ride",
+    "hint": "Start from the game, or tap Start here. The recording runs on the phone, so keep JoyoFit open.",
+    "start": "Start",
+    "noSensors": "No cadence or heart rate sensor is paired. Add one under Sensors first.",
+    "manageSensors": "Manage sensors",
+    "preparing": "Getting the recording and sensors ready..."
+  },
+  "live": {
+    "title": "In the game",
+    "speed": "Virtual speed",
+    "distance": "Virtual distance",
+    "grade": "Grade",
+    "gear": "Gear",
+    "gearValue": "{{gear}} of {{count}}",
+    "power": "Power (estimate)",
+    "route": "Route",
+    "waiting": "Waiting for data from the game",
+    "gearUp": "Gear up",
+    "gearDown": "Gear down",
+    "note": "Distance, speed and power here come from the game's simulation. Power is an estimate from cadence and gear, not a measurement."
+  },
+  "actions": {
+    "leave": "Leave the room",
+    "leaveTitle": "Leave the room?",
+    "leaveMessage": "The game stops getting data from your phone. A recording that already started carries on as a normal indoor ride.",
+    "leaveConfirm": "Leave",
+    "reconnect": "Reconnect",
+    "stopAsked": "The game asked to stop."
+  }
+}

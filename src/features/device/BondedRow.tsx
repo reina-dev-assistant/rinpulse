@@ -1,8 +1,10 @@
-import { Alert, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { IconChip } from '@/components/IconChip';
 import { canConnect, supportLabel } from '@/features/device/modelSupport';
 import { spacing } from '@/theme';
@@ -30,16 +32,9 @@ export function BondedRow({
   const isActive = activeAddress === device.address && linkState !== 'disconnected';
   const idle = linkState === 'disconnected';
 
-  function confirmForget() {
-    Alert.alert(
-      t('watch:device.bonded.forgetTitle'),
-      t('watch:device.bonded.forgetMessage'),
-      [
-        { text: t('common:actions.cancel'), style: 'cancel' },
-        { text: t('watch:device.bonded.forget'), style: 'destructive', onPress: () => onForget(device.address) },
-      ],
-    );
-  }
+  const [confirmingForget, setConfirmingForget] = useState(false);
+  // A link to another watch is open: Connect moves the link here (the watch in use is disconnected first).
+  const switching = linkState === 'connected' && !isActive;
 
   const connectable = canConnect(device);
 
@@ -79,16 +74,27 @@ export function BondedRow({
           />
         ) : (
           <Button
-            label={t('watch:device.bonded.connect')}
+            label={switching ? t('watch:device.bonded.switchHere') : t('watch:device.bonded.connect')}
             variant="primary"
-            disabled={!connectable || !idle}
+            disabled={!connectable || !(idle || switching)}
             onPress={() => onConnect(device.address)}
           />
         )}
         {connectable ? (
-          <Button label={t('watch:device.bonded.forgetPairing')} variant="destructive" disabled={!idle && !isActive} onPress={confirmForget} />
+          <Button label={t('watch:device.bonded.forgetPairing')} variant="destructive" disabled={!idle && !isActive} onPress={() => setConfirmingForget(true)} />
         ) : null}
       </View>
+      <ConfirmDialog
+        visible={confirmingForget}
+        title={t('watch:device.bonded.forgetTitle')}
+        message={t('watch:device.bonded.forgetMessage')}
+        confirmLabel={t('watch:device.bonded.forget')}
+        onConfirm={() => {
+          setConfirmingForget(false);
+          onForget(device.address);
+        }}
+        onCancel={() => setConfirmingForget(false)}
+      />
     </View>
   );
 }

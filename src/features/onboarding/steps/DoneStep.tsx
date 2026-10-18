@@ -21,7 +21,7 @@ const isWhereId = (id: StepId): id is WhereId => (WHERE_IDS as readonly string[]
 interface Tip {
   icon: IconName;
   tint?: Tint | 'neutral';
-  id: 'today' | 'workouts' | 'strava' | 'findWatch';
+  id: 'today' | 'workouts' | 'strava' | 'findWatch' | 'strength' | 'coach' | 'library' | 'watchLater';
 }
 
 const TIPS: readonly Tip[] = [
@@ -31,9 +31,19 @@ const TIPS: readonly Tip[] = [
   { icon: 'watch', tint: 'link', id: 'findWatch' },
 ];
 
+/** The no-watch route's tips: the logger, Coach, the library, and where a watch can be added later. */
+const PHONE_TIPS: readonly Tip[] = [
+  { icon: 'barbell', tint: 'workouts', id: 'strength' },
+  { icon: 'flash', tint: 'workouts', id: 'coach' },
+  { icon: 'library', tint: 'steps', id: 'library' },
+  { icon: 'watch', tint: 'link', id: 'watchLater' },
+];
+
 export function DoneStep() {
   const { t } = useTranslation('onboarding');
   const { state, ctx } = useOnboarding();
+  const noWatch = state?.route === 'none';
+  const tips = noWatch ? PHONE_TIPS : TIPS;
   const open = state ? openSteps(state, ctx).filter(isWhereId) : [];
   const place = t('done.healthSettings', { store: HEALTH_STORE });
   const whereOf = (id: WhereId) => (id === 'health' || id === 'account' ? t(`done.where.${id}`, { place }) : t(`done.where.${id}`));
@@ -41,11 +51,11 @@ export function DoneStep() {
   return (
     <>
       <StepIntro icon="checkmark-circle" tint="link" title={t('done.title')}>
-        {t('done.intro')}
+        {t(noWatch ? 'done.introNoWatch' : 'done.intro')}
       </StepIntro>
       <Card>
         <View style={styles.tips}>
-          {TIPS.map((tip, i) => (
+          {tips.map((tip, i) => (
             <FadeIn key={tip.id} delay={120 + i * 50} distance={6} style={styles.tip}>
               <IconChip icon={tip.icon} tint={tip.tint} size="sm" />
               <View style={styles.tipText}>

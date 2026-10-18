@@ -1,12 +1,12 @@
 import { useEventListener } from 'expo';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { errorMessage } from '@/format';
 import { t } from '@/i18n';
 import { useWatch } from '@/state/WatchProvider';
-import { HuaweiWear, type UploadProgressEvent, type WatchfaceList } from '@/wear';
+import { HuaweiWear, type UploadProgressEvent, type WatchfaceInstallResult, type WatchfaceList } from '@/wear';
 
 /** What the screen is waiting for: reading the list, installing a file, or an operation on one face. */
 export type WatchfaceBusy = 'list' | 'install' | { id: string; action: 'activate' | 'delete' } | null;
@@ -54,6 +54,30 @@ export function useWatchfaces() {
     [run],
   );
 
+  /** Installs a watch face from an explicit URI (file://, content://, or http/https URL). */
+  const installFromUri = useCallback(
+    async (uri: string, signature?: string, fileName?: string): Promise<WatchfaceInstallResult | null> => {
+      setProgress({ bytes: 0, total: 0 });
+      let outcome: WatchfaceInstallResult | null = null;
+      await run('install', async () => {
+        try {
+          const result = await HuaweiWear.installWatchface(uri, signature, fileName);
+          if (result.list) setList(result.list);
+          if (result.listed) {
+            setNotice(t('watch:faces.installResult', { name: result.name, message: result.message }));
+            outcome = result;
+          } else {
+            setError(t('watch:faces.installResult', { name: result.name, message: result.message }));
+          }
+        } finally {
+          setProgress(null);
+        }
+      });
+      return outcome;
+    },
+    [run],
+  );
+
   /** Installs a picked .hwt; `signature` + `fileName` replay a captured Huawei signature (see installWatchface). */
   const install = useCallback(async (signature?: string, fileName?: string) => {
     let picked: DocumentPicker.DocumentPickerResult;
@@ -65,24 +89,25 @@ export function useWatchfaces() {
     }
     if (picked.canceled || picked.assets.length === 0) return;
     const asset = picked.assets[0];
-    setProgress({ bytes: 0, total: 0 });
-    await run('install', async () => {
-      try {
-        const result = await HuaweiWear.installWatchface(asset.uri, signature, fileName);
-        if (result.list) setList(result.list);
-        if (result.listed) setNotice(t('watch:faces.installResult', { name: result.name, message: result.message }));
-        else setError(t('watch:faces.installResult', { name: result.name, message: result.message }));
-      } finally {
-        setProgress(null);
-      }
-    });
-  }, [run]);
+    await installFromUri(asset.uri, signature, fileName);
+  }, [installFromUri]);
+
+  const initialFetchDone = useRef(false);
+
+  useEffect(() => {
+    if (!connected) {
+      initialFetchDone.current = false;
+    }
+  }, [connected]);
 
   useFocusEffect(
     useCallback(() => {
-      if (connected) void refresh();
+      if (connected && !initialFetchDone.current) {
+        initialFetchDone.current = true;
+        void refresh();
+      }
     }, [connected, refresh]),
   );
 
-  return { connected, list, busy, error, notice, progress, refresh, setActive, remove, install };
+  return { connected, list, busy, error, notice, progress, refresh, setActive, remove, install, installFromUri };
 }

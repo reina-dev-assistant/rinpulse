@@ -5,7 +5,7 @@ import { AppText } from '@/components/AppText';
 import { JOYOROGO_URL } from '@/cloud/config';
 import { useColors } from '@/theme';
 
-const SIZES = { sm: 32, md: 40, lg: 48 } as const;
+const SIZES = { sm: 32, md: 40, lg: 48, xl: 56 } as const;
 
 /** JoyoRogo stores uploaded photos as server-relative `/avatar/...` paths and Google photos as absolute URLs. */
 export function avatarUri(image: string | null | undefined): string | null {

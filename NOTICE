@@ -29,3 +29,40 @@ It uses zip4j (https://github.com/srikanth-lingala/zip4j, Apache-2.0) to read th
 
 Huawei and HUAWEI WATCH FIT are trademarks of Huawei Technologies Co., Ltd. This project is not
 affiliated with or endorsed by Huawei.
+
+Strava, the Strava symbol and the "Connect with Strava" and "Compatible with Strava" artwork (assets/strava/) are trademarks
+of Strava, Inc. Google Health Connect and its icon (assets/brand-marks/health-connect.png) belong to Google LLC. Apple Health
+and its icon (assets/brand-marks/apple-health.png, Apple Design Resources) belong to Apple Inc.; that icon is not covered by
+this project's licence and may only appear in the UI of an iOS app. Claude and ChatGPT are trademarks of Anthropic PBC and
+OpenAI; JoyoFit shows their names as text only. None of them endorses this project. Rules per mark: docs/brand-marks.md.
+
+Exercise library of the Coach (src/features/coach/exercises/, site/public/exercises/), retrieved 2026-10-18.
+Built by scripts/build-exercises.ts. The steps, common mistakes, Indonesian names and English names are written for
+this project; no instruction text of any dataset is copied.
+
+Classification data (primary and secondary muscles, level) comes from free-exercise-db,
+https://github.com/yuhonas/free-exercise-db (dist/exercises.json), licensed under The Unlicense (public domain
+dedication, LICENSE.md: "Anyone is free to copy, modify, publish, use, compile, sell, or distribute this software ...
+for any purpose, commercial or non-commercial"). No attribution is required.
+
+free-exercise-db's own images are NOT used. Its README says nothing about their origin, its maintainer answered
+"I actually have no idea where the images are from or if they are royalty free so usage would be at your own risk"
+(https://github.com/yuhonas/free-exercise-db/issues/2), and the upstream project it was forked from states about them
+"these have been scrapped off the internet, therefore l do not own the copy right for these images and would advise
+against using them in comercial projects" (https://github.com/wrkout/exercises.json/blob/master/CONTRIBUTING.md).
+Issue #13 of free-exercise-db (still open) asks the same question without a licence answer.
+
+The pictures come from wger, https://wger.de (API https://wger.de/api/v2/exerciseimage/), where every image carries its
+own licence and author. Only images that are not AI generated, name their author, and were checked by eye are used:
+56 images of 38 exercises, all licensed CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/) or CC BY-SA 4.0
+(https://creativecommons.org/licenses/by-sa/4.0/). Attribution is required and adaptations stay under the same licence.
+The copies in site/public/exercises/ are adaptations (flattened onto white, scaled to at most 480 px, converted to WebP)
+and are shared under the licence of the original. Author, licence and source page of every image:
+https://fit.joyorogo.com/exercises/ATTRIBUTION.txt (generated into site/public/exercises/ATTRIBUTION.txt). The main
+authors are Everkinetic (https://everkinetic.com, CC BY-SA 3.0) and wger contributors such as Franpol, philip, utkb and
+AlucardEvil40 (CC BY-SA 4.0). The images are separate works shown next to the AGPL code; the licence of the code does not
+change theirs.
+
+In-app credit line (coach:library.credits): "Gambar latihan dari wger.de, lisensi Creative Commons (CC BY-SA); pembuat dan
+lisensi tiap gambar ada di fit.joyorogo.com/exercises/ATTRIBUTION.txt. Data otot dan tingkat dari free-exercise-db (domain
+publik)."

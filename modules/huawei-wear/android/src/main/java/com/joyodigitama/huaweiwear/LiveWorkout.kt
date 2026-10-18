@@ -81,6 +81,9 @@ internal class LiveWorkout(
   /** The current or last workout for JS (`getLiveWorkout`), null when none was seen since the app started. */
   fun snapshot(): Map<String, Any?>? = synchronized(lock) { session?.let { toJs(it) } }
 
+  /** True from a workout's start until it ends: the link must not be taken away from it. */
+  val isLive: Boolean get() = synchronized(lock) { session?.status.let { it != null && it != Status.ENDED } }
+
   /** The user closed the finished workout on the phone. */
   fun dismiss() {
     synchronized(lock) {

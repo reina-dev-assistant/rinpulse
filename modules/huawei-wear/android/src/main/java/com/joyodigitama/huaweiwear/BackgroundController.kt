@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.sqlite.SQLiteException
 import android.os.Build
 import android.os.PowerManager
 import android.os.SystemClock
@@ -179,7 +180,7 @@ internal class BackgroundController(private val runtime: WearRuntime) {
               if (now - lastSyncAtMs > RESYNC_AFTER_RECONNECT_MS) nextSyncAtMs = 0L
             }
             if (now >= nextSyncAtMs) {
-              cycle()
+              if (cycle()) visitDueWatch()
               waitMs = maxOf(1L, nextSyncAtMs - SystemClock.elapsedRealtime())
             } else {
               waitMs = nextSyncAtMs - now
@@ -225,12 +226,17 @@ internal class BackgroundController(private val runtime: WearRuntime) {
     }
   }
 
-  /** One periodic round: sync, then battery, then the family summary upload. Failures are logged; the next interval retries. */
-  private suspend fun cycle() {
+  /**
+   * One periodic round: sync, then battery, then the family summary upload. Failures are logged; the next interval retries.
+   * True when the sync of the active watch went through.
+   */
+  private suspend fun cycle(): Boolean {
     nextSyncAtMs = SystemClock.elapsedRealtime() + intervalMs()
     scheduleTick()
+    var synced = false
     try {
       link.syncActivity()
+      synced = true
       lastSyncAtMs = SystemClock.elapsedRealtime()
     } catch (e: CancellationException) {
       throw e
@@ -248,6 +254,72 @@ internal class BackgroundController(private val runtime: WearRuntime) {
     }
     // Family monitoring posts the fresh summary and battery; it runs on its own and never fails the cycle.
     runtime.family.uploadAfterSync()
+    return synced
+  }
+
+  /** A visit in progress; [aborted] is set when the user connects from the app meanwhile. */
+  private class Visit(val address: String) {
+    @Volatile
+    var aborted = false
+  }
+
+  @Volatile
+  private var visit: Visit? = null
+
+  /** Visits tried by this process, wall-clock seconds: a failed visit waits for the next interval like a successful one. */
+  private val lastVisitAttempt = HashMap<String, Long>()
+
+  /** A connect from the app ends a visit in progress, so the app's connect does not meet a busy link. */
+  fun abortVisit() {
+    val current = visit ?: return
+    current.aborted = true
+    link.disconnectIfConnectedTo(current.address)
+  }
+
+  /**
+   * After the active watch's own sync: when another watch has `bg_sync` on and is due ([nextVisit]), leaves the active link,
+   * connects to it without making it the remembered watch, syncs it and disconnects. The loop reconnects the active watch
+   * afterwards. A phone with one watch, or none with `bg_sync`, never gets past the first query.
+   */
+  private suspend fun visitDueWatch() {
+    val active = settings.watchAddress ?: return
+    val nowSec = System.currentTimeMillis() / 1000
+    val candidates = try {
+      runtime.syncStore.bgSyncWatches().filter { it.first != active }.map { (address, lastSync) ->
+        VisitCandidate(address, lastSync, !link.needsBind(address), lastVisitAttempt[address])
+      }
+    } catch (e: SQLiteException) {
+      log.log(LogDirection.ERROR, null, null, null, "Background visit: could not read the watches: ${e.message}")
+      return
+    }
+    if (candidates.isEmpty()) return
+    val busy = runtime.paused || !settings.backgroundEnabled || runtime.status.value.state != LinkState.CONNECTED ||
+      runtime.liveWorkout.isLive || runtime.liveHeartRate.inUse || runtime.hrv.isRunning || link.operationRunning()
+    val due = nextVisit(candidates, active, nowSec, watchVisitIntervalMinutes(settings.syncIntervalMinutes) * 60, busy) ?: return
+    visit(due.address, active, nowSec)
+  }
+
+  private suspend fun visit(address: String, active: String, nowSec: Long) {
+    val current = Visit(address)
+    visit = current
+    lastVisitAttempt[address] = nowSec
+    wakeLock.acquire(WAKE_LOCK_MS)
+    log.log(LogDirection.INFO, null, null, null, "Background visit: leaving $active to sync $address, then going back")
+    try {
+      link.disconnect()
+      // A visit never starts a first bind (needsBind was checked above) and never makes the watch the remembered one.
+      link.connect(address, allowFirstBind = false, remember = false)
+      if (current.aborted) return
+      link.syncActivity()
+      log.log(LogDirection.INFO, null, null, null, "Background visit: $address synced")
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: WearException) {
+      log.log(LogDirection.ERROR, null, null, null, "Background visit to $address failed [${e.errorCode}]: ${e.message}")
+    } finally {
+      visit = null
+      if (!current.aborted) link.disconnectIfConnectedTo(address)
+    }
   }
 
   companion object {

@@ -1,0 +1,32 @@
+{
+  "fallbackName": "Latihan beban",
+  "unknownExercise": "Gerakan",
+  "stats": {
+    "volume": "Total volume",
+    "reps": "Repetisi",
+    "time": "Durasi",
+    "sets": "Set",
+    "kcal": "Energi"
+  },
+  "topSets": "Set terbaik",
+  "prBadge_other": "{{count}} rekor baru",
+  "setWeightReps": "{{weight}} kg x {{reps}}",
+  "setWeightSeconds": "{{weight}} kg x {{seconds}} dtk",
+  "setWeight": "{{weight}} kg",
+  "setReps_other": "{{reps}} repetisi",
+  "setSeconds": "{{seconds}} dtk",
+  "description": {
+    "totalsVolume_other": "Total volume {{volume}} kg, {{count}} set, {{reps}} repetisi.",
+    "totalsReps_other": "{{count}} set, {{reps}} repetisi.",
+    "topSets": "Set terbaik: {{sets}}."
+  },
+  "share": {
+    "heading": "Bagikan latihan",
+    "caption": "Dicatat dengan JoyoFit · https://fit.joyorogo.com"
+  },
+  "actions": {
+    "title": "Bagikan dan kirim",
+    "connect": "Hubungkan Strava",
+    "connectHint": "Hubungkan Strava untuk mengirim latihan ini lengkap dengan setiap set."
+  }
+}

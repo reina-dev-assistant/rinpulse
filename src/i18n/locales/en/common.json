@@ -53,6 +53,22 @@
     "watch": "Watch",
     "settings": "Settings"
   },
+  "dbRecovery": {
+    "inline": "The data on your phone is being repaired. Wait a moment, then try again.",
+    "repairingTitle": "Repairing your data",
+    "repairingBody": "The data file on your phone is damaged. We are saving what can still be read first.",
+    "repairedTitle": "Your data is repaired",
+    "repairedBody": "The data file on your phone was damaged. Everything that could still be read is saved, and nothing is lost.",
+    "lostTitle": "Part of your data is saved",
+    "lostBody": "The data file on your phone was damaged. What could still be read is saved. We fetch the rest again from the cloud if you are signed in, and from your watch at the next sync. The old file is kept, not deleted.",
+    "recreatedTitle": "Your data file was rebuilt",
+    "recreatedBody": "The data file on your phone is damaged and could not be read at all, so we made a new one. Your workouts come back from the cloud if you are signed in, and your watch data is fetched again at the next sync. The old file is kept, not deleted.",
+    "failedTitle": "Your data could not be repaired yet",
+    "failedBody": "The data file on your phone is damaged and the automatic repair did not work. Your data is not deleted. Try again, or close the app and open it again.",
+    "pendingBody": "The data file on your phone is damaged. A fresh copy is ready and goes in when the app opens again. Close the app completely, then open it again. Your data is not deleted.",
+    "retry": "Try again",
+    "dismiss": "Got it"
+  },
   "language": {
     "title": "Language",
     "auto": "Automatic",
@@ -133,5 +149,10 @@
       "name": "Ocean",
       "tagline": "Clean blue and white. Follows the phone."
     }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This link doesn't lead to any page in JoyoFit. If an update just came out, close the app and open it again.",
+    "home": "Go home"
   }
 }

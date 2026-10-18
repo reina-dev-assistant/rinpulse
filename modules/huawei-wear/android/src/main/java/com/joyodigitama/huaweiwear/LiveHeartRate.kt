@@ -47,6 +47,9 @@ internal class LiveHeartRate(
   /** A live workout holds the heart-rate sensor; an HRV measurement must not take it over. */
   val workoutActive get() = workoutWanted
 
+  /** True while a screen or a live workout asks for live readings (even if an HRV measurement pauses them); a visit to another watch waits. */
+  val inUse get() = uiWanted || workoutWanted
+
   /** Switches the live readings off on the watch (when they were on) and keeps them off until [resume]. */
   suspend fun pause() {
     paused = true

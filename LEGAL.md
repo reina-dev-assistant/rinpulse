@@ -15,6 +15,9 @@ notifications to that watch over Bluetooth.
 - It is **not affiliated with, endorsed by or sponsored by** Huawei Technologies Co., Ltd. or Honor.
 - "Huawei", "Honor", "HUAWEI WATCH FIT" and similar names are trademarks of their owners. They are used here only to say
   which watches the software works with.
+- Other names and marks in the app (Strava, Google Health Connect, Apple Health, Claude, ChatGPT) belong to their owners and
+  are shown only to say which service a feature talks to, following each owner's brand rules. JoyoFit is not affiliated
+  with or endorsed by any of them. What is shown and why: [docs/brand-marks.md](docs/brand-marks.md).
 
 ## Basis
 

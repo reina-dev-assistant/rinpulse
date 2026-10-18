@@ -3,7 +3,10 @@
  * (resume, skip, platform filtering, existing-user bypass) is a plain function with a test.
  *
  * Order, and why it is not just the order of the Settings screens:
- * 1. `welcome`: what the guide covers, and the one place to leave it altogether.
+ * 1. `welcome`: what the guide covers, the one place to leave it altogether, and the fork: "Aku belum punya jam / jamku belum didukung"
+ *    switches the run to the phone-only route (`route: 'none'`). Continue keeps the watch route, unchanged for watch owners.
+ *    The phone-only route hides every watch step and adds `phone`: what works without a watch, the body weight the energy estimate
+ *    uses, and the supported watches with the way to ask for yours. Its path is welcome, phone, account, pro, cloud, done.
  * 2. `unbind`: before pairing. The watch holds one phone pairing, so it has to be released in Huawei Health first. This is also the
  *    last point where Huawei Health can still sync once more and where its data export can be requested (the export takes days, so it is
  *    asked for now and imported whenever it arrives).
@@ -24,6 +27,7 @@ export type Platform = 'ios' | 'android';
 
 export const STEP_IDS = [
   'welcome',
+  'phone',
   'unbind',
   'pair',
   'sync',
@@ -46,13 +50,25 @@ export interface StepContext {
   cloudConfigured: boolean;
 }
 
+/** `watch`: the run for someone with a watch to pair. `none`: no watch, or one that is not supported; the phone-only run. */
+export type Route = 'watch' | 'none';
+
 interface StepRule {
   platforms?: readonly Platform[];
   needsCloud?: boolean;
+  /** Shown on this route only. */
+  route?: Route;
 }
 
 const RULES: Partial<Record<StepId, StepRule>> = {
-  background: { platforms: ['android'] },
+  phone: { route: 'none' },
+  unbind: { route: 'watch' },
+  pair: { route: 'watch' },
+  sync: { route: 'watch' },
+  notifications: { route: 'watch' },
+  health: { route: 'watch' },
+  weather: { route: 'watch' },
+  background: { platforms: ['android'], route: 'watch' },
   pro: { needsCloud: true },
   cloud: { needsCloud: true },
 };
@@ -63,6 +79,8 @@ export interface OnboardingState {
   status: OnboardingStatus;
   /** The step on screen (`active`), or the last one reached. */
   step: StepId;
+  /** Which run this is; chosen on `welcome` (see `advance` and `chooseNoWatch`). */
+  route: Route;
   /** Steps left with Continue. */
   done: StepId[];
   /** Steps left with Skip or Later. */
@@ -72,17 +90,18 @@ export interface OnboardingState {
 }
 
 /** Whether `id` applies on this phone and build. */
-function applies(id: StepId, ctx: StepContext): boolean {
+function applies(id: StepId, ctx: StepContext, route: Route): boolean {
   const rule = RULES[id];
   if (!rule) return true;
+  if (rule.route && rule.route !== route) return false;
   if (rule.platforms && !rule.platforms.includes(ctx.platform)) return false;
   if (rule.needsCloud && !ctx.cloudConfigured) return false;
   return true;
 }
 
 /** The steps this run shows, in order. */
-export function visibleSteps(state: Pick<OnboardingState, 'without'>, ctx: StepContext): StepId[] {
-  return STEP_IDS.filter((id) => applies(id, ctx) && !state.without.includes(id));
+export function visibleSteps(state: Pick<OnboardingState, 'without' | 'route'>, ctx: StepContext): StepId[] {
+  return STEP_IDS.filter((id) => applies(id, ctx, state.route) && !state.without.includes(id));
 }
 
 /** A fresh run from the first step. `hasPairedWatch` (Setup guide reopened from Settings) leaves out the unbind step. */
@@ -90,6 +109,7 @@ export function startState(options: { hasPairedWatch: boolean }): OnboardingStat
   return {
     status: 'active',
     step: 'welcome',
+    route: 'watch',
     done: [],
     skipped: [],
     without: options.hasPairedWatch ? ['unbind'] : [],
@@ -131,9 +151,19 @@ function moveForward(state: OnboardingState, ctx: StepContext, how: 'done' | 'sk
   return { ...marked, step: next };
 }
 
-/** Continue: the step is done, go to the next one; past the last step the guide is completed. */
+/** Continue: the step is done, go to the next one; past the last step the guide is completed. Continue on `welcome` is the watch route. */
 export function advance(state: OnboardingState, ctx: StepContext): OnboardingState {
-  return moveForward(state, ctx, 'done');
+  const route: OnboardingState = currentStep(state, ctx) === 'welcome' ? { ...state, route: 'watch' } : state;
+  return moveForward(route, ctx, 'done');
+}
+
+/**
+ * "Aku belum punya jam / jamku belum didukung", from `welcome`: the run switches to the phone-only route and goes on to its first
+ * step. Pairing is not lost: the Watch tab (and Settings) pair a watch whenever one turns up.
+ */
+export function chooseNoWatch(state: OnboardingState, ctx: StepContext): OnboardingState {
+  if (state.status !== 'active') return state;
+  return moveForward({ ...state, route: 'none' }, ctx, 'done');
 }
 
 /** Skip / Later: the same move, remembered as skipped so the last step can say what is still open. */
@@ -198,6 +228,8 @@ export function footerFor(step: StepId, facts: FooterFacts): Footer {
   switch (step) {
     case 'welcome':
       return { primary: t('onboarding:footer.getStarted'), primaryDisabled: false, skip: t('onboarding:footer.skipSetup'), back: false };
+    case 'phone':
+      return { primary: label.continue, primaryDisabled: false, skip: null, back: true };
     case 'pair':
       return linkUp
         ? { primary: label.continue, primaryDisabled: false, skip: null, back: true }
@@ -260,6 +292,7 @@ export function parseState(raw: string | null): OnboardingState | null {
     return {
       status: record.status as OnboardingStatus,
       step: record.step as StepId,
+      route: record.route === 'none' ? 'none' : 'watch',
       done: stepList(record.done),
       skipped: stepList(record.skipped),
       without: stepList(record.without),

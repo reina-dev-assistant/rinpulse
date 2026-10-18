@@ -134,7 +134,9 @@ export interface WatchPostOptions {
 /**
  * `social.createWatchPost` input from a local workout row and its points. Seconds on the watch side, minutes and
  * milliseconds on the server's. With `analysis` (the full result of `analyzeWorkout`) the detail is the shareable part of
- * it alone; without, the legacy heart-rate series and route.
+ * it alone; without, the legacy heart-rate series and route. `includeRoute` is the post's "Tampilkan peta" switch: the
+ * route goes along only while it is on, and `showMap` carries it so JoyoRogo shows the feed map (it trims 200 m off both
+ * ends and simplifies the line itself) from the start.
  */
 export function buildWatchPost(
   workout: WorkoutRow,
@@ -175,5 +177,6 @@ export function buildWatchPost(
     ...(detail ? { detail } : {}),
     ...(caption ? { caption } : {}),
     visibility: options.visibility,
+    showMap: options.includeRoute,
   };
 }

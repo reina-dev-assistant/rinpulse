@@ -30,7 +30,13 @@
     "covers3Ios": "Izin: notifikasi, Apple Health, cuaca.",
     "covers3Android": "Izin: notifikasi, Health Connect, cuaca, tetap terhubung.",
     "covers4": "Masuk dengan JoyoRogo, ini opsional.",
-    "reopen": "Kamu bisa membuka panduan ini lagi kapan saja dari Pengaturan, Panduan penyiapan."
+    "reopen": "Kamu bisa membuka panduan ini lagi kapan saja dari Pengaturan, Panduan penyiapan.",
+    "noWatch": {
+      "title": "Belum punya jam, atau jam-mu belum didukung?",
+      "body": "Tidak masalah. Latihan beban, Coach, dan perpustakaan gerakan jalan sepenuhnya tanpa jam. Jam bisa disambungkan nanti dari tab Jam.",
+      "button": "Aku belum punya jam / jamku belum didukung",
+      "supported": "Jam apa saja yang didukung?"
+    }
   },
   "unbind": {
     "title": "Lepas jam dari Huawei Health",
@@ -105,7 +111,7 @@
     "gives1": "Skor Pemulihan, Strain, dan Tidur harianmu muncul di samping yang kamu makan di catatan JoyoRogo, lengkap dengan saran makan singkat untuk hari seperti itu.",
     "gives2": "Yang kamu catat di JoyoRogo bisa tampil di kartu kalori jam.",
     "gives3": "Pilihan mencadangkan data jam ke cloud, yang termasuk JoyoRogo Pro (langkah berikutnya).",
-    "note": "Selama kamu masuk, JoyoFit mengirim skor harianmu ke JoyoRogo dan bertukar data makanan dan berat badan. Data jammu tetap di HP ini kecuali kamu menyalakan cadangan cloud Pro. Keluar kapan saja di Pengaturan, Kesehatan dan cloud.",
+    "note": "Selama kamu masuk, JoyoFit mengirim skor dan ukuran tubuh harianmu (tidur, detak istirahat, HRV, VO2max) ke JoyoRogo dan bertukar data makanan dan berat badan. Data jam-mu tetap di HP ini kecuali kamu menyalakan cadangan cloud Pro. Keluar kapan saja di Pengaturan, Kesehatan dan cloud.",
     "signedIn": "Sudah masuk.",
     "signedInAs": "Sudah masuk sebagai {{email}}."
   },
@@ -169,10 +175,38 @@
     "reopen": "Buka panduan ini lagi dari Pengaturan, Panduan penyiapan.",
     "healthSettings": "{{store}} dan cloud",
     "tip": {
-      "today": { "title": "Hari ini", "text": "Langkah, detak jantung, tidur, dan skor Pemulihan, Strain, dan Kesiapan kamu. Tarik ke bawah untuk sinkron." },
-      "workouts": { "title": "Latihan", "text": "Semua latihan yang direkam di jam, lengkap dengan rutenya dan kartu untuk dibagikan." },
-      "strava": { "title": "Strava", "text": "Pengaturan, Strava: kirim latihan jam ke Strava, gratis." },
-      "findWatch": { "title": "Cari jam", "text": "Tab Jam: buat jam berbunyi saat hilang di dalam rumah." }
+      "today": {
+        "title": "Hari ini",
+        "text": "Langkah, detak jantung, tidur, dan skor Pemulihan, Strain, dan Kesiapan kamu. Tarik ke bawah untuk sinkron."
+      },
+      "workouts": {
+        "title": "Latihan",
+        "text": "Semua latihan yang direkam di jam, lengkap dengan rutenya dan kartu untuk dibagikan."
+      },
+      "strava": {
+        "title": "Strava",
+        "text": "Pengaturan, Strava: kirim latihan jam ke Strava, gratis."
+      },
+      "findWatch": {
+        "title": "Cari jam",
+        "text": "Tab Jam: buat jam berbunyi saat hilang di dalam rumah."
+      },
+      "strength": {
+        "title": "Latihan",
+        "text": "Hari ini: Mulai latihan, atau pilih rutinitas. Riwayat, kalender, dan rekor ada di tab Latihan."
+      },
+      "coach": {
+        "title": "Coach",
+        "text": "Rencana latihan dan saran harian di Hari ini. Jawab \"Gimana badanmu hari ini?\" supaya saran pas."
+      },
+      "library": {
+        "title": "Perpustakaan gerakan",
+        "text": "Cara melakukan tiap gerakan, dengan gambar, dari kartu di Hari ini."
+      },
+      "watchLater": {
+        "title": "Jam, kapan pun",
+        "text": "Tab Jam: pasangkan jam Huawei atau Honor, atau minta dukungan untuk jam-mu."
+      }
     },
     "where": {
       "unbind": "Pengaturan, Impor dari Huawei Health",
@@ -194,6 +228,21 @@
       "background": "Koneksi latar belakang",
       "account": "Masuk JoyoRogo",
       "cloud": "JoyoRogo Cloud"
-    }
+    },
+    "introNoWatch": "Hari ini sudah siap dipakai, tanpa jam. Beberapa tempat yang perlu kamu tahu:"
+  },
+  "phone": {
+    "title": "Latihan tanpa jam",
+    "intro": "Semua yang kamu butuhkan untuk berlatih sudah ada di HP ini.",
+    "logger": "Catat latihan beban: set, repetisi, beban, timer istirahat, dan rekor pribadi. Kalori dihitung dari berat badanmu dan lama latihan.",
+    "coach": "Coach (Pro) membuat rencana latihan dan saran harian. Tanpa data dari jam, saran memakai rencanamu dan jawabanmu soal badan hari ini.",
+    "library": "Perpustakaan gerakan dengan gambar dan cara melakukannya.",
+    "rogo": "JoyoRogo: kalori latihan ikut masuk ke buku harian makan.",
+    "weightIntro": "Berat badanmu dipakai untuk memperkirakan kalori latihan. Boleh dilewati, perkiraan memakai 70 kg.",
+    "weightLabel": "Berat badan (kg)",
+    "weightSave": "Simpan berat",
+    "weightSaved": "Tersimpan: {{kg}} kg. Tinggi dan tahun lahir bisa diisi di Pengaturan, Profil.",
+    "weightInvalid": "Isi berat antara 20 dan 300 kg.",
+    "later": "Punya jam Huawei atau Honor nanti? Pasangkan dari tab Jam kapan saja, tanpa mengulang panduan ini."
   }
 }

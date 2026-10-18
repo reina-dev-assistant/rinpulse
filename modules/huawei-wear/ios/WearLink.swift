@@ -459,7 +459,7 @@ public final class WearLink: @unchecked Sendable {
 
     /// Pulls sleep, steps and totals since the last stored sync, commits them to the shared database and reports a summary (also as
     /// `onSyncComplete`). `fullHistory` ignores `device.last_sync` and re-pulls everything the watch still holds (`syncFullHistory`). The
-    /// night-HRV phase of the Android sync is not ported; the P2P health metrics run as a sync extension.
+    /// night-HRV phase of the Android sync is not ported; a watch with `tracks_health = 0` stores nothing; the P2P health metrics run as a sync extension.
     public func syncActivity(fullHistory: Bool = false) async throws -> SyncSummary {
         let connection = try requireConnected()
         if currentState() == .syncing { throw WearError(.busy, "A sync is already running") }
@@ -503,6 +503,11 @@ public final class WearLink: @unchecked Sendable {
         let address = connection.address
         let last = fullHistory ? nil : try storage { try syncStore.lastSync(address: address) }
         let nowSec = Int64(now().timeIntervalSince1970)
+        // A watch that does not track health (a guest's band) stores no rows and runs no extension that does; the flag is read on every sync.
+        if let empty = try storage({ try syncStore.untrackedSyncSummary(address: address, nowSec: nowSec) }) {
+            events.info("History: \(address) does not track health (device.tracks_health = 0); nothing stored, last sync advanced")
+            return empty
+        }
         // The first sync and a full history both ask from the beginning of time (ActivitySync turns 0 into 2000-01-01) in slices.
         let from = syncWindowStart(lastSyncSec: last)
         let slices = syncSlices(fromSec: from, nowSec: nowSec)
@@ -527,7 +532,7 @@ public final class WearLink: @unchecked Sendable {
         }
         let finalPart = finalSlice!
         let workouts = try await WorkoutPhase.run(
-            session: session, caps: caps, syncStore: syncStore, events: events, nowSec: Int64(now().timeIntervalSince1970), fullHistory: fullHistory
+            session: session, caps: caps, syncStore: syncStore, address: address, events: events, nowSec: Int64(now().timeIntervalSince1970), fullHistory: fullHistory
         )
         events.info("History: summary \(samples) step samples, \(sleep) sleep segments, \(workouts) workouts written")
         let summary = SyncSummary(

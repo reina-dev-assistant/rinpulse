@@ -3,6 +3,7 @@ import { File } from 'expo-file-system';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 
+import { dbHealth, isCorruptionError } from '@/db/recovery';
 import { errorMessage } from '@/format';
 import { t } from '@/i18n';
 import { useWatch } from '@/state/WatchProvider';
@@ -45,7 +46,15 @@ export function useFitImport() {
       setRunning(true);
       setResult(null);
       try {
-        const outcome = await importFitFromUri(db, uri);
+        let outcome: FitImportResult;
+        try {
+          outcome = await importFitFromUri(db, uri);
+        } catch (e) {
+          if (!isCorruptionError(e)) throw e;
+          // The database file is damaged: repair it (the notice says what happened), then the same file once more.
+          await dbHealth.repair();
+          outcome = await importFitFromUri(db, uri);
+        }
         setResult(outcome);
         if (outcome.ok) dataChanged();
       } catch (e) {

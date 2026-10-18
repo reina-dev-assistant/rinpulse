@@ -143,6 +143,17 @@ describe('buildWatchPost', () => {
     expect(buildWatchPost(workout(), [], options).detail).toBeUndefined();
   });
 
+  test('the map switch becomes showMap, and the route only travels while it is on', () => {
+    const points = [...hrPoints(60), ...fixes(10)];
+    const on = buildWatchPost(workout(), points, options);
+    expect(on.showMap).toBe(true);
+    expect(on.detail?.route).toHaveLength(10);
+    const off = buildWatchPost(workout(), points, { ...options, includeRoute: false });
+    expect(off.showMap).toBe(false);
+    expect(off.detail?.route).toBeNull();
+    expect(off.detail?.hr?.bpm.length).toBeGreaterThan(0);
+  });
+
   test('a long sport name is cut to the server limit', () => {
     expect(buildWatchPost(workout({ sportName: 'x'.repeat(80) }), [], options).workout.sportName).toHaveLength(60);
   });
@@ -283,6 +294,15 @@ describe('buildWatchPost with an analysis', () => {
   test('applies the privacy switches to the analysis', () => {
     const post = buildWatchPost(workout(), [], { ...options, includeHr: false, includeRoute: false, includeComparison: false }, analysis());
     expect(post.detail?.analysis).toMatchObject({ hrZones: null, comparison: null, series: { track: null, hr: null } });
+  });
+
+  test('the map switch becomes showMap next to the analysis, whose track goes only while it is on', () => {
+    const on = buildWatchPost(workout(), [], options, analysis());
+    expect(on.showMap).toBe(true);
+    expect(on.detail?.analysis?.series?.track).not.toBeNull();
+    const off = buildWatchPost(workout(), [], { ...options, includeRoute: false }, analysis());
+    expect(off.showMap).toBe(false);
+    expect(off.detail?.analysis?.series?.track).toBeNull();
   });
 
   test('aligns durationMin with the analysis when the server would reject the gap', () => {

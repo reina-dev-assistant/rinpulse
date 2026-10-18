@@ -1,4 +1,4 @@
-import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { isIos } from '@/components/IosUnavailable';
 import { KeyValue } from '@/components/KeyValue';
 import { Metric } from '@/components/Metric';
 import { Ring } from '@/components/Ring';
+import { HeaderIconButton } from '@/components/HeaderIconButton';
 import { Card, Screen, Section } from '@/components/Screen';
 import { Notice, Skeleton } from '@/components/States';
 import {
@@ -24,17 +25,24 @@ import {
 import { BurnFigure, FuelBar } from '@/features/live/FuelBar';
 import { startOfLocalDay } from '@/features/today/stats';
 import { STRAIN_MAX, strainAddedToDay, workoutStrain } from '@/features/today/strain';
+import { useWorkoutSource } from '@/features/device/useWorkoutSource';
 import { GearWorkoutSection } from '@/features/gear/ui/GearWorkoutSection';
+import { CoachFeedbackSection } from '@/features/coach/ui/CoachFeedbackSection';
 import { StravaWorkoutSection } from '@/features/strava/StravaWorkoutSection';
-import { ShareWorkoutButton } from '@/features/share/ShareWorkoutSheet';
+import { ShareRunButton } from '@/features/stickers/ui/ShareRunButton';
+import { ReplayButton } from '@/features/replay/ui/ReplayButton';
 import { ShareToRogoButton } from '@/features/social/ShareToRogo';
 import { SaveWorkoutRouteButton } from '@/features/routes/SaveWorkoutRouteButton';
+import { useRoleText } from '@/features/record/ui/roleText';
+import { listWorkoutSensors, type WorkoutSensor } from '@/features/sensors/store';
 import { analyzeWorkout } from '@/features/workouts/analysis/analyze';
 import { loadAnalysisHistory } from '@/features/workouts/analysis/history';
 import { useAnalysisPalette, useMapTheme } from '@/features/workouts/analysis/palette';
 import { workoutElevation } from '@/features/workouts/analysis/elevation';
 import type { WorkoutAnalysis } from '@/features/workouts/analysis/types';
 import { WorkoutAnalysisView, useAnalysisT } from '@/features/workouts/analysis/ui';
+import { DeleteWorkoutDialog } from '@/features/workouts/ui/DeleteWorkoutDialog';
+import { MenuSheet, type MenuItem } from '@/features/strength/ui/Sheet';
 import { sportIcon } from '@/features/workouts/sportIcon';
 import { sportLabel } from '@/features/workouts/sportLabel';
 import { splitWorkout } from '@/features/workouts/substrate';
@@ -52,6 +60,15 @@ import { sourceLabel } from '@/features/fitness/format';
 import { effectWord, trainingEffect } from '@/features/fitness/trainingEffect';
 import { plausibleVo2 } from '@/features/fitness/vo2max';
 import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { useStrengthHistory } from '@/features/strength/history';
+import { getStrengthWorkoutByStart } from '@/features/strength/store';
+import type { StrengthWorkout } from '@/features/strength/types';
+import { StrengthDetailSection } from '@/features/strength/ui/StrengthDetailSection';
+import { EbikeRow } from '@/features/cycling/ui/EbikeRow';
+import { RideAnalysisView } from '@/features/cycling/ui/RideAnalysisView';
+import { useRideData } from '@/features/cycling/ui/useRideData';
+import { withRideStats } from '@/features/cycling/ui/withRideStats';
+import { sportKind } from '@/features/workouts/analysis/sport';
 import { errorMessage, formatClock, formatCount, formatDateTime } from '@/format';
 import { fmtDecimal, fmtInt, t as translate } from '@/i18n';
 import { spacing, useColors } from '@/theme';
@@ -63,6 +80,10 @@ interface Loaded {
   points: WorkoutPointRow[];
   /** Per-minute samples of the workout's day, for its share of that day's strain. */
   daySamples: StepSample[];
+  /** The strength workout stored as this row (its own, or the one merged with this watch workout). */
+  strength: StrengthWorkout | null;
+  /** The sensors a phone recording used; empty for every other workout. */
+  sensors: WorkoutSensor[];
 }
 
 /** `x,y m`, or null when the summary does not have the value. */
@@ -101,11 +122,14 @@ function paceRows(summary: WorkoutSummary, distanceM: number, movingSec: number)
 }
 
 /** The analysis of the workout on screen: computed after the rest of the screen is drawn. */
-type AnalysisState = { status: 'pending' } | { status: 'ready'; analysis: WorkoutAnalysis } | { status: 'error'; message: string };
+type AnalysisState = { status: 'pending' } | { status: 'none' } | { status: 'ready'; analysis: WorkoutAnalysis } | { status: 'error'; message: string };
 
 export default function WorkoutDetailScreen() {
   const db = useSQLiteContext();
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>({ status: 'pending' });
@@ -114,6 +138,9 @@ export default function WorkoutDetailScreen() {
   const mapTheme = useMapTheme();
   const { t } = useTranslation('workouts');
   const analysisT = useAnalysisT();
+  const { catalog } = useStrengthHistory();
+  const recordedBy = useWorkoutSource(Number(id));
+  const roleText = useRoleText();
 
   useFocusEffect(
     useCallback(() => {
@@ -124,13 +151,21 @@ export default function WorkoutDetailScreen() {
         const found = await getWorkout(db, workoutId);
         if (!found) throw new Error(translate('workouts:detail.errors.notStored'));
         const points = await listWorkoutPoints(db, workoutId);
+        const strength = await getStrengthWorkoutByStart(db, found.workout.start);
         const day = startOfLocalDay(found.workout.start);
         const daySamples = (await listStepSamplesSince(db, day)).filter((s) => s.timestamp < day + 86400);
-        return { workout: found.workout, summary: parseSummary(found.summaryJson), points, daySamples };
+        const summary = parseSummary(found.summaryJson);
+        const sensors = summary.source === 'phone' ? await listWorkoutSensors(db, workoutId) : [];
+        return { workout: found.workout, summary, points, daySamples, strength, sensors };
       })().then(
         async (value) => {
           if (cancelled) return;
           setLoaded(value);
+          // The logger's own row has no heart rate, GPS or samples: there is nothing to analyse.
+          if (value.strength !== null && value.points.length === 0) {
+            setAnalysisState({ status: 'none' });
+            return;
+          }
           try {
             const maxHr = userMaxHr();
             const history = await loadAnalysisHistory(db, value.workout, maxHr);
@@ -184,6 +219,20 @@ export default function WorkoutDetailScreen() {
     () => (loaded ? { ...loaded.summary, elevationGain: elevation?.gainM, elevationLoss: elevation?.lossM } : {}),
     [loaded, elevation],
   );
+  const rideInput = useMemo(
+    () =>
+      loaded !== null && sportKind(loaded.workout.sportName, loaded.summary.kind) === 'ride'
+        ? { workout: loaded.workout, summary: loaded.summary, points: loaded.points }
+        : null,
+    [loaded],
+  );
+  const rideData = useRideData(db, rideInput);
+  // The consumers of the analysis (share to JoyoRogo, coach) get the ride's own power and speed figures, not the 600-step grid's.
+  const sharedAnalysis = useMemo(() => {
+    if (analysisState.status !== 'ready') return null;
+    return rideData.ride ? withRideStats(analysisState.analysis, rideData.ride) : analysisState.analysis;
+  }, [analysisState, rideData.ride]);
+  const avgRideSpeed = rideData.ride?.speed.avgMovingMs != null ? rideData.ride.speed.avgMovingMs * 3.6 : null;
   const colors = useColors();
 
   if (!loaded) {
@@ -204,6 +253,7 @@ export default function WorkoutDetailScreen() {
   }
 
   const { workout, summary } = loaded;
+  const bare = loaded.strength !== null && loaded.points.length === 0;
   const jumpRope = summary.kind === 'JUMP_ROPING';
   const swim = summary.swim;
   const sport = sportLabel(workout.sportName);
@@ -221,7 +271,22 @@ export default function WorkoutDetailScreen() {
 
   return (
     <Screen scrollEnabled={!scrubbing}>
-      <Stack.Screen options={{ title: sport }} />
+      <Stack.Screen
+        options={{
+          title: sport,
+          headerRight: () => <HeaderIconButton icon="ellipsis-vertical" label={t('delete.menu')} onPress={() => setMenuOpen(true)} />,
+        }}
+      />
+      <MenuSheet
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        items={[{ key: 'delete', label: t('delete.action'), icon: 'trash-outline', danger: true, onPress: () => setDeleteOpen(true) }] satisfies MenuItem[]}
+      />
+      <DeleteWorkoutDialog
+        target={deleteOpen ? { start: workout.start, sportName: workout.sportName, name: loaded.strength?.name } : null}
+        onClose={() => setDeleteOpen(false)}
+        onConfirmed={() => (router.canGoBack() ? router.back() : router.replace('/workouts'))}
+      />
       <Card>
         <View style={styles.summaryHead}>
           <IconChip icon={sportIcon(workout.sportName)} tint="workouts" size="lg" />
@@ -248,6 +313,11 @@ export default function WorkoutDetailScreen() {
               <Metric value={distance} unit={distanceUnit} size="md" />
             </Figure>
           ) : null}
+          {avgRideSpeed !== null ? (
+            <Figure label={translate('cycling:header.avgSpeed')}>
+              <Metric value={fmtDecimal(avgRideSpeed, 1)} unit={translate('cycling:unit.kmh')} size="md" />
+            </Figure>
+          ) : null}
           {workout.calories > 0 ? (
             <Figure label={t('detail.figure.calories')}>
               <Metric value={formatCount(workout.calories)} unit={t('detail.unit.kcal')} size="md" />
@@ -269,55 +339,93 @@ export default function WorkoutDetailScreen() {
             </Figure>
           ) : null}
         </View>
-        <ShareWorkoutButton workout={workout} summary={shareSummary} route={route} />
-        <ShareToRogoButton
-          workout={workout}
-          points={loaded.points}
-          analysis={analysisState.status === 'ready' ? analysisState.analysis : null}
-          analysisPending={analysisState.status === 'pending'}
-        />
-        <SaveWorkoutRouteButton workout={workout} points={loaded.points} />
+        {rideInput !== null ? <EbikeRow workoutStart={workout.start} /> : null}
+        {bare ? null : (
+          <>
+            <ShareRunButton
+              workout={workout}
+              summary={shareSummary}
+              route={route}
+              analysis={analysisState.status === 'ready' ? analysisState.analysis : null}
+              ride={rideData.ride}
+            />
+            <ReplayButton workout={workout} analysis={sharedAnalysis} climbs={rideData.ride?.climbs ?? null} />
+            <ShareToRogoButton
+              workout={workout}
+              points={loaded.points}
+              analysis={sharedAnalysis}
+              analysisPending={analysisState.status === 'pending'}
+            />
+            <SaveWorkoutRouteButton workout={workout} points={loaded.points} />
+          </>
+        )}
         <CloudWorkoutLine start={workout.start} />
       </Card>
 
+      {loaded.strength ? <StrengthDetailSection strength={loaded.strength} catalog={catalog} /> : null}
+
       {analysisState.status === 'ready' ? (
-        <WorkoutAnalysisView analysis={analysisState.analysis} palette={palette} t={analysisT} mapTheme={mapTheme} onScrubActive={setScrubbing} />
+        rideData.ride !== null ? (
+          <RideAnalysisView
+            analysis={analysisState.analysis}
+            ride={rideData.ride}
+            palette={palette}
+            t={analysisT}
+            mapTheme={mapTheme}
+            onScrubActive={setScrubbing}
+            ftp={rideData.ftp}
+            weightKg={rideData.weightKg}
+            allTime={rideData.allTime}
+            records={rideData.records}
+            onUseFtp={rideData.setFtpAndRefresh}
+          />
+        ) : rideInput !== null && rideData.error === null ? (
+          <Skeleton width="100%" height={320} radius="card" />
+        ) : (
+          <>
+            {rideData.error !== null ? <Notice tone="danger">{t('detail.errors.analysis', { message: rideData.error })}</Notice> : null}
+            <WorkoutAnalysisView analysis={analysisState.analysis} palette={palette} t={analysisT} mapTheme={mapTheme} onScrubActive={setScrubbing} />
+          </>
+        )
       ) : analysisState.status === 'error' ? (
         <Notice tone="danger">{t('detail.errors.analysis', { message: analysisState.message })}</Notice>
-      ) : (
+      ) : analysisState.status === 'none' ? null : (
         <Skeleton width="100%" height={320} radius="card" />
       )}
       {summary.gps === 'failed' ? <Notice icon="location-outline">{t('detail.gpsFailed')}</Notice> : null}
+      <CoachFeedbackSection workoutStart={workout.start} analysis={sharedAnalysis} />
 
-      <Section title={t('detail.strain.title')} icon="pulse" tint="workouts">
-        {strain ? (
-          <>
-            <View style={styles.strainRow}>
-              <Ring
-                size={72}
-                stroke={7}
-                value={strain.strain}
-                max={STRAIN_MAX}
-                color={colors.workouts}
-                track={colors.workoutsSoft}
-                accessibilityLabel={t('detail.strain.a11y', { value: fmtDecimal(strain.strain, 1), max: STRAIN_MAX })}>
-                <AppText variant="heading" style={styles.strainValue}>
-                  {fmtDecimal(strain.strain, 1)}
-                </AppText>
-              </Ring>
-              <View style={styles.strainText}>
-                <Metric value={`+${fmtDecimal(strain.share.added, 1)}`} unit={t('detail.strain.toTheDay')} size="md" color={colors.workoutsText} unitColor={colors.workoutsText} />
-                <AppText variant="caption" muted>
-                  {t('detail.strain.dayNow', { value: fmtDecimal(strain.share.dayStrain, 1) })}
-                </AppText>
+      {bare ? null : (
+        <Section title={t('detail.strain.title')} icon="pulse" tint="workouts">
+          {strain ? (
+            <>
+              <View style={styles.strainRow}>
+                <Ring
+                  size={72}
+                  stroke={7}
+                  value={strain.strain}
+                  max={STRAIN_MAX}
+                  color={colors.workouts}
+                  track={colors.workoutsSoft}
+                  accessibilityLabel={t('detail.strain.a11y', { value: fmtDecimal(strain.strain, 1), max: STRAIN_MAX })}>
+                  <AppText variant="heading" style={styles.strainValue}>
+                    {fmtDecimal(strain.strain, 1)}
+                  </AppText>
+                </Ring>
+                <View style={styles.strainText}>
+                  <Metric value={`+${fmtDecimal(strain.share.added, 1)}`} unit={t('detail.strain.toTheDay')} size="md" color={colors.workoutsText} unitColor={colors.workoutsText} />
+                  <AppText variant="caption" muted>
+                    {t('detail.strain.dayNow', { value: fmtDecimal(strain.share.dayStrain, 1) })}
+                  </AppText>
+                </View>
               </View>
-            </View>
-            <Details title={t('detail.strain.how')}>{t('detail.strain.explain', { maxHr })}</Details>
-          </>
-        ) : (
-          <Notice icon="heart-outline">{t('detail.strain.noHr')}</Notice>
-        )}
-      </Section>
+              <Details title={t('detail.strain.how')}>{t('detail.strain.explain', { maxHr })}</Details>
+            </>
+          ) : (
+            <Notice icon="heart-outline">{t('detail.strain.noHr')}</Notice>
+          )}
+        </Section>
+      )}
 
       {effectShown ? (
         <Section title={t('detail.effect.title')} icon="fitness" tint="workouts">
@@ -388,6 +496,35 @@ export default function WorkoutDetailScreen() {
           label={t('detail.more.timeOfDay')}
           value={t('detail.more.timeRange', { from: formatClock(workout.start), to: formatClock(workout.end) })}
         />
+        {recordedBy !== null ? <KeyValue icon="watch-outline" label={t('detail.more.recordedBy')} value={recordedBy} /> : null}
+        {summary.source === 'phone' ? (
+          <>
+            <KeyValue icon="phone-portrait-outline" label={t('detail.more.recordedBy')} value={t('detail.more.phone')} />
+            {loaded.sensors.map((sensor) => {
+              const name = roleText(sensor.kinds) === '' ? sensor.name : `${sensor.name} (${roleText(sensor.kinds)})`;
+              const silent = summary.sensors?.find((s) => s.id === sensor.id)?.frames === 0;
+              return (
+                <KeyValue
+                  key={sensor.id}
+                  icon="bluetooth-outline"
+                  label={t('detail.more.sensor')}
+                  value={silent ? `${name} · ${t('detail.more.sensorSilent')}` : name}
+                />
+              );
+            })}
+            {(summary.sensors ?? []).map((sensor) =>
+              sensor.frames === 0 && (sensor.kinds.includes('csc') || sensor.kinds.includes('power')) ? (
+                <Notice key={`${sensor.id}-silent`} icon="bluetooth">
+                  {t('detail.more.sensorNoDataNotice', { name: sensor.name })}
+                </Notice>
+              ) : sensor.mode === 'speed' && sensor.kinds.includes('csc') ? (
+                <Notice key={`${sensor.id}-speed`} icon="speedometer-outline">
+                  {t('detail.more.sensorSpeedNotice', { name: sensor.name })}
+                </Notice>
+              ) : null,
+            )}
+          </>
+        ) : null}
         {paceRows(summary, workout.distance, times.movingSec).map((row) => (
           <KeyValue key={row.key} icon="speedometer-outline" label={row.label} value={row.value} />
         ))}
@@ -428,6 +565,9 @@ export default function WorkoutDetailScreen() {
           <Notice icon="document-outline">
             {t('detail.more.imported', { brand: summary.importedFrom, health: isIos ? t('detail.more.healthIos') : t('detail.more.healthAndroid') })}
           </Notice>
+        ) : null}
+        {summary.source === 'phone' && summary.kcalSource !== undefined ? (
+          <Notice icon="flame-outline">{t(summary.kcalSource === 'hr' ? 'detail.more.kcalHr' : 'detail.more.kcalMet')}</Notice>
         ) : null}
         {!workout.complete ? <Notice icon="cloud-download-outline">{t('detail.more.partial')}</Notice> : null}
         {summary.missingData ? <Notice>{t('detail.more.missing')}</Notice> : null}

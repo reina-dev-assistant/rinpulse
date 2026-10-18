@@ -2,6 +2,7 @@ import { Hono } from "hono";
 
 import type { AppContext, AppEnv } from "./env";
 import { deleteFamilyData } from "./family/store";
+import { deleteLiveStatements } from "./live";
 import { dropStravaConnection } from "./strava";
 
 /** Every table with a `user_id` column. `user_state` goes last so a half-finished deletion can still be repeated. */
@@ -18,10 +19,11 @@ async function deleteImportFiles(env: AppEnv, userId: string): Promise<void> {
   }
 }
 
-/** The rows and files the app uploaded (steps, sleep, workouts, devices, imports); not Strava or family. Repeatable. */
+/** The rows and files the app uploaded (steps, sleep, workouts, devices, imports, live tracking sessions); not Strava or family. Repeatable. */
 export async function deleteSyncedData(env: AppEnv, userId: string): Promise<void> {
   await deleteImportFiles(env, userId);
-  await env.DB.batch(USER_TABLES.map((table) => env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?1`).bind(userId)));
+  // Live tracking rows go first: the points are found through the sessions. `user_state` stays last (see USER_TABLES).
+  await env.DB.batch([...deleteLiveStatements(env.DB, userId), ...USER_TABLES.map((table) => env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?1`).bind(userId))]);
 }
 
 /** Everything JoyoFit holds for one JoyoRogo user: synced rows, imported files, the Strava connection, family links (both roles). Repeatable. */

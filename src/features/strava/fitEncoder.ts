@@ -12,6 +12,7 @@ const BASE_TYPES = {
   uint8: { code: 0x02, size: 1, invalid: 0xff },
   uint16: { code: 0x84, size: 2, invalid: 0xffff },
   uint32: { code: 0x86, size: 4, invalid: 0xffff_ffff },
+  sint16: { code: 0x83, size: 2, invalid: 0x7fff },
   sint32: { code: 0x85, size: 4, invalid: 0x7fff_ffff },
   /** Like uint32, but 0 is the invalid value. */
   uint32z: { code: 0x8c, size: 4, invalid: 0 },
@@ -136,15 +137,16 @@ export class FitWriter {
         return;
       }
       const base = BASE_TYPES[field.type];
-      const signed = field.type === 'sint32';
+      const signed = field.type === 'sint16' || field.type === 'sint32';
+      const half = 256 ** base.size / 2;
       let number: number = base.invalid;
       if (typeof value === 'number' && Number.isFinite(value)) {
-        number = Math.min(signed ? 2 ** 31 - 1 : 256 ** base.size - 1, Math.max(signed ? -(2 ** 31) : 0, Math.round(value)));
+        number = Math.min(signed ? half - 1 : 256 ** base.size - 1, Math.max(signed ? -half : 0, Math.round(value)));
         // A real value must not read as the invalid marker (for the `z` types that marker is 0, and 0 stays "none").
         if (number === base.invalid && base.invalid !== 0) number = base.invalid - 1;
       }
-      // sint32 goes through its two's complement form.
-      this.uint(number < 0 ? number + 2 ** 32 : number, base.size);
+      // Signed values go through their two's complement form.
+      this.uint(number < 0 ? number + 256 ** base.size : number, base.size);
     });
   }
 

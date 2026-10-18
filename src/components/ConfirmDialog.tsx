@@ -11,12 +11,16 @@ interface ConfirmDialogProps {
   message: string;
   confirmLabel: string;
   cancelLabel?: string;
+  /** Red confirm button, for a decision that deletes something or signs out. */
+  destructive?: boolean;
+  /** The decision is being carried out: the confirm button spins and both buttons stop answering. */
+  busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
 /** A centered card over a dimmed screen for one decision that cannot be undone silently. Back or a tap outside cancels. */
-export function ConfirmDialog({ visible, title, message, confirmLabel, cancelLabel, onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({ visible, title, message, confirmLabel, cancelLabel, destructive, busy, onConfirm, onCancel }: ConfirmDialogProps) {
   const { t } = useTranslation('common');
   const cancel = cancelLabel ?? t('actions.cancel');
   const { colors, radius } = useTheme();
@@ -33,8 +37,8 @@ export function ConfirmDialog({ visible, title, message, confirmLabel, cancelLab
           </AppText>
           <AppText variant="body">{message}</AppText>
           <View style={styles.actions}>
-            <Button label={confirmLabel} variant="primary" onPress={onConfirm} />
-            <Button label={cancel} onPress={onCancel} />
+            <Button label={confirmLabel} variant={destructive ? 'destructive' : 'primary'} loading={busy} onPress={onConfirm} />
+            <Button label={cancel} disabled={busy} onPress={onCancel} />
           </View>
         </Pressable>
       </Pressable>

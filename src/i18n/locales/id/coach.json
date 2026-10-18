@@ -1,0 +1,426 @@
+{
+  "title": "Coach",
+  "disclaimer": "Saran Coach dihitung dari data jam dan aturan umum latihan. Ini bukan saran medis. Kalau ada nyeri, pusing, atau keluhan lain, berhenti dan periksakan ke dokter.",
+  "access": {
+    "upsell": {
+      "title": "Coach adalah fitur Pro",
+      "description": "Saran latihan harian, rencana lari dan latihan kekuatan, dan chat Tanya coach. Rencanamu tersimpan di akun JoyoRogo.",
+      "see": "Lihat Pro",
+      "open": "Buka JoyoRogo di Google Play",
+      "mention": "Coach tersedia untuk akun JoyoRogo Pro. Rencananya tersimpan di akun JoyoRogo-mu."
+    },
+    "signIn": {
+      "title": "Masuk dulu",
+      "body": "Coach menyimpan rencanamu di akun JoyoRogo, jadi kamu perlu masuk dulu.",
+      "cta": "Masuk"
+    },
+    "checking": "Memeriksa akunmu..."
+  },
+  "card": {
+    "title": "Saran hari ini",
+    "details": "Lihat detail",
+    "createPlan": "Buat rencana",
+    "teaser": "Rencana lari dan latihan kekuatan, plus saran harian dari pemulihanmu."
+  },
+  "unit": {
+    "min": "{{value}} mnt",
+    "sec": "{{value}} dtk"
+  },
+  "what": {
+    "easy": "Lari santai {{minutes}} menit, zona {{zone}}",
+    "recovery": "Lari pemulihan {{minutes}} menit, zona {{zone}}",
+    "long": "Lari panjang {{minutes}} menit, zona {{zone}}",
+    "tempo": "Lari tempo: {{main}} menit di zona 3-4 (total {{minutes}} menit)",
+    "intervals": "Interval: {{reps}} x {{work}} cepat, jeda jogging {{rest}} (total {{minutes}} menit)",
+    "walkrun": "Jalan-lari {{minutes}} menit: {{reps}} x (lari {{run}}, jalan {{walk}})",
+    "race": "Lari {{distance}} sesuai targetmu",
+    "walk": "Jalan santai {{minutes}} menit",
+    "mobility": "Istirahat aktif: jalan pelan atau peregangan {{minutes}} menit",
+    "strength": "Latihan kekuatan {{minutes}} menit"
+  },
+  "type": {
+    "easy": "Lari santai",
+    "recovery": "Lari pemulihan",
+    "long": "Lari panjang",
+    "tempo": "Lari tempo",
+    "intervals": "Interval",
+    "walkrun": "Jalan-lari",
+    "race": "Lari {{distance}}",
+    "strength": "Latihan kekuatan",
+    "strengthFocus": "Full body {{focus}}"
+  },
+  "headline": {
+    "rest": "Hari ini istirahat dulu",
+    "activeRest": "Istirahat aktif hari ini",
+    "trainedToday": "Kamu sudah latihan hari ini",
+    "planDone": "Sesi hari ini sudah selesai",
+    "planRestDay": "Hari ini jadwal istirahat",
+    "planFinished": "Rencanamu sudah selesai",
+    "session": "Hari ini: {{what}}",
+    "sessionScaled": "Hari ini: {{what}}",
+    "sessionEasier": "Hari ini: {{what}}",
+    "catchUp": "Kejar sesi yang terlewat: {{what}}",
+    "free": "Hari ini: {{what}}"
+  },
+  "body": {
+    "rest": "Badanmu butuh pulih. Tidur cukup, makan teratur, dan jalan santai kalau mau.",
+    "activeRest": "Gerak ringan membantu pulih tanpa menambah beban. Jangan dipaksa.",
+    "trainedToday": "Cukup untuk hari ini. Makan dan tidur yang baik bikin latihan tadi jadi berguna.",
+    "planDone": "Kerja bagus. Sisanya istirahat.",
+    "planRestDay": "Istirahat bagian dari rencana, bukan sesi yang bolong.",
+    "planFinished": "Mau lanjut? Buat rencana baru dari layar Coach.",
+    "scaled": "Dikurangi jadi {{pct}}% dari rencana",
+    "easier": "Sesi berat diganti yang ringan",
+    "catchUp": "Kamu segar dan kemarin tidak berat, jadi sesi yang terlewat bisa dikejar."
+  },
+  "band": {
+    "title": "Kondisimu: {{band}}",
+    "fresh": "segar",
+    "ok": "cukup",
+    "tired": "lelah",
+    "exhausted": "sangat lelah"
+  },
+  "why": {
+    "title": "Kenapa begini",
+    "readinessRunDown": "Kesiapanmu rendah sekali hari ini.",
+    "readinessStrained": "Kesiapanmu rendah hari ini.",
+    "readinessPrimed": "Kesiapanmu tinggi hari ini.",
+    "hrvLow": "HRV-mu di bawah rentang normalmu.",
+    "overreaching": "Beban latihan 7 hari terakhir jauh di atas rata-rata 28 harimu (rasio {{ratio}}).",
+    "sleepShort": "Tidurmu semalam hanya {{duration}}.",
+    "sleepDebt": "Utang tidurmu 7 malam terakhir {{duration}}.",
+    "strainYesterday": "Beban kemarin tinggi ({{strain}} dari 21).",
+    "hardStreak": "Dua hari berturut-turut berat.",
+    "recoveryLeft": "Jam masih menghitung sisa pemulihan {{hours}} jam.",
+    "activeStreak": "Kamu aktif {{days}} hari berturut-turut.",
+    "afterHardDay": "Kemarin berat (beban {{strain}}), jadi sesi keras jadi sesi santai.",
+    "planRestDay": "Rencanamu menjadwalkan istirahat hari ini.",
+    "planDone": "Rencana dan sesinya sudah selesai.",
+    "trainedToday": "Latihan hari ini sudah tercatat.",
+    "catchUp": "Ada sesi minggu ini yang belum dikerjakan.",
+    "noSignal": "Belum ada data pemulihan, jadi ini saran umum. Jawab pertanyaan di bawah atau sambungkan jam supaya saran lebih pas.",
+    "feelWrecked": "Kamu bilang badanmu sangat lelah hari ini.",
+    "feelTired": "Kamu bilang badanmu capek hari ini.",
+    "feelGreat": "Kamu bilang badanmu segar hari ini."
+  },
+  "rules": {
+    "title": "Cara saran ini dibuat",
+    "body": "Coach menjumlah poin lelah dari sinyal yang ada: kesiapan (dari jam, atau jawabanmu soal badanmu), HRV, beban latihan 7 hari lawan 28 hari, tidur semalam dan utang tidur, beban kemarin, sisa waktu pemulihan di jam, dan hari aktif berturut-turut. Sinyal yang tidak ada tidak dihitung.\n\n0 sampai 1 poin: segar, rencana jalan seperti tertulis.\n2 sampai 3: cukup, rencana dikurangi jadi 85%.\n4 sampai 5: lelah, sesi diganti yang ringan atau istirahat aktif.\n6 atau lebih: sangat lelah, istirahat.\n\nSesi berat tidak pernah ditaruh sehari setelah hari berat. Tanpa rencana, Coach memberi saran umum dari kondisi badanmu saja. Tidak ada AI di sini, hanya aturan di atas."
+  },
+  "plan": {
+    "title": "Rencana latihan",
+    "name": {
+      "run5k": "Lari 5K",
+      "run10k": "Lari 10K",
+      "runHalf": "Half marathon",
+      "runRoutine": "Lari rutin 3x seminggu",
+      "strengthFull": "Kekuatan full body"
+    },
+    "summary": "{{name}} · {{level}} · {{days}}x seminggu",
+    "weekOf": "Minggu {{week}} dari {{weeks}}",
+    "notStarted": "Mulai {{date}}",
+    "finished": "Selesai",
+    "thisWeek": "Minggu ini",
+    "doneOfPlanned": "{{done}} dari {{planned}} sesi selesai",
+    "allWeeks": "Semua minggu",
+    "weekLine": "Minggu {{week}}",
+    "scale": "{{pct}}% dari rencana",
+    "phase": {
+      "build": "Membangun",
+      "cutback": "Pekan ringan",
+      "taper": "Tapering menuju hari H"
+    },
+    "adapt": {
+      "title": "Penyesuaian minggu ini",
+      "reason": {
+        "low_recovery": "Pemulihanmu rendah, jadi volume minggu ini dikurangi.",
+        "missed": "Minggu lalu banyak sesi terlewat, jadi minggu ini dilonggarkan dulu.",
+        "overreaching": "Beban latihanmu kelewat tinggi, jadi minggu ini dikurangi.",
+        "strong": "Minggu lalu lengkap dan beban pas. Volume kembali naik.",
+        "steady": "Tidak ada yang perlu diubah. Rencana jalan terus."
+      }
+    },
+    "status": {
+      "done": "Selesai",
+      "skipped": "Dilewati",
+      "missed": "Terlewat",
+      "today": "Hari ini",
+      "upcoming": "Nanti",
+      "beforeStart": "Sebelum mulai"
+    },
+    "empty": {
+      "title": "Belum ada rencana",
+      "body": "Pilih tujuan, level, dan hari latihan. Coach menyusun rencana mingguan dan menyesuaikannya dengan pemulihanmu."
+    },
+    "change": "Ganti rencana",
+    "end": {
+      "cta": "Akhiri rencana",
+      "title": "Akhiri rencana?",
+      "message": "Rencana dan progresnya dihapus. Data latihan dari jam tidak terpengaruh.",
+      "confirm": "Akhiri",
+      "cancel": "Batal"
+    },
+    "synced": "Rencanamu tersimpan di akun JoyoRogo-mu dan ikut ke ponsel lain."
+  },
+  "setup": {
+    "title": "Rencana baru",
+    "goal": {
+      "title": "Tujuanmu",
+      "run5k": {
+        "title": "Lari 5K",
+        "hint": "Dari nol sampai 5 km, atau lebih cepat."
+      },
+      "run10k": {
+        "title": "Lari 10K",
+        "hint": "Naik bertahap sampai 10 km."
+      },
+      "runHalf": {
+        "title": "Half marathon",
+        "hint": "21 km dengan lari panjang tiap minggu."
+      },
+      "runRoutine": {
+        "title": "Lari rutin 3x seminggu",
+        "hint": "Tanpa lomba. Teratur dan makin kuat."
+      },
+      "strengthFull": {
+        "title": "Kekuatan full body",
+        "hint": "Seluruh tubuh, 2 atau 3 kali seminggu."
+      }
+    },
+    "level": {
+      "title": "Levelmu",
+      "beginner": "Belum rutin lari. Mulai dengan jalan-lari.",
+      "intermediate": "Bisa lari santai 30 menit tanpa berhenti.",
+      "advanced": "Lari 3x seminggu atau lebih dan pernah lari 10 km."
+    },
+    "days": {
+      "title": "Berapa kali seminggu",
+      "hint": "{{n}} sesi seminggu"
+    },
+    "weekdays": {
+      "title": "Hari latihan",
+      "hint": "Pilih {{n}} hari. Sesi panjang jatuh di hari terakhir.",
+      "needMore": "Pilih {{n}} hari",
+      "tooMany": "Maksimal {{n}} hari"
+    },
+    "summary": "{{weeks}} minggu, mulai minggu ini, {{days}} sesi seminggu.",
+    "start": "Mulai rencana",
+    "starting": "Menyimpan...",
+    "error": "Rencana belum tersimpan: {{message}}",
+    "setting": {
+      "title": "Di mana latihannya",
+      "home": "Di rumah",
+      "homeHint": "Tanpa alat. Gerakan menarik pakai karet band atau dumbbell ringan.",
+      "gym": "Di gym",
+      "gymHint": "Pakai mesin, dumbbell, dan barbel."
+    },
+    "levelStrength": {
+      "beginner": "Baru mulai atau lama tidak latihan beban.",
+      "intermediate": "Sudah latihan beban beberapa bulan dan paham tekniknya.",
+      "advanced": "Latihan beban rutin lebih dari setahun."
+    }
+  },
+  "session": {
+    "title": "Detail sesi",
+    "notFound": "Sesi ini sudah tidak ada di rencanamu.",
+    "when": "{{date}}, minggu {{week}}",
+    "total": "Total {{minutes}} menit",
+    "zone": "Zona detak jantung {{zone}}",
+    "zoneRange": "Zona {{zone}}: {{from}} sampai {{to}} bpm",
+    "paceTarget": "Target pace: {{fast}} sampai {{slow}} /km",
+    "paceUnknown": "Target pace muncul setelah ada beberapa lari dengan GPS di jam.",
+    "steps": {
+      "title": "Susunan sesi",
+      "warmup": "Pemanasan {{minutes}} menit: jalan cepat atau jogging pelan.",
+      "walkrun": "Ulangi {{reps}} kali: lari {{run}}, lalu jalan {{walk}}.",
+      "easy": "Lari pada zona 2: kamu masih bisa ngobrol.",
+      "recovery": "Lari sangat pelan di zona 1 sampai 2. Boleh diselingi jalan.",
+      "long": "Lari panjang di zona 2. Pelan itu benar.",
+      "tempo": "{{minutes}} menit tempo: napas berat tapi stabil, zona 3 sampai 4.",
+      "intervals": "Ulangi {{reps}} kali: {{work}} cepat (zona 4), lalu {{rest}} jogging pelan.",
+      "race": "Lari {{distance}}. Mulai pelan, tambah di separuh akhir kalau masih kuat.",
+      "cooldown": "Pendinginan {{minutes}} menit: jalan santai, lalu peregangan."
+    },
+    "mark": {
+      "done": "Tandai selesai",
+      "skip": "Lewati sesi",
+      "undo": "Batalkan tanda"
+    },
+    "state": {
+      "doneWatch": "Selesai, otomatis dari latihan di jam.",
+      "doneHand": "Selesai, ditandai manual.",
+      "skipped": "Dilewati.",
+      "missed": "Terlewat. Kalau badan segar, boleh dikejar dalam beberapa hari.",
+      "upcoming": "Belum waktunya.",
+      "today": "Jadwal hari ini."
+    },
+    "openWorkout": "Buka latihan",
+    "strength": {
+      "title": "Gerakan",
+      "warmup": "Pemanasan 5 menit: jalan di tempat, putar bahu dan pinggul.",
+      "line": "{{sets}} set x {{reps}} ulangan, istirahat {{rest}}",
+      "lineTimed": "{{sets}} set x {{seconds}}, istirahat {{rest}}",
+      "start": "Mulai latihan",
+      "scaled": "Hari ini set dikurangi jadi {{pct}}% dari rencana.",
+      "reps": "Jam Huawei tidak melaporkan jumlah ulangan dari latihan kekuatan, jadi ulangan dan beban dicatat manual di pencatat latihan.",
+      "openExercise": "Lihat cara melakukannya"
+    }
+  },
+  "feedback": {
+    "title": "Dibanding rencana",
+    "planned": "Sesi rencana: {{what}}",
+    "duration": {
+      "on": "Durasi pas: {{actual}}, rencananya {{planned}}.",
+      "under": "Lebih pendek: {{actual}}, rencananya {{planned}}.",
+      "over": "Lebih panjang: {{actual}}, rencananya {{planned}}."
+    },
+    "zone": {
+      "easy": {
+        "on": "Detak jantung terjaga: hanya {{share}}% waktu di atas zona {{target}}.",
+        "over": "Terlalu cepat untuk sesi ini: {{share}}% waktu di atas zona {{target}}."
+      },
+      "tempo": {
+        "on": "Tempo tepat: {{share}}% waktu di zona 3 sampai 4.",
+        "under": "Kurang berat: hanya {{share}}% waktu di zona 3 sampai 4.",
+        "over": "Terlalu keras: {{share}}% waktu di zona 5."
+      },
+      "intervals": {
+        "on": "Interval masuk zona keras: {{actual}} dari rencana {{planned}}.",
+        "under": "Waktu di zona 4 sampai 5 cuma {{actual}}, rencananya {{planned}}."
+      },
+      "walkrun": {
+        "on": "Detak jantung wajar untuk jalan-lari.",
+        "over": "{{share}}% waktu di zona 4 atau 5. Pelankan bagian larinya."
+      }
+    },
+    "pace": {
+      "on": "Pace {{actual}} /km, dalam target {{fast}} sampai {{slow}}.",
+      "over": "Pace {{actual}} /km, lebih cepat dari target {{fast}} sampai {{slow}}.",
+      "under": "Pace {{actual}} /km, lebih santai dari target {{fast}} sampai {{slow}}."
+    },
+    "distance": {
+      "on": "Jarak tercapai: {{actual}} dari {{planned}}.",
+      "under": "Jarak {{actual}}, targetnya {{planned}}."
+    },
+    "overall": {
+      "onTarget": "Sesuai rencana. Lanjutkan.",
+      "tooHard": "Terlalu cepat dari yang direncanakan. Pelankan supaya sesi santai benar-benar santai.",
+      "tooEasy": "Sesi ini bisa sedikit lebih berat kalau kamu merasa segar.",
+      "short": "Lebih pendek dari rencana. Tidak apa-apa, minggu depan lanjut.",
+      "long": "Lebih panjang dari rencana. Jangan lupa istirahat."
+    }
+  },
+  "library": {
+    "credits": "Gambar latihan dari wger.de, lisensi Creative Commons (CC BY-SA); pembuat dan lisensi tiap gambar ada di fit.joyorogo.com/exercises/ATTRIBUTION.txt. Data otot dan tingkat dari free-exercise-db (domain publik).",
+    "title": "Perpustakaan latihan",
+    "search": "Cari gerakan",
+    "setting": {
+      "all": "Semua",
+      "home": "Rumah",
+      "gym": "Gym"
+    },
+    "empty": "Tidak ada gerakan yang cocok.",
+    "count": "{{n}} gerakan",
+    "detail": {
+      "steps": "Langkah",
+      "mistakes": "Kesalahan umum",
+      "muscles": "Otot",
+      "primary": "Utama",
+      "secondary": "Pendukung",
+      "info": "Info",
+      "equipment": "Alat",
+      "level": "Level",
+      "pattern": "Jenis gerakan",
+      "timed": "Dihitung dalam detik",
+      "noImage": "Belum ada gambar untuk gerakan ini.",
+      "notFound": "Gerakan ini tidak ditemukan."
+    }
+  },
+  "muscle": {
+    "abs": "Perut",
+    "abductors": "Paha luar",
+    "adductors": "Paha dalam",
+    "biceps": "Bisep",
+    "calves": "Betis",
+    "chest": "Dada",
+    "forearms": "Lengan bawah",
+    "glutes": "Bokong",
+    "hamstrings": "Paha belakang",
+    "lats": "Punggung samping (lat)",
+    "lower_back": "Punggung bawah",
+    "middle_back": "Punggung tengah",
+    "neck": "Leher",
+    "quadriceps": "Paha depan",
+    "shoulders": "Bahu",
+    "traps": "Punggung atas (trapesius)",
+    "triceps": "Trisep"
+  },
+  "equipment": {
+    "bodyweight": "Berat badan",
+    "band": "Resistance band",
+    "dumbbell": "Dumbbell",
+    "kettlebell": "Kettlebell",
+    "barbell": "Barbell",
+    "machine": "Mesin",
+    "cable": "Kabel",
+    "bench": "Bangku",
+    "bar": "Bar",
+    "other": "Lainnya"
+  },
+  "pattern": {
+    "squat": "Squat",
+    "hinge": "Hinge (engsel pinggul)",
+    "lunge": "Lunge",
+    "push_h": "Dorong ke depan",
+    "push_v": "Dorong ke atas",
+    "pull_h": "Tarik ke badan",
+    "pull_v": "Tarik ke bawah",
+    "core": "Perut dan inti",
+    "glute": "Bokong",
+    "calf": "Betis",
+    "arms": "Lengan",
+    "cardio": "Kardio"
+  },
+  "level": {
+    "beginner": "Pemula",
+    "intermediate": "Menengah",
+    "advanced": "Mahir"
+  },
+  "home": {
+    "library": {
+      "title": "Perpustakaan latihan",
+      "subtitle": "{{n}} gerakan dengan langkah dan kesalahan umum"
+    },
+    "chat": {
+      "title": "Tanya coach",
+      "subtitle": "Tanya soal latihan, pemulihan, dan rencanamu (Pro)"
+    }
+  },
+  "chat": {
+    "emptyTitle": "Tanya apa saja soal latihanmu",
+    "emptyBody": "Coach membaca data jam, rencana, dan catatan makanmu di JoyoRogo. Dia bukan dokter: untuk nyeri atau cedera, temui tenaga medis.",
+    "suggest": {
+      "q1": "Apa latihan yang pas hari ini?",
+      "q2": "Kenapa saranku hari ini begitu?",
+      "q3": "Makanku cukup buat latihan?"
+    },
+    "placeholder": "Tulis pertanyaanmu",
+    "send": "Kirim",
+    "clear": "Hapus obrolan",
+    "thinking": "Coach sedang menulis...",
+    "usage": "Pesan hari ini: {{used}} dari {{cap}}",
+    "capReached": "Batas pesan hari ini sudah tercapai. Coba lagi besok.",
+    "error": "Pesan belum terkirim: {{message}}",
+    "flagged": "Kalau nyeri atau keluhanmu berlanjut, hentikan latihan dan periksakan ke dokter atau fisioterapis.",
+    "privacy": "Pesanmu dan ringkasan datamu dikirim ke AI JoyoRogo untuk dijawab, lalu tidak disimpan di server. Obrolan hanya tersimpan di ponselmu."
+  },
+  "feel": {
+    "title": "Gimana badanmu hari ini?",
+    "hint": "Tanpa data dari jam, jawabanmu dipakai sebagai gantinya. Berlaku untuk hari ini saja.",
+    "great": "Segar",
+    "good": "Biasa",
+    "tired": "Capek",
+    "wrecked": "Lemas",
+    "change": "Ubah jawaban"
+  }
+}

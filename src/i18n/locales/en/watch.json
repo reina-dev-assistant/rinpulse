@@ -5,7 +5,8 @@
     "alarms": "Alarms",
     "faces": "Watch faces",
     "faceEdit": "Customize face",
-    "photo": "Photo face"
+    "photo": "Photo face",
+    "sensors": "Sensors"
   },
   "link": {
     "disconnected": "Disconnected",
@@ -91,14 +92,15 @@
     },
     "bonded": {
       "forgetTitle": "Forget pairing?",
-      "forgetMessage": "This drops the stored auth key for this watch. The next connect is a first-time bind and has to be confirmed on the watch. Android Bluetooth pairing is not touched.",
+      "forgetMessage": "This deletes the watch's authentication key from this phone and removes the watch from your list. Health data already stored stays. The next connection is a first pairing and has to be confirmed on the watch. The Android Bluetooth pairing does not change.",
       "forget": "Forget",
       "forgetPairing": "Forget pairing",
       "unnamed": "Unnamed device",
       "systemConnected": "Already connected to this iPhone. Tap Connect to use it here.",
       "notInReach": "Not in reach. If it is on another phone, disconnect it there first.",
       "disconnect": "Disconnect",
-      "connect": "Connect"
+      "connect": "Connect",
+      "switchHere": "Switch here"
     },
     "list": {
       "title": "Available watches",
@@ -241,7 +243,59 @@
     "tagVideo": "video",
     "tagPhoto": "photo",
     "setActive": "Set active",
-    "customize": "Customize"
+    "customize": "Customize",
+    "activeOnWrist": "Active on Wrist",
+    "onWatchTab": "On watch",
+    "library": "My watch",
+    "storageTitle": "Watch Storage",
+    "storageEstimateTitle": "Estimated Storage",
+    "storageTelemetry": "Hardware Telemetry",
+    "storagePredicted": "Estimated",
+    "storageRemaining": "~{{freeMb}} MB free · ~{{slots}} slots left",
+    "storageBreakdown": "{{custom}} custom · {{factory}} preinstalled",
+    "storageTelemetryFootnote": "Storage capacity reported directly by watch hardware.",
+    "storageEstimateFootnote": "Band models do not broadcast free storage over BLE. Metrics are estimated from known flash limits.",
+    "installRejected": "Install Rejected",
+    "installRejectedHint": "The watch rejected \"{{name}}\". The watch memory may be full, or the file is incompatible with your screen size.",
+    "deleteFromStorage": "Delete from Storage",
+    "deleteFromStorageOnWatch": "Delete \"{{title}}\" from your phone storage?\n\nIt is currently installed on your watch and will stay on the watch until uninstalled.",
+    "deleteFromStorageOnly": "Permanently delete \"{{title}}\" from your phone storage? To reinstall it in the future, you will need to re-import it.",
+    "deleteFromPhone": "Delete from Phone",
+    "personalLibrary": "Personal library",
+    "personalLibraryHint": "Watch faces stored on your phone. Keep your favorites here and swap them onto your watch anytime.",
+    "updateApp": "Update the app to use this feature",
+    "importHwt": "Import .hwt file",
+    "noSaved": "No watch faces saved",
+    "noSavedHint": "Import a .hwt file from your phone storage to build your personal offline collection.",
+    "installed": "Installed",
+    "installedOnWatch": "Installed on Watch",
+    "wrongSize": "Wrong size",
+    "matchesScreen": "Matches screen",
+    "incompatible": "Incompatible",
+    "noPreview": "No preview",
+    "savedToMyWatch": "Saved to My Watch",
+    "savedIncompatibleHint": "\"{{title}}\" has been saved to your My watch collection.\n\nNote: This watch face ({{faceW}}×{{faceH}}) does not match your watch screen resolution ({{watchW}}×{{watchH}}) and cannot be installed to this watch.",
+    "savedInstallPrompt": "\"{{title}}\" has been saved to your My watch collection.\n\nWould you like to install it to your watch right now?",
+    "installToWatchNow": "Install to Watch Now",
+    "keepInMyWatch": "Keep in My Watch",
+    "invalidFileExt": "Invalid File Extension",
+    "zipWarning": "\"{{name}}\" is a .zip archive, not a .hwt file.\n\nMany watch faces are distributed inside a .zip file. Please extract the .zip using your phone's file manager and import the .hwt file found inside.",
+    "notHwtWarning": "\"{{name}}\" does not have a .hwt extension. Please select a valid Huawei watch face (.hwt) file.",
+    "invalidPackage": "Invalid Watch Face Package",
+    "invalidPackageHint": "Could not parse \"{{name}}\":\n\n{{error}}",
+    "installToWatch": "Install to Watch",
+    "installingToWatch": "Installing to Watch...",
+    "incompatibleResolution": "Incompatible ({{width}}×{{height}})",
+    "installAction": "Install",
+    "missingFile": "Missing file",
+    "noDescription": "No description provided.",
+    "byAuthor": "by {{author}}",
+    "customImport": "Custom Import",
+    "customSize": "Custom size",
+    "unknownResolution": "Unknown resolution",
+    "savedUnknownHint": "\"{{title}}\" has been saved to your My watch collection.\n\nNote: This watch face has an unknown screen resolution and cannot be installed to this watch ({{watchW}}×{{watchH}}).",
+    "onWatchCount_one": "{{count}} on watch",
+    "onWatchCount_other": "{{count}} on watch"
   },
   "faceEdit": {
     "reported": "The watch reported new options for this face.",
@@ -431,5 +485,203 @@
     "file": "File",
     "fileValue": "{{name}}, {{bytes}} bytes",
     "statusHint": "Huawei Health reads an upload status of 1 as accepted. Check the course on the watch."
+  },
+  "multi": {
+    "title": "Your watches",
+    "primaryHint": "The primary watch owns the all-day data: steps, heart rate, SpO2 and sleep. The other watches fill the minutes it has nothing for. Workouts from every watch are kept, and the same workout from two watches is counted once.",
+    "add": "Add another watch",
+    "addHint": "Pair the second watch in Bluetooth settings, then tap Connect in the list below. The watches you already have keep their keys. Only one watch is connected at a time.",
+    "badge": {
+      "primary": "Primary",
+      "active": "Active"
+    },
+    "lastSync": "Last synced {{time}}",
+    "neverSynced": "Never synced",
+    "notTracked": "Its health data is not stored",
+    "switchTo": "Switch to this watch",
+    "manage": "Manage this watch",
+    "makePrimary": "Make primary",
+    "rename": {
+      "title": "Watch name",
+      "placeholder": "For example: Running watch",
+      "save": "Save",
+      "action": "Rename",
+      "reset": "Use the watch's name"
+    },
+    "tracksHealth": {
+      "label": "Store this watch's health data",
+      "hint": "Turn off for somebody else's watch, such as a family band: its steps, sleep, heart rate and workouts are not stored on this phone. Notifications, watch faces and alarms still work."
+    },
+    "background": {
+      "label": "Sync in the background",
+      "hint": "Android only. Between the active watch's syncs this watch is connected briefly and synced. The active watch disconnects for a few seconds."
+    },
+    "remove": {
+      "action": "Remove watch",
+      "title": "Remove this watch?",
+      "message": "{{name}} is removed from the list and its pairing key is deleted from this phone. Health data already stored stays. Connecting it again is a first pairing and has to be confirmed on the watch.",
+      "confirm": "Remove"
+    }
+  },
+  "sensors": {
+    "title": "Sensors",
+    "kind": {
+      "hr": "Heart rate",
+      "csc": "Speed and cadence",
+      "power": "Power",
+      "rsc": "Running pod"
+    },
+    "battery": "Battery {{value}}",
+    "unnamed": "Unnamed sensor ({{tail}})",
+    "reading": {
+      "rpm": "{{value}} rpm",
+      "kmh": "{{value}} km/h"
+    },
+    "status": {
+      "idle": "Not connected",
+      "connecting": "Connecting",
+      "searching": "Looking for the sensor",
+      "failed": "Could not connect",
+      "waiting": "Connected, waiting for data",
+      "receiving": "Connected, data coming in",
+      "quiet": "Connected, no new data",
+      "lastValue": "last value {{age}}"
+    },
+    "age": {
+      "now": "just now",
+      "seconds": "{{value}} s ago",
+      "minutes": "{{value}} min ago",
+      "hours": "{{value}} h ago"
+    },
+    "mode": {
+      "speed": "Speed mode",
+      "cadence": "Cadence mode",
+      "both": "Speed and cadence"
+    },
+    "signal": {
+      "strong": "Strong signal",
+      "good": "Good signal",
+      "fair": "Fair signal",
+      "weak": "Weak signal"
+    },
+    "hint": {
+      "notFound": "Sensor not found, make sure it is awake: turn the pedals",
+      "lost": "The sensor signal dropped. Turn the pedals to wake it, the app reconnects by itself.",
+      "failed": "Could not connect. Make sure the sensor is on, close by, and not connected to another app or watch.",
+      "contactLost": "The strap is not touching your skin. Wet the electrodes and tighten it on your chest.",
+      "waitingHr": "No heartbeat yet. Wear the strap on your chest and wet its electrodes.",
+      "waitingBike": "No data yet. Turn the pedals or the wheel to wake the sensor.",
+      "waitingPod": "No data yet. Start walking or running to wake the pod.",
+      "speedMode": "The sensor is in speed mode: it only sends wheel revolutions, so there is no cadence. If it sits on the crank, switch it to cadence mode in the sensor's app (XOSS Vortex: the XOSS app)."
+    },
+    "hub": {
+      "empty": "Pair a heart rate strap, a speed and cadence sensor, a power meter or a running pod over Bluetooth. Workouts recorded on the phone use them; a watch is not required.",
+      "add": "Add a sensor",
+      "manage": "Manage sensors",
+      "manageSub": "Pair, rename, test the connection"
+    },
+    "intro": {
+      "title": "Got a heart rate strap or a bike sensor?",
+      "subtitle": "Pair it straight to the phone, no watch needed."
+    },
+    "paired": {
+      "title": "Your sensors",
+      "empty": "No sensors paired yet. Search for one below.",
+      "connect": "Connect",
+      "cancel": "Cancel",
+      "disconnect": "Disconnect",
+      "connectHint": "Connect to see live numbers. The connection stays on until you disconnect.",
+      "autoConnect": {
+        "label": "Connect automatically for workouts",
+        "hint": "This sensor connects when you start a workout on the phone."
+      },
+      "kinds": "Type",
+      "batteryLabel": "Battery",
+      "maker": "Manufacturer",
+      "model": "Model",
+      "rename": {
+        "action": "Rename",
+        "title": "Sensor name",
+        "placeholder": "For example: Chest strap",
+        "save": "Save",
+        "reset": "Use original name"
+      },
+      "remove": {
+        "action": "Remove sensor",
+        "title": "Remove this sensor?",
+        "message": "{{name}} is removed from the list and disconnected. Past workouts keep their data. Pair it again any time from Find sensors.",
+        "confirm": "Remove"
+      }
+    },
+    "scan": {
+      "title": "Find sensors",
+      "intro": "Look for Bluetooth sensors near you. The phone asks for Bluetooth permission first. It is only used to find and connect to sensors.",
+      "continue": "Continue",
+      "start": "Find sensors",
+      "again": "Search again",
+      "stop": "Stop",
+      "scanning": "Looking for nearby sensors",
+      "found_one": "{{count}} found",
+      "found_other": "{{count}} found",
+      "none": "No sensors found yet. Try the tips below, then search again.",
+      "pair": "Pair",
+      "paired": "Already paired",
+      "tips": "Chest strap: wet the electrodes and wear it on your chest. Bike sensor: turn the pedals or the wheel to wake it. Keep the sensor close to the phone and disconnect it from other apps or watches."
+    },
+    "problem": {
+      "bluetoothOff": "Bluetooth is off. Turn Bluetooth on, then try again.",
+      "unsupported": "This phone does not support Bluetooth LE, so sensors cannot be used.",
+      "permission": "Bluetooth permission is not granted, so sensors cannot be found or connected. Allow it in the app settings.",
+      "openSettings": "Open settings",
+      "scanFailed": "The sensor search failed. Turn Bluetooth off and on, then try again.",
+      "connectFailed": "Could not connect to the sensor. Try again."
+    },
+    "wheel": {
+      "title": "Wheel size",
+      "body": "Speed and distance from a wheel sensor are worked out from the wheel's circumference. Pick your tyre size, or enter the circumference yourself.",
+      "presets": "Tyre size",
+      "field": "Wheel circumference (mm)",
+      "hint": "Between {{min}} and {{max}} mm. A size you measured yourself is the most accurate.",
+      "invalid": "Enter the circumference as a whole number from {{min}} to {{max}} mm."
+    },
+    "notes": {
+      "title": "Good to know",
+      "ant": "ANT+ is not supported (it needs ANT hardware). Use a Bluetooth sensor.",
+      "huawei": "A Huawei watch cannot take an external strap. A strap is used by workouts recorded on the phone."
+    }
+  },
+  "agps": {
+    "title": "Satellite data (A-GPS)",
+    "lastUpdated": "Last updated",
+    "size": "Size",
+    "asked": "Your watch asked for",
+    "askedNever": "Nothing yet",
+    "never": "Never",
+    "refresh": "Update now",
+    "cancel": "Cancel",
+    "phoneCopy": "Copy on this phone",
+    "details": "Your watch uses satellite data to find its GPS position quickly. The data is good for about 7 days. If your watch asks for the Broadcom kind, JoyoFit downloads it from Broadcom's public server, with no account, and gives it to the watch. Other kinds are prepared only by Huawei's own app; JoyoFit never sends the watch anything it did not ask for.",
+    "retryAt": "Next automatic try around {{time}}.",
+    "sizeValue": "{{kb}} KB",
+    "status": {
+      "never": "Your watch has not taken satellite data from JoyoFit yet.",
+      "delivered": "Your watch has the latest satellite data.",
+      "expired": "The satellite data on your watch has expired. Tap Update now.",
+      "stored": "The data is downloaded to this phone. It goes to your watch when the watch connects and asks for it.",
+      "watchSilent": "The data is ready on this phone, but your watch did not respond. It will be sent when your watch asks.",
+      "noNetwork": "This phone has no internet. Try again when it is connected.",
+      "downloadFailed": "The satellite data could not be downloaded.",
+      "invalidFile": "What was downloaded is not valid satellite data, so it was not sent to your watch.",
+      "unsupported": "Your watch needs satellite data that only Huawei's own app can prepare, and JoyoFit cannot provide it.",
+      "watchRefused": "Your watch did not take part in the exchange. It starts the update itself.",
+      "timeout": "The transfer to your watch stopped halfway, so it was dropped.",
+      "cancelled": "The update was cancelled.",
+      "busy": "An update is already running.",
+      "linkLost": "The connection to your watch dropped during the update.",
+      "asking": "Asking your watch...",
+      "downloading": "Downloading satellite data...",
+      "waiting": "Data ready, waiting for your watch to take it...",
+      "sending": "Sending to your watch..."
+    }
   }
 }

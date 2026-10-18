@@ -1,5 +1,4 @@
 import { NativeModule, requireNativeModule } from 'expo';
-
 import type {
   BackgroundStatus,
   BondedDevice,
@@ -23,7 +22,14 @@ import type {
   WeatherStatus,
 } from './HuaweiWear.types';
 import type { PhoneFeatures, WatchAlarms, WatchAlarmsUpdate } from './HuaweiWearPhone.types';
-import type { CycleOverview, CycleSwitches, SafetyStatus, SosRelayTest } from './HuaweiWearExtras.types';
+import type {
+  AgpsRefreshResult,
+  AgpsStatus,
+  CycleOverview,
+  CycleSwitches,
+  SafetyStatus,
+  SosRelayTest,
+} from './HuaweiWearExtras.types';
 import type {
   ActivityGoals,
   ActivityGoalsStatus,
@@ -32,7 +38,7 @@ import type {
   DietDay,
   DietStatus,
 } from './HuaweiWearDiet.types';
-import type { WatchfaceInstallResult, WatchfaceList } from './HuaweiWearWatchface.types';
+import type { ParsedWatchfacePackage, WatchfaceInstallResult, WatchfaceList } from './HuaweiWearWatchface.types';
 import type { FaceApplyResult, FaceCustomization } from './HuaweiWearFaceCustom.types';
 import type { PhotoFace } from './HuaweiWearPhotoFace.types';
 import type { CoursesStatus, HealthyLivingStatus, RunningCourse, RunningCoursePushResult } from './HuaweiWearP2p.types';
@@ -296,6 +302,10 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
   setActiveWatchface(id: string): Promise<WatchfaceList>;
   /** Deletes the face with this id; resolves with the list read afterwards, rejects if the face is still there. */
   deleteWatchface(id: string): Promise<WatchfaceList>;
+  /** Parses metadata, description, and preview image from a local .hwt file. Set persist=true to keep an internal copy in app storage. */
+  parseWatchfacePackage(uri: string, persist?: boolean): Promise<ParsedWatchfacePackage>;
+  /** Deletes an imported watchface binary from the phone's local storage. */
+  deleteLocalWatchfaceFile(filePath: string): Promise<boolean>;
   /**
    * A face's current options (DataSync 800100008). Resolves with what the watch reports; a face with no editable options does not answer
    * (ERR_TIMEOUT). ERR_NOT_CONNECTED, ERR_UNSUPPORTED (watch lacks ExpandCapability 84), ERR_INVALID_ARGUMENT (face not on the watch).
@@ -341,6 +351,16 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
   setSleepReportEnabled(enabled: boolean): Promise<void>;
   /** Pushes the report for the latest stored night now, ignoring the once-a-morning rules. Resolves with "sent" or why not. */
   sendSleepReportNow(): Promise<string>;
+
+  /** Satellite data (A-GPS) state: the newest download, the last delivery to the watch, what the watch asked for, the last outcome. Android only. */
+  getAgps(): AgpsStatus;
+  /**
+   * "Update now": downloads fresh satellite data and, with a watch connected, starts the exchange from the phone so the watch takes it.
+   * Without a watch the data is kept on the phone and goes out when the watch asks. Never rejects for a failed download; the outcome says what happened.
+   */
+  refreshAgps(): Promise<AgpsRefreshResult>;
+  /** Cancels an update that is running (tells the watch "failed" so it does not wait). */
+  cancelAgps(): Promise<void>;
 
   /** The cycle log, estimates and switches. Predictions are an average-cycle estimate. */
   getCycle(): Promise<CycleOverview>;

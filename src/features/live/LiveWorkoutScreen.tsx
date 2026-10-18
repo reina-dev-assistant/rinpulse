@@ -24,7 +24,9 @@ import { sportIcon } from '@/features/workouts/sportIcon';
 import { formatElapsed } from '@/features/workouts/summary';
 import { fmtDecimal, fmtInt } from '@/i18n';
 import { useNow } from '@/hooks/useNow';
+import { isLinkUp } from '@/features/device/linkState';
 import { useLiveWorkout } from '@/state/LiveWorkoutProvider';
+import { useWatch } from '@/state/WatchProvider';
 import { radius, spacing, useColors } from '@/theme';
 import { HuaweiWear, type LiveWorkout } from '@/wear';
 import { sportLabel } from '@/features/workouts/sportLabel';
@@ -37,6 +39,7 @@ export function LiveWorkoutScreen() {
   const { t } = useTranslation(['sharing', 'common']);
   const live = useLiveWorkout();
   const router = useRouter();
+  const { linkState } = useWatch();
 
   if (!live) {
     return (
@@ -46,7 +49,7 @@ export function LiveWorkoutScreen() {
           icon="walk"
           title={t('live.emptyTitle')}
           description={t('live.emptyDescription')}
-          action={{ label: t('live.start'), icon: 'play', onPress: () => HuaweiWear.startLiveWorkout() }}
+          action={isLinkUp(linkState) ? { label: t('live.start'), icon: 'play', onPress: () => HuaweiWear.startLiveWorkout() } : undefined}
         />
       </Screen>
     );

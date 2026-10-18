@@ -1,14 +1,15 @@
 import { usePathname, useRootNavigationState, useRouter } from 'expo-router';
-import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
+import { useSQLiteContext } from 'expo-sqlite';
 import Storage from 'expo-sqlite/kv-store';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { isIos } from '@/components/IosUnavailable';
 import { CLOUD_CONFIGURED } from '@/cloud/config';
-import { hasStoredWatch } from '@/db/queries';
+import { rememberedWatch } from '@/features/device/rememberedWatch';
 import {
   advance,
   back,
+  chooseNoWatch,
   dismiss,
   parseState,
   resolveLaunch,
@@ -35,6 +36,8 @@ export interface OnboardingContextValue {
   back: () => void;
   /** Skip setup: leave the whole guide; it is not shown again on its own. */
   dismissGuide: () => void;
+  /** "Aku belum punya jam / jamku belum didukung": the phone-only route, which skips pairing. */
+  chooseNoWatch: () => void;
   /** Settings, Setup guide: a fresh run from the first step. */
   open: () => void;
 }
@@ -100,6 +103,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       skipStep: () => state && store(skip(state, ctx)),
       back: () => state && store(back(state, ctx)),
       dismissGuide: () => state && store(dismiss(state)),
+      chooseNoWatch: () => state && store(chooseNoWatch(state, ctx)),
       open: () => {
         store(startState({ hasPairedWatch: HuaweiWear.getDevice() !== null || HuaweiWear.getBackgroundStatus().address !== null }));
         router.navigate('/onboarding');
@@ -109,14 +113,4 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   );
 
   return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
-}
-
-/** A watch this phone already knows: linked now, remembered for background, or stored by an earlier sync. */
-async function rememberedWatch(db: SQLiteDatabase): Promise<boolean> {
-  if (HuaweiWear.getDevice() !== null || HuaweiWear.getBackgroundStatus().address !== null) return true;
-  try {
-    return await hasStoredWatch(db);
-  } catch {
-    return false;
-  }
 }

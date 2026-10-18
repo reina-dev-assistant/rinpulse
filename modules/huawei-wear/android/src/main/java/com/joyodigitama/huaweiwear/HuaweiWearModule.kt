@@ -336,6 +336,9 @@ class HuaweiWearModule : Module() {
     // Family monitoring, monitored side: config, upload now, last result (FamilyModuleApi.kt, FamilyUploader.kt).
     familyApi { runtime() }
 
+    // Satellite data (A-GPS): status, update now, cancel, the watch maker's servers switch (AgpsModuleApi.kt, Ephemeris.kt).
+    agpsApi { runtime() }
+
     OnDestroy {
       destroyed = true
       runtimeRef?.let {

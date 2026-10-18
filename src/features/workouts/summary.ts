@@ -13,6 +13,14 @@ export interface PaceBlock {
 }
 
 /** The fields of `workouts.summary_json` the app shows (see `WorkoutRecord.kt`); everything is optional. */
+/** What the web game reports at the end of a ride (`sum` in features/ride/protocol.ts), kept with the workout. */
+export interface VirtualRide {
+  distM: number;
+  elevM: number;
+  route: string;
+  laps: { sec: number; distM: number }[];
+}
+
 export interface WorkoutSummary {
   /** Gadgetbridge `ActivityKind` name, e.g. `RUNNING`. */
   kind?: string;
@@ -37,6 +45,10 @@ export interface WorkoutSummary {
   avgAltitude?: number;
   elevationGain?: number;
   elevationLoss?: number;
+  /** Where `elevationGain` and `elevationLoss` come from: the recording device (a FIT file's session), JoyoFit's computation from the altitude, or the web game's route (`virtualRide`). */
+  ascentSource?: 'device' | 'computed' | 'virtual';
+  /** An indoor ride played in the web game ("Main di web"): the distance and climb are the game's, not measured. */
+  virtualRide?: VirtualRide;
   maxDepth?: number;
   workoutLoad?: number;
   aerobicEffect?: number;
@@ -48,10 +60,18 @@ export interface WorkoutSummary {
   avgPower?: number;
   maxPower?: number;
   normalizedPower?: number;
+  /** Mean percent of the left pedal of a power meter that measures balance (a phone recording or an imported file). */
+  balanceLeftPct?: number;
   avgCadence?: number;
   maxCadence?: number;
   /** Set on workouts imported from a FIT file: the device brand, or `FIT file` when the file does not say. */
   importedFrom?: string;
+  /** `phone`: recorded by this phone (GPS and any paired sensors), see `features/record`. */
+  source?: 'phone';
+  /** The sensors a phone recording used, as named when it was recorded. */
+  sensors?: SummarySensor[];
+  /** Where a phone recording's energy came from: the heart rate strap or the MET estimate. */
+  kcalSource?: 'hr' | 'met';
   swim?: {
     style?: string;
     strokes?: number;
@@ -66,6 +86,17 @@ export interface WorkoutSummary {
   paceSlowestSecPerKm?: number;
   /** Watch laps, unix seconds; absent for workouts stored before laps were kept. */
   laps?: SummaryLap[];
+}
+
+/** One sensor of `summary_json.sensors`; `kinds` are `SensorKind` values (`hr`, `csc`, `power`, `rsc`). */
+export interface SummarySensor {
+  id: string;
+  name: string;
+  kinds: string[];
+  /** Values the recording took from it; 0 when it was asked for and never sent one. Absent on recordings made before this was kept. */
+  frames?: number;
+  /** What its CSC frames carried: `speed` (wheel only), `cadence` (crank only) or `both`. */
+  mode?: 'speed' | 'cadence' | 'both';
 }
 
 /** One lap of `summary_json.laps`. */

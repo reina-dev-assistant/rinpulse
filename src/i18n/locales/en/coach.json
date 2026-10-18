@@ -1,0 +1,426 @@
+{
+  "title": "Coach",
+  "disclaimer": "Coach suggestions are worked out from your watch data and general training rules. This is not medical advice. If you feel pain, dizziness or anything else wrong, stop and see a doctor.",
+  "access": {
+    "upsell": {
+      "title": "Coach is a Pro feature",
+      "description": "A daily training suggestion, running and strength plans, and the Ask coach chat. Your plan is kept in your JoyoRogo account.",
+      "see": "See Pro",
+      "open": "Open JoyoRogo on Google Play",
+      "mention": "Coach is available to JoyoRogo Pro accounts. The plan is kept in your JoyoRogo account."
+    },
+    "signIn": {
+      "title": "Sign in first",
+      "body": "Coach keeps your plan in your JoyoRogo account, so you need to sign in.",
+      "cta": "Sign in"
+    },
+    "checking": "Checking your account..."
+  },
+  "card": {
+    "title": "Today's suggestion",
+    "details": "See details",
+    "createPlan": "Make a plan",
+    "teaser": "Running and strength plans, plus a daily suggestion from your recovery."
+  },
+  "unit": {
+    "min": "{{value}} min",
+    "sec": "{{value}} s"
+  },
+  "what": {
+    "easy": "Easy run {{minutes}} minutes, zone {{zone}}",
+    "recovery": "Recovery run {{minutes}} minutes, zone {{zone}}",
+    "long": "Long run {{minutes}} minutes, zone {{zone}}",
+    "tempo": "Tempo run: {{main}} minutes in zones 3-4 ({{minutes}} minutes in all)",
+    "intervals": "Intervals: {{reps}} x {{work}} hard, {{rest}} easy jog between ({{minutes}} minutes in all)",
+    "walkrun": "Walk/run {{minutes}} minutes: {{reps}} x (run {{run}}, walk {{walk}})",
+    "race": "Run {{distance}} at your goal effort",
+    "walk": "Easy walk {{minutes}} minutes",
+    "mobility": "Active rest: a slow walk or stretching for {{minutes}} minutes",
+    "strength": "Strength session {{minutes}} minutes"
+  },
+  "type": {
+    "easy": "Easy run",
+    "recovery": "Recovery run",
+    "long": "Long run",
+    "tempo": "Tempo run",
+    "intervals": "Intervals",
+    "walkrun": "Walk/run",
+    "race": "Run {{distance}}",
+    "strength": "Strength session",
+    "strengthFocus": "Full body {{focus}}"
+  },
+  "headline": {
+    "rest": "Rest today",
+    "activeRest": "Active rest today",
+    "trainedToday": "You already trained today",
+    "planDone": "Today's session is done",
+    "planRestDay": "Rest day in your plan",
+    "planFinished": "Your plan is finished",
+    "session": "Today: {{what}}",
+    "sessionScaled": "Today: {{what}}",
+    "sessionEasier": "Today: {{what}}",
+    "catchUp": "Catch up on a missed session: {{what}}",
+    "free": "Today: {{what}}"
+  },
+  "body": {
+    "rest": "Your body needs to recover. Sleep enough, eat regularly, and take an easy walk if you like.",
+    "activeRest": "Light movement helps recovery without adding load. Do not force it.",
+    "trainedToday": "That is enough for today. Good food and sleep make the session count.",
+    "planDone": "Nice work. The rest of the day is for recovery.",
+    "planRestDay": "Rest is part of the plan, not a hole in it.",
+    "planFinished": "Want to keep going? Make a new plan from the Coach screen.",
+    "scaled": "Cut to {{pct}}% of the plan",
+    "easier": "A hard session swapped for an easy one",
+    "catchUp": "You are fresh and yesterday was not hard, so a missed session can be caught up."
+  },
+  "band": {
+    "title": "Your state: {{band}}",
+    "fresh": "fresh",
+    "ok": "fair",
+    "tired": "tired",
+    "exhausted": "very tired"
+  },
+  "why": {
+    "title": "Why",
+    "readinessRunDown": "Your readiness is very low today.",
+    "readinessStrained": "Your readiness is low today.",
+    "readinessPrimed": "Your readiness is high today.",
+    "hrvLow": "Your HRV is below your normal range.",
+    "overreaching": "The last 7 days of load are far above your 28-day average (ratio {{ratio}}).",
+    "sleepShort": "You slept only {{duration}} last night.",
+    "sleepDebt": "Your sleep debt over the last 7 nights is {{duration}}.",
+    "strainYesterday": "Yesterday's strain was high ({{strain}} out of 21).",
+    "hardStreak": "Two hard days in a row.",
+    "recoveryLeft": "Your watch still counts {{hours}} hours of recovery.",
+    "activeStreak": "You have been active {{days}} days in a row.",
+    "afterHardDay": "Yesterday was hard (strain {{strain}}), so the hard session became an easy one.",
+    "planRestDay": "Your plan schedules rest today.",
+    "planDone": "The plan and its session are done.",
+    "trainedToday": "Today's workout is already recorded.",
+    "catchUp": "A session this week has not been done yet.",
+    "noSignal": "No recovery data yet, so this is a general suggestion. Answer the question below or connect a watch for a better fit.",
+    "feelWrecked": "You said your body is very worn out today.",
+    "feelTired": "You said you feel tired today.",
+    "feelGreat": "You said you feel fresh today."
+  },
+  "rules": {
+    "title": "How this suggestion is made",
+    "body": "Coach adds up fatigue points from the signals it has: readiness (from your watch, or how you say you feel), HRV, the 7-day against 28-day training load, last night's sleep and sleep debt, yesterday's strain, the recovery time left on your watch, and days active in a row. A signal that is missing counts for nothing.\n\n0 to 1 points: fresh, the plan goes ahead as written.\n2 to 3: fair, the plan is cut to 85%.\n4 to 5: tired, the session becomes an easy one or active rest.\n6 or more: very tired, rest.\n\nA hard session is never placed the day after a hard day. With no plan, Coach gives a general suggestion from the state of your body alone. There is no AI here, only the rules above."
+  },
+  "plan": {
+    "title": "Training plan",
+    "name": {
+      "run5k": "5K run",
+      "run10k": "10K run",
+      "runHalf": "Half marathon",
+      "runRoutine": "Regular running, 3x a week",
+      "strengthFull": "Full-body strength"
+    },
+    "summary": "{{name}} · {{level}} · {{days}}x a week",
+    "weekOf": "Week {{week}} of {{weeks}}",
+    "notStarted": "Starts {{date}}",
+    "finished": "Finished",
+    "thisWeek": "This week",
+    "doneOfPlanned": "{{done}} of {{planned}} sessions done",
+    "allWeeks": "All weeks",
+    "weekLine": "Week {{week}}",
+    "scale": "{{pct}}% of plan",
+    "phase": {
+      "build": "Building",
+      "cutback": "Easy week",
+      "taper": "Taper toward the day"
+    },
+    "adapt": {
+      "title": "This week's adjustment",
+      "reason": {
+        "low_recovery": "Your recovery is low, so this week's volume is lower.",
+        "missed": "Many sessions were missed last week, so this week eases off first.",
+        "overreaching": "Your training load is too high, so this week is lighter.",
+        "strong": "Last week was complete and the load was right. Volume is climbing back.",
+        "steady": "Nothing to change. The plan carries on."
+      }
+    },
+    "status": {
+      "done": "Done",
+      "skipped": "Skipped",
+      "missed": "Missed",
+      "today": "Today",
+      "upcoming": "Later",
+      "beforeStart": "Before start"
+    },
+    "empty": {
+      "title": "No plan yet",
+      "body": "Pick a goal, a level and your training days. Coach builds a weekly plan and adjusts it to your recovery."
+    },
+    "change": "Change plan",
+    "end": {
+      "cta": "End plan",
+      "title": "End the plan?",
+      "message": "The plan and its progress are deleted. Workouts from your watch are not affected.",
+      "confirm": "End",
+      "cancel": "Cancel"
+    },
+    "synced": "Your plan is kept in your JoyoRogo account and follows you to other phones."
+  },
+  "setup": {
+    "title": "New plan",
+    "goal": {
+      "title": "Your goal",
+      "run5k": {
+        "title": "5K run",
+        "hint": "From zero to 5 km, or faster."
+      },
+      "run10k": {
+        "title": "10K run",
+        "hint": "Build up step by step to 10 km."
+      },
+      "runHalf": {
+        "title": "Half marathon",
+        "hint": "21 km with a long run each week."
+      },
+      "runRoutine": {
+        "title": "Regular running, 3x a week",
+        "hint": "No race. Steady, and getting stronger."
+      },
+      "strengthFull": {
+        "title": "Full-body strength",
+        "hint": "The whole body, 2 or 3 times a week."
+      }
+    },
+    "level": {
+      "title": "Your level",
+      "beginner": "Not running regularly. Start with walk/run.",
+      "intermediate": "Can run easily for 30 minutes without stopping.",
+      "advanced": "Run 3 times a week or more and have run 10 km."
+    },
+    "days": {
+      "title": "Times a week",
+      "hint": "{{n}} sessions a week"
+    },
+    "weekdays": {
+      "title": "Training days",
+      "hint": "Pick {{n}} days. The long session falls on the last one.",
+      "needMore": "Pick {{n}} days",
+      "tooMany": "{{n}} days at most"
+    },
+    "summary": "{{weeks}} weeks, starting this week, {{days}} sessions a week.",
+    "start": "Start plan",
+    "starting": "Saving...",
+    "error": "The plan was not saved: {{message}}",
+    "setting": {
+      "title": "Where you train",
+      "home": "At home",
+      "homeHint": "No equipment. Pulling moves use a resistance band or light dumbbells.",
+      "gym": "At the gym",
+      "gymHint": "With machines, dumbbells and barbells."
+    },
+    "levelStrength": {
+      "beginner": "Just starting, or a long break from lifting.",
+      "intermediate": "Lifting for a few months and know the technique.",
+      "advanced": "Lifting regularly for over a year."
+    }
+  },
+  "session": {
+    "title": "Session details",
+    "notFound": "This session is no longer in your plan.",
+    "when": "{{date}}, week {{week}}",
+    "total": "{{minutes}} minutes in all",
+    "zone": "Heart-rate zone {{zone}}",
+    "zoneRange": "Zone {{zone}}: {{from}} to {{to}} bpm",
+    "paceTarget": "Target pace: {{fast}} to {{slow}} /km",
+    "paceUnknown": "A target pace appears after a few GPS runs from your watch.",
+    "steps": {
+      "title": "Session layout",
+      "warmup": "Warm-up {{minutes}} minutes: a brisk walk or slow jog.",
+      "walkrun": "Repeat {{reps}} times: run {{run}}, then walk {{walk}}.",
+      "easy": "Run in zone 2: you can still hold a conversation.",
+      "recovery": "Run very easy in zone 1 to 2. Walking breaks are fine.",
+      "long": "Long run in zone 2. Slow is right.",
+      "tempo": "{{minutes}} minutes of tempo: breathing hard but steady, zones 3 to 4.",
+      "intervals": "Repeat {{reps}} times: {{work}} hard (zone 4), then {{rest}} easy jog.",
+      "race": "Run {{distance}}. Start easy and add in the second half if you feel good.",
+      "cooldown": "Cool-down {{minutes}} minutes: an easy walk, then stretching."
+    },
+    "mark": {
+      "done": "Mark done",
+      "skip": "Skip session",
+      "undo": "Undo mark"
+    },
+    "state": {
+      "doneWatch": "Done, matched automatically from your watch workout.",
+      "doneHand": "Done, marked by hand.",
+      "skipped": "Skipped.",
+      "missed": "Missed. If you feel fresh, you can catch it up in the next few days.",
+      "upcoming": "Not yet.",
+      "today": "Scheduled today."
+    },
+    "openWorkout": "Open workout",
+    "strength": {
+      "title": "Exercises",
+      "warmup": "Warm-up 5 minutes: march in place, circle your shoulders and hips.",
+      "line": "{{sets}} sets x {{reps}} reps, rest {{rest}}",
+      "lineTimed": "{{sets}} sets x {{seconds}}, rest {{rest}}",
+      "start": "Start workout",
+      "scaled": "Today the sets are cut to {{pct}}% of the plan.",
+      "reps": "A Huawei watch does not report repetitions from strength workouts, so reps and loads are logged by hand in the workout logger.",
+      "openExercise": "See how to do it"
+    }
+  },
+  "feedback": {
+    "title": "Against the plan",
+    "planned": "Planned session: {{what}}",
+    "duration": {
+      "on": "Duration on target: {{actual}}, planned {{planned}}.",
+      "under": "Shorter: {{actual}}, planned {{planned}}.",
+      "over": "Longer: {{actual}}, planned {{planned}}."
+    },
+    "zone": {
+      "easy": {
+        "on": "Heart rate kept in check: only {{share}}% of the time above zone {{target}}.",
+        "over": "Too fast for this session: {{share}}% of the time above zone {{target}}."
+      },
+      "tempo": {
+        "on": "Tempo on target: {{share}}% of the time in zones 3 to 4.",
+        "under": "Not hard enough: only {{share}}% of the time in zones 3 to 4.",
+        "over": "Too hard: {{share}}% of the time in zone 5."
+      },
+      "intervals": {
+        "on": "Intervals reached the hard zones: {{actual}} of the planned {{planned}}.",
+        "under": "Only {{actual}} in zones 4 to 5, planned {{planned}}."
+      },
+      "walkrun": {
+        "on": "Heart rate is fair for walk/run.",
+        "over": "{{share}}% of the time in zone 4 or 5. Slow the running parts down."
+      }
+    },
+    "pace": {
+      "on": "Pace {{actual}} /km, inside the target {{fast}} to {{slow}}.",
+      "over": "Pace {{actual}} /km, faster than the target {{fast}} to {{slow}}.",
+      "under": "Pace {{actual}} /km, easier than the target {{fast}} to {{slow}}."
+    },
+    "distance": {
+      "on": "Distance reached: {{actual}} of {{planned}}.",
+      "under": "Distance {{actual}}, the target was {{planned}}."
+    },
+    "overall": {
+      "onTarget": "On plan. Keep going.",
+      "tooHard": "Faster than planned. Slow down so an easy session is really easy.",
+      "tooEasy": "This session could be a little harder if you feel fresh.",
+      "short": "Shorter than planned. That is fine, carry on next week.",
+      "long": "Longer than planned. Make sure you rest."
+    }
+  },
+  "library": {
+    "credits": "Exercise images from wger.de under Creative Commons licences (CC BY-SA); author and licence of every image are listed at fit.joyorogo.com/exercises/ATTRIBUTION.txt. Muscle and level data from free-exercise-db (public domain).",
+    "title": "Exercise library",
+    "search": "Search exercises",
+    "setting": {
+      "all": "All",
+      "home": "Home",
+      "gym": "Gym"
+    },
+    "empty": "No exercise matches.",
+    "count": "{{n}} exercises",
+    "detail": {
+      "steps": "Steps",
+      "mistakes": "Common mistakes",
+      "muscles": "Muscles",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "info": "Info",
+      "equipment": "Equipment",
+      "level": "Level",
+      "pattern": "Movement",
+      "timed": "Counted in seconds",
+      "noImage": "No image for this exercise yet.",
+      "notFound": "This exercise was not found."
+    }
+  },
+  "muscle": {
+    "abs": "Abs",
+    "abductors": "Outer thighs",
+    "adductors": "Inner thighs",
+    "biceps": "Biceps",
+    "calves": "Calves",
+    "chest": "Chest",
+    "forearms": "Forearms",
+    "glutes": "Glutes",
+    "hamstrings": "Hamstrings",
+    "lats": "Lats",
+    "lower_back": "Lower back",
+    "middle_back": "Mid back",
+    "neck": "Neck",
+    "quadriceps": "Quads",
+    "shoulders": "Shoulders",
+    "traps": "Traps",
+    "triceps": "Triceps"
+  },
+  "equipment": {
+    "bodyweight": "Bodyweight",
+    "band": "Resistance band",
+    "dumbbell": "Dumbbell",
+    "kettlebell": "Kettlebell",
+    "barbell": "Barbell",
+    "machine": "Machine",
+    "cable": "Cable",
+    "bench": "Bench",
+    "bar": "Bar",
+    "other": "Other"
+  },
+  "pattern": {
+    "squat": "Squat",
+    "hinge": "Hinge",
+    "lunge": "Lunge",
+    "push_h": "Push forward",
+    "push_v": "Push overhead",
+    "pull_h": "Pull to body",
+    "pull_v": "Pull down",
+    "core": "Core",
+    "glute": "Glutes",
+    "calf": "Calves",
+    "arms": "Arms",
+    "cardio": "Cardio"
+  },
+  "level": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  },
+  "home": {
+    "library": {
+      "title": "Exercise library",
+      "subtitle": "{{n}} exercises with steps and common mistakes"
+    },
+    "chat": {
+      "title": "Ask coach",
+      "subtitle": "Ask about your training, recovery and plan (Pro)"
+    }
+  },
+  "chat": {
+    "emptyTitle": "Ask anything about your training",
+    "emptyBody": "Coach reads your watch data, your plan and your food log in JoyoRogo. It is not a doctor: for pain or injury, see a professional.",
+    "suggest": {
+      "q1": "What is the right workout for today?",
+      "q2": "Why is my suggestion what it is today?",
+      "q3": "Is my food enough for training?"
+    },
+    "placeholder": "Write your question",
+    "send": "Send",
+    "clear": "Clear chat",
+    "thinking": "Coach is writing...",
+    "usage": "Messages today: {{used}} of {{cap}}",
+    "capReached": "Today's message limit is reached. Try again tomorrow.",
+    "error": "The message was not sent: {{message}}",
+    "flagged": "If the pain or symptoms continue, stop training and see a doctor or physiotherapist.",
+    "privacy": "Your message and a summary of your data go to JoyoRogo's AI to be answered, and are not stored on the server. The chat is kept only on your phone."
+  },
+  "feel": {
+    "title": "How does your body feel today?",
+    "hint": "With no watch data, your answer stands in for it. It counts for today only.",
+    "great": "Fresh",
+    "good": "Normal",
+    "tired": "Tired",
+    "wrecked": "Worn out",
+    "change": "Change answer"
+  }
+}

@@ -1,0 +1,269 @@
+{
+  "settings": {
+    "title": "Cycling",
+    "ftp": {
+      "title": "FTP",
+      "body": "FTP is the most power you can hold for about an hour. Power zones, IF, TSS and ride load are worked out from it.",
+      "label": "FTP (watts)",
+      "hint": "Between {{min}} and {{max}} W. Leave it empty if you do not know it.",
+      "invalid": "FTP must be between {{min}} and {{max}} W.",
+      "clear": "Clear FTP",
+      "unset": "FTP is not set, so power zones, IF and TSS are not calculated.",
+      "tip": "Do not know your FTP? After a hard 20 minute ride, the ride detail suggests a number and you just tap Use."
+    },
+    "zones": {
+      "title": "Power zones",
+      "body": "The seven Coggan zones from an FTP of {{ftp}} W.",
+      "empty": "Enter your FTP to see your power zone limits.",
+      "range": "{{from}}-{{to}} W",
+      "from": "{{from}} W and up",
+      "to": "up to {{to}} W"
+    },
+    "weight": {
+      "title": "Body weight",
+      "body": "W/kg uses the weight in your profile ({{kg}} kg).",
+      "action": "Change in profile"
+    }
+  },
+  "ebike": {
+    "label": "Electric bike (e-bike)",
+    "hint": "Used for the activity type on Strava (EBikeRide)."
+  },
+  "header": {
+    "avgSpeed": "Average speed"
+  },
+  "section": {
+    "splits": "5 km splits",
+    "laps": "Device laps",
+    "climbs": "Climbs",
+    "power": "Power",
+    "powerZones": "Power zones",
+    "powerCurve": "Power curve",
+    "ftp": "FTP estimate",
+    "cadence": "Cadence",
+    "efficiency": "Aerobic efficiency",
+    "load": "Ride load"
+  },
+  "unit": {
+    "kmh": "km/h",
+    "km": "km",
+    "m": "m",
+    "w": "W",
+    "wkg": "W/kg",
+    "rpm": "rpm",
+    "bpm": "bpm",
+    "kcal": "kcal",
+    "kj": "kJ",
+    "vam": "m/h"
+  },
+  "value": {
+    "percent": "{{value}}%",
+    "gainLoss": "+{{gain}} / -{{loss}}"
+  },
+  "summary": {
+    "a11y": "Ride summary",
+    "distance": "Distance",
+    "movingTime": "Moving time",
+    "time": "Time",
+    "elapsed": "Total {{time}}",
+    "elapsedStopped": "Total {{elapsed}}, stopped {{stopped}}",
+    "avgMovingSpeed": "Average speed",
+    "avgSpeed": "Speed (timer)",
+    "overall": "Overall {{value}} km/h",
+    "maxSpeed": "Max speed",
+    "elevation": "Elevation",
+    "grade": "Average grade",
+    "maxGrade": "max {{value}}%",
+    "calories": "Calories",
+    "caloriesPerHour": "{{value}} kcal/h",
+    "heartRate": "Heart rate",
+    "maxHr": "max {{value}} bpm",
+    "cadence": "Cadence",
+    "maxCadence": "max {{value}} rpm",
+    "power": "Average power",
+    "normalizedPower": "NP {{value}} W",
+    "maxPower": "Max power",
+    "wkg": "W/kg",
+    "wkgNp": "NP {{value}} W/kg",
+    "how": "How this is calculated",
+    "explain": "Speed (timer) uses the device timer, moving speed leaves out long stops, and overall uses the total time. Max speed is the fastest 3 second average. Average cadence leaves out the seconds you were coasting (0 rpm), like Garmin does.",
+    "calorieSource": {
+      "power": "Calories from power (mechanical work)",
+      "hr": "Calories from heart rate",
+      "met": "Calories estimated from speed (MET)",
+      "device": "Calories from the device"
+    },
+    "speedSource": {
+      "sensor": "Speed from the wheel sensor.",
+      "gps": "Speed from GPS.",
+      "power": "Speed estimated from power.",
+      "none": "There is no speed data."
+    }
+  },
+  "speedEstimate": "This ride has no wheel sensor or GPS, so speed and distance are estimated from power and can be off.",
+  "splits": {
+    "km": "Km",
+    "speed": "Speed",
+    "hr": "HR",
+    "power": "Power",
+    "cad": "Cad",
+    "gain": "Gain",
+    "a11yRow": "Split to kilometre {{km}}, {{speed}} kilometres per hour",
+    "a11yHint": "Moves the marker on the charts and the map",
+    "note": "Each split's speed uses the moving time."
+  },
+  "laps": {
+    "lap": "Lap",
+    "time": "Time",
+    "dist": "Distance",
+    "speed": "Speed",
+    "hr": "HR",
+    "power": "Power",
+    "cad": "Cad",
+    "a11yRow": "Lap {{n}}, {{time}}"
+  },
+  "climbs": {
+    "category": {
+      "hc": "HC",
+      "1": "Cat. 1",
+      "2": "Cat. 2",
+      "3": "Cat. 3",
+      "4": "Cat. 4",
+      "none": "Minor"
+    },
+    "title": "Climb {{n}}",
+    "gain": "+{{value}} m",
+    "line": "{{length}} km, average grade {{avg}}%, max {{max}}%",
+    "time": "Time",
+    "vam": "VAM",
+    "speed": "Speed",
+    "power": "Power",
+    "hr": "Heart rate",
+    "a11yRow": "Climb {{n}}, {{length}} kilometres, {{gain}} metres up, average grade {{grade}} percent",
+    "a11yHint": "Moves the marker to the start of the climb",
+    "note": "Climbs are at least 500 m long with an average grade of 3% or more, found in the elevation profile. Categories follow the Garmin ClimbPro score: length (m) times grade (%). VAM is metres climbed per hour."
+  },
+  "power": {
+    "avg": "Average",
+    "np": "NP",
+    "max": "Max",
+    "if": "IF",
+    "tss": "TSS",
+    "vi": "VI",
+    "work": "Work",
+    "wkg": "W/kg",
+    "ftp": "FTP used",
+    "balance": "Left / right balance",
+    "balanceValue": "{{left}}% / {{right}}%",
+    "balanceA11y": "Pedal balance: left {{left}} percent, right {{right}} percent",
+    "noFtp": "FTP is not set, so IF, TSS and power zones are not calculated yet.",
+    "setFtp": "Set FTP",
+    "how": "How this is calculated",
+    "explain": "NP (Normalized Power) is the power that would cost you the same if you rode steady: a ride that surges counts as harder than its average power. IF = NP divided by FTP. TSS = hours ridden times IF squared times 100, so one hour right at FTP is 100. VI = NP divided by average power; the closer to 1.00, the steadier your pedalling. W/kg uses the weight in your profile.",
+    "profileLink": "Change weight"
+  },
+  "powerZones": {
+    "ftp": "FTP {{ftp}} W",
+    "range": "{{from}}-{{to}} W",
+    "from": "{{from}} W and up",
+    "to": "up to {{to}} W",
+    "zone": "Z{{n}} {{name}}",
+    "a11yRow": "Zone {{n}}, {{name}}, {{range}}, {{time}}, {{percent}} percent",
+    "name": {
+      "z1": "Active recovery",
+      "z2": "Endurance",
+      "z3": "Tempo",
+      "z4": "Threshold",
+      "z5": "VO2 max",
+      "z6": "Anaerobic",
+      "z7": "Neuromuscular"
+    },
+    "note": "The seven Coggan zones from your FTP. Coasting seconds count in zone 1."
+  },
+  "curve": {
+    "mine": "This ride",
+    "allTime": "All-time best",
+    "a11y": "Best power curve for each duration, from 1 second to {{max}}",
+    "record": "All-time best",
+    "best": "Best {{value}} W",
+    "wkg": "{{value}} W/kg",
+    "none": "This ride is too short for a power curve.",
+    "duration": {
+      "sec": "{{value}} s",
+      "min": "{{value}} min",
+      "hour": "{{value}} h"
+    },
+    "key": {
+      "5": "5 seconds",
+      "60": "1 minute",
+      "300": "5 minutes",
+      "1200": "20 minutes",
+      "3600": "60 minutes"
+    },
+    "note": "The best average power for each duration in this ride. The dashed line is your best from the rides stored in JoyoFit.",
+    "watts": "{{value}} W",
+    "a11yRow": "{{name}}, {{value}} watts"
+  },
+  "ftpSuggestion": {
+    "value": "{{value}} W",
+    "body": "Estimated FTP is 95% of your best 20 minutes ({{best}} W).",
+    "current": "Your FTP is {{value}} W now.",
+    "unset": "Your FTP is not set.",
+    "use": "Use",
+    "hint": "This is only a suggestion. Your FTP does not change until you tap Use."
+  },
+  "cadence": {
+    "pedalling": "Pedalling",
+    "coasting": "Coasting",
+    "band": {
+      "coasting": "Coasting (0)",
+      "range": "{{from}}-{{to}}",
+      "open": "{{from}}+"
+    },
+    "a11yRow": "Cadence {{band}} rpm, {{time}}, {{percent}} percent",
+    "note": "Time in each cadence band. Coasting is moving with zero cadence; average cadence leaves it out.",
+    "timeShare": "{{time}}, {{percent}}"
+  },
+  "hr": {
+    "pwhr": "Pw:Hr {{value}}%",
+    "pahr": "Pa:Hr {{value}}%",
+    "halves": "Efficiency first half {{first}}, second half {{second}}",
+    "good": "Under 5%: a good aerobic base, your heart rate stayed steady for the same effort.",
+    "drift": "Over 5%: your heart rate rose for the same effort, a sign of fatigue, heat or too little drink.",
+    "better": "Efficiency was better in the second half, usually after a long warm-up.",
+    "how": "How this is calculated",
+    "explainPower": "Pw:Hr compares NP with heart rate in the first and second half of the ride (after a 10 minute warm-up). The percentage is the drop in efficiency: under 5% means a good aerobic base, more than that and the heart rate drifted up.",
+    "explainSpeed": "Pa:Hr compares speed with heart rate in the first and second half of the ride (after a 10 minute warm-up). The percentage is the drop in efficiency: under 5% means a good aerobic base, more than that and the heart rate drifted up."
+  },
+  "load": {
+    "thisRide": "This ride",
+    "basis": {
+      "tss": "From power (TSS)",
+      "hr": "From heart rate (TRIMP)"
+    },
+    "trimp": "TRIMP",
+    "tss": "TSS",
+    "tssTrimp": "TSS equals {{value}} TRIMP",
+    "hrTrimp": "From heart rate {{value}} TRIMP",
+    "last7": "Last 7 days",
+    "weeklyAverage": "Weekly average",
+    "verdictLine": "{{verdict}} {{ratio}}",
+    "ratio": "{{percent}}% of your weekly average",
+    "verdict": {
+      "under": "Low",
+      "steady": "Steady",
+      "high": "High",
+      "spike": "Spiking"
+    },
+    "how": "How this is calculated",
+    "explainTss": "A ride with power and an FTP is scored from TSS: 100 TSS (an hour at FTP) equals 240 TRIMP, the same scale as runs and other workouts. The last 7 days add up to this ride; the weekly average is the average of the 28 days before.",
+    "explainHr": "Without power or an FTP, the ride is scored from the minutes in each heart rate zone (Edwards TRIMP). Set your FTP in Cycling settings for a load from power. The last 7 days add up to this ride; the weekly average is the average of the 28 days before.",
+    "a11y": "Ride load: {{verdict}}",
+    "verdictText": {
+      "under": "Lighter than your usual week.",
+      "steady": "In line with your usual week.",
+      "high": "Heavier than your usual week.",
+      "spike": "A big jump from your usual week. Mix in some easy days."
+    }
+  }
+}

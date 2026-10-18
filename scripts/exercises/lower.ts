@@ -1,0 +1,1071 @@
+import type { Curation } from './curation-types';
+
+export const LOWER: Curation = {
+  squat: [
+    {
+      id: 'bodyweight_squat', src: 'Bodyweight_Squat', en: 'Bodyweight squat', idn: 'Squat', eq: 'bodyweight', img: [],
+      se: [
+        'Stand with your feet about shoulder-width apart and toes turned out slightly.',
+        'Brace your core and keep your chest up.',
+        'Push your hips back and bend your knees to lower down.',
+        'Go as deep as is comfortable with your heels flat on the floor.',
+        'Push through your whole foot to stand back up.',
+      ],
+      si: [
+        'Berdiri dengan kaki selebar bahu, ujung kaki sedikit menghadap keluar.',
+        'Kencangkan perut dan jaga dada tetap tegak.',
+        'Dorong pinggul ke belakang, lalu tekuk lutut untuk turun.',
+        'Turun sedalam yang nyaman, tumit tetap menempel di lantai.',
+        'Dorong lewat seluruh telapak kaki untuk berdiri lagi.',
+      ],
+      me: [
+        'Knees cave inward: push them out so they follow the line of your toes.',
+        'Heels lift off the floor: shift your weight to mid-foot and sit back more.',
+        'Lower back rounds at the bottom: stop a little higher until your back stays flat.',
+      ],
+      mi: [
+        'Lutut masuk ke dalam: dorong keluar supaya searah dengan ujung kaki.',
+        'Tumit terangkat: pindahkan beban ke tengah telapak kaki dan duduk lebih ke belakang.',
+        'Punggung bawah membulat di dasar gerakan: berhenti sedikit lebih tinggi sampai punggung tetap lurus.',
+      ],
+    },
+    {
+      id: 'goblet_squat', src: 'Goblet_Squat', en: 'Goblet squat', idn: 'Goblet squat', eq: 'dumbbell', lvl: 'beginner', img: [329],
+      se: [
+        'Hold one dumbbell upright against your chest with both hands under the top end.',
+        'Stand with your feet slightly wider than your shoulders.',
+        'Sit down between your knees while keeping your chest tall.',
+        'Pause when your elbows touch the inside of your knees.',
+        'Stand up by pushing the floor away.',
+      ],
+      si: [
+        'Pegang satu dumbbell tegak di depan dada, kedua tangan menopang ujung atasnya.',
+        'Berdiri dengan kaki sedikit lebih lebar dari bahu.',
+        'Turun duduk di antara kedua lutut, dada tetap tegak.',
+        'Berhenti sejenak saat siku menyentuh bagian dalam lutut.',
+        'Berdiri dengan mendorong lantai menjauh.',
+      ],
+      me: [
+        'The weight drifts away from your chest: hug it close so it does not pull you forward.',
+        'Your torso folds forward: lift your chest and keep your elbows pointing down.',
+        'Knees collapse inward: push them out as you come up.',
+      ],
+      mi: [
+        'Beban menjauh dari dada: dekap rapat supaya tidak menarik badan ke depan.',
+        'Badan membungkuk ke depan: angkat dada dan arahkan siku ke bawah.',
+        'Lutut masuk ke dalam: dorong keluar saat naik.',
+      ],
+    },
+    {
+      id: 'leg_press', src: 'Leg_Press', en: 'Leg press', idn: 'Leg press', eq: 'machine', lvl: 'beginner',
+      se: [
+        'Sit with your back and hips flat against the pad and place your feet shoulder-width apart on the platform.',
+        'Release the safety handles and bring the platform toward you by bending your knees.',
+        'Lower until your knees are bent to about 90 degrees without your hips lifting off the seat.',
+        'Press the platform away through your heels without locking your knees.',
+        'Put the safety handles back when you finish the set.',
+      ],
+      si: [
+        'Duduk dengan punggung dan pinggul menempel di sandaran, kaki selebar bahu di platform.',
+        'Lepas pengunci pengaman, lalu tekuk lutut untuk menarik platform ke arahmu.',
+        'Turun sampai lutut membentuk sekitar 90 derajat, pinggul tidak terangkat dari jok.',
+        'Dorong platform lewat tumit tanpa mengunci lutut.',
+        'Kembalikan pengunci pengaman setelah set selesai.',
+      ],
+      me: [
+        'Hips lift and your lower back rounds: stop the lowering before that point.',
+        'Knees locked hard at the top: stop just short of straight.',
+        'Knees cave inward: keep them in line with your toes.',
+      ],
+      mi: [
+        'Pinggul terangkat dan punggung bawah membulat: berhenti turun sebelum titik itu.',
+        'Lutut dikunci keras di atas: berhenti sedikit sebelum lurus penuh.',
+        'Lutut masuk ke dalam: jaga searah dengan ujung kaki.',
+      ],
+    },
+    {
+      id: 'chair_squat', src: 'Chair_Squat', en: 'Chair squat', idn: 'Squat ke kursi', eq: 'bodyweight', lvl: 'beginner',
+      se: [
+        'Stand in front of a sturdy chair with your feet shoulder-width apart.',
+        'Reach your arms forward and push your hips back.',
+        'Sit down slowly until you lightly touch the seat.',
+        'Keep your weight over your feet and stand back up without using your hands.',
+      ],
+      si: [
+        'Berdiri di depan kursi yang kokoh dengan kaki selebar bahu.',
+        'Julurkan tangan ke depan dan dorong pinggul ke belakang.',
+        'Duduk pelan sampai pantat menyentuh dudukan dengan ringan.',
+        'Beban tetap di atas kaki, lalu berdiri lagi tanpa bantuan tangan.',
+      ],
+      me: [
+        'Dropping onto the chair: lower slowly and control the last few centimetres.',
+        'Using momentum to bounce up: pause for a moment on the seat, then stand.',
+        'Chair slides away: put it against a wall first.',
+      ],
+      mi: [
+        'Menjatuhkan badan ke kursi: turun pelan dan kontrol beberapa sentimeter terakhir.',
+        'Memantul memakai momentum: berhenti sebentar di dudukan, lalu berdiri.',
+        'Kursi bergeser: sandarkan ke dinding dulu.',
+      ],
+    },
+    {
+      id: 'wall_sit', src: 'own', en: 'Wall sit', idn: 'Wall sit', eq: 'bodyweight', lvl: 'beginner', timed: true,
+      p: ['quadriceps'], s: ['glutes', 'calves'],
+      se: [
+        'Lean your back flat against a wall and walk your feet forward about two steps.',
+        'Slide down until your knees are bent close to 90 degrees.',
+        'Keep your knees over your ankles and your back flat on the wall.',
+        'Hold the position for the time shown while you breathe normally.',
+      ],
+      si: [
+        'Sandarkan punggung rata ke dinding, lalu langkahkan kaki ke depan sekitar dua langkah.',
+        'Geser turun sampai lutut menekuk mendekati 90 derajat.',
+        'Lutut tetap di atas pergelangan kaki dan punggung menempel di dinding.',
+        'Tahan posisi selama waktu yang ditentukan sambil bernapas normal.',
+      ],
+      me: [
+        'Knees drift past your toes: walk your feet further from the wall.',
+        'Hands resting on your thighs: let your arms hang or fold them across your chest.',
+        'Holding your breath: breathe slowly and steadily.',
+      ],
+      mi: [
+        'Lutut melewati ujung kaki: jauhkan kaki dari dinding.',
+        'Tangan bertumpu di paha: biarkan tangan menggantung atau silangkan di dada.',
+        'Menahan napas: bernapas pelan dan teratur.',
+      ],
+    },
+    {
+      id: 'sumo_squat_db', src: 'Plie_Dumbbell_Squat', en: 'Dumbbell sumo squat', idn: 'Sumo squat dumbbell', eq: 'dumbbell', lvl: 'beginner',
+      se: [
+        'Stand with your feet wide and toes pointing out about 45 degrees.',
+        'Hold one dumbbell with both hands hanging in front of your hips.',
+        'Bend your knees and lower your hips straight down between your legs.',
+        'Keep your chest up and your knees over your toes.',
+        'Squeeze your glutes and thighs to stand up.',
+      ],
+      si: [
+        'Berdiri dengan kaki lebar, ujung kaki menghadap keluar sekitar 45 derajat.',
+        'Pegang satu dumbbell dengan dua tangan menggantung di depan pinggul.',
+        'Tekuk lutut dan turunkan pinggul lurus ke bawah di antara kedua kaki.',
+        'Dada tetap tegak dan lutut searah dengan ujung kaki.',
+        'Kencangkan bokong dan paha untuk berdiri.',
+      ],
+      me: [
+        'Knees fall inward: push them out over your toes.',
+        'Leaning far forward: keep your torso upright.',
+        'Stance too wide to control: narrow it until you can keep your heels down.',
+      ],
+      mi: [
+        'Lutut jatuh ke dalam: dorong keluar searah ujung kaki.',
+        'Badan condong jauh ke depan: jaga badan tetap tegak.',
+        'Kuda-kuda terlalu lebar sehingga sulit dikontrol: persempit sampai tumit tetap menapak.',
+      ],
+    },
+    {
+      id: 'barbell_back_squat', src: 'Barbell_Squat', en: 'Barbell back squat', idn: 'Barbell squat', eq: 'barbell', lvl: 'intermediate',
+      se: [
+        'Set the bar on a rack at about upper-chest height and step under it so it rests across your upper back.',
+        'Stand up to unrack it, step back and set your feet shoulder-width apart.',
+        'Brace your core, then sit back and down until your thighs are about parallel to the floor.',
+        'Keep your chest up and your knees tracking over your toes.',
+        'Drive up through your whole foot and rack the bar when the set is done.',
+      ],
+      si: [
+        'Pasang barbell di rak setinggi dada atas, masuk ke bawahnya sampai bar bertumpu di punggung atas.',
+        'Berdiri untuk mengangkat bar dari rak, mundur, lalu buka kaki selebar bahu.',
+        'Kencangkan perut, lalu duduk ke belakang dan turun sampai paha kira-kira sejajar lantai.',
+        'Dada tetap tegak dan lutut searah dengan ujung kaki.',
+        'Dorong naik lewat seluruh telapak kaki, lalu kembalikan bar ke rak setelah set selesai.',
+      ],
+      me: [
+        'Your hips shoot up before your chest: keep your chest up and push the floor away.',
+        'The bar sits on your neck: place it on the muscle of your upper back.',
+        'Squatting heavy without safety bars: set the rack safeties just below your lowest point.',
+      ],
+      mi: [
+        'Pinggul naik duluan sebelum dada: jaga dada tegak dan dorong lantai menjauh.',
+        'Bar menekan leher: letakkan di otot punggung atas.',
+        'Squat berat tanpa pengaman rak: atur pengaman sedikit di bawah titik terendahmu.',
+      ],
+    },
+    {
+      id: 'band_squat', src: 'Squats_-_With_Bands', en: 'Banded squat', idn: 'Squat pakai band', eq: 'band', lvl: 'beginner',
+      se: [
+        'Stand on the middle of a resistance band and hold the ends at your shoulders.',
+        'Set your feet shoulder-width apart and brace your core.',
+        'Push your hips back and bend your knees to lower down.',
+        'Stand up against the band and keep your chest up.',
+      ],
+      si: [
+        'Berdiri di tengah resistance band dan pegang kedua ujungnya di bahu.',
+        'Buka kaki selebar bahu dan kencangkan perut.',
+        'Dorong pinggul ke belakang dan tekuk lutut untuk turun.',
+        'Berdiri melawan tarikan band dengan dada tetap tegak.',
+      ],
+      me: [
+        'The band pulls your shoulders forward: keep your elbows tucked and your chest up.',
+        'Knees cave inward when you stand: push them out against the band.',
+        'Band slips under your feet: stand on it with your whole foot.',
+      ],
+      mi: [
+        'Band menarik bahu ke depan: rapatkan siku dan jaga dada tegak.',
+        'Lutut masuk saat berdiri: dorong keluar melawan band.',
+        'Band tergelincir di bawah kaki: injak dengan seluruh telapak kaki.',
+      ],
+    },
+    {
+      id: 'hack_squat', src: 'Hack_Squat', en: 'Hack squat', idn: 'Hack squat', eq: 'machine', lvl: 'intermediate',
+      se: [
+        'Stand on the platform with your back and shoulders against the pads and your feet shoulder-width apart.',
+        'Release the safety handles and straighten your legs without locking your knees.',
+        'Bend your knees to lower the sled under control.',
+        'Go down until your thighs are about parallel to the platform.',
+        'Press back up through your heels.',
+      ],
+      si: [
+        'Berdiri di platform dengan punggung dan bahu menempel di bantalan, kaki selebar bahu.',
+        'Lepas pengunci pengaman dan luruskan kaki tanpa mengunci lutut.',
+        'Tekuk lutut untuk menurunkan sled dengan terkontrol.',
+        'Turun sampai paha kira-kira sejajar dengan platform.',
+        'Dorong naik lewat tumit.',
+      ],
+      me: [
+        'Your lower back leaves the pad: lower only as far as your back stays flat.',
+        'Heels come off the platform: move your feet slightly forward.',
+      ],
+      mi: [
+        'Punggung bawah lepas dari bantalan: turun hanya sejauh punggung tetap menempel.',
+        'Tumit terangkat dari platform: majukan kaki sedikit.',
+      ],
+    },
+    {
+      id: 'leg_extension', src: 'Leg_Extensions', en: 'Leg extension', idn: 'Leg extension', eq: 'machine', lvl: 'beginner',
+      se: [
+        'Adjust the seat so your knees line up with the machine pivot and the pad rests on your lower shins.',
+        'Hold the handles and sit with your back against the pad.',
+        'Straighten your legs until your knees are almost fully extended.',
+        'Pause for a second and squeeze your thighs.',
+        'Lower the weight slowly back to the start.',
+      ],
+      si: [
+        'Atur jok supaya lutut sejajar dengan poros mesin dan bantalan berada di tulang kering bawah.',
+        'Pegang gagang dan duduk dengan punggung menempel di sandaran.',
+        'Luruskan kaki sampai lutut hampir lurus penuh.',
+        'Tahan sebentar dan kencangkan paha.',
+        'Turunkan beban pelan-pelan kembali ke awal.',
+      ],
+      me: [
+        'Swinging the weight up: use a lighter weight and lift smoothly.',
+        'Hips rising off the seat: hold the handles and keep your hips down.',
+        'Dropping the weight on the way down: take about two seconds to lower it.',
+      ],
+      mi: [
+        'Mengayun beban ke atas: pakai beban lebih ringan dan angkat dengan halus.',
+        'Pinggul terangkat dari jok: pegang gagang dan jaga pinggul tetap turun.',
+        'Beban dijatuhkan saat turun: turunkan dalam sekitar dua detik.',
+      ],
+    },
+  ],
+
+  hinge: [
+    {
+      id: 'db_rdl', src: 'Stiff-Legged_Dumbbell_Deadlift', en: 'Dumbbell Romanian deadlift', idn: 'Romanian deadlift dumbbell', eq: 'dumbbell', lvl: 'beginner',
+      se: [
+        'Stand tall holding a dumbbell in each hand in front of your thighs.',
+        'Soften your knees and push your hips straight back.',
+        'Slide the dumbbells down along your legs until you feel a stretch in the back of your thighs.',
+        'Keep your back flat and your shoulders pulled back.',
+        'Drive your hips forward to stand tall again.',
+      ],
+      si: [
+        'Berdiri tegak sambil memegang dumbbell di tiap tangan di depan paha.',
+        'Tekuk lutut sedikit dan dorong pinggul lurus ke belakang.',
+        'Geser dumbbell turun menyusuri kaki sampai paha belakang terasa teregang.',
+        'Punggung tetap lurus dan bahu ditarik ke belakang.',
+        'Dorong pinggul ke depan untuk berdiri tegak lagi.',
+      ],
+      me: [
+        'Rounding your back: shorten the range and keep your chest proud.',
+        'Turning it into a squat: keep your knees almost fixed and move at the hips.',
+        'Dumbbells drift away from your legs: keep them close the whole time.',
+      ],
+      mi: [
+        'Punggung membulat: perpendek jangkauan dan jaga dada tetap membusung.',
+        'Berubah jadi squat: biarkan lutut hampir diam dan gerak dari pinggul.',
+        'Dumbbell menjauh dari kaki: dekatkan terus sepanjang gerakan.',
+      ],
+    },
+    {
+      id: 'bw_good_morning', src: 'own', en: 'Bodyweight good morning', idn: 'Good morning tanpa beban', eq: 'bodyweight', lvl: 'beginner',
+      p: ['hamstrings', 'glutes'], s: ['lower_back'],
+      se: [
+        'Stand with your feet hip-width apart and your hands behind your head or crossed on your chest.',
+        'Soften your knees and push your hips straight back.',
+        'Lean your torso forward with a flat back until you feel your hamstrings stretch.',
+        'Squeeze your glutes and push your hips forward to stand up.',
+      ],
+      si: [
+        'Berdiri dengan kaki selebar pinggul, tangan di belakang kepala atau disilangkan di dada.',
+        'Tekuk lutut sedikit dan dorong pinggul lurus ke belakang.',
+        'Condongkan badan ke depan dengan punggung lurus sampai paha belakang terasa teregang.',
+        'Kencangkan bokong dan dorong pinggul ke depan untuk berdiri.',
+      ],
+      me: [
+        'Rounding your back: only go down as far as it stays flat.',
+        'Bending your knees too much: keep the knee bend small so it stays a hip movement.',
+        'Looking up hard: keep your neck in line with your spine.',
+      ],
+      mi: [
+        'Punggung membulat: turun hanya sejauh punggung tetap lurus.',
+        'Lutut ditekuk terlalu banyak: tekukan kecil saja supaya gerakannya tetap dari pinggul.',
+        'Mendongak terlalu keras: jaga leher sejajar tulang belakang.',
+      ],
+    },
+    {
+      id: 'seated_leg_curl', src: 'Seated_Leg_Curl', en: 'Seated leg curl', idn: 'Seated leg curl', eq: 'machine', lvl: 'beginner',
+      se: [
+        'Sit in the machine with your back against the pad and set the thigh pad snug on top of your legs.',
+        'Place your ankles on the roller above your heels.',
+        'Bend your knees and pull the roller down and back.',
+        'Squeeze the back of your thighs for a second.',
+        'Let the weight rise slowly until your legs are straight again.',
+      ],
+      si: [
+        'Duduk di mesin dengan punggung menempel di sandaran dan pasang bantalan paha pas di atas kaki.',
+        'Letakkan pergelangan kaki di atas roller tepat di atas tumit.',
+        'Tekuk lutut dan tarik roller ke bawah dan ke belakang.',
+        'Kencangkan paha belakang selama satu detik.',
+        'Biarkan beban naik pelan sampai kaki lurus lagi.',
+      ],
+      me: [
+        'Hips lift off the seat: lower the thigh pad and keep your hips down.',
+        'Jerking the weight: lighten the load and curl smoothly.',
+        'Letting the weight slam back: take two to three seconds on the way up.',
+      ],
+      mi: [
+        'Pinggul terangkat dari jok: turunkan bantalan paha dan jaga pinggul tetap di bawah.',
+        'Menyentak beban: ringankan beban dan tarik dengan halus.',
+        'Beban dibiarkan menghantam balik: butuh dua sampai tiga detik saat naik.',
+      ],
+    },
+    {
+      id: 'band_pull_through', src: 'Band_Good_Morning_Pull_Through', en: 'Band pull-through', idn: 'Pull-through pakai band', eq: 'band', lvl: 'beginner',
+      se: [
+        'Anchor a band low behind you, face away from it and hold the band between your legs with both hands.',
+        'Step forward until the band is tight and set your feet shoulder-width apart.',
+        'Push your hips back with a flat back and let the band pull your hands between your legs.',
+        'Squeeze your glutes and drive your hips forward to stand tall.',
+      ],
+      si: [
+        'Pasang band rendah di belakangmu, menghadap menjauh darinya, dan pegang band di antara kaki dengan dua tangan.',
+        'Melangkah maju sampai band kencang, kaki selebar bahu.',
+        'Dorong pinggul ke belakang dengan punggung lurus dan biarkan band menarik tangan ke antara kaki.',
+        'Kencangkan bokong dan dorong pinggul ke depan untuk berdiri tegak.',
+      ],
+      me: [
+        'Squatting instead of hinging: send your hips back, not down.',
+        'Pulling with your arms: keep them straight and let your hips do the work.',
+        'Leaning back at the top: stand tall and stop there.',
+      ],
+      mi: [
+        'Squat, bukan hinge: dorong pinggul ke belakang, bukan ke bawah.',
+        'Menarik pakai lengan: luruskan lengan dan biarkan pinggul yang bekerja.',
+        'Condong ke belakang di atas: berdiri tegak dan berhenti di situ.',
+      ],
+    },
+    {
+      id: 'back_extension', src: 'Hyperextensions_Back_Extensions', en: 'Back extension', idn: 'Back extension', eq: 'bench', lvl: 'beginner', img: [11, 12],
+      se: [
+        'Set the pad so it sits just below your hip bones and hook your heels under the rollers.',
+        'Cross your arms over your chest and start with your torso hanging down with a straight back.',
+        'Raise your torso by squeezing your glutes and lower back until your body is in a straight line.',
+        'Lower back down slowly.',
+      ],
+      si: [
+        'Atur bantalan tepat di bawah tulang pinggul dan kaitkan tumit di bawah roller.',
+        'Silangkan tangan di dada dan mulai dengan badan menggantung ke bawah, punggung lurus.',
+        'Angkat badan dengan mengencangkan bokong dan punggung bawah sampai tubuh membentuk garis lurus.',
+        'Turun lagi dengan pelan.',
+      ],
+      me: [
+        'Arching far past straight at the top: stop when your body is in one line.',
+        'Swinging up with momentum: slow down and lift smoothly.',
+        'Pad set too high: lower it so your hips can fold freely.',
+      ],
+      mi: [
+        'Melengkung jauh melewati garis lurus di atas: berhenti saat tubuh membentuk satu garis.',
+        'Mengayun dengan momentum: pelankan dan angkat dengan halus.',
+        'Bantalan terlalu tinggi: turunkan supaya pinggul bisa menekuk bebas.',
+      ],
+    },
+    {
+      id: 'single_leg_rdl_db', src: 'own', en: 'Single-leg Romanian deadlift', idn: 'Single-leg RDL dumbbell', eq: 'dumbbell', lvl: 'intermediate',
+      p: ['hamstrings', 'glutes'], s: ['lower_back', 'calves'],
+      se: [
+        'Hold a dumbbell in the hand opposite to your standing leg and stand on one foot with a soft knee.',
+        'Hinge at your hip and send your free leg straight back for balance.',
+        'Lower the dumbbell toward the floor with a flat back until your torso is near parallel.',
+        'Squeeze your glute and return to standing.',
+        'Finish all reps on one side, then switch.',
+      ],
+      si: [
+        'Pegang dumbbell di tangan yang berlawanan dengan kaki tumpu dan berdiri satu kaki dengan lutut sedikit ditekuk.',
+        'Tekuk di pinggul dan kirim kaki yang bebas lurus ke belakang untuk keseimbangan.',
+        'Turunkan dumbbell ke arah lantai dengan punggung lurus sampai badan hampir sejajar lantai.',
+        'Kencangkan bokong dan kembali berdiri.',
+        'Selesaikan semua repetisi satu sisi, lalu ganti sisi.',
+      ],
+      me: [
+        'Hips open up to the side: keep both hip bones pointing at the floor.',
+        'Wobbling too much: touch a wall lightly with your free hand or use a lighter weight.',
+        'Rounding your back: shorten the range until it stays flat.',
+      ],
+      mi: [
+        'Pinggul terbuka ke samping: jaga kedua tulang pinggul menghadap lantai.',
+        'Terlalu goyah: sentuh dinding dengan ringan memakai tangan bebas atau pakai beban lebih ringan.',
+        'Punggung membulat: perpendek jangkauan sampai punggung tetap lurus.',
+      ],
+    },
+    {
+      id: 'barbell_rdl', src: 'Romanian_Deadlift', en: 'Barbell Romanian deadlift', idn: 'Romanian deadlift', eq: 'barbell', lvl: 'intermediate',
+      se: [
+        'Hold a barbell with an overhand grip just outside your thighs and stand tall.',
+        'Soften your knees, brace your core and push your hips back.',
+        'Slide the bar down your thighs to just below your knees while keeping your back flat.',
+        'Drive your hips forward to stand up and squeeze your glutes.',
+      ],
+      si: [
+        'Pegang barbell dengan genggaman dari atas sedikit di luar paha, lalu berdiri tegak.',
+        'Tekuk lutut sedikit, kencangkan perut, dan dorong pinggul ke belakang.',
+        'Geser bar turun di sepanjang paha sampai tepat di bawah lutut dengan punggung tetap lurus.',
+        'Dorong pinggul ke depan untuk berdiri dan kencangkan bokong.',
+      ],
+      me: [
+        'The bar drifts away from your legs: keep it brushing your thighs and shins.',
+        'Rounding your lower back: stop lower down when your back can no longer stay flat.',
+        'Looking up with your neck cranked: keep your gaze on the floor a few metres ahead.',
+      ],
+      mi: [
+        'Bar menjauh dari kaki: biarkan bar terus menyentuh paha dan tulang kering.',
+        'Punggung bawah membulat: berhenti sebelum punggung tidak bisa tetap lurus.',
+        'Mendongak dengan leher tertekuk: arahkan pandangan ke lantai beberapa meter di depan.',
+      ],
+    },
+    {
+      id: 'barbell_deadlift', src: 'Barbell_Deadlift', en: 'Barbell deadlift', idn: 'Deadlift', eq: 'barbell', lvl: 'intermediate', img: [332],
+      se: [
+        'Stand with the bar over the middle of your feet and your feet hip-width apart.',
+        'Bend down, grip the bar just outside your legs and pull your chest up so your back is flat.',
+        'Take a big breath, brace your core and push the floor away to stand up with the bar close to your legs.',
+        'Stand tall with your hips and knees locked at the same time.',
+        'Push your hips back and lower the bar along your legs to the floor.',
+      ],
+      si: [
+        'Berdiri dengan bar tepat di atas tengah telapak kaki, kaki selebar pinggul.',
+        'Turun, pegang bar sedikit di luar kaki, lalu angkat dada sampai punggung lurus.',
+        'Tarik napas dalam, kencangkan perut, dan dorong lantai menjauh untuk berdiri dengan bar dekat kaki.',
+        'Berdiri tegak dengan pinggul dan lutut terkunci bersamaan.',
+        'Dorong pinggul ke belakang dan turunkan bar menyusuri kaki sampai ke lantai.',
+      ],
+      me: [
+        'Your back rounds off the floor: lower the weight and keep your chest up before each pull.',
+        'The bar swings away from you: keep it dragging along your shins and thighs.',
+        'Yanking the bar off the floor: take the slack out first, then push the floor away.',
+      ],
+      mi: [
+        'Punggung membulat saat bar lepas dari lantai: kurangi beban dan angkat dada sebelum tiap tarikan.',
+        'Bar menjauh dari tubuh: biarkan bar terus menyusuri tulang kering dan paha.',
+        'Menyentak bar dari lantai: kencangkan dulu semua kendur, baru dorong lantai menjauh.',
+      ],
+    },
+    {
+      id: 'kettlebell_swing', src: 'One-Arm_Kettlebell_Swings', en: 'Kettlebell swing', idn: 'Kettlebell swing', eq: 'kettlebell', lvl: 'intermediate', home: false,
+      p: ['glutes', 'hamstrings'], s: ['lower_back', 'shoulders', 'abs'],
+      se: [
+        'Stand with your feet slightly wider than your shoulders and the kettlebell on the floor just in front of you.',
+        'Hinge at your hips, grab the handle with both hands and hike the bell back between your legs.',
+        'Snap your hips forward to swing the bell up to chest height.',
+        'Let the bell fall back and hinge again to send it between your legs.',
+      ],
+      si: [
+        'Berdiri dengan kaki sedikit lebih lebar dari bahu dan kettlebell di lantai tepat di depanmu.',
+        'Tekuk di pinggul, pegang gagangnya dengan dua tangan, lalu ayunkan bel ke belakang di antara kaki.',
+        'Hentakkan pinggul ke depan untuk mengayunkan bel setinggi dada.',
+        'Biarkan bel jatuh kembali dan tekuk pinggul lagi untuk mengirimnya ke antara kaki.',
+      ],
+      me: [
+        'Lifting the bell with your arms: let your hip snap send it up.',
+        'Squatting the swing: push your hips back and keep your shins nearly vertical.',
+        'Leaning back at the top: stand tall with your glutes tight and stop there.',
+      ],
+      mi: [
+        'Mengangkat bel dengan lengan: biarkan hentakan pinggul yang menaikkannya.',
+        'Mengayun sambil squat: dorong pinggul ke belakang dan jaga tulang kering hampir tegak.',
+        'Condong ke belakang di atas: berdiri tegak dengan bokong kencang lalu berhenti.',
+      ],
+    },
+  ],
+
+  lunge: [
+    {
+      id: 'reverse_lunge', src: 'own', en: 'Reverse lunge', idn: 'Reverse lunge', eq: 'bodyweight', lvl: 'beginner', img: [336],
+      p: ['quadriceps', 'glutes'], s: ['hamstrings', 'calves'],
+      se: [
+        'Stand tall with your feet hip-width apart and your hands on your hips.',
+        'Step one foot back and bend both knees to lower your back knee toward the floor.',
+        'Keep your front knee over your ankle and your torso upright.',
+        'Push through your front foot to step back to standing.',
+        'Alternate legs or finish one side first.',
+      ],
+      si: [
+        'Berdiri tegak dengan kaki selebar pinggul dan tangan di pinggang.',
+        'Langkahkan satu kaki ke belakang dan tekuk kedua lutut sampai lutut belakang turun ke arah lantai.',
+        'Lutut depan tetap di atas pergelangan kaki dan badan tegak.',
+        'Dorong lewat kaki depan untuk kembali berdiri.',
+        'Ganti kaki bergantian atau selesaikan satu sisi dulu.',
+      ],
+      me: [
+        'Front knee slides past your toes: take a longer step back.',
+        'Torso tips forward: keep your chest up and look straight ahead.',
+        'Landing with your feet in a line: step slightly to the side so you stay balanced.',
+      ],
+      mi: [
+        'Lutut depan melewati ujung kaki: langkahkan kaki lebih jauh ke belakang.',
+        'Badan condong ke depan: jaga dada tegak dan pandang lurus ke depan.',
+        'Kaki mendarat dalam satu garis lurus: geser sedikit ke samping supaya seimbang.',
+      ],
+    },
+    {
+      id: 'split_squat', src: 'own', en: 'Split squat', idn: 'Split squat', eq: 'bodyweight', lvl: 'beginner',
+      p: ['quadriceps', 'glutes'], s: ['hamstrings', 'adductors'],
+      se: [
+        'Take a long step forward and keep both feet flat with your back heel lifted.',
+        'Hold your hands on your hips and keep your torso upright.',
+        'Bend both knees and lower straight down until your back knee almost touches the floor.',
+        'Push through your front foot to stand back up without moving your feet.',
+        'Finish all reps on one side, then switch legs.',
+      ],
+      si: [
+        'Langkahkan satu kaki jauh ke depan, kedua telapak menapak dan tumit belakang terangkat.',
+        'Tangan di pinggang dan badan tetap tegak.',
+        'Tekuk kedua lutut dan turun lurus ke bawah sampai lutut belakang hampir menyentuh lantai.',
+        'Dorong lewat kaki depan untuk berdiri lagi tanpa menggeser kaki.',
+        'Selesaikan semua repetisi satu sisi, lalu ganti kaki.',
+      ],
+      me: [
+        'Stance too short: step further so your front shin stays almost vertical.',
+        'Leaning forward and rocking: keep your torso tall and move straight up and down.',
+        'Front knee caves inward: push it out in line with your toes.',
+      ],
+      mi: [
+        'Langkah terlalu pendek: langkahkan lebih jauh supaya tulang kering depan hampir tegak.',
+        'Condong ke depan dan bergoyang: jaga badan tegak dan gerak lurus naik turun.',
+        'Lutut depan masuk ke dalam: dorong keluar searah ujung kaki.',
+      ],
+    },
+    {
+      id: 'step_up', src: 'Step-up_with_Knee_Raise', en: 'Step-up', idn: 'Step-up', eq: 'bodyweight', lvl: 'beginner',
+      p: ['quadriceps', 'glutes'], s: ['hamstrings', 'calves'],
+      se: [
+        'Stand in front of a sturdy box, bench or stair at about knee height.',
+        'Place your whole foot on the step.',
+        'Push through that foot to stand up on the step.',
+        'Lower the other foot back to the floor under control.',
+        'Finish all reps on one leg, then switch.',
+      ],
+      si: [
+        'Berdiri di depan box, bangku, atau anak tangga yang kokoh setinggi lutut.',
+        'Letakkan seluruh telapak kaki di atasnya.',
+        'Dorong lewat kaki itu untuk berdiri di atas pijakan.',
+        'Turunkan kaki satunya kembali ke lantai dengan terkontrol.',
+        'Selesaikan semua repetisi satu kaki, lalu ganti.',
+      ],
+      me: [
+        'Pushing off with your back foot: keep your weight on the front foot.',
+        'Using a wobbly or slippery step: pick one that stays still.',
+        'Dropping down fast: lower for about two seconds.',
+      ],
+      mi: [
+        'Mendorong dengan kaki belakang: pindahkan beban ke kaki depan.',
+        'Memakai pijakan yang goyang atau licin: pilih yang stabil.',
+        'Turun dengan cepat: turunkan dalam sekitar dua detik.',
+      ],
+    },
+    {
+      id: 'db_lunge', src: 'Dumbbell_Lunges', en: 'Dumbbell lunge', idn: 'Lunge dumbbell', eq: 'dumbbell', lvl: 'beginner', img: [123, 124],
+      se: [
+        'Stand tall holding a dumbbell in each hand at your sides.',
+        'Step forward with one leg and bend both knees.',
+        'Lower until your back knee is just above the floor and your front thigh is about parallel.',
+        'Push through your front heel to return to the start.',
+        'Alternate legs on each rep.',
+      ],
+      si: [
+        'Berdiri tegak sambil memegang dumbbell di tiap tangan di sisi tubuh.',
+        'Langkahkan satu kaki ke depan dan tekuk kedua lutut.',
+        'Turun sampai lutut belakang sedikit di atas lantai dan paha depan hampir sejajar.',
+        'Dorong lewat tumit depan untuk kembali ke posisi awal.',
+        'Ganti kaki di setiap repetisi.',
+      ],
+      me: [
+        'Short steps that put all the load on your knee: step further forward.',
+        'Torso leaning forward: keep your chest up and your shoulders back.',
+        'Wobbling side to side: place your feet hip-width apart rather than on one line.',
+      ],
+      mi: [
+        'Langkah terlalu pendek sehingga beban menumpu di lutut: langkahkan lebih jauh.',
+        'Badan condong ke depan: jaga dada tegak dan bahu ke belakang.',
+        'Goyah ke samping: letakkan kaki selebar pinggul, jangan dalam satu garis.',
+      ],
+    },
+    {
+      id: 'bulgarian_split_squat_db', src: 'own', en: 'Dumbbell Bulgarian split squat', idn: 'Bulgarian split squat dumbbell', eq: 'dumbbell', lvl: 'intermediate', img: [597],
+      p: ['quadriceps', 'glutes'], s: ['hamstrings', 'adductors'],
+      se: [
+        'Stand about two steps in front of a bench or sturdy chair and rest the top of one foot on it behind you.',
+        'Hold a dumbbell in each hand and keep your torso upright.',
+        'Bend your front knee and lower straight down until your front thigh is about parallel.',
+        'Press through your front foot to stand back up.',
+        'Finish all reps on one leg, then switch.',
+      ],
+      si: [
+        'Berdiri sekitar dua langkah di depan bangku atau kursi kokoh dan letakkan punggung satu kaki di atasnya.',
+        'Pegang dumbbell di tiap tangan dan jaga badan tetap tegak.',
+        'Tekuk lutut depan dan turun lurus ke bawah sampai paha depan hampir sejajar.',
+        'Dorong lewat kaki depan untuk berdiri lagi.',
+        'Selesaikan semua repetisi satu kaki, lalu ganti.',
+      ],
+      me: [
+        'Front foot too close to the bench: step further out so your knee stays over your ankle.',
+        'Pushing off the back foot: let it just rest and use your front leg.',
+        'Starting too heavy: learn the balance with bodyweight first.',
+      ],
+      mi: [
+        'Kaki depan terlalu dekat bangku: langkahkan lebih jauh supaya lutut tetap di atas pergelangan kaki.',
+        'Mendorong dengan kaki belakang: biarkan hanya bertumpu dan pakai kaki depan.',
+        'Mulai dengan beban terlalu berat: latih keseimbangan dengan berat badan dulu.',
+      ],
+    },
+    {
+      id: 'lateral_lunge', src: 'own', en: 'Lateral lunge', idn: 'Lateral lunge', eq: 'bodyweight', lvl: 'beginner',
+      p: ['quadriceps', 'glutes', 'adductors'], s: ['hamstrings'],
+      se: [
+        'Stand tall with your feet together and your hands clasped in front of your chest.',
+        'Take a big step to the side and sit your hips back over that leg.',
+        'Keep the other leg straight and both feet flat and pointing forward.',
+        'Push off the bent leg to return to the middle.',
+        'Alternate sides.',
+      ],
+      si: [
+        'Berdiri tegak dengan kaki rapat dan tangan digenggam di depan dada.',
+        'Melangkah lebar ke samping dan duduk dengan pinggul ke belakang di atas kaki itu.',
+        'Kaki satunya tetap lurus dan kedua telapak menapak, ujung kaki menghadap depan.',
+        'Dorong dari kaki yang ditekuk untuk kembali ke tengah.',
+        'Ganti sisi bergantian.',
+      ],
+      me: [
+        'Heel of the bent leg lifts: sit your hips back more and keep the whole foot down.',
+        'Knee of the bent leg falls inward: point it over your toes.',
+        'Rounding forward: keep your chest up.',
+      ],
+      mi: [
+        'Tumit kaki yang ditekuk terangkat: dorong pinggul lebih ke belakang dan jaga seluruh telapak menapak.',
+        'Lutut kaki yang ditekuk jatuh ke dalam: arahkan searah ujung kaki.',
+        'Membungkuk ke depan: jaga dada tegak.',
+      ],
+    },
+    {
+      id: 'barbell_lunge', src: 'Barbell_Lunge', en: 'Barbell lunge', idn: 'Lunge barbell', eq: 'barbell', lvl: 'intermediate',
+      se: [
+        'Rest a barbell across your upper back and stand tall with your feet hip-width apart.',
+        'Step forward and bend both knees to lower your back knee close to the floor.',
+        'Keep your torso upright and your front knee over your ankle.',
+        'Push through your front foot to stand back up.',
+        'Use a rack or a spotter when the weight gets heavy.',
+      ],
+      si: [
+        'Letakkan barbell di punggung atas dan berdiri tegak dengan kaki selebar pinggul.',
+        'Melangkah ke depan dan tekuk kedua lutut sampai lutut belakang dekat lantai.',
+        'Badan tetap tegak dan lutut depan di atas pergelangan kaki.',
+        'Dorong lewat kaki depan untuk berdiri lagi.',
+        'Pakai rak atau spotter saat beban sudah berat.',
+      ],
+      me: [
+        'The bar rolls or bounces: keep your upper back tight and move smoothly.',
+        'Steps that are too short: step further so your front shin stays upright.',
+        'Losing balance on the way up: slow down and push through the whole front foot.',
+      ],
+      mi: [
+        'Bar bergulir atau memantul: kencangkan punggung atas dan bergerak dengan halus.',
+        'Langkah terlalu pendek: langkahkan lebih jauh supaya tulang kering depan tegak.',
+        'Kehilangan keseimbangan saat naik: pelankan dan dorong lewat seluruh telapak kaki depan.',
+      ],
+    },
+  ],
+
+  glute: [
+    {
+      id: 'glute_bridge', src: 'Butt_Lift_Bridge', en: 'Glute bridge', idn: 'Glute bridge', eq: 'bodyweight', lvl: 'beginner',
+      se: [
+        'Lie on your back with your knees bent and your feet flat on the floor, hip-width apart.',
+        'Place your arms by your sides with your palms down.',
+        'Squeeze your glutes and push through your heels to lift your hips.',
+        'Stop when your body forms a straight line from your shoulders to your knees.',
+        'Lower your hips slowly.',
+      ],
+      si: [
+        'Berbaring telentang dengan lutut ditekuk dan telapak kaki rata di lantai, selebar pinggul.',
+        'Letakkan tangan di samping badan dengan telapak menghadap bawah.',
+        'Kencangkan bokong dan dorong lewat tumit untuk mengangkat pinggul.',
+        'Berhenti saat tubuh membentuk garis lurus dari bahu sampai lutut.',
+        'Turunkan pinggul pelan-pelan.',
+      ],
+      me: [
+        'Arching your lower back at the top: tuck your ribs down and stop when your hips are level.',
+        'Pushing through your toes: keep your weight on your heels.',
+        'Feet too far from your body: bring them closer so your shins are almost vertical at the top.',
+      ],
+      mi: [
+        'Punggung bawah melengkung di atas: tarik tulang rusuk ke bawah dan berhenti saat pinggul sejajar.',
+        'Mendorong lewat ujung jari kaki: pindahkan beban ke tumit.',
+        'Kaki terlalu jauh dari badan: dekatkan supaya tulang kering hampir tegak di atas.',
+      ],
+    },
+    {
+      id: 'single_leg_glute_bridge', src: 'Single_Leg_Glute_Bridge', en: 'Single-leg glute bridge', idn: 'Glute bridge satu kaki', eq: 'bodyweight', lvl: 'intermediate',
+      se: [
+        'Lie on your back with one knee bent and that foot flat on the floor, the other leg held straight in the air.',
+        'Squeeze your glute and push through your heel to lift your hips.',
+        'Keep your hips level and stop when your body forms a straight line.',
+        'Lower slowly, then repeat and switch legs after your reps.',
+      ],
+      si: [
+        'Berbaring telentang dengan satu lutut ditekuk dan telapak kakinya rata di lantai, kaki satunya lurus terangkat.',
+        'Kencangkan bokong dan dorong lewat tumit untuk mengangkat pinggul.',
+        'Jaga pinggul tetap sejajar dan berhenti saat tubuh membentuk garis lurus.',
+        'Turun pelan, ulangi, dan ganti kaki setelah selesai repetisi.',
+      ],
+      me: [
+        'Your hips tilt to one side: tighten your core and keep both hip bones level.',
+        'Pushing with your lower back: squeeze your glute and stop lower.',
+        'Going too fast: take two seconds up and two seconds down.',
+      ],
+      mi: [
+        'Pinggul miring ke satu sisi: kencangkan perut dan jaga kedua tulang pinggul sejajar.',
+        'Mendorong pakai punggung bawah: kencangkan bokong dan berhenti lebih rendah.',
+        'Terlalu cepat: naik dua detik dan turun dua detik.',
+      ],
+    },
+    {
+      id: 'donkey_kick', src: 'Glute_Kickback', en: 'Donkey kick', idn: 'Donkey kick', eq: 'bodyweight', lvl: 'beginner',
+      se: [
+        'Start on your hands and knees with your hands under your shoulders and your knees under your hips.',
+        'Keep your knee bent at 90 degrees and lift one foot toward the ceiling.',
+        'Squeeze your glute at the top without arching your lower back.',
+        'Lower your knee back under your hip and repeat, then switch legs.',
+      ],
+      si: [
+        'Mulai dengan posisi merangkak, tangan di bawah bahu dan lutut di bawah pinggul.',
+        'Tekuk lutut 90 derajat dan angkat satu telapak kaki ke arah langit-langit.',
+        'Kencangkan bokong di atas tanpa melengkungkan punggung bawah.',
+        'Turunkan lutut kembali ke bawah pinggul dan ulangi, lalu ganti kaki.',
+      ],
+      me: [
+        'Your lower back arches as you kick: lift only as high as your hips stay level.',
+        'Twisting your hips open: keep both hip bones pointing at the floor.',
+        'Swinging the leg: slow down and squeeze at the top.',
+      ],
+      mi: [
+        'Punggung bawah melengkung saat menendang: angkat hanya setinggi pinggul tetap sejajar.',
+        'Memutar pinggul terbuka: jaga kedua tulang pinggul menghadap lantai.',
+        'Mengayun kaki: pelankan dan kencangkan di atas.',
+      ],
+    },
+    {
+      id: 'fire_hydrant', src: 'own', en: 'Fire hydrant', idn: 'Fire hydrant', eq: 'bodyweight', lvl: 'beginner',
+      p: ['glutes', 'abductors'], s: ['abs'],
+      se: [
+        'Start on your hands and knees with your hands under your shoulders and your knees under your hips.',
+        'Keep your knee bent and lift one knee out to the side.',
+        'Stop when your thigh is about level with your hip.',
+        'Lower back to the start and repeat, then switch legs.',
+      ],
+      si: [
+        'Mulai dengan posisi merangkak, tangan di bawah bahu dan lutut di bawah pinggul.',
+        'Jaga lutut tetap ditekuk dan angkat satu lutut ke samping.',
+        'Berhenti saat paha kira-kira sejajar dengan pinggul.',
+        'Turun kembali ke posisi awal dan ulangi, lalu ganti kaki.',
+      ],
+      me: [
+        'Rotating your whole torso: keep your shoulders and hips square to the floor.',
+        'Lifting too high: stop when your hips start to tilt.',
+        'Dropping your chest between your arms: push the floor away and keep your back flat.',
+      ],
+      mi: [
+        'Memutar seluruh badan: jaga bahu dan pinggul tetap rata menghadap lantai.',
+        'Mengangkat terlalu tinggi: berhenti saat pinggul mulai miring.',
+        'Dada jatuh di antara kedua lengan: dorong lantai menjauh dan jaga punggung lurus.',
+      ],
+    },
+    {
+      id: 'band_lateral_walk', src: 'Monster_Walk', en: 'Banded lateral walk', idn: 'Lateral walk pakai band', eq: 'band', lvl: 'beginner',
+      p: ['abductors', 'glutes'], s: ['quadriceps'],
+      se: [
+        'Put a looped resistance band just above your knees or around your ankles.',
+        'Stand with your feet hip-width apart and bend your knees slightly into a quarter squat.',
+        'Take a step to the side while keeping tension on the band.',
+        'Bring your other foot in without letting the band go slack.',
+        'Take your steps in one direction, then walk back the other way.',
+      ],
+      si: [
+        'Pasang resistance band yang melingkar tepat di atas lutut atau di sekitar pergelangan kaki.',
+        'Berdiri dengan kaki selebar pinggul dan tekuk lutut sedikit seperti seperempat squat.',
+        'Langkahkan satu kaki ke samping sambil menjaga band tetap tegang.',
+        'Susul dengan kaki satunya tanpa membiarkan band mengendur.',
+        'Melangkah ke satu arah, lalu jalan balik ke arah sebaliknya.',
+      ],
+      me: [
+        'Knees cave in against the band: push them out as you step.',
+        'Leaning over to the side: keep your torso upright.',
+        'Letting your feet touch: keep them hip-width apart the whole time.',
+      ],
+      mi: [
+        'Lutut masuk karena tarikan band: dorong keluar saat melangkah.',
+        'Badan condong ke samping: jaga badan tetap tegak.',
+        'Kedua kaki saling menempel: jaga tetap selebar pinggul sepanjang gerakan.',
+      ],
+    },
+    {
+      id: 'db_hip_thrust', src: 'Barbell_Hip_Thrust', en: 'Dumbbell hip thrust', idn: 'Hip thrust dumbbell', eq: 'dumbbell', lvl: 'beginner', img: [582],
+      se: [
+        'Sit on the floor with your upper back against a bench or sturdy sofa and your knees bent.',
+        'Rest a dumbbell across your hips and hold it with both hands.',
+        'Push through your heels and squeeze your glutes to lift your hips until your body is in a straight line.',
+        'Lower your hips slowly without sitting down.',
+      ],
+      si: [
+        'Duduk di lantai dengan punggung atas bersandar di bangku atau sofa yang kokoh dan lutut ditekuk.',
+        'Letakkan dumbbell di atas pinggul dan pegang dengan dua tangan.',
+        'Dorong lewat tumit dan kencangkan bokong untuk mengangkat pinggul sampai tubuh membentuk garis lurus.',
+        'Turunkan pinggul pelan-pelan tanpa duduk.',
+      ],
+      me: [
+        'Arching your lower back at the top: tuck your ribs down and finish with your glutes.',
+        'Feet too far away or too close: place them so your shins are about vertical at the top.',
+        'The dumbbell digs into your hips: wrap a towel around it.',
+      ],
+      mi: [
+        'Punggung bawah melengkung di atas: tarik tulang rusuk ke bawah dan akhiri gerakan dengan bokong.',
+        'Kaki terlalu jauh atau terlalu dekat: atur supaya tulang kering hampir tegak di atas.',
+        'Dumbbell menekan pinggul: lilitkan handuk di sekelilingnya.',
+      ],
+    },
+    {
+      id: 'hip_abduction_machine', src: 'Thigh_Abductor', en: 'Hip abduction machine', idn: 'Hip abduction machine', eq: 'machine', lvl: 'beginner',
+      se: [
+        'Sit in the machine with your back against the pad and your legs against the outer pads.',
+        'Hold the handles and keep your feet on the footrests.',
+        'Push your knees apart until your legs are comfortably wide.',
+        'Pause for a second and squeeze the outside of your hips.',
+        'Bring your legs back together slowly.',
+      ],
+      si: [
+        'Duduk di mesin dengan punggung menempel di sandaran dan kaki menempel di bantalan sisi luar.',
+        'Pegang gagang dan letakkan kaki di pijakan.',
+        'Dorong lutut ke samping sampai kaki terbuka lebar dengan nyaman.',
+        'Tahan sebentar dan kencangkan sisi luar pinggul.',
+        'Kembalikan kaki pelan-pelan ke tengah.',
+      ],
+      me: [
+        'Letting the weight slam shut: control the return for about two seconds.',
+        'Rocking your torso to push: lighten the weight and keep your back against the pad.',
+      ],
+      mi: [
+        'Membiarkan beban menutup dengan keras: kontrol saat kembali sekitar dua detik.',
+        'Mengayun badan untuk mendorong: ringankan beban dan jaga punggung menempel di sandaran.',
+      ],
+    },
+    {
+      id: 'cable_kickback', src: 'One-Legged_Cable_Kickback', en: 'Cable glute kickback', idn: 'Cable kickback', eq: 'cable', lvl: 'intermediate',
+      se: [
+        'Attach the ankle strap to a low pulley and fasten it around one ankle.',
+        'Hold the machine frame, lean forward slightly and keep your standing knee soft.',
+        'Kick your working leg straight back by squeezing your glute.',
+        'Pause for a second without arching your lower back.',
+        'Bring your leg back slowly and repeat, then switch legs.',
+      ],
+      si: [
+        'Pasang tali pergelangan kaki di katrol bawah dan kaitkan di satu pergelangan kaki.',
+        'Pegang rangka mesin, condongkan badan sedikit ke depan, dan jaga lutut tumpu agak ditekuk.',
+        'Tendang kaki kerja lurus ke belakang dengan mengencangkan bokong.',
+        'Tahan sebentar tanpa melengkungkan punggung bawah.',
+        'Kembalikan kaki dengan pelan dan ulangi, lalu ganti kaki.',
+      ],
+      me: [
+        'Swinging the weight with momentum: slow down and choose a lighter weight.',
+        'Arching your lower back to lift higher: only move as far as your hips stay level.',
+        'Twisting your hips: keep them square to the machine.',
+      ],
+      mi: [
+        'Mengayun beban dengan momentum: pelankan dan pilih beban lebih ringan.',
+        'Melengkungkan punggung bawah untuk naik lebih tinggi: gerak hanya sejauh pinggul tetap sejajar.',
+        'Memutar pinggul: jaga tetap menghadap mesin.',
+      ],
+    },
+    {
+      id: 'barbell_hip_thrust', src: 'Barbell_Hip_Thrust', en: 'Barbell hip thrust', idn: 'Hip thrust barbell', eq: 'barbell', lvl: 'intermediate',
+      se: [
+        'Sit on the floor with your upper back against a bench and roll a padded barbell over your hips.',
+        'Set your feet flat on the floor, hip-width apart, with your knees bent.',
+        'Push through your heels and squeeze your glutes to lift your hips until your torso is level.',
+        'Keep your chin tucked and your ribs down at the top.',
+        'Lower your hips under control and repeat.',
+      ],
+      si: [
+        'Duduk di lantai dengan punggung atas bersandar di bangku dan gulirkan barbell berbantalan ke atas pinggul.',
+        'Letakkan telapak kaki rata di lantai selebar pinggul dengan lutut ditekuk.',
+        'Dorong lewat tumit dan kencangkan bokong untuk mengangkat pinggul sampai badan sejajar.',
+        'Dagu ditarik dan tulang rusuk turun di puncak gerakan.',
+        'Turunkan pinggul dengan terkontrol dan ulangi.',
+      ],
+      me: [
+        'Over-arching your lower back: tuck your ribs and stop when your hips are level.',
+        'Bar rolls on your hips: use a pad and keep both hands on the bar.',
+        'Feet too far forward: move them closer so your shins are vertical at the top.',
+      ],
+      mi: [
+        'Punggung bawah terlalu melengkung: tarik tulang rusuk dan berhenti saat pinggul sejajar.',
+        'Bar bergulir di pinggul: pakai bantalan dan pegang bar dengan dua tangan.',
+        'Kaki terlalu jauh ke depan: dekatkan supaya tulang kering tegak di atas.',
+      ],
+    },
+  ],
+
+  calf: [
+    {
+      id: 'calf_raise', src: 'own', en: 'Standing calf raise', idn: 'Calf raise', eq: 'bodyweight', lvl: 'beginner', img: [453],
+      p: ['calves'], s: [],
+      se: [
+        'Stand tall with your feet hip-width apart and hold a wall or chair for balance.',
+        'Rise up onto the balls of your feet as high as you can.',
+        'Pause for a second at the top.',
+        'Lower your heels slowly until they are back on the floor.',
+      ],
+      si: [
+        'Berdiri tegak dengan kaki selebar pinggul dan berpegangan pada dinding atau kursi untuk keseimbangan.',
+        'Naik berjinjit setinggi yang kamu bisa.',
+        'Tahan sebentar di atas.',
+        'Turunkan tumit pelan-pelan sampai kembali menapak lantai.',
+      ],
+      me: [
+        'Bouncing through the movement: pause at the top and bottom.',
+        'Rolling to the outside of your feet: push through the base of your big toe.',
+        'Short range: go all the way up and all the way down.',
+      ],
+      mi: [
+        'Memantul sepanjang gerakan: berhenti di atas dan di bawah.',
+        'Telapak kaki miring ke luar: dorong lewat pangkal jempol kaki.',
+        'Jangkauan terlalu pendek: naik sepenuhnya dan turun sepenuhnya.',
+      ],
+    },
+    {
+      id: 'single_leg_calf_raise', src: 'own', en: 'Single-leg calf raise', idn: 'Calf raise satu kaki', eq: 'bodyweight', lvl: 'intermediate',
+      p: ['calves'], s: [],
+      se: [
+        'Stand on one foot next to a wall or rail and hold it lightly for balance.',
+        'Rise up onto the ball of your foot as high as you can.',
+        'Pause for a second at the top.',
+        'Lower your heel slowly, then repeat and switch feet after your reps.',
+      ],
+      si: [
+        'Berdiri di satu kaki di dekat dinding atau pegangan dan berpegangan ringan untuk keseimbangan.',
+        'Naik berjinjit setinggi yang kamu bisa.',
+        'Tahan sebentar di atas.',
+        'Turunkan tumit pelan-pelan, ulangi, lalu ganti kaki setelah selesai repetisi.',
+      ],
+      me: [
+        'Pushing off with the free foot: lift it clear of the floor so one leg does all the work.',
+        'Leaning on the wall: hold it with only your fingertips.',
+        'Short range: go all the way up and all the way down.',
+      ],
+      mi: [
+        'Mendorong dengan kaki bebas: angkat sampai lepas dari lantai supaya satu kaki yang bekerja penuh.',
+        'Bersandar pada dinding: pegang hanya dengan ujung jari.',
+        'Jangkauan terlalu pendek: naik sepenuhnya dan turun sepenuhnya.',
+      ],
+    },
+    {
+      id: 'db_calf_raise', src: 'Standing_Dumbbell_Calf_Raise', en: 'Dumbbell calf raise', idn: 'Calf raise dumbbell', eq: 'dumbbell', lvl: 'beginner', img: [438, 437],
+      se: [
+        'Stand with the balls of your feet on a low step or a thick book and hold a dumbbell in each hand.',
+        'Lower your heels below the step until your calves stretch.',
+        'Rise up onto your toes as high as you can.',
+        'Pause for a second, then lower slowly.',
+      ],
+      si: [
+        'Berdiri dengan bagian depan telapak kaki di atas anak tangga rendah atau buku tebal sambil memegang dumbbell di tiap tangan.',
+        'Turunkan tumit di bawah pijakan sampai betis teregang.',
+        'Naik berjinjit setinggi yang kamu bisa.',
+        'Tahan sebentar, lalu turun pelan.',
+      ],
+      me: [
+        'Short range: lower fully for a stretch, then rise fully.',
+        'Bending your knees to lift: keep your legs nearly straight.',
+        'Rocking your whole body: hold a wall with one hand if you need to.',
+      ],
+      mi: [
+        'Jangkauan terlalu pendek: turun penuh sampai teregang, lalu naik penuh.',
+        'Menekuk lutut untuk mengangkat: jaga kaki hampir lurus.',
+        'Badan bergoyang: pegang dinding dengan satu tangan jika perlu.',
+      ],
+    },
+    {
+      id: 'standing_calf_raise_machine', src: 'Standing_Calf_Raises', en: 'Standing calf raise machine', idn: 'Calf raise machine', eq: 'machine', lvl: 'beginner', img: [],
+      se: [
+        'Set the shoulder pads so you stand tall under them with the balls of your feet on the platform.',
+        'Release the safety and let your heels sink until your calves stretch.',
+        'Rise up onto your toes as high as you can.',
+        'Pause for a second, then lower slowly.',
+      ],
+      si: [
+        'Atur bantalan bahu supaya kamu berdiri tegak di bawahnya dengan bagian depan telapak kaki di platform.',
+        'Lepas pengaman dan biarkan tumit turun sampai betis teregang.',
+        'Naik berjinjit setinggi yang kamu bisa.',
+        'Tahan sebentar, lalu turun pelan.',
+      ],
+      me: [
+        'Bouncing out of the bottom: pause at the stretch.',
+        'Bending your knees to get more weight up: keep them nearly straight.',
+        'Stopping halfway: reach the top fully on every rep.',
+      ],
+      mi: [
+        'Memantul dari posisi bawah: berhenti sebentar saat teregang.',
+        'Menekuk lutut untuk mengangkat lebih berat: jaga hampir lurus.',
+        'Berhenti di tengah: capai puncak penuh di setiap repetisi.',
+      ],
+    },
+    {
+      id: 'seated_calf_raise_machine', src: 'Seated_Calf_Raise', en: 'Seated calf raise machine', idn: 'Seated calf raise', eq: 'machine', lvl: 'beginner',
+      se: [
+        'Sit down, place the balls of your feet on the platform and set the pad snug on top of your thighs.',
+        'Release the safety and let your heels sink until your calves stretch.',
+        'Press up onto your toes as high as you can.',
+        'Pause for a second, then lower slowly.',
+      ],
+      si: [
+        'Duduk, letakkan bagian depan telapak kaki di platform, dan pasang bantalan pas di atas paha.',
+        'Lepas pengaman dan biarkan tumit turun sampai betis teregang.',
+        'Dorong naik berjinjit setinggi yang kamu bisa.',
+        'Tahan sebentar, lalu turun pelan.',
+      ],
+      me: [
+        'Bouncing the weight: slow down and pause at the bottom.',
+        'Feet rolling outward: keep your weight under the base of your big toe.',
+      ],
+      mi: [
+        'Memantulkan beban: pelankan dan berhenti sebentar di bawah.',
+        'Telapak kaki miring ke luar: jaga beban di bawah pangkal jempol kaki.',
+      ],
+    },
+  ],
+};

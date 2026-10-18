@@ -18,6 +18,8 @@ interface ButtonProps {
   /** A check in place of the icon or spinner: the action just succeeded. The caller clears it after a moment. */
   done?: boolean;
   icon?: IconName;
+  /** Lines the label may take before it is cut off; 1 by default. */
+  lines?: number;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -29,6 +31,7 @@ export function Button({
   loading,
   done,
   icon,
+  lines = 1,
   style,
 }: ButtonProps) {
   const { colors, fonts, radius } = useTheme();
@@ -55,7 +58,7 @@ export function Button({
         </PopIn>
       ) : null}
       {!loading && !done && icon ? <Ionicons name={icon} size={18} color={scheme.fg} /> : null}
-      <Text style={[styles.label, { color: scheme.fg, fontFamily: fonts.medium }]} numberOfLines={1}>
+      <Text style={[styles.label, { color: scheme.fg, fontFamily: fonts.medium }, lines > 1 && styles.wrapped]} numberOfLines={lines}>
         {label}
       </Text>
     </PressableScale>
@@ -72,4 +75,5 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   label: { fontSize: fontSize.base },
+  wrapped: { flexShrink: 1, textAlign: 'center', paddingVertical: spacing.xs },
 });

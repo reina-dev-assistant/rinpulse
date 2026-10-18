@@ -8,11 +8,18 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.huawei.p2p.dictionar
  * number a chart plots, every value as JSON) and `health_metric_status` (what the last gate check and sync did
  * per metric, so the screen can say which ones the watch does not support). Schema: migration `health_metrics`
  * in `schema/joyofit-db-migrations.json`.
+ *
+ * Rows carry the watch that reported them (`device`, from [deviceAddress]: the connected watch when the call happens),
+ * and "what is already stored" is asked per watch, so each watch fetches from where it stopped itself. The status table
+ * is one row per metric for the phone.
  */
-internal class HealthMetricsStore(private val store: SyncStore) : HuaweiDictionarySyncInterface.Store {
+internal class HealthMetricsStore(
+  private val store: SyncStore,
+  private val deviceAddress: () -> String?,
+) : HuaweiDictionarySyncInterface.Store {
   override fun getLastFetchTimestamp(type: String): Long =
     try {
-      store.db().rawQuery("SELECT MAX(last_ts) FROM health_metrics WHERE type = ?", arrayOf(type)).use {
+      store.db().rawQuery(WatchSql.SELECT_HEALTH_METRIC_CURSOR, arrayOf(type, deviceAddress())).use {
         if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) * 1000 else 0L
       }
     } catch (e: SQLiteException) {
@@ -22,12 +29,10 @@ internal class HealthMetricsStore(private val store: SyncStore) : HuaweiDictiona
   override fun persist(rows: List<HuaweiDictionarySyncInterface.Row>) {
     if (rows.isEmpty()) return
     val db = store.db()
+    val device = deviceAddress()
     db.beginTransaction()
     try {
-      val statement = db.compileStatement(
-        """INSERT INTO health_metrics (type, ts, last_ts, value, values_json) VALUES (?, ?, ?, ?, ?)
-           ON CONFLICT(type, ts) DO UPDATE SET last_ts = excluded.last_ts, value = excluded.value, values_json = excluded.values_json""",
-      )
+      val statement = db.compileStatement(WatchSql.UPSERT_HEALTH_METRIC)
       try {
         for (r in rows) {
           statement.clearBindings()
@@ -36,6 +41,7 @@ internal class HealthMetricsStore(private val store: SyncStore) : HuaweiDictiona
           statement.bindLong(3, maxOf(r.lastTimestamp, r.timestamp) / 1000)
           r.value?.let { statement.bindDouble(4, it) } ?: statement.bindNull(4)
           statement.bindString(5, r.valuesJson)
+          device?.let { statement.bindString(6, it) } ?: statement.bindNull(6)
           statement.executeInsert()
         }
       } finally {

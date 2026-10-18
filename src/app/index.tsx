@@ -32,15 +32,22 @@ import { WatchHero } from '@/features/today/WatchHero';
 import { computeScores } from '@/features/today/scores';
 import { MorningCheckin } from '@/features/today/MorningCheckin';
 import { FitnessTodayCards } from '@/features/fitness/FitnessTodayCards';
+import { CoachTodayCard } from '@/features/coach/ui/CoachTodayCard';
 import { FamilyCard } from '@/features/today/FamilyCard';
 import { ScoresCard } from '@/features/today/ScoresCard';
 import { useRogoScoresPush } from '@/features/today/useRogoScoresPush';
-import { ShareTodayButton } from '@/features/share/ShareTodayButton';
+import { useRogoActiveKcal } from '@/features/today/useRogoActiveKcal';
+import { rogoDailyMetrics } from '@/features/today/rogoScores';
+import { useFitnessData } from '@/features/fitness/useFitnessData';
+import { ShareTodayButton } from '@/features/stickers/ui/ShareTodayButton';
 import { formatElapsed } from '@/features/workouts/summary';
 import { formatClock, formatCount, formatDistance } from '@/format';
 import { useNow } from '@/hooks/useNow';
 import { getLocale, INTL_TAG, useLocale } from '@/i18n';
 import { useLiveWorkout } from '@/state/LiveWorkoutProvider';
+import { useWatchPresence } from '@/features/device/useWatchPresence';
+import { showsWatchUi } from '@/features/device/presence';
+import { TodayNoWatch } from '@/features/today/TodayNoWatch';
 import { useWatch } from '@/state/WatchProvider';
 import { spacing, useColors } from '@/theme';
 import { sportLabel } from '@/features/workouts/sportLabel';
@@ -56,7 +63,7 @@ const WEEKDAY_FORMAT: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'nume
 /** How often the hero re-checks whether the live reading is stale and re-words "5 min ago". */
 const HERO_TICK_MS = 5_000;
 
-export default function TodayScreen() {
+function WatchToday() {
   const router = useRouter();
   const colors = useColors();
   const { t } = useTranslation(['today', 'common']);
@@ -87,7 +94,11 @@ export default function TodayScreen() {
     };
   }, [data, totals, nightHrv, locale]);
 
-  useRogoScoresPush(view?.scores ?? null, data?.dayStart ?? null);
+  // One read of the fitness inputs for the cards below and for the body metrics JoyoRogo gets.
+  const { data: fitness } = useFitnessData(dataVersion, 'full');
+  const rogoMetrics = useMemo(() => (fitness && data ? rogoDailyMetrics(fitness, data.dayStart) : undefined), [fitness, data]);
+  const rogoActiveKcal = useRogoActiveKcal(dataVersion);
+  useRogoScoresPush(view?.scores ?? null, data?.dayStart ?? null, rogoMetrics, rogoActiveKcal);
 
   const canSync = linkState === 'connected' && device !== null;
   const syncing = linkState === 'syncing';
@@ -102,7 +113,7 @@ export default function TodayScreen() {
       caption={new Date().toLocaleDateString(INTL_TAG[getLocale()], WEEKDAY_FORMAT)}
       right={
         data && view ? (
-          <ShareTodayButton day={view.share} nowMs={data.nowSec * 1000} />
+          <ShareTodayButton day={view.share} nowMs={data.nowSec * 1000} stepGoal={goal} restingHr={data.resting.get(data.dayStart) ?? null} />
         ) : null
       }
       refresh={{ refreshing: syncing, onRefresh: () => void sync(), enabled: canSync }}>
@@ -149,7 +160,9 @@ export default function TodayScreen() {
 
       {view ? <ScoresCard readiness={view.scores.readiness} today={view.scores.today} onPress={() => router.push('/readiness')} /> : null}
 
-      <FitnessTodayCards dataVersion={dataVersion} availability={nightHrv} />
+      <CoachTodayCard dataVersion={dataVersion} availability={nightHrv} />
+
+      <FitnessTodayCards data={fitness} availability={nightHrv} />
 
       <FamilyCard />
 
@@ -222,6 +235,18 @@ export default function TodayScreen() {
       </Details>
     </Screen>
   );
+}
+
+/**
+ * Today. With a watch (or data from one) it is the watch's day: ring, scores, sleep, heart rate. A phone that has never had a watch
+ * gets `TodayNoWatch`, built around the strength logger and Coach, instead of a screen of empty cards. The first moment, before the
+ * database says which one applies, shows only the title.
+ */
+export default function TodayScreen() {
+  const { t } = useTranslation('common');
+  const presence = useWatchPresence();
+  if (presence === null) return <Screen title={t('nav.today')}>{null}</Screen>;
+  return showsWatchUi(presence) ? <WatchToday /> : <TodayNoWatch />;
 }
 
 const styles = StyleSheet.create({

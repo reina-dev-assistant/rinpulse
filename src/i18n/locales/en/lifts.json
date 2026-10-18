@@ -1,0 +1,204 @@
+{
+  "title": "Lift history",
+  "group": {
+    "chest": "Chest",
+    "back": "Back",
+    "shoulders": "Shoulders",
+    "biceps": "Biceps",
+    "triceps": "Triceps",
+    "forearms": "Forearms",
+    "abs": "Abs",
+    "glutes": "Glutes",
+    "quads": "Quads",
+    "hamstrings": "Hamstrings",
+    "calves": "Calves",
+    "hips": "Hips"
+  },
+  "unit": {
+    "kg": "{{value}} kg",
+    "sec": "{{value}} s",
+    "kcal": "kcal",
+    "sets_one": "set",
+    "sets_other": "sets",
+    "reps_one": "{{value}} rep",
+    "reps_other": "{{value}} reps"
+  },
+  "set": {
+    "weightReps": "{{weight}} × {{reps}}",
+    "weightSeconds": "{{weight}} × {{time}}",
+    "reps_one": "{{value}} rep",
+    "reps_other": "{{value}} reps"
+  },
+  "row": {
+    "dateTime": "{{date}}, {{time}}",
+    "untitled": "Workout",
+    "a11y": "{{name}}, {{date}}",
+    "prs_one": "{{count}} personal record",
+    "prs_other": "{{count}} personal records"
+  },
+  "week": {
+    "title": "This week",
+    "workouts": "Workouts",
+    "volume": "Volume",
+    "sets": "Sets",
+    "streak_one": "{{count}} week in a row. You trained in {{active}} of the last {{weeks}} weeks.",
+    "streak_other": "{{count}} weeks in a row. You trained in {{active}} of the last {{weeks}} weeks.",
+    "steady": "You trained in {{active}} of the last {{weeks}} weeks."
+  },
+  "history": {
+    "title": "History and calendar",
+    "view": {
+      "list": "List",
+      "calendar": "Calendar"
+    },
+    "empty": {
+      "title": "No workouts yet",
+      "description": "Finished strength workouts show up here, with their volume and records.",
+      "start": "Start a workout"
+    }
+  },
+  "calendar": {
+    "previous": "Previous month",
+    "next": "Next month",
+    "today": "Today",
+    "monthCount": "This month: {{strength}} strength, {{other}} other",
+    "legend": {
+      "strength": "Strength",
+      "other": "Other sports"
+    },
+    "dayEmpty": "Nothing logged on this day.",
+    "pickDay": "Pick a day to see its workouts.",
+    "day": {
+      "none": "{{date}}: no workouts",
+      "strength": "{{date}}: strength workouts {{strength}}",
+      "other": "{{date}}: other workouts {{other}}",
+      "both": "{{date}}: strength workouts {{strength}}, other workouts {{other}}"
+    }
+  },
+  "list": {
+    "history": "History and calendar",
+    "strengthLine_one": "{{count}} set, {{volume}}",
+    "strengthLine_other": "{{count}} sets, {{volume}}"
+  },
+  "exercises": {
+    "title": "Exercises",
+    "removed": "Removed exercise",
+    "usedLine_one": "{{count}} session, last {{date}}",
+    "usedLine_other": "{{count}} sessions, last {{date}}",
+    "tab": {
+      "done": "Done by you",
+      "all": "All exercises"
+    },
+    "searchLabel": "Search exercises",
+    "searchPlaceholder": "Search exercises",
+    "emptyDone": {
+      "title": "No exercises yet",
+      "description": "Exercises you finish in a workout show up here. You can also open any exercise from the full list.",
+      "browse": "Browse all exercises"
+    },
+    "noMatch": {
+      "title": "Nothing found",
+      "description": "Try another word, or search by the English name."
+    },
+    "rowA11y": "{{name}}, {{detail}}"
+  },
+  "exercise": {
+    "removed": "Removed exercise",
+    "removedHint": "This exercise was removed. Its history is still here.",
+    "musclesLine": "{{muscles}} ({{equipment}})",
+    "summary_one": "{{count}} session, last {{last}}",
+    "summary_other": "{{count}} sessions, last {{last}}",
+    "noSessions": {
+      "title": "No sessions yet",
+      "description": "Finish a set of this exercise in a workout and its charts and records show up here."
+    },
+    "progress": "Progress"
+  },
+  "metric": {
+    "bestSet": "Best set",
+    "e1rm": "Estimated 1RM",
+    "volume": "Volume",
+    "reps": "Reps",
+    "time": "Longest time",
+    "totalTime": "Total time"
+  },
+  "range": {
+    "3m": "3M",
+    "6m": "6M",
+    "1y": "1Y",
+    "all": "All"
+  },
+  "chart": {
+    "label": "{{metric}}, {{exercise}}",
+    "emptyRange": "No data in this range yet.",
+    "hint": "Swipe up or down to move between points."
+  },
+  "records": {
+    "title": "Records",
+    "weight": "Heaviest weight",
+    "e1rm": "Best estimated 1RM",
+    "volume": "Best set volume",
+    "time": "Longest time",
+    "valueOn": "{{value}}, {{date}}",
+    "rowA11y": "{{label}}: {{value}}, {{date}}"
+  },
+  "repRecords": {
+    "title": "Rep records",
+    "caption": "Most reps at each weight.",
+    "weight": "Weight",
+    "reps": "Reps",
+    "date": "Date",
+    "bodyweight": "Bodyweight",
+    "showAll": "Show all ({{n}})",
+    "showLess": "Show less",
+    "rowA11y": "{{weight}}, reps: {{reps}}, {{date}}"
+  },
+  "sessions": {
+    "title": "Past sessions",
+    "rowA11y": "{{date}}, sets: {{sets}}",
+    "best": "Best: {{set}}",
+    "more": "Show {{n}} more"
+  },
+  "heat": {
+    "title": "Muscle volume",
+    "intro": "Hard sets you finished per muscle group each week. Warm-up sets do not count.",
+    "gridTitle_one": "Last {{count}} week",
+    "gridTitle_other": "Last {{count}} weeks",
+    "weekA11y": "Week starting {{week}}",
+    "cellA11y_one": "{{group}}, week starting {{week}}: {{value}} set",
+    "cellA11y_other": "{{group}}, week starting {{week}}: {{value}} sets",
+    "weekNote": "The number above each column is the Monday of that week. The last column is this week.",
+    "legend": {
+      "none": "0",
+      "from": "{{from}}+",
+      "range": "{{from}}-{{to}}",
+      "a11y": "Sets per week: {{list}}"
+    },
+    "target": "10 to 20 hard sets per muscle per week is a common target.",
+    "thisWeek": "This week",
+    "thisWeekEmpty": "No sets yet this week.",
+    "rowA11y_one": "{{group}}: {{value}} set this week",
+    "rowA11y_other": "{{group}}: {{value}} sets this week",
+    "sets_one": "{{value}} set",
+    "sets_other": "{{value}} sets",
+    "secondaryNote": "Secondary muscles count as half a set.",
+    "sheet": {
+      "title": "{{group}}, week of {{week}}",
+      "empty": "No sets for this muscle that week.",
+      "rowA11y_one": "{{name}}: {{value}} set",
+      "rowA11y_other": "{{name}}: {{value}} sets",
+      "secondary": "Secondary muscle, counts half"
+    }
+  },
+  "detail": {
+    "title": "Strength",
+    "volume": "Volume",
+    "sets": "Sets",
+    "reps": "Reps",
+    "setsCount_one": "{{count}} set",
+    "setsCount_other": "{{count}} sets",
+    "rowA11y_one": "{{name}}, {{count}} set, best {{best}}",
+    "rowA11y_other": "{{name}}, {{count}} sets, best {{best}}",
+    "open": "Open strength summary"
+  }
+}

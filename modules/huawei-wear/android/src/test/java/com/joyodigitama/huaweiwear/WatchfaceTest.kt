@@ -17,6 +17,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 /** `.hwt` validation, the resolution gate, and list / set active / delete / install against a fake 0x27 watch. */
@@ -51,6 +52,18 @@ class WatchfaceTest {
 
   private val binary = ByteArray(300) { (it * 5 + 1).toByte() }
 
+  @Test
+  fun testAllFixturesParsingAndPreview() {
+    val root = java.io.File("../../../packages/hwt/fixtures")
+    assumeTrue("packages/hwt/fixtures directory not found", root.exists())
+    val files = root.walkTopDown().filter { it.extension == "hwt" }.toList()
+    for (f in files) {
+      val bytes = f.readBytes()
+      val preview = WatchfacePackages.extractPreview(bytes)
+      assertNotNull("Preview should be extracted for ${f.name}", preview)
+      assertTrue("Preview bytes should not be empty for ${f.name}", preview!!.first.isNotEmpty())
+    }
+  }
   private fun hwt(screen: String = "HWHD13", nested: Boolean = true, root: String = "HwTheme", bom: Boolean = false): ByteArray {
     val inner = if (nested) zip("watchface.bin" to binary, "other.txt" to byteArrayOf(1)) else binary
     val entry = if (root == "HnTheme") "com.honor.watchface" else "com.huawei.watchface"
@@ -829,5 +842,29 @@ class WatchfaceTest {
 
     assertTrue(result.listed)
     assertEquals("Installed and active.", result.message)
+  }
+  @Test(timeout = 1000)
+  fun testRgb565HugeRleCountTerminatesWithoutHanging() {
+    val w = 10
+    val h = 10
+    val data = ByteArrayOutputStream().apply {
+      // Magic 0x2345
+      write(0x45); write(0x23)
+      // Format 0xF565 (RGB565)
+      write(0x65); write(0xF5)
+      // Width 10, Height 10 (little endian)
+      write(w and 0xFF); write((w shr 8) and 0xFF)
+      write(h and 0xFF); write((h shr 8) and 0xFF)
+      // RLE marker: 0x23456789
+      write(0x89); write(0x67); write(0x45); write(0x23)
+      // Pixel 1 (white 0xFFFF), Pixel 2 (black 0x0000)
+      write(0xFF); write(0xFF)
+      write(0x00); write(0x00)
+      // Pairs count: 0x7FFFFFFF (2.1 billion pairs)
+      write(0xFF); write(0xFF); write(0xFF); write(0x7F)
+    }.toByteArray()
+
+    val bmp = WatchfaceBitmapDecoder.decodeBlobToBmp(data, 0, data.size)
+    assertNotNull("BMP should decode without hanging or timing out", bmp)
   }
 }

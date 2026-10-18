@@ -188,15 +188,15 @@ final class HuaweiImportStoreTests: XCTestCase {
 
     func testImportedWorkoutsDoNotMoveTheWatchsWorkoutSyncWindow() throws {
         _ = try imports.writeWorkout(workout(start: 1_750_000_020))
-        XCTAssertEqual(try WorkoutStore(store).syncStart(), Int(WorkoutStore.defaultStartSec))
+        XCTAssertEqual(try WorkoutStore(store, address: "AA:AA:AA:AA:AA:01").syncStart(), Int(WorkoutStore.defaultStartSec))
         // The watch syncing the same workout takes it over; from then on it counts.
         let record = WorkoutRecord(
             number: 3, start: 1_750_000_020, end: 1_750_000_630, sportType: 1, sportName: "Running", duration: 610, distance: 1500, calories: 90, steps: 1, avgHr: nil, maxHr: nil,
             summaryJson: "{}", points: [], complete: true)
-        _ = try WorkoutStore(store).save(record)  // false: the row was complete already; what matters is that it is the watch's now
+        _ = try WorkoutStore(store, address: "AA:AA:AA:AA:AA:01").save(record)  // false: the row was complete already; what matters is that it is the watch's now
         let imported: [Int] = try store.read { db in try db.query("SELECT imported FROM workouts") { $0.int(0) } }
         XCTAssertEqual(imported, [0])
-        XCTAssertEqual(try WorkoutStore(store).syncStart(), 1_750_000_631)
+        XCTAssertEqual(try WorkoutStore(store, address: "AA:AA:AA:AA:AA:01").syncStart(), 1_750_000_631)
     }
 
     func testImportedRowsStayOutOfTheAppleHealthExport() async throws {

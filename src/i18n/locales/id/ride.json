@@ -1,0 +1,83 @@
+{
+  "title": "Main di web",
+  "notificationTitle": "Main di web",
+  "entry": {
+    "title": "Main di web",
+    "hint": "Sepeda indoor di layar besar. HP-mu jadi penghubung sensor, game-nya jalan di browser.",
+    "action": "Main di web"
+  },
+  "join": {
+    "title": "Gabung ke game",
+    "steps": "Buka {{url}} di browser laptop atau TV, lalu ketik kode 6 angka yang muncul di sana. Atau scan QR-nya pakai kamera HP, JoyoFit langsung terbuka.",
+    "codeLabel": "Kode dari layar",
+    "codePlaceholder": "000000",
+    "action": "Gabung",
+    "fromLink": "Kode dari QR sudah terisi. Cocokkan angkanya dengan layar, lalu tekan Gabung.",
+    "account": "Butuh akun JoyoRogo yang masuk di JoyoFit. Gratis, tidak perlu Pro.",
+    "ride": "Gabung memasang rekaman ride indoor di HP-mu. Hasilnya tersimpan seperti ride biasa, dengan jarak dan tanjakan dari game."
+  },
+  "error": {
+    "notSignedIn": "Masuk ke JoyoRogo dulu untuk memakai Main di web.",
+    "notConfigured": "Server JoyoFit belum diatur di build ini.",
+    "notFound": "Kode tidak ketemu atau sudah kedaluwarsa. Kode berlaku 10 menit, minta kode baru di layar.",
+    "taken": "Ruang ini sudah dipakai HP lain.",
+    "rateLimited": "Terlalu banyak percobaan. Tunggu sebentar, lalu coba lagi.",
+    "network": "Tidak bisa menghubungi server. Cek koneksimu.",
+    "busy": "Ada rekaman lain yang sedang jalan. Selesaikan dulu, baru gabung.",
+    "prepare": "Rekaman belum bisa disiapkan. Cek izin Bluetooth dan sensor-mu.",
+    "replaced": "HP lain mengambil alih ruang ini.",
+    "expired": "Ruang ditutup karena lama tidak dipakai.",
+    "policy": "Server menutup koneksi karena data yang dikirim tidak sesuai.",
+    "lost": "Koneksi putus dan belum tersambung lagi.",
+    "notSignedInAction": "Masuk"
+  },
+  "status": {
+    "title": "Status",
+    "room": "Ruang {{code}}",
+    "connection": "Koneksi",
+    "connected": "Tersambung",
+    "connecting": "Menyambung...",
+    "reconnecting": "Menyambung ulang (percobaan {{count}})",
+    "lost": "Putus",
+    "ended": "Ditutup",
+    "game": "Game di browser",
+    "gameOn_other": "{{count}} layar terhubung",
+    "gameWaiting": "Menunggu game dibuka",
+    "sensors": "Sensor",
+    "sensorsNone": "Belum ada data sensor",
+    "hr": "{{value}} bpm",
+    "cad": "{{value}} rpm",
+    "latency": "Latensi",
+    "latencyValue": "{{ms}} ms"
+  },
+  "lobby": {
+    "title": "Siap main",
+    "hint": "Mulai dari game, atau tekan Mulai di sini. Rekaman jalan di HP, jadi biarkan JoyoFit terbuka.",
+    "start": "Mulai",
+    "noSensors": "Belum ada sensor kadens atau detak jantung yang dipasangkan. Tambahkan dulu di Sensor.",
+    "manageSensors": "Atur sensor",
+    "preparing": "Menyiapkan rekaman dan sensor..."
+  },
+  "live": {
+    "title": "Di game",
+    "speed": "Kecepatan virtual",
+    "distance": "Jarak virtual",
+    "grade": "Tanjakan",
+    "gear": "Gigi",
+    "gearValue": "{{gear}} dari {{count}}",
+    "power": "Daya (estimasi)",
+    "route": "Rute",
+    "waiting": "Menunggu data dari game",
+    "gearUp": "Gigi naik",
+    "gearDown": "Gigi turun",
+    "note": "Jarak, kecepatan, dan daya di sini hasil simulasi game. Daya adalah estimasi dari kadens dan gigi, bukan hasil ukur."
+  },
+  "actions": {
+    "leave": "Keluar dari ruang",
+    "leaveTitle": "Keluar dari ruang?",
+    "leaveMessage": "Game berhenti menerima data dari HP-mu. Rekaman yang sudah jalan tetap lanjut sebagai ride indoor biasa.",
+    "leaveConfirm": "Keluar",
+    "reconnect": "Sambungkan lagi",
+    "stopAsked": "Game minta berhenti."
+  }
+}

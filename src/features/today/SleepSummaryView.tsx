@@ -29,8 +29,8 @@ export function SleepSummaryView({ summary, score }: { summary: SleepSummary | n
   }
 
   const hasStages = summary.byStage.length > 0;
-  const awakeSeconds = summary.byStage.find((entry) => entry.stage === 'awake')?.seconds ?? 0;
-  const headlineSeconds = hasStages ? summary.totalSeconds - awakeSeconds : summary.totalSeconds;
+  const headlineSeconds = summary.dayAsleepSeconds;
+  const napSeconds = summary.naps.reduce((sum, nap) => sum + nap.seconds, 0);
   const minutes = Math.round(headlineSeconds / 60);
 
   return (
@@ -44,9 +44,21 @@ export function SleepSummaryView({ summary, score }: { summary: SleepSummary | n
           <AppText variant="caption" muted>
             {t(hasStages ? 'sleep.rangeStages' : 'sleep.rangeNoStages', { start: formatClock(summary.start), end: formatClock(summary.end) })}
           </AppText>
+          {summary.naps.length > 0 ? (
+            <AppText variant="caption" muted>
+              {t('sleep.napsIncluded', { duration: formatDuration(napSeconds) })}
+            </AppText>
+          ) : null}
         </View>
         {score ? <SleepScoreRing score={score} /> : null}
       </View>
+      {summary.naps.map((nap) => (
+        <KeyValue
+          key={nap.start}
+          label={t('sleep.nap', { start: formatClock(nap.start), end: formatClock(nap.end) })}
+          value={formatDuration(nap.seconds)}
+        />
+      ))}
       {hasStages ? (
         <>
           <View accessible={false} importantForAccessibility="no-hide-descendants" style={styles.stageBar}>

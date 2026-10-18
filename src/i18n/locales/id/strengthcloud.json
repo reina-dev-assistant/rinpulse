@@ -1,0 +1,14 @@
+{
+  "title": "Awan latihan beban",
+  "kcal": {
+    "name": "Latihan beban: {{name}}",
+    "nameEmpty": "Latihan beban"
+  },
+  "status": {
+    "synced": "Riwayat latihan beban tersimpan di cloud JoyoRogo.",
+    "localOnly": "Riwayat latihan beban tetap di ponsel ini. Pro menyimpannya di cloud.",
+    "offline": "Offline. Perubahan menunggu koneksi untuk diunggah.",
+    "notSignedIn": "Masuk ke JoyoRogo untuk menyimpan riwayat latihan beban di cloud.",
+    "pending_other": "{{count}} perubahan menunggu diunggah."
+  }
+}

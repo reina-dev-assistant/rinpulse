@@ -35,7 +35,7 @@
     "high": "High",
     "noHeart": "No heart rate stored today.",
     "stepsTitle": "Steps per hour",
-    "sleepTitle": "Last night's sleep",
+    "sleepTitle": "Sleep summary",
     "healthTitle": "Health metrics",
     "healthSubtitle": "Skin temp, HRV, stress and more",
     "aboutTitle": "About these numbers",
@@ -55,6 +55,8 @@
     "emptyTitle": "No sleep stored",
     "emptyDescription": "Nothing in the last 36 hours. Sync after waking.",
     "sleptA11y": "Slept {{duration}}",
+    "napsIncluded": "includes naps, {{duration}}",
+    "nap": "Nap, {{start}} to {{end}}",
     "rangeStages": "{{start}} to {{end}}, awake excluded",
     "rangeNoStages": "{{start}} to {{end}}, no stages",
     "stagesNote": "Stages come from the watch's sleep data. Spans without a stage count only in the total.",
@@ -166,7 +168,11 @@
     },
     "trendEmpty": "No night HRV stored. Wear the watch asleep and sync.",
     "recoveryEmptyNoNight": "No recovery yet. {{message}}, so it needs 1-minute readings: measure HRV for a minute on 5 different days.",
-    "recoveryEmpty": "No recovery yet. Needs HRV readings (a night with the watch on, or a 1-minute reading) and 4 earlier ones of the same kind in the 30 days before."
+    "recoveryEmpty": "No recovery yet. Needs HRV readings (a night with the watch on, or a 1-minute reading) and 4 earlier ones of the same kind in the 30 days before.",
+    "noWatch": {
+      "message": "No watch connected",
+      "detail": "Night HRV and recovery come from a watch. Without one, Coach uses how you say you feel."
+    }
   },
   "strain": {
     "title": "Strain",
@@ -287,6 +293,34 @@
       "easyPregnancy": "Easy-pregnancy reminders",
       "detailsSupported": "Sends your estimates and symptoms to the watch when it asks. Off by default. The reminders switch is the master switch for the reminders below it.",
       "detailsPending": "Sent on the next connection with a watch that supports it. The reminders switch is the master switch for the reminders below it."
+    }
+  },
+  "noWatch": {
+    "strength": {
+      "title": "Training",
+      "none": "No workouts logged yet. Start the first one, no watch needed.",
+      "last_one": "Last {{date}}: {{name}}. {{count}} workout in 7 days.",
+      "last_other": "Last {{date}}: {{name}}. {{count}} workouts in 7 days.",
+      "untitled": "Workout",
+      "start": "Start workout",
+      "routines": "Routines"
+    },
+    "library": {
+      "title": "Exercise library",
+      "subtitle": "How to do each move, with pictures"
+    },
+    "history": {
+      "title": "Workout history",
+      "subtitle": "Calendar, records and muscle volume"
+    },
+    "connect": {
+      "title": "Connect a watch",
+      "subtitle": "Optional. Steps, sleep and heart rate show up here once a Huawei or Honor watch is connected."
+    },
+    "rogo": {
+      "title": "Your training in JoyoRogo",
+      "signedIn": "The energy of every strength workout you save goes to your JoyoRogo food diary, so your daily calories account for training.",
+      "signedOut": "Sign in with JoyoRogo so your workout energy lands in the food diary and your history is stored in the cloud (cloud needs Pro)."
     }
   }
 }

@@ -164,13 +164,31 @@ public final class SyncStore: @unchecked Sendable {
         }
     }
 
-    /// `upsertDevice` of the old JS queries: keeps `last_sync` of an existing row.
+    /// Whether a watch stores health rows (`device.tracks_health`); a watch with no row yet does.
+    public func tracksHealth(address: String) throws -> Bool {
+        try read { db in
+            try db.query("SELECT tracks_health FROM device WHERE address = ?", [.text(address)]) { $0.int(0) != 0 }.first ?? true
+        }
+    }
+
+    /// The sync of a watch with `tracks_health = 0` (docs/multi-watch.md, section 3): nothing is stored, `device.last_sync` still advances to
+    /// `nowSec`, and the summary is empty. nil when the watch tracks health and the sync must run. Read fresh on every sync.
+    public func untrackedSyncSummary(address: String, nowSec: Int64) throws -> SyncSummary? {
+        if try tracksHealth(address: address) { return nil }
+        try read { db in try db.run("UPDATE device SET last_sync = ? WHERE address = ?", [.int(nowSec), .text(address)]) }
+        return SyncSummary(from: nowSec, to: nowSec, samples: 0, sleep: 0, totalSteps: 0, totalCalories: 0, totalDistance: 0)
+    }
+
+    /// `upsertDevice` of the old JS queries: keeps `last_sync` of an existing row. A new row is primary when no watch is yet; an existing row
+    /// keeps its alias, primary flag, `tracks_health`, `bg_sync`, `added_at` and `last_sync` (docs/multi-watch.md, section 2).
     public func upsertDevice(address: String, name: String, productModel: String?, softwareVersion: String?) throws {
         try read { db in
             try db.run(
                 """
-                INSERT INTO device (address, name, product_model, software_version, last_sync)
-                VALUES (?, ?, ?, ?, NULL)
+                INSERT INTO device (address, name, product_model, software_version, last_sync, is_primary, added_at)
+                VALUES (?, ?, ?, ?, NULL,
+                  CASE WHEN EXISTS (SELECT 1 FROM device WHERE is_primary = 1) THEN 0 ELSE 1 END,
+                  CAST(strftime('%s', 'now') AS INTEGER))
                 ON CONFLICT(address) DO UPDATE SET
                   name = excluded.name,
                   product_model = excluded.product_model,
@@ -188,8 +206,8 @@ public final class SyncStore: @unchecked Sendable {
                 let sample = try db.prepare(
                     """
                     INSERT INTO step_samples
-                      (timestamp, steps, calories, distance, heart_rate, spo2, resting_heart_rate)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                      (timestamp, steps, calories, distance, heart_rate, spo2, resting_heart_rate, device)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(timestamp) DO UPDATE SET
                       steps = excluded.steps,
                       calories = excluded.calories,
@@ -197,35 +215,36 @@ public final class SyncStore: @unchecked Sendable {
                       heart_rate = excluded.heart_rate,
                       spo2 = excluded.spo2,
                       resting_heart_rate = excluded.resting_heart_rate,
+                      device = excluded.device,
                       imported = 0
                     """
                 )
                 let segment = try db.prepare(
                     """
-                    INSERT INTO sleep_segments (start, end, type, stage) VALUES (?, ?, ?, ?)
-                    ON CONFLICT(start, type) DO UPDATE SET end = excluded.end, stage = excluded.stage, imported = 0
+                    INSERT INTO sleep_segments (start, end, type, stage, device) VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(start, type) DO UPDATE SET end = excluded.end, stage = excluded.stage, device = excluded.device, imported = 0
                     """
                 )
                 for s in result.samples {
                     sample.reset()
                     try sample.bind([
                         .int(s.timestamp), .int(Int64(s.steps)), .int(Int64(s.calories)), .int(Int64(s.distance)),
-                        .integer(s.heartRate), .integer(s.spo2), .integer(s.restingHeartRate),
+                        .integer(s.heartRate), .integer(s.spo2), .integer(s.restingHeartRate), .text(address),
                     ])
                     while try sample.step() {}
                 }
                 for s in result.sleep {
                     segment.reset()
-                    try segment.bind([.int(s.start), .int(s.end), .int(Int64(s.type)), .string(s.stage)])
+                    try segment.bind([.int(s.start), .int(s.end), .int(Int64(s.type)), .string(s.stage), .text(address)])
                     while try segment.step() {}
                 }
                 for s in result.sleepScores {
                     try db.run(
                         """
-                        INSERT INTO sleep_scores (start, end, score, efficiency) VALUES (?, ?, ?, ?)
-                        ON CONFLICT(start) DO UPDATE SET end = excluded.end, score = excluded.score, efficiency = excluded.efficiency
+                        INSERT INTO sleep_scores (start, end, score, efficiency, device) VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(start) DO UPDATE SET end = excluded.end, score = excluded.score, efficiency = excluded.efficiency, device = excluded.device
                         """,
-                        [.int(s.start), .int(s.end), .int(Int64(s.score)), .integer(s.efficiency)]
+                        [.int(s.start), .int(s.end), .int(Int64(s.score)), .integer(s.efficiency), .text(address)]
                     )
                 }
                 try db.run("UPDATE device SET last_sync = ? WHERE address = ?", [.int(result.to), .text(address)])

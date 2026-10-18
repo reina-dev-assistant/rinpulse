@@ -1,3 +1,6 @@
+// Hermes has no Intl.PluralRules, which i18next needs for plural suffixes. Installs only when missing,
+// and must load before i18next resolves a plural (this app has no custom entry file).
+import 'intl-pluralrules';
 import i18next from 'i18next';
 import type { i18n as I18n, TFunction } from 'i18next';
 import { initReactI18next } from 'react-i18next';

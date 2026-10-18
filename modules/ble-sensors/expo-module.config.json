@@ -1,0 +1,9 @@
+{
+  "platforms": ["android", "ios"],
+  "android": {
+    "modules": ["com.joyodigitama.blesensors.BleSensorsModule"]
+  },
+  "ios": {
+    "modules": ["BleSensorsModule"]
+  }
+}

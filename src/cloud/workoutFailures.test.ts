@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import { clearFailure, isFailed, noFailures, parseFailures, partitionPending, recordFailure } from './workoutFailures';
+import { clearFailure, isFailed, noFailures, parseFailures, partitionPending, RETRY_REFUSED_MS, recordFailure } from './workoutFailures';
 
 describe('workout failures', () => {
   it('refuses one state of one workout until its rev moves', () => {
@@ -11,13 +11,25 @@ describe('workout failures', () => {
     expect(failures.lastError).toBe('bad_doc: x');
   });
 
-  it('survives a save and load, and is forgotten by another app build', () => {
-    const failures = recordFailure(noFailures('1.0+1'), 100, 5, 'e');
+  it('survives a save and load, and is forgotten by another app build or JS update', () => {
+    const failures = recordFailure(noFailures('1.0+1+u1'), 100, 5, 'e', 1_000);
     const raw = JSON.stringify(failures);
-    expect(parseFailures(raw, '1.0+1')).toEqual(failures);
-    expect(parseFailures(raw, '1.1+2')).toEqual(noFailures('1.1+2'));
-    expect(parseFailures(null, '1.0+1')).toEqual(noFailures('1.0+1'));
-    expect(parseFailures('not json', '1.0+1')).toEqual(noFailures('1.0+1'));
+    expect(parseFailures(raw, '1.0+1+u1', 2_000)).toEqual(failures);
+    expect(parseFailures(raw, '1.1+2+u1', 2_000)).toEqual(noFailures('1.1+2+u1'));
+    expect(parseFailures(raw, '1.0+1+u2', 2_000)).toEqual(noFailures('1.0+1+u2'));
+    expect(parseFailures(null, '1.0+1+u1')).toEqual(noFailures('1.0+1+u1'));
+    expect(parseFailures('not json', '1.0+1+u1')).toEqual(noFailures('1.0+1+u1'));
+  });
+
+  it('is forgotten a day after the first refusal, so a server-side fix needs no app update', () => {
+    const first = recordFailure(noFailures('b'), 100, 5, 'e', 1_000);
+    const second = recordFailure(first, 101, 5, 'e2', 1_000 + RETRY_REFUSED_MS / 2);
+    expect(second.since).toBe(1_000);
+    const raw = JSON.stringify(second);
+    expect(Object.keys(parseFailures(raw, 'b', 1_000 + RETRY_REFUSED_MS - 1).items)).toHaveLength(2);
+    expect(parseFailures(raw, 'b', 1_000 + RETRY_REFUSED_MS)).toEqual(noFailures('b'));
+    // Saved by an older app without `since`: tried again at once.
+    expect(parseFailures(JSON.stringify({ build: 'b', items: { 100: 5 }, lastError: 'e' }), 'b', 2_000)).toEqual(noFailures('b'));
   });
 
   it('forgets a workout that uploaded after all, and its error with the last one', () => {

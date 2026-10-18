@@ -1,5 +1,7 @@
 import Storage from 'expo-sqlite/kv-store';
 
+import { notePrefChanged } from '@/cloud/prefsSync';
+
 import { applyLocale } from './core';
 import { deviceLanguages, isLocalePref, resolveLocale, type LocalePref } from './locale';
 
@@ -36,6 +38,7 @@ export function setLocalePref(pref: LocalePref): void {
     // Applied for this session even when the write fails.
   }
   void applyLocale(resolveLocale({ pref, device: deviceLanguages() }));
+  void notePrefChanged('locale');
 }
 
 /** Re-resolves after the phone language changed (app returns to the foreground). No-op when pinned. */

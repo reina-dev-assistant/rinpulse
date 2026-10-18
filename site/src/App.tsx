@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import {
+  Bike,
+  History,
+  Radio,
+  Timer,
   ArrowRight,
   AlarmClock,
   ArrowLeft,
@@ -78,6 +82,7 @@ import { isPublicPath } from "./seo";
 import { Testimonials } from "./testimonials-section";
 import { TESTIMONIALS } from "./testimonials";
 import { AndroidMark, ANDROID_ROBOT_CREDIT, AppleMark, ButtonLink, GithubMark, Phone, Ring } from "./ui";
+import roadmap from "../../docs/roadmap.json";
 import { IphonePage, StravaPage } from "./Waitlist";
 
 /** Harga JoyoRogo Pro, sama dengan joyorogo.com/harga (api.joyorogo.com/api/config). */
@@ -87,7 +92,7 @@ const FACTS = [
   { value: `${JAM_BISA_DICOBA} model`, label: "jam dan band Huawei dan Honor bisa dicoba", href: "/jam" },
   { value: "Live", label: "detak, kkal, lemak dan karbo saat olahraga" },
   { value: "AGPL-3.0", label: "kode terbuka" },
-  { value: "Lokal", label: "data di HP, cloud opsional" },
+  { value: "Tanpa jam", label: "catat latihan beban dari HP saja", href: "#beban" },
 ] as const;
 
 const BASICS = [
@@ -160,9 +165,9 @@ const LIVE: { Icon: LucideIcon; name: string; note: string }[] = [
 ];
 
 const FACES: { Icon: LucideIcon; name: string; note: string }[] = [
-  { Icon: Palette, name: "Watch face", note: "Lihat, ganti, hapus, dan pasang file .hwt." },
-  { Icon: Watch, name: "Kustomisasi", note: "Ubah gaya, latar, huruf, dan widget face bawaan." },
-  { Icon: Download, name: "Face foto", note: "Pasang fotomu sendiri ke face foto." },
+  { Icon: Palette, name: "Watch face", note: "Daftar, pratinjau, ganti, dan hapus. File .hwt dicek dulu; jam menghapus face yang tidak ditandatangani Huawei." },
+  { Icon: Watch, name: "Ruang di jam", note: "Meter penyimpanan jam dan perkiraan apakah face baru masih muat." },
+  { Icon: Download, name: "Kustomisasi dan face foto", note: "Ubah gaya dan widget face bawaan, atau pasang fotomu sendiri." },
 ];
 
 function Check2({ className }: { className?: string }) {
@@ -243,7 +248,7 @@ function Footer() {
           <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted-foreground">
             Jam Huawei dan Honor tanpa Huawei Health: langkah, detak jantung, dan{" "}
             <span className="font-semibold text-tidur-ink">tidur</span> masuk ke HP, kalori{" "}
-            <span className="font-semibold text-makan-ink">makan</span> dari JoyoRogo tampil di jammu.
+            <span className="font-semibold text-makan-ink">makan</span> dari JoyoRogo tampil di jam-mu.
           </p>
           <p className="mt-4 flex items-start gap-1.5 text-sm text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
@@ -271,6 +276,9 @@ function Footer() {
             </a>
             <a href={BLOG_PATH} className={link}>
               Blog
+            </a>
+            <a href="/#roadmap" className={link}>
+              Roadmap
             </a>
           </FooterColumn>
           <FooterColumn title="Ekosistem">
@@ -352,7 +360,7 @@ function Hero() {
         <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground md:text-xl">
           Pendamping jam Huawei yang jalan di HP sendiri. Langkah, detak jantung, tidur, dan olahraga
           ditarik langsung lewat Bluetooth dan disimpan di HP. Tanpa Huawei Health, cloud hanya kalau
-          kamu mau.
+          kamu mau. Belum punya jam? Catat latihan beban dari HP saja.
         </p>
         <PlatformButtons location="hero" className="hero-rise mt-8 [--i:1]" />
         <div className="hero-rise mt-4 grid max-w-lg gap-3 text-sm leading-relaxed text-muted-foreground sm:grid-cols-2 [--i:2]">
@@ -735,7 +743,7 @@ function Features() {
       <article className="rounded-[1.75rem] bg-card p-6 md:p-8">
         <h3 className="text-2xl font-extrabold tracking-tight">Tampilan jam sendiri</h3>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
-          Atur tampilan jam dari HP.
+          Atur tampilan jam dari HP. Layar watch face dikerjakan bersama kontributor komunitas (terima kasih David4rr).
         </p>
         <ul className="mt-6 space-y-3">
           {FACES.map(({ Icon, name, note }) => (
@@ -778,13 +786,74 @@ const SOCIAL_POINTS: { Icon: LucideIcon; title: string; body: string }[] = [
   },
 ];
 
+const COACH_POINTS: { Icon: LucideIcon; title: string; body: string }[] = [
+  {
+    Icon: HeartPulse,
+    title: "Saran harian",
+    body: "\"Lari santai 30 menit, zona 2\" atau \"istirahat aktif\", dihitung dari kesiapan, HRV, tidur, dan beban latihan. Aturannya terbuka, tanpa AI, dan alasannya ditampilkan.",
+  },
+  {
+    Icon: Route,
+    title: "Rencana lari",
+    body: "5K, 10K, half marathon, atau lari rutin 3x seminggu. Kamu pilih tujuan, level, dan hari; volume disesuaikan tiap minggu dengan sesi yang selesai dan pemulihanmu.",
+  },
+  {
+    Icon: Dumbbell,
+    title: "Kekuatan dan perpustakaan gerakan",
+    body: "Full body 2 atau 3 kali seminggu di rumah atau gym, dengan sekitar 100 gerakan lengkap dengan langkah dan kesalahan umum. Sesinya langsung dibuka di pencatat latihan beban.",
+  },
+  {
+    Icon: MessageCircle,
+    title: "Tanya coach",
+    body: "Chat tentang latihan, pemulihan, dan rencanamu dengan konteks data jam dan catatan makanmu. Maksimal 20 pesan sehari, tidak disimpan di server, dan bukan saran medis.",
+  },
+];
+
+function CoachSection() {
+  return (
+    <section id="coach" data-section="coach" className="scroll-mt-16 border-t border-border/70 py-20 md:py-28">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <div className="max-w-2xl">
+          <p className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Baru, untuk JoyoRogo Pro</p>
+          <SectionTitle>Coach: tahu harus latihan apa hari ini</SectionTitle>
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            Coach membaca pemulihanmu dan memberi saran latihan hari ini, lengkap dengan rencana lari dan latihan kekuatan. Tanpa jam, kamu menjawab satu pertanyaan, &quot;badanmu terasa bagaimana hari ini&quot;, sebagai pengganti kesiapan. Rencanamu tersimpan di akun JoyoRogo dan ikut ke ponsel lain.
+          </p>
+        </div>
+        <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {COACH_POINTS.map(({ Icon, title, body }) => (
+            <li key={title} className="rounded-[1.75rem] bg-card p-6">
+              <span className="flex size-10 items-center justify-center rounded-full bg-bakar-soft text-bakar-ink">
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <h3 className="mt-4 text-lg font-extrabold tracking-tight">{title}</h3>
+              <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-6 text-[0.9375rem] text-muted-foreground">
+          Langkahnya ada di{" "}
+          <a href={`${PANDUAN_PATH}#coach`} className="font-semibold text-foreground underline underline-offset-4">
+            panduan Coach
+          </a>{" "}
+          dan{" "}
+          <a href="/blog/coach" className="font-semibold text-foreground underline underline-offset-4">
+            tulisan tentang Coach
+          </a>
+          . Coach bukan saran medis.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function SocialSection() {
   return (
     <section id="social" data-section="social" className="scroll-mt-16 bg-card py-20 md:py-28">
       <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
         <div className="max-w-2xl">
           <p className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Baru</p>
-          <SectionTitle>Social: latihan dari jammu, dilihat teman</SectionTitle>
+          <SectionTitle>Social: latihan dari jam-mu, dilihat teman</SectionTitle>
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
             Tab Social membuka feed{" "}
             <a href={JOYOROGO_URL} className="font-bold underline underline-offset-2">
@@ -821,7 +890,7 @@ function SocialSection() {
   );
 }
 
-const SEND_POINTS: { Icon: LucideIcon; title: string; body: string; href: string; label: string }[] = [
+const SEND_POINTS: { Icon: LucideIcon; title: string; body: string; href?: string; label?: string }[] = [
   {
     Icon: Share2,
     title: "Kartu bagikan",
@@ -832,9 +901,14 @@ const SEND_POINTS: { Icon: LucideIcon; title: string; body: string; href: string
   {
     Icon: Upload,
     title: "Upload ke Strava",
-    body: "Olahraga dikirim ke Strava sebagai file FIT berisi angka dari jam: jarak, waktu aktif, kalori, detak jantung, elevasi, kadensi, dan rute. Gratis. Slot Strava sedang penuh, ada daftar tunggu.",
+    body: "Olahraga dikirim ke Strava sebagai file FIT berisi angka dari jam: jarak, waktu gerak, kalori, detak jantung, elevasi, kadensi, dan rute. Angka di JoyoFit sama dengan yang tampil di Strava. Gratis. Slot Strava sedang penuh, ada daftar tunggu.",
     href: "/blog/strava-file-fit",
     label: "Soal upload Strava",
+  },
+  {
+    Icon: Footprints,
+    title: "Sepatu dan sepeda",
+    body: "Catat jarak seumur pakai per sepatu atau sepeda, atur bawaan per olahraga, dan dapat pengingat pensiun di 90 dan 100 persen jarak yang kamu tetapkan. Bisa ditautkan ke sepatu dan sepeda di Strava. Salinan cloud-nya fitur JoyoRogo Pro.",
   },
   {
     Icon: ListChecks,
@@ -851,10 +925,10 @@ function SendSection() {
       <div className="max-w-2xl">
         <SectionTitle>Bagikan, kirim, dan mulai tanpa bingung</SectionTitle>
         <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-          Tiga hal yang sudah ada di aplikasi sekarang. JoyoFit dari Google Play juga memberi tahu kalau ada versi baru.
+          Empat hal yang sudah ada di aplikasi sekarang. JoyoFit dari Google Play juga memberi tahu kalau ada versi baru.
         </p>
       </div>
-      <ul className="mt-10 grid gap-4 md:grid-cols-3">
+      <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {SEND_POINTS.map(({ Icon, title, body, href, label }) => (
           <li key={title} className="flex flex-col rounded-[1.75rem] bg-card p-6 md:p-7">
             <span className="flex size-12 items-center justify-center rounded-full bg-bakar-soft text-bakar-ink">
@@ -862,13 +936,15 @@ function SendSection() {
             </span>
             <h3 className="mt-5 text-xl font-extrabold tracking-tight">{title}</h3>
             <p className="mt-2 flex-1 text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
-            <a
-              href={href}
-              className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-primary underline-offset-4 hover:underline"
-            >
-              {label}
-              <ArrowRight className="size-4" aria-hidden />
-            </a>
+            {href && (
+              <a
+                href={href}
+                className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-primary underline-offset-4 hover:underline"
+              >
+                {label}
+                <ArrowRight className="size-4" aria-hidden />
+              </a>
+            )}
           </li>
         ))}
       </ul>
@@ -904,6 +980,183 @@ function WatchSection() {
           src="/shots/watch.webp"
           alt="Layar Watch di JoyoFit: Watch faces, Photo face, Alarms, dan tombol Ring the watch untuk mencari jam. Antarmuka berbahasa Inggris."
         />
+      </div>
+    </section>
+  );
+}
+
+const STRENGTH_POINTS: { Icon: LucideIcon; title: string; body: string }[] = [
+  {
+    Icon: Timer,
+    title: "Timer istirahat",
+    body: "Satu timer untuk seluruh aplikasi, dengan notifikasi lokal saat habis dan layar tetap menyala selama sesi.",
+  },
+  {
+    Icon: Dumbbell,
+    title: "Set, RPE, superset",
+    body: "Set biasa, pemanasan, drop set, dan sampai gagal. Beban dan ulangan sesi lalu tampil di tiap baris, rekor ditandai di ringkasan. Pemanasan tidak dihitung ke volume.",
+  },
+  {
+    Icon: ListChecks,
+    title: "Rutinitas dan perpustakaan gerakan",
+    body: "Buat rutinitas sendiri, simpan di folder, atau salin rutinitas awal. Sekitar 100 gerakan dengan langkah, otot, dan kesalahan umum; gerakan sendiri bisa kamu tambah.",
+  },
+  {
+    Icon: History,
+    title: "Riwayat, grafik, peta otot",
+    body: "Riwayat dengan kalender di samping latihan dari jam, grafik per gerakan, dan peta panas otot mingguan.",
+  },
+];
+
+function StrengthSection() {
+  return (
+    <section id="beban" data-section="strength" className="scroll-mt-16 bg-card py-20 md:py-28">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 md:grid-cols-[1.1fr_1fr] md:gap-12 md:px-6">
+        <div>
+          <p className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Baru</p>
+          <SectionTitle>Latihan beban, dengan jam atau tanpa jam</SectionTitle>
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            Pencatat latihan beban ada di dalam JoyoFit dan gratis. Kamu tidak perlu jam: kalorinya
+            diperkirakan dari jumlah set dengan metode MET. Kalau jam merekam sesi yang sama, angka
+            jam yang dipakai dan jam tidak membuat catatan ganda.
+          </p>
+          <ul className="mt-8 grid gap-6 sm:grid-cols-2">
+            {STRENGTH_POINTS.map(({ Icon, title, body }) => (
+              <li key={title} className="flex gap-4">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-bakar-soft text-bakar-ink">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="font-bold">{title}</h3>
+                  <p className="mt-0.5 text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-8 text-[0.9375rem] leading-relaxed text-muted-foreground">
+            Sesi selesai bisa dikirim ke Strava, dan kalorinya masuk ke JoyoRogo. Riwayat beban yang disalin ke cloud adalah fitur{" "}
+            <a href={HARGA_URL} className="font-semibold text-foreground underline underline-offset-4" {...goal("founder_cta_click", "strength")}>
+              JoyoRogo Pro
+            </a>
+            ; mencatat dan melihat riwayat di HP tetap gratis. Pencatat latihan beban pindah ke sini dari JoyoRogo; riwayat lamamu bisa diimpor.
+          </p>
+        </div>
+        <div className="flex justify-center gap-4 md:gap-5">
+          <Phone
+            className="md:w-52 lg:w-56"
+            src="/shots/strength-routines.webp"
+            alt="Layar Routines di pencatat latihan beban JoyoFit: mulai latihan kosong, rutinitas sendiri, folder, dan rutinitas awal. Antarmuka berbahasa Inggris."
+          />
+          <Phone
+            className="mt-12 hidden md:block md:w-52 lg:w-56"
+            src="/shots/strength-exercises.webp"
+            alt="Layar Exercises: perpustakaan gerakan yang bisa dicari, dengan otot utama di tiap gerakan. Antarmuka berbahasa Inggris."
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const COMING_SOON: { Icon: LucideIcon; title: string; body: string }[] = [
+  {
+    Icon: Watch,
+    title: "Lebih dari satu jam",
+    body: "Simpan beberapa jam di JoyoFit, misalnya satu untuk harian dan satu untuk lari. Satu jam aktif, ganti dengan satu ketukan. Data harian tetap milik satu jam utama, dan latihan yang direkam dua jam tidak tercatat dua kali.",
+  },
+  {
+    Icon: Radio,
+    title: "Sensor Bluetooth dan rekam dari HP",
+    body: "Chest strap detak jantung, sensor kadens dan kecepatan sepeda, power meter, dan foot pod. Latihan direkam langsung dari HP dengan GPS dan sensor, dan tetap jalan saat layar terkunci. Yang didukung sensor Bluetooth, bukan ANT+, karena HP tidak punya radio ANT.",
+  },
+  {
+    Icon: Bike,
+    title: "Data bersepeda kelas pro",
+    body: "Normalized Power, TSS, FTP, kurva power, dan deteksi tanjakan dari power meter-mu.",
+  },
+];
+
+function ComingSoonSection() {
+  return (
+    <section id="segera" data-section="coming" className="scroll-mt-16 mx-auto w-full max-w-6xl px-4 py-20 md:px-6 md:py-28">
+      <div className="max-w-2xl">
+        <SectionTitle>Segera hadir</SectionTitle>
+        <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+          Tiga hal ini sudah dikerjakan di cabang pengembangan tapi belum ada di aplikasi yang kamu pasang. Belum ada tanggal.
+        </p>
+      </div>
+      <ul className="mt-10 grid gap-4 md:grid-cols-3">
+        {COMING_SOON.map(({ Icon, title, body }) => (
+          <li key={title} className="flex flex-col rounded-[1.75rem] border border-dashed border-border bg-background p-6 md:p-7">
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex size-12 items-center justify-center rounded-full bg-tidur-soft text-tidur-ink">
+                <Icon className="size-6" aria-hidden />
+              </span>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">Segera hadir</span>
+            </div>
+            <h3 className="mt-5 text-xl font-extrabold tracking-tight">{title}</h3>
+            <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+/** "2026-10-18" -> "18 Oktober 2026", without Intl so the prerendered and client text cannot differ. */
+function roadmapDate(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+}
+
+/** Reads docs/roadmap.json, the same file the README section is generated from (scripts/roadmap-sync.ts). */
+function RoadmapSection() {
+  const { updated, groups } = roadmap as { updated: string; groups: { id: string; title: string; items: string[] }[] };
+  return (
+    <section id="roadmap" data-section="roadmap" className="scroll-mt-16 bg-card py-20 md:py-28">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <div className="max-w-2xl">
+          <SectionTitle>Roadmap</SectionTitle>
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            Yang sedang dikerjakan dan yang menyusul. Urutannya bisa berubah dan belum ada tanggal. Diperbarui {roadmapDate(updated)}.
+          </p>
+        </div>
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr]">
+          {groups.map((group) => (
+            <section
+              key={group.id}
+              aria-labelledby={`roadmap-${group.id}`}
+              className={cn(
+                "rounded-[1.75rem] p-6 md:p-7",
+                group.id === "doing" ? "bg-bakar-soft md:col-span-2 lg:col-span-1" : "bg-background",
+              )}
+            >
+              <h3
+                id={`roadmap-${group.id}`}
+                className={cn("text-xl font-extrabold tracking-tight", group.id === "doing" && "text-bakar-ink")}
+              >
+                {group.title}
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {group.items.map((item) => (
+                  <li key={item} className="flex gap-3 text-[0.9375rem] leading-relaxed">
+                    <Dot />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+        <p className="mt-6 text-[0.9375rem] text-muted-foreground">
+          Ada fitur yang kamu tunggu?{" "}
+          <a href={`${GITHUB_URL}/issues`} className="font-semibold text-foreground underline underline-offset-4" target="_blank" rel="noopener">
+            Tulis di GitHub
+          </a>
+          .
+        </p>
       </div>
     </section>
   );
@@ -1846,9 +2099,13 @@ function HomePage() {
       <Workouts />
       <Scores />
       <Features />
+      <StrengthSection />
+      <CoachSection />
       <SocialSection />
       <SendSection />
       <WatchSection />
+      <ComingSoonSection />
+      <RoadmapSection />
       <Testimonials items={TESTIMONIALS} />
       <JamTeaser />
       <Promises />

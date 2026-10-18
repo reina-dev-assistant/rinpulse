@@ -30,7 +30,13 @@
     "covers3Ios": "Permissions: notifications, Apple Health, weather.",
     "covers3Android": "Permissions: notifications, Health Connect, weather, staying connected.",
     "covers4": "Signing in with JoyoRogo, which is optional.",
-    "reopen": "You can open this guide again any time from Settings, Setup guide."
+    "reopen": "You can open this guide again any time from Settings, Setup guide.",
+    "noWatch": {
+      "title": "No watch yet, or your watch isn't supported?",
+      "body": "That is fine. Strength logging, Coach and the exercise library work fully without a watch. You can connect one later from the Watch tab.",
+      "button": "I don't have a watch / my watch isn't supported yet",
+      "supported": "Which watches are supported?"
+    }
   },
   "unbind": {
     "title": "Release the watch from Huawei Health",
@@ -105,7 +111,7 @@
     "gives1": "Your daily Recovery, Strain and Sleep scores appear next to what you ate in the JoyoRogo diary, with a short food tip for a day like this.",
     "gives2": "What you log in JoyoRogo can show on the watch's calorie card.",
     "gives3": "The option of a cloud backup of your watch data, which is part of JoyoRogo Pro (the next step).",
-    "note": "While you are signed in, JoyoFit sends your daily scores to JoyoRogo and exchanges meals and weight with it. Your watch data stays on this phone unless you turn on the Pro cloud backup. Sign out any time in Settings, Health and cloud.",
+    "note": "While you are signed in, JoyoFit sends your daily scores and body metrics (sleep, resting heart rate, HRV, VO2max) to JoyoRogo and exchanges meals and weight with it. Your watch data stays on this phone unless you turn on the Pro cloud backup. Sign out any time in Settings, Health and cloud.",
     "signedIn": "Signed in.",
     "signedInAs": "Signed in as {{email}}."
   },
@@ -169,10 +175,38 @@
     "reopen": "Open this guide again from Settings, Setup guide.",
     "healthSettings": "{{store}} and cloud",
     "tip": {
-      "today": { "title": "Today", "text": "Steps, heart rate, sleep and your Recovery, Strain and Readiness scores. Pull down to sync." },
-      "workouts": { "title": "Workouts", "text": "Every workout recorded on the watch, with its route and a card to share." },
-      "strava": { "title": "Strava", "text": "Settings, Strava: send watch workouts to Strava, free." },
-      "findWatch": { "title": "Find my watch", "text": "Watch tab: make the watch ring when it is lost in the house." }
+      "today": {
+        "title": "Today",
+        "text": "Steps, heart rate, sleep and your Recovery, Strain and Readiness scores. Pull down to sync."
+      },
+      "workouts": {
+        "title": "Workouts",
+        "text": "Every workout recorded on the watch, with its route and a card to share."
+      },
+      "strava": {
+        "title": "Strava",
+        "text": "Settings, Strava: send watch workouts to Strava, free."
+      },
+      "findWatch": {
+        "title": "Find my watch",
+        "text": "Watch tab: make the watch ring when it is lost in the house."
+      },
+      "strength": {
+        "title": "Training",
+        "text": "On Today: Start workout, or pick a routine. History, calendar and records are in the Workouts tab."
+      },
+      "coach": {
+        "title": "Coach",
+        "text": "A training plan and a daily suggestion on Today. Answer \"How does your body feel today?\" so the suggestion fits."
+      },
+      "library": {
+        "title": "Exercise library",
+        "text": "How to do each move, with pictures, from the card on Today."
+      },
+      "watchLater": {
+        "title": "A watch, any time",
+        "text": "Watch tab: pair a Huawei or Honor watch, or request support for yours."
+      }
     },
     "where": {
       "unbind": "Settings, Import from Huawei Health",
@@ -194,6 +228,21 @@
       "background": "Background connection",
       "account": "JoyoRogo sign-in",
       "cloud": "JoyoRogo Cloud"
-    }
+    },
+    "introNoWatch": "Today is ready to use, no watch needed. A few places worth knowing:"
+  },
+  "phone": {
+    "title": "Training without a watch",
+    "intro": "Everything you need to train is already on this phone.",
+    "logger": "Log strength workouts: sets, reps, weight, rest timer and personal records. Calories come from your body weight and how long you trained.",
+    "coach": "Coach (Pro) builds a training plan and a daily suggestion. With no watch data, the suggestion uses your plan and how you say you feel today.",
+    "library": "An exercise library with pictures and how to do each move.",
+    "rogo": "JoyoRogo: your workout calories go to your food diary.",
+    "weightIntro": "Your body weight is used to estimate workout calories. You can skip it; the estimate then uses 70 kg.",
+    "weightLabel": "Body weight (kg)",
+    "weightSave": "Save weight",
+    "weightSaved": "Saved: {{kg}} kg. Height and birth year can be added in Settings, Profile.",
+    "weightInvalid": "Enter a weight between 20 and 300 kg.",
+    "later": "Got a Huawei or Honor watch later? Pair it from the Watch tab any time, without repeating this guide."
   }
 }

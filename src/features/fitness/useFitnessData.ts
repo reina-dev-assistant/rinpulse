@@ -15,6 +15,7 @@ import {
 } from '@/db/queries';
 import { errorMessage } from '@/format';
 import { startOfLocalDay } from '@/features/today/stats';
+import { withRideLoad } from '@/features/cycling/load';
 import { strainFromLoads, zoneThresholds, type DayStrain } from '@/features/today/strain';
 import { addDays, dayBounds, dayStarts } from '@/features/trends/series';
 import { parseSummary, type WorkoutSummary } from '@/features/workouts/summary';
@@ -80,14 +81,15 @@ export function useFitnessData(dataVersion: number, scope: FitnessScope): Fitnes
         listStepSamplesSince(db, dayStart),
         listMetricSince(db, 'emotion', addDays(dayStart, -1)),
       ]).then(
-        ([loads, resting, workouts, hrv, sleep, samples, stress]) => {
+        async ([loads, resting, workouts, hrv, sleep, samples, stress]) => {
+          const strain = await withRideLoad(db, strainFromLoads(loads), nowSec);
           if (cancelled) return;
           setState({
             data: {
               nowSec,
               dayStart,
               maxHr,
-              strain: strainFromLoads(loads),
+              strain,
               resting,
               workouts: workouts.map(({ workout, summaryJson }) => ({ workout, summary: parseSummary(summaryJson) })),
               hrv,

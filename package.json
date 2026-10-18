@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@better-auth/expo": "1.7.3",
+    "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
     "@garmin/fitsdk": "^21.218.0",
@@ -13,6 +14,7 @@
     "eslint-config-expo": "~57.0.2",
     "expo": "~57.0.28",
     "expo-apple-authentication": "~57.0.2",
+    "expo-brightness": "~57.0.2",
     "expo-build-properties": "~57.0.22",
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.21",
@@ -22,11 +24,13 @@
     "expo-font": "~57.0.4",
     "expo-image-manipulator": "~57.0.21",
     "expo-image-picker": "~57.0.20",
+    "expo-keep-awake": "~57.0.2",
     "expo-linking": "~57.0.12",
     "expo-media-library": "~57.0.5",
     "expo-network": "~57.0.2",
     "expo-notifications": "~57.0.23",
     "expo-router": "~57.0.26",
+    "expo-screen-orientation": "~57.0.3",
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.10",
     "expo-sqlite": "~57.0.4",
@@ -36,6 +40,7 @@
     "expo-web-browser": "~57.0.3",
     "fflate": "^0.8.3",
     "i18next": "^26.5.2",
+    "intl-pluralrules": "^2.0.1",
     "react": "19.2.3",
     "react-i18next": "^17.1.0",
     "react-native": "0.86.3",
@@ -45,7 +50,8 @@
     "react-native-share": "^12.3.1",
     "react-native-svg": "15.15.4",
     "react-native-view-shot": "5.1.0",
-    "sp-react-native-in-app-updates": "2.0.0"
+    "sp-react-native-in-app-updates": "2.0.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

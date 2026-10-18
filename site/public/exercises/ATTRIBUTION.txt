@@ -1,0 +1,341 @@
+JoyoFit exercise images
+
+The pictures in this folder come from wger (https://wger.de), where every image carries its own Creative Commons
+licence. Each one is listed below with its author, licence and source page. Adapted copies (flattened onto white,
+scaled down, converted to WebP) are shared under the same licence as the original.
+
+goblet_squat/0.webp  Goblet squat
+  author   philip
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/203/view  (image 329: https://wger.de/media/exercise-images/203/2ab30113-4e08-4d39-9d23-d901ce2c0971.jpeg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+back_extension/0.webp  Back extension
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/301/view  (image 11: https://wger.de/media/exercise-images/128/Hyperextensions-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+back_extension/1.webp  Back extension
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/301/view  (image 12: https://wger.de/media/exercise-images/128/Hyperextensions-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_deadlift/0.webp  Barbell deadlift
+  author   philip
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/184/view  (image 332: https://wger.de/media/exercise-images/184/1709c405-620a-4d07-9658-fade2b66a2df.jpeg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+reverse_lunge/0.webp  Reverse lunge
+  author   philip
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/999/view  (image 336: https://wger.de/media/exercise-images/999/8548b2d2-004d-48b4-95fd-b1b25f4e53d0.jfif)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_lunge/0.webp  Dumbbell lunge
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/206/view  (image 123: https://wger.de/media/exercise-images/113/Walking-lunges-3.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_lunge/1.webp  Dumbbell lunge
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/206/view  (image 124: https://wger.de/media/exercise-images/113/Walking-lunges-4.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+bulgarian_split_squat_db/0.webp  Dumbbell Bulgarian split squat
+  author   AlucardEvil40
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1706/view  (image 597: https://wger.de/media/exercise-images/1706/0c5243cc-2539-4005-aee0-d3a8c5d3a32c.jfif)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_bench_press/0.webp  Dumbbell bench press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/75/view  (image 114: https://wger.de/media/exercise-images/97/Dumbbell-bench-press-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_bench_press/1.webp  Dumbbell bench press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/75/view  (image 113: https://wger.de/media/exercise-images/97/Dumbbell-bench-press-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+close_grip_push_up/0.webp  Close-grip push-up
+  author   philip
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1086/view  (image 326: https://wger.de/media/exercise-images/1086/b2ee8d9b-0480-4992-8494-c223b37c2696.jpg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+decline_push_up/0.webp  Decline push-up
+  author   anon1337
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1112/view  (image 357: https://wger.de/media/exercise-images/1112/81f40bee-4adf-4317-8476-1a87706e3031.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_bench_press/0.webp  Barbell bench press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/73/view  (image 70: https://wger.de/media/exercise-images/192/Bench-press-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_bench_press/1.webp  Barbell bench press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/73/view  (image 68: https://wger.de/media/exercise-images/192/Bench-press-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+incline_db_press/0.webp  Incline dumbbell press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/537/view  (image 106: https://wger.de/media/exercise-images/16/Incline-press-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+incline_db_press/1.webp  Incline dumbbell press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/537/view  (image 105: https://wger.de/media/exercise-images/16/Incline-press-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+cable_crossover/0.webp  Cable crossover
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/323/view  (image 128: https://wger.de/media/exercise-images/71/Cable-crossover-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+cable_crossover/1.webp  Cable crossover
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/323/view  (image 127: https://wger.de/media/exercise-images/71/Cable-crossover-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_shoulder_press/0.webp  Dumbbell shoulder press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/567/view  (image 174: https://wger.de/media/exercise-images/123/dumbbell-shoulder-press-large-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_shoulder_press/1.webp  Dumbbell shoulder press
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/567/view  (image 173: https://wger.de/media/exercise-images/123/dumbbell-shoulder-press-large-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_lateral_raise/0.webp  Dumbbell lateral raise
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/348/view  (image 178: https://wger.de/media/exercise-images/148/lateral-dumbbell-raises-large-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_lateral_raise/1.webp  Dumbbell lateral raise
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/348/view  (image 177: https://wger.de/media/exercise-images/148/lateral-dumbbell-raises-large-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+machine_shoulder_press/0.webp  Machine shoulder press
+  author   wger.de
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/543/view  (image 196: https://wger.de/media/exercise-images/53/Shoulder-press-machine-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+machine_shoulder_press/1.webp  Machine shoulder press
+  author   wger.de
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/543/view  (image 195: https://wger.de/media/exercise-images/53/Shoulder-press-machine-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_overhead_press/0.webp  Barbell overhead press
+  author   nishant0712
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1893/view  (image 647: https://wger.de/media/exercise-images/1893/7dbad19e-0616-41fd-9d7d-3e21649c0eea.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+one_arm_db_row/0.webp  One-arm dumbbell row
+  author   Franpol
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/81/view  (image 410: https://wger.de/media/exercise-images/81/a751a438-ae2d-4751-8d61-cef0e9292174.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+machine_row/0.webp  Machine row
+  author   barry
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1725/view  (image 598: https://wger.de/media/exercise-images/1725/f0ebd44e-b8e1-400c-b598-ca371f3a07af.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+chest_supported_db_row/0.webp  Chest-supported dumbbell row
+  author   carlos3c
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1283/view  (image 459: https://wger.de/media/exercise-images/1283/e7262f70-7512-408a-8d00-4c499ef632fc.jpg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+inverted_row/0.webp  Inverted row
+  author   Gavru
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1198/view  (image 428: https://wger.de/media/exercise-images/1198/864906ac-4ac7-4e52-a886-c6bb97950a9f.jpg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_bent_over_row/0.webp  Barbell bent-over row
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/83/view  (image 90: https://wger.de/media/exercise-images/109/Barbell-rear-delt-row-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_bent_over_row/1.webp  Barbell bent-over row
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/83/view  (image 84: https://wger.de/media/exercise-images/109/Barbell-rear-delt-row-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+straight_arm_pulldown/0.webp  Straight-arm pulldown
+  author   barry
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1726/view  (image 599: https://wger.de/media/exercise-images/1726/2e7e541b-5f55-405a-ae78-3e71b3f42db4.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+pull_up/0.webp  Pull-up
+  author   Imobard
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/475/view  (image 323: https://wger.de/media/exercise-images/475/b0554016-16fd-4dbe-be47-a2a17d16ae0e.jpg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+chin_up/0.webp  Chin-up
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/152/view  (image 73: https://wger.de/media/exercise-images/152/6c1a7459-266d-491a-bd50-7cbaea2bc771.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+chin_up/1.webp  Chin-up
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/152/view  (image 75: https://wger.de/media/exercise-images/152/b2c5a9f9-8beb-41f7-841c-9664d22a427e.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+plank/0.webp  Plank
+  author   utkb
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/458/view  (image 347: https://wger.de/media/exercise-images/458/902e6836-394e-458b-b94e-101d714294e2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+russian_twist/0.webp  Russian twist
+  author   lion
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1193/view  (image 426: https://wger.de/media/exercise-images/1193/70ca5d80-3847-4a8c-8882-c6e9e485e29e.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+lying_leg_raise/0.webp  Lying leg raise
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/377/view  (image 140: https://wger.de/media/exercise-images/125/Leg-raises-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+lying_leg_raise/1.webp  Lying leg raise
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/377/view  (image 139: https://wger.de/media/exercise-images/125/Leg-raises-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+pallof_press/0.webp  Pallof press
+  author   prevail90
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1194/view  (image 427: https://wger.de/media/exercise-images/1194/074e1766-4208-4a67-a211-9721772d99b0.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_hip_thrust/0.webp  Dumbbell hip thrust
+  author   AlucardEvil40
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1642/view  (image 582: https://wger.de/media/exercise-images/1642/a81ad922-caf5-47f8-99b4-640cb0717436.webp)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+calf_raise/0.webp  Standing calf raise
+  author   erikocobra
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/1243/view  (image 453: https://wger.de/media/exercise-images/1243/53d4fabe-c994-4907-873f-8d82813a9832.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_calf_raise/0.webp  Dumbbell calf raise
+  author   clafal
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/622/view  (image 438: https://wger.de/media/exercise-images/622/d6d57067-97de-462e-a8bb-15228d730323.jpeg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_calf_raise/1.webp  Dumbbell calf raise
+  author   clafal
+  licence  CC-BY-SA 4 (https://creativecommons.org/licenses/by-sa/4.0/deed.en)
+  source   https://wger.de/en/exercise/622/view  (image 437: https://wger.de/media/exercise-images/622/9a429bd0-afd3-4ad0-8043-e9beec901c81.jpeg)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_biceps_curl/0.webp  Dumbbell biceps curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/92/view  (image 24: https://wger.de/media/exercise-images/81/Biceps-curl-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+db_biceps_curl/1.webp  Dumbbell biceps curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/92/view  (image 23: https://wger.de/media/exercise-images/81/Biceps-curl-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+hammer_curl/0.webp  Hammer curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/272/view  (image 48: https://wger.de/media/exercise-images/86/Bicep-hammer-curl-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+hammer_curl/1.webp  Hammer curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/272/view  (image 47: https://wger.de/media/exercise-images/86/Bicep-hammer-curl-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+bench_dip/0.webp  Bench dip
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/197/view  (image 36: https://wger.de/media/exercise-images/83/Bench-dips-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+bench_dip/1.webp  Bench dip
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/197/view  (image 35: https://wger.de/media/exercise-images/83/Bench-dips-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+cable_biceps_curl/0.webp  Cable biceps curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/95/view  (image 20: https://wger.de/media/exercise-images/129/Standing-biceps-curl-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+cable_biceps_curl/1.webp  Cable biceps curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/95/view  (image 19: https://wger.de/media/exercise-images/129/Standing-biceps-curl-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_curl/0.webp  Barbell curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/91/view  (image 28: https://wger.de/media/exercise-images/74/Bicep-curls-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+barbell_curl/1.webp  Barbell curl
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/91/view  (image 27: https://wger.de/media/exercise-images/74/Bicep-curls-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+skull_crusher/0.webp  Skull crusher
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/246/view  (image 61: https://wger.de/media/exercise-images/84/Lying-close-grip-triceps-press-to-chin-2.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP
+
+skull_crusher/1.webp  Skull crusher
+  author   Everkinetic
+  licence  CC-BY-SA 3 (https://creativecommons.org/licenses/by-sa/3.0/deed.en)
+  source   https://wger.de/en/exercise/246/view  (image 60: https://wger.de/media/exercise-images/84/Lying-close-grip-triceps-press-to-chin-1.png)
+  changes  flattened onto white, scaled to at most 480 px, converted to WebP

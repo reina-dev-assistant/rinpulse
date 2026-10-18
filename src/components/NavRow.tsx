@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -7,8 +8,13 @@ import { PressableScale } from '@/components/PressableScale';
 import { spacing, useColors, type Colors, type Theme, type Tint } from '@/theme';
 
 interface NavRowProps {
-  icon: IconName;
+  /** Glyph of the round chip; leave out when `leading` is given. */
+  icon?: IconName;
   tint?: Tint | 'neutral';
+  /** Replaces the chip, e.g. a `BrandMark` or an avatar. */
+  leading?: ReactNode;
+  /** Sign out or delete: red chip and title, no chevron. The action confirms in its own dialog. */
+  destructive?: boolean;
   title: string;
   subtitle?: string;
   /** Short value shown before the chevron, e.g. a count. */
@@ -19,8 +25,8 @@ interface NavRowProps {
   style?: ViewStyle;
 }
 
-/** Tappable row: icon chip, title with an optional line under it, chevron. 64 dp so it is easy to hit. */
-export function NavRow({ icon, tint, title, subtitle, value, onPress, disabled, style }: NavRowProps) {
+/** Tappable row: leading chip or mark, title with an optional line under it, chevron. At least 56 dp so it is easy to hit. */
+export function NavRow({ icon, tint, leading, destructive, title, subtitle, value, onPress, disabled, style }: NavRowProps) {
   const colors = useColors();
   return (
     <PressableScale
@@ -31,9 +37,13 @@ export function NavRow({ icon, tint, title, subtitle, value, onPress, disabled, 
       onPress={onPress}
       scaleTo={0.985}
       style={[styles.row, style]}>
-      <IconChip icon={icon} tint={tint} size="md" />
+      {leading ? (
+        <View style={styles.leading}>{leading}</View>
+      ) : icon ? (
+        <IconChip icon={icon} tint={destructive ? 'destructive' : tint} size="md" />
+      ) : null}
       <View style={styles.text}>
-        <AppText variant="bodyStrong" numberOfLines={1}>
+        <AppText variant="bodyStrong" numberOfLines={1} danger={destructive}>
           {title}
         </AppText>
         {subtitle ? (
@@ -47,7 +57,7 @@ export function NavRow({ icon, tint, title, subtitle, value, onPress, disabled, 
           {value}
         </AppText>
       ) : null}
-      <Ionicons name="chevron-forward" size={18} color={colors.mutedForeground} />
+      {destructive ? null : <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />}
     </PressableScale>
   );
 }
@@ -75,12 +85,14 @@ export function groupedRowStyle(
 
 const styles = StyleSheet.create({
   row: {
-    minHeight: 64,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
+  /** The width of the round chip, so titles line up whether a row has a chip or a mark (36) in front. */
+  leading: { minWidth: 40, alignItems: 'center' },
   text: { flex: 1, gap: 1 },
 });

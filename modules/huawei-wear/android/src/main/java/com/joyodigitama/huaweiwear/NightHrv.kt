@@ -278,6 +278,8 @@ internal class NightHrvSync(
   private val events: WearEvents,
   private val store: SyncStore,
   private val settings: WearSettings,
+  /** The connected watch: its nights are the ones this sync reads the cursor of and writes ([NightHrvStore]). */
+  private val address: String,
 ) {
   private val downloader = FileDownloader(session, events)
 
@@ -314,13 +316,7 @@ internal class NightHrvSync(
       return true
     }
 
-    val lastEnd = withContext(Dispatchers.IO) {
-      store.read { db ->
-        db.rawQuery("SELECT MAX(end) FROM hrv_readings WHERE source = 'night'", null).use { c ->
-          if (c.moveToFirst() && !c.isNull(0)) c.getLong(0) else null
-        }
-      }
-    }
+    val lastEnd = withContext(Dispatchers.IO) { NightHrvStore.lastEnd(AndroidWatchDb(store.db()), address) }
     val from = NightHrv.windowStart(lastEnd, nowSec, fullHistory || repairing)
     val request = FileRequest.rri(newSync, from.toInt(), nowSec.toInt())
     log("Night HRV: requesting $request (last stored night ends ${lastEnd ?: "never"})")
@@ -399,7 +395,7 @@ internal class NightHrvSync(
         log("Night HRV: $label no reading: ${reason ?: "no usable RMSSD"}")
         continue
       }
-      withContext(Dispatchers.IO) { saveNight(store.db(), night, mean, summary.beats) }
+      withContext(Dispatchers.IO) { NightHrvStore.save(AndroidWatchDb(store.db()), address, night, mean, summary.beats) }
       stored++
       diag.stored = stored
       diag.nights.add("$detail: stored rmssd ${"%.1f".format(mean)} ms")
@@ -410,24 +406,28 @@ internal class NightHrvSync(
     return true
   }
 
-  /** A night's row replaces any earlier row for an overlapping session (its start moves when more sleep arrives). */
-  private fun saveNight(db: android.database.sqlite.SQLiteDatabase, night: NightSpan, rmssd: Double, beats: Int) {
-    db.beginTransaction()
-    try {
-      db.execSQL("DELETE FROM hrv_readings WHERE source = 'night' AND start <= ? AND end >= ?", arrayOf<Any?>(night.end, night.start))
-      db.execSQL(
-        "INSERT OR REPLACE INTO hrv_readings (start, end, source, rmssd, sdnn, mean_rr, beats) VALUES (?, ?, 'night', ?, NULL, NULL, ?)",
-        arrayOf<Any?>(night.start, night.end, rmssd, beats),
-      )
-      db.setTransactionSuccessful()
-    } finally {
-      db.endTransaction()
-    }
-  }
-
   private fun log(message: String) = events.log(LogDirection.INFO, null, null, null, message)
 
   private companion object {
     const val LOGGED_RECORDS = 40
+  }
+}
+
+/** `hrv_readings` rows of source `night`, per watch. */
+internal object NightHrvStore {
+  /** End of the newest night [address] stored, null when it has none: each watch's file window starts after its own last night. */
+  fun lastEnd(db: WatchDb, address: String): Long? =
+    db.query(WatchSql.SELECT_NIGHT_HRV_CURSOR, address).firstOrNull()?.get(0) as Long?
+
+  /**
+   * A night's row replaces this watch's earlier row (or an unattributed one) for an overlapping session; its start moves
+   * when more sleep arrives. Another watch's overlapping night is not touched here: the claim triggers keep the primary's
+   * and ignore a non-primary insert that overlaps another watch's night.
+   */
+  fun save(db: WatchDb, address: String, night: NightSpan, rmssd: Double, beats: Int) {
+    db.transaction {
+      db.exec(WatchSql.DELETE_NIGHT_HRV_OVERLAP, night.end, night.start, address)
+      db.exec(WatchSql.INSERT_NIGHT_HRV, night.start, night.end, rmssd, beats, address)
+    }
   }
 }

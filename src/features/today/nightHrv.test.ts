@@ -30,6 +30,13 @@ describe('nightHrvAvailability', () => {
     expect(nightHrvAvailability({ ...base, anyNightRowInHistory: true })).toEqual({ state: 'available' });
   });
 
+  it('a phone that never had a watch says so instead of advising a switch that does not exist', () => {
+    const a = nightHrvAvailability({ ...base, enabled: false, noWatch: true });
+    expect(a.state).toBe('no-watch');
+    expect(nightHrvAvailability({ ...base, platform: 'ios', noWatch: true }).state).toBe('no-watch');
+    expect(nightHrvAvailability({ ...base, noWatch: true, anyNightRowInHistory: true })).toEqual({ state: 'available' });
+  });
+
   it('available wins over ios, unsupported and off', () => {
     expect(
       nightHrvAvailability({ ...base, platform: 'ios', knownSupported: false, enabled: false, anyNightRowInHistory: true }),

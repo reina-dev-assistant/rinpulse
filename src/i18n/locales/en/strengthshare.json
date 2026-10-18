@@ -1,0 +1,36 @@
+{
+  "fallbackName": "Strength workout",
+  "unknownExercise": "Exercise",
+  "stats": {
+    "volume": "Total volume",
+    "reps": "Reps",
+    "time": "Time",
+    "sets": "Sets",
+    "kcal": "Energy"
+  },
+  "topSets": "Top sets",
+  "prBadge_one": "{{count}} new PR",
+  "prBadge_other": "{{count}} new PRs",
+  "setWeightReps": "{{weight}} kg x {{reps}}",
+  "setWeightSeconds": "{{weight}} kg x {{seconds}} s",
+  "setWeight": "{{weight}} kg",
+  "setReps_one": "{{reps}} rep",
+  "setReps_other": "{{reps}} reps",
+  "setSeconds": "{{seconds}} s",
+  "description": {
+    "totalsVolume_one": "Total volume {{volume}} kg, {{count}} set, {{reps}} reps.",
+    "totalsVolume_other": "Total volume {{volume}} kg, {{count}} sets, {{reps}} reps.",
+    "totalsReps_one": "{{count}} set, {{reps}} reps.",
+    "totalsReps_other": "{{count}} sets, {{reps}} reps.",
+    "topSets": "Top sets: {{sets}}."
+  },
+  "share": {
+    "heading": "Share workout",
+    "caption": "Tracked with JoyoFit · https://fit.joyorogo.com"
+  },
+  "actions": {
+    "title": "Share and send",
+    "connect": "Connect Strava",
+    "connectHint": "Connect Strava to send this workout with every set."
+  }
+}

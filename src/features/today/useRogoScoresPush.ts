@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import { authClient } from '@/cloud/auth';
-import { RogoError, rogo } from '@/cloud/rogo';
+import { RogoError, rogo, type RogoScoreMetrics } from '@/cloud/rogo';
 import { rogoScoreDays } from '@/features/today/rogoScores';
 import type { Scores } from '@/features/today/scores';
 import { errorMessage } from '@/format';
@@ -19,16 +19,27 @@ const log = (direction: 'info' | 'error', message: string) =>
   pushLog({ ts: Date.now(), direction, serviceId: null, commandId: null, hex: null, message });
 
 /**
- * Sends the last few days' Recovery / Strain / Sleep to JoyoRogo's diary while signed in to JoyoRogo. It runs when the
- * scores change (every stored sync and every time Today regains focus re-reads them) and when the app returns to the
+ * Sends the last few days' Recovery / Strain / Sleep to JoyoRogo's diary while signed in to JoyoRogo, with today's body
+ * metrics (`metrics`: sleep hours, resting HR, HRV, VO2max, training status, recovery time; whichever JoyoFit has computed)
+ * and the watch's all-day active energy per day (`activeKcal`, which JoyoRogo counts in Sisa). A change of any of them
+ * (also only the active energy of a day) changes the serialized days and so is sent again.
+ * It runs when the scores change (every stored sync and every time Today regains focus re-reads them) and when the app returns to the
  * foreground, and only sends what differs from the last accepted push. Nothing is shown: a failure is a line in the Log
  * screen, and a JoyoRogo that does not have the procedure yet (404) is skipped quietly for a while.
  */
-export function useRogoScoresPush(scores: Scores | null, dayStart: number | null): void {
+export function useRogoScoresPush(
+  scores: Scores | null,
+  dayStart: number | null,
+  metrics?: RogoScoreMetrics,
+  activeKcal?: ReadonlyMap<string, number>,
+): void {
   const session = authClient.useSession();
   const signedIn = session.data?.user != null;
 
-  const days = useMemo(() => (scores && dayStart !== null ? rogoScoreDays(scores, dayStart) : []), [scores, dayStart]);
+  const days = useMemo(
+    () => (scores && dayStart !== null ? rogoScoreDays(scores, dayStart, metrics, activeKcal) : []),
+    [scores, dayStart, metrics, activeKcal],
+  );
   const payload = useMemo(() => JSON.stringify(days), [days]);
   const latest = useRef({ days, payload });
   // Declared before the effects that call `push`, so they see this render's scores.

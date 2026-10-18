@@ -1,0 +1,13 @@
+// Applied by every module's build.gradle (`apply from: '../../newapi-lint.gradle'`).
+//
+// `./gradlew lintDebug` runs one check, NewApi: a call to something newer than minSdk (29) that is not behind a Build.VERSION.SDK_INT
+// check. It compiles and runs on a new phone and throws NoSuchMethodError on an old one (PackageManager.ResolveInfoFlags is API 33:
+// the notification app chooser crashed on Android 12). CI runs it (.github/workflows/ci.yml, job kotlin); the findings print to the log.
+android {
+  lint {
+    checkOnly 'NewApi'
+    abortOnError true
+    textReport true
+    textOutput file('stdout')
+  }
+}

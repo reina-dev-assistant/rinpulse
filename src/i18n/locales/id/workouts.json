@@ -190,15 +190,34 @@
   },
   "list": {
     "title": "Latihan",
-    "importFit": "Impor file FIT",
+    "start": {
+      "button": "Mulai latihan",
+      "title": "Mulai latihan",
+      "record": {
+        "title": "Rekam di HP",
+        "subtitle": "Lari, jalan, sepeda, hiking, atau treadmill"
+      },
+      "strength": {
+        "title": "Latihan beban",
+        "subtitle": "Catat set atau mulai dari rutinitas"
+      },
+      "manual": {
+        "title": "Catat manual",
+        "subtitle": "Tambah latihan yang sudah kamu lakukan"
+      },
+      "fit": {
+        "title": "Impor file FIT",
+        "subtitle": "Dari bike computer atau aplikasi lain"
+      }
+    },
     "pickError": "Tidak bisa membuka pemilih file: {{error}}",
     "readError": "Tidak bisa membaca latihan tersimpan: {{error}}",
-    "connectToSync": "Hubungkan jammu untuk sinkronisasi.",
-    "connectWatch": "Hubungkan jammu",
+    "connectToSync": "Hubungkan jam-mu untuk sinkronisasi.",
+    "connectWatch": "Hubungkan jam-mu",
     "empty": {
       "title": "Belum ada latihan",
-      "description": "Sesi dari jam muncul di sini setelah sinkronisasi.",
-      "syncNow": "Sinkronkan sekarang"
+      "description": "Mulai satu di atas. Sesi dari jam-mu juga muncul di sini setelah sinkronisasi.",
+      "descriptionNoWatch": "Latihan yang kamu rekam di HP, catat, atau impor dari file FIT muncul di sini. Jam tidak diperlukan."
     },
     "partial": "Baru terunduh sebagian; sinkronisasi berikutnya mengambil sisanya.",
     "cardA11y": "{{sport}}, {{date}}",
@@ -206,7 +225,8 @@
       "kcal": "kcal",
       "bpmAvg": "bpm rata-rata",
       "strain": "strain"
-    }
+    },
+    "strengthElsewhere_other": "{{count}} latihan beban dari JoyoRogo ada di riwayat latihan beban, tidak di daftar ini."
   },
   "detail": {
     "title": "Latihan",
@@ -296,7 +316,16 @@
       "healthIos": "Apple Health",
       "healthAndroid": "Health Connect",
       "partial": "Baru terunduh sebagian; sinkronisasi berikutnya mengambil sisanya.",
-      "missing": "Jam menolak mengembalikan sebagian data latihan ini, jadi sebagian mungkin hilang."
+      "missing": "Jam menolak mengembalikan sebagian data latihan ini, jadi sebagian mungkin hilang.",
+      "recordedBy": "Direkam oleh",
+      "removedWatch": "Jam yang sudah dihapus",
+      "phone": "HP",
+      "sensor": "Sensor",
+      "sensorSilent": "tidak ada data masuk",
+      "sensorNoDataNotice": "{{name}} tidak mengirim data selama latihan ini. Sensor sepeda tidur sampai pedal diputar, jadi putar pedal sebentar sebelum mulai dan lihat statusnya di layar rekam.",
+      "sensorSpeedNotice": "{{name}} dalam mode kecepatan, jadi latihan ini tidak punya data kadence. Kalau dipasang di engkol, ganti ke mode kadence di aplikasi sensornya.",
+      "kcalHr": "Kalori dihitung dari detak jantung.",
+      "kcalMet": "Kalori perkiraan (MET). Pasang strap detak jantung untuk hitungan yang lebih akurat."
     },
     "value": {
       "perMin": "{{value}} /mnt"
@@ -433,5 +462,165 @@
     "outdoor_run": "Lari luar ruangan",
     "unknownType": "Latihan (tipe {{type}})",
     "withBrand": "{{sport}} ({{brand}})"
+  },
+  "manual": {
+    "title": "Catat latihan",
+    "intro": "Untuk lari, jalan, atau sepeda yang tidak direkam jam. Detak jantung dan rute tidak ada, kalori diperkirakan.",
+    "day": "Hari",
+    "days": {
+      "0": "Hari ini",
+      "1": "Kemarin",
+      "2": "2 hari lalu"
+    },
+    "start": "Mulai (jam:menit)",
+    "minutes": "Lama (menit)",
+    "km": "Jarak (km)",
+    "kcal": "Kalori",
+    "optional": "Opsional",
+    "estimate": "Kalori diperkirakan {{kcal}} kcal dengan berat {{kg}} kg. Isi kolom Kalori untuk memakai angkamu sendiri.",
+    "save": "Simpan latihan",
+    "errors": {
+      "clock": "Isi jam mulai seperti 07:30.",
+      "minutes": "Isi lama latihan antara 1 dan 1440 menit.",
+      "km": "Jarak harus antara 0,01 dan 500 km, atau kosongkan.",
+      "kcal": "Kalori harus berupa angka lebih dari 0, atau kosongkan.",
+      "future": "Waktu mulai belum terjadi."
+    }
+  },
+  "record": {
+    "title": "Rekam latihan",
+    "setup": {
+      "sensors": "Sensor",
+      "noSensors": "Belum ada sensor yang dipasangkan. Strap detak jantung atau sensor sepeda bisa kamu tambah kapan saja, tidak wajib.",
+      "manageSensors": "Kelola sensor",
+      "gpsNote": "GPS HP merekam rute dan jarak latihan ini.",
+      "noGpsNote": "Tanpa GPS. Jarak dan kecepatan datang dari sensor, kalau ada.",
+      "start": "Mulai",
+      "prepareError": "Tidak bisa menyiapkan rekaman: {{error}}",
+      "bluetoothOff": "Bluetooth mati. Nyalakan dulu supaya sensor bisa tersambung."
+    },
+    "permission": {
+      "continue": "Lanjut",
+      "openSettings": "Buka pengaturan",
+      "location": {
+        "title": "Lokasi presisi",
+        "body": "Rute, jarak, dan pace dihitung dari GPS HP. Lokasimu hanya dipakai selama kamu merekam latihan.",
+        "denied": "Izin lokasi presisi belum diberikan, jadi latihan di luar ruangan tidak bisa direkam. Buka pengaturan untuk mengizinkannya, atau pilih olahraga dalam ruangan."
+      },
+      "bluetooth": {
+        "title": "Bluetooth",
+        "body": "Dipakai untuk menyambung strap detak jantung dan sensor lain yang sudah kamu pasangkan.",
+        "denied": "Izin Bluetooth belum diberikan, jadi sensor tidak akan tersambung. Kamu tetap bisa merekam tanpa sensor, atau buka pengaturan untuk mengizinkannya."
+      }
+    },
+    "gps": {
+      "searching": "Mencari sinyal GPS",
+      "ready": "GPS siap, akurasi {{meters}} m",
+      "readyNoAccuracy": "GPS siap",
+      "fair": "Sinyal GPS sudah cukup, akurasi {{meters}} m. Akurasinya terus membaik selama kamu merekam.",
+      "weak": "Sinyal GPS lemah, akurasi {{meters}} m. Cari tempat yang lebih terbuka."
+    },
+    "ready": {
+      "gps": "GPS",
+      "hint": "Kamu bisa mulai tanpa menunggu GPS. Jarak dihitung begitu sinyalnya siap.",
+      "hintNoGps": "Tekan Mulai kalau kamu sudah siap.",
+      "noService": "Layar mati bisa menghentikan rekaman. Izinkan notifikasi dan matikan penghemat baterai untuk JoyoFit di pengaturan HP supaya rekaman tetap jalan.",
+      "start": "Mulai",
+      "cancel": "Batal"
+    },
+    "sensor": {
+      "connected": "Terhubung",
+      "connecting": "Menghubungkan",
+      "disconnected": "Belum terhubung",
+      "willConnect": "Tersambung otomatis saat mulai",
+      "a11y": "{{name}}, {{state}}",
+      "role": {
+        "hr": "Detak jantung",
+        "speed": "Kecepatan",
+        "cadence": "Kadens",
+        "power": "Daya",
+        "pod": "Pod lari"
+      }
+    },
+    "sensorError": {
+      "off": "Bluetooth mati, jadi sensor belum tersambung. Nyalakan Bluetooth supaya sensornya terbaca.",
+      "permission": "Izin Bluetooth belum diberikan, jadi sensor belum tersambung.",
+      "unavailable": "HP ini tidak mendukung Bluetooth LE, jadi sensor tidak bisa dipakai.",
+      "other": "Sensor belum bisa tersambung. Rekaman tetap bisa jalan tanpa sensor."
+    },
+    "live": {
+      "status": {
+        "recording": "Merekam",
+        "paused": "Dijeda"
+      },
+      "time": "Waktu",
+      "timeA11y": "Waktu latihan {{value}}",
+      "distance": "Jarak",
+      "pace": "Pace",
+      "speed": "Kecepatan",
+      "hr": "Detak jantung",
+      "cadence": "Kadens",
+      "power": "Daya",
+      "calories": "Kalori",
+      "zone": "Zona {{zone}}: {{label}}",
+      "pausedBanner": "Rekaman dijeda. Waktu dan jarak berhenti sampai kamu lanjutkan.",
+      "sensors": "Sensor",
+      "pause": "Jeda",
+      "resume": "Lanjut",
+      "lap": "Lap",
+      "finish": "Selesai",
+      "lapName": "Lap {{number}}",
+      "lapNow": "Lap sekarang",
+      "lapStats": "{{distance}} · {{time}}",
+      "laps": "Lap sebelumnya",
+      "lapStatsHr": "{{distance}} · {{time}} · {{hr}} bpm",
+      "saving": "Menyimpan latihan",
+      "saveFailed": "Latihan belum tersimpan: {{error}}. Datamu masih aman, coba simpan lagi.",
+      "saveAgain": "Simpan lagi"
+    },
+    "finish": {
+      "title": "Selesai latihan?",
+      "time": "Waktu",
+      "distance": "Jarak",
+      "calories": "Kalori",
+      "strava": "Kirim ke Strava",
+      "stravaHint": "Diunggah setelah latihan tersimpan.",
+      "save": "Simpan latihan",
+      "resume": "Lanjutkan latihan",
+      "discard": "Buang latihan",
+      "nothing": "Belum ada data yang terekam, jadi tidak ada latihan yang disimpan.",
+      "discardTitle": "Buang latihan ini?",
+      "discardMessage": "Rekaman ini dihapus dan tidak bisa dikembalikan.",
+      "discardConfirm": "Buang"
+    },
+    "banner": {
+      "recording": "Sedang merekam",
+      "paused": "Rekaman dijeda",
+      "unsaved": "Latihan belum tersimpan",
+      "ready": "Siap merekam",
+      "progress": "{{sport}} · {{time}} · {{distance}}",
+      "a11y": "{{title}}. {{detail}}. Buka rekaman."
+    }
+  },
+  "liveEntry": {
+    "ready": "Siap merekam",
+    "recording": "Merekam",
+    "paused": "Dijeda",
+    "unsaved": "Belum tersimpan",
+    "detail": "{{sport}} · {{time}}",
+    "a11y": "{{status}}. {{detail}}. Buka rekaman."
+  },
+  "delete": {
+    "menu": "Menu latihan",
+    "action": "Hapus latihan",
+    "title": "Hapus latihan ini?",
+    "message": "{{sport}}, {{date}}. Latihan ini dihapus dari JoyoFit di HP ini, dari cloud, dan dari catatan olahraga di JoyoRogo, dan jam-mu tidak akan membawanya kembali. Aktivitas di Strava tidak ikut terhapus.",
+    "withPost": "{{sport}}, {{date}}. Latihan ini dihapus dari JoyoFit di HP ini, dari cloud, dan dari catatan olahraga di JoyoRogo, dan jam-mu tidak akan membawanya kembali. Aktivitas di Strava tidak ikut terhapus.\n\nHapus juga postingan di feed?",
+    "confirm": "Hapus",
+    "withPostYes": "Hapus latihan dan postingan",
+    "withPostNo": "Hapus latihan saja",
+    "done": "Latihan dihapus",
+    "undo": "Urungkan",
+    "undoA11y": "Urungkan penghapusan {{sport}}"
   }
 }

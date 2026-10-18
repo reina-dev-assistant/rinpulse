@@ -1,0 +1,170 @@
+{
+  "title": "Rutinitas",
+  "duplicateName": "{{name}} (salinan)",
+  "unit": {
+    "kg": "{{value}} kg"
+  },
+  "toast": {
+    "duplicated": "Rutinitas diduplikasi",
+    "copied": "Disalin ke rutinitasmu"
+  },
+  "move": {
+    "title": "Pindahkan ke folder",
+    "noFolder": "Tanpa folder"
+  },
+  "confirmDelete": {
+    "title": "Hapus {{name}}?",
+    "message": "Rutinitas ini dihapus. Latihan yang sudah kamu catat dengannya tetap ada di riwayat.",
+    "confirm": "Hapus rutinitas"
+  },
+  "row": {
+    "removedExercise": "Gerakan yang dihapus",
+    "summaryMore": "{{names}} +{{count}}",
+    "sets_other": "{{count}} set",
+    "open": "Lihat {{name}}",
+    "start": "Mulai {{name}}"
+  },
+  "folder": {
+    "toggle_other": "{{name}}, {{count}} rutinitas",
+    "menu": "Opsi untuk folder {{name}}",
+    "newRoutineHere": "Rutinitas baru di folder ini",
+    "rename": "Ubah nama folder",
+    "delete": "Hapus folder",
+    "empty": "Folder ini kosong. Pindahkan rutinitas ke sini dari pratinjaunya, atau buat yang baru.",
+    "newTitle": "Folder baru",
+    "newConfirm": "Buat folder",
+    "renameTitle": "Ubah nama folder",
+    "renameConfirm": "Simpan nama",
+    "namePlaceholder": "Nama folder",
+    "confirmDelete": {
+      "title": "Hapus folder {{name}}?",
+      "message": "Rutinitas di dalamnya tetap ada dan keluar dari folder.",
+      "confirm": "Hapus folder"
+    }
+  },
+  "home": {
+    "startEmpty": "Mulai latihan kosong",
+    "retry": "Coba lagi",
+    "error": "Rutinitasmu tidak bisa dibaca: {{error}}",
+    "myRoutines": "Rutinitasku",
+    "newRoutine": "Rutinitas baru",
+    "newFolder": "Folder baru",
+    "empty": {
+      "title": "Belum ada rutinitas",
+      "body": "Rutinitas adalah latihan yang kamu ulang: gerakan, set, dan repetisinya sudah siap. Buat sendiri, atau salin salah satu rutinitas awal di bawah."
+    },
+    "noFolder": "Tanpa folder",
+    "starters": "Rutinitas awal",
+    "startersHint": "Latihan siap pakai. Mulai langsung, atau salin ke rutinitasmu supaya bisa diubah.",
+    "recent": "Latihan terbaru",
+    "recentEmpty": "Latihan yang sudah selesai muncul di sini.",
+    "untitled": "Latihan",
+    "recentMeta_other": "{{date}}, {{count}} set, {{duration}}",
+    "links": {
+      "history": "Riwayat",
+      "exercises": "Gerakan",
+      "muscles": "Volume otot",
+      "settings": "Pengaturan"
+    }
+  },
+  "sheet": {
+    "close": "Tutup pratinjau",
+    "exerciseCount_other": "{{count}} gerakan",
+    "summaryReps": "{{sets}} × {{reps}}",
+    "summaryRepsWeight": "{{sets}} × {{reps}}, {{weight}}",
+    "summarySeconds": "{{sets}} × {{seconds}} dtk",
+    "superset": "Superset",
+    "start": "Mulai latihan",
+    "copy": "Salin ke rutinitasku",
+    "edit": "Ubah rutinitas",
+    "duplicate": "Duplikasi",
+    "moveToFolder": "Pindahkan ke folder",
+    "moveUp": "Naikkan di daftar",
+    "moveDown": "Turunkan di daftar",
+    "delete": "Hapus rutinitas"
+  },
+  "editor": {
+    "titleNew": "Rutinitas baru",
+    "titleEdit": "Ubah rutinitas",
+    "missing": {
+      "title": "Rutinitas tidak ditemukan",
+      "body": "Mungkin sudah dihapus di perangkat lain."
+    },
+    "name": "Nama",
+    "namePlaceholder": "Misalnya Hari dorong",
+    "folder": "Folder",
+    "note": "Catatan",
+    "notePlaceholder": "Apa saja yang perlu diingat tentang rutinitas ini",
+    "exercises": "Gerakan",
+    "exercisesEmpty": "Belum ada gerakan. Tambahkan yang pertama di bawah.",
+    "addExercise": "Tambah gerakan",
+    "addSet": "Tambah set",
+    "superset": "Superset",
+    "exerciseMenu": "Opsi untuk {{name}}",
+    "exerciseNote": "Catatan untuk gerakan ini",
+    "exerciseNoteLabel": "Catatan untuk {{name}}",
+    "setType": "Jenis set",
+    "setTypeLabel": "Jenis set {{number}} dari {{name}}",
+    "weightLabel": "Beban set {{number}} dari {{name}}, kg",
+    "repsLabel": "Repetisi set {{number}} dari {{name}}",
+    "secondsLabel": "Detik set {{number}} dari {{name}}",
+    "removeSet": "Hapus set {{number}} dari {{name}}",
+    "col": {
+      "set": "Set",
+      "kg": "kg",
+      "reps": "Repetisi",
+      "seconds": "Detik"
+    },
+    "rest": {
+      "label": "Istirahat antar set",
+      "default": "Bawaan, {{value}} dtk",
+      "seconds": "{{value}} dtk",
+      "less": "Istirahat lebih singkat untuk {{name}}",
+      "more": "Istirahat lebih lama untuk {{name}}"
+    },
+    "menu": {
+      "replace": "Ganti gerakan",
+      "superset": "Superset dengan yang berikutnya",
+      "splitSuperset": "Pisahkan dari yang berikutnya",
+      "moveUp": "Naikkan",
+      "moveDown": "Turunkan",
+      "defaultRest": "Pakai istirahat bawaan",
+      "remove": "Hapus gerakan"
+    },
+    "problem": {
+      "name": "Beri nama rutinitasnya.",
+      "exercises": "Tambahkan minimal satu gerakan."
+    },
+    "saveError": "Tidak bisa menyimpan: {{error}}",
+    "save": "Simpan rutinitas",
+    "duplicate": "Duplikasi",
+    "delete": "Hapus",
+    "discard": {
+      "title": "Buang perubahan?",
+      "message": "Ada perubahan di rutinitas ini yang belum disimpan.",
+      "confirm": "Buang",
+      "keep": "Lanjut mengubah"
+    }
+  },
+  "import": {
+    "title": "Riwayat JoyoRogo kamu",
+    "offer_other": "Kamu mencatat {{count}} latihan di JoyoRogo. Mau dibawa ke JoyoFit?",
+    "offerRoutines_other": "Kamu menyimpan {{count}} rutinitas di JoyoRogo. Mau dibawa ke JoyoFit?",
+    "note": "Riwayatmu tetap bisa dibaca di JoyoRogo dan tidak ada yang dihapus di sana.",
+    "action": {
+      "import": "Impor",
+      "notNow": "Nanti saja",
+      "askLater": "Tanya lagi 30 hari lagi",
+      "never": "Jangan tanya lagi",
+      "retry": "Coba lagi",
+      "done": "Selesai"
+    },
+    "progress": "Mengimpor {{done}} dari {{total}}",
+    "progressUnknown": "Mengimpor {{done}}",
+    "success": {
+      "title": "Berhasil diimpor dari JoyoRogo",
+      "body": "Latihan: {{workouts}}, rutinitas: {{routines}}"
+    },
+    "error": "Impor belum selesai. Cek koneksimu lalu coba lagi. Yang sudah masuk tetap tersimpan."
+  }
+}

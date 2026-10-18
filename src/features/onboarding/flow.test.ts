@@ -5,6 +5,7 @@ import { applyLocale } from '@/i18n';
 import {
   advance,
   back,
+  chooseNoWatch,
   currentStep,
   dismiss,
   footerFor,
@@ -78,6 +79,71 @@ describe('platform filtering', () => {
       state = advance(state, IOS);
     }
     expect(seen).toEqual(visibleSteps(state, IOS));
+  });
+});
+
+describe('the no-watch route', () => {
+  const none = (ctx: StepContext) => chooseNoWatch(startState({ hasPairedWatch: false }), ctx);
+
+  test('choosing no watch from the welcome step skips pairing and lands on the phone step', () => {
+    const state = none(ANDROID);
+    expect(state.route).toBe('none');
+    expect(state.step).toBe('phone');
+    expect(state.done).toEqual(['welcome']);
+  });
+
+  test('the phone-only path is welcome, phone, account, pro, cloud, done, on both platforms', () => {
+    for (const ctx of [ANDROID, IOS]) {
+      expect(visibleSteps(none(ctx), ctx)).toEqual(['welcome', 'phone', 'account', 'pro', 'cloud', 'done']);
+    }
+  });
+
+  test('every watch-only step is hidden, and the watch route never shows the phone step', () => {
+    const hidden: StepId[] = ['unbind', 'pair', 'sync', 'notifications', 'health', 'weather', 'background'];
+    for (const id of hidden) expect(visibleSteps(none(ANDROID), ANDROID)).not.toContain(id);
+    expect(visibleSteps(startState({ hasPairedWatch: false }), ANDROID)).not.toContain('phone');
+  });
+
+  test('walking the phone route ends with a completed guide, never touching a watch step', () => {
+    let state = none(ANDROID);
+    const seen: StepId[] = [];
+    while (state.status === 'active') {
+      seen.push(currentStep(state, ANDROID));
+      state = advance(state, ANDROID);
+    }
+    expect(seen).toEqual(['phone', 'account', 'pro', 'cloud', 'done']);
+    expect(state.status).toBe('completed');
+  });
+
+  test('without the cloud server the phone route is welcome, phone, account, done', () => {
+    const ctx: StepContext = { platform: 'android', cloudConfigured: false };
+    expect(visibleSteps(none(ctx), ctx)).toEqual(['welcome', 'phone', 'account', 'done']);
+  });
+
+  test('Back from the phone step returns to welcome, and Continue there is the watch route again', () => {
+    const welcome = back(none(ANDROID), ANDROID);
+    expect(welcome.step).toBe('welcome');
+    const watchRoute = advance(welcome, ANDROID);
+    expect(watchRoute.route).toBe('watch');
+    expect(watchRoute.step).toBe('unbind');
+  });
+
+  test('the phone step has Continue and Back, and no Later', () => {
+    const footer = footerFor('phone', { linkState: 'disconnected', signedIn: false });
+    expect(footer.primary).not.toBeNull();
+    expect(footer.skip).toBeNull();
+    expect(footer.back).toBe(true);
+  });
+
+  test('the route survives storage, and a record from before it existed is the watch route', () => {
+    const state = none(ANDROID);
+    expect(parseState(serializeState(state))?.route).toBe('none');
+    expect(parseState(JSON.stringify({ status: 'active', step: 'pair' }))?.route).toBe('watch');
+  });
+
+  test('a finished run does not switch route', () => {
+    const finished = advance(walkTo('done', ANDROID), ANDROID);
+    expect(chooseNoWatch(finished, ANDROID)).toEqual(finished);
   });
 });
 
@@ -199,7 +265,7 @@ describe('resume', () => {
 
   test('unknown step ids in the lists are dropped', () => {
     const parsed = parseState(JSON.stringify({ status: 'active', step: 'pair', done: ['welcome', 'zzz'], skipped: 'x' }));
-    expect(parsed).toEqual({ status: 'active', step: 'pair', done: ['welcome'], skipped: [], without: [] });
+    expect(parsed).toEqual({ status: 'active', step: 'pair', route: 'watch', done: ['welcome'], skipped: [], without: [] });
   });
 });
 

@@ -1,0 +1,34 @@
+{
+  "switch": {
+    "label": "Bagikan lokasi",
+    "hint": "Siapa pun yang kamu beri tautannya bisa melihat posisi dan kecepatan-mu selama perjalanan ini, tanpa akun. Tautan baru dibuat saat perjalanan dimulai, berhenti berlaku begitu perjalanan selesai atau saklar ini kamu matikan, dan datanya dihapus dalam 24 jam."
+  },
+  "consent": {
+    "title": "Bagikan lokasi-mu?",
+    "message": "Tautan ini menampilkan posisi, jejak, dan kecepatan-mu secara langsung kepada siapa pun yang memegangnya. Kamu bisa menghentikannya kapan saja: tautan mati saat perjalanan selesai atau saat kamu mematikan pilihan ini.",
+    "confirm": "Lanjut"
+  },
+  "link": {
+    "title": "Tautan untuk dibagikan",
+    "copy": "Salin tautan",
+    "copied": "Tersalin",
+    "share": "Bagikan",
+    "shareMessage": "Pantau perjalanan sepedaku langsung: {{url}}"
+  },
+  "status": {
+    "idle": "Tautan dibuat saat perjalanan dimulai.",
+    "starting": "Menunggu sinyal untuk membuat tautan.",
+    "waiting": "Tautan siap. Menunggu posisi pertama.",
+    "live": "Lokasi dibagikan. Terakhir terkirim pukul {{time}}.",
+    "offline_other": "Tidak ada sinyal. {{count}} titik menunggu dan dikirim begitu tersambung.",
+    "ended": "Perjalanan selesai. Tautan sudah tidak berlaku.",
+    "error": {
+      "not-signed-in": "Masuk ke akun JoyoRogo dulu untuk membagikan lokasi.",
+      "not-configured": "Server JoyoFit belum diatur, jadi lokasi belum bisa dibagikan.",
+      "unauthorized": "Server menolak kunci tautan. Matikan lalu nyalakan lagi untuk membuat tautan baru.",
+      "expired": "Tautan kedaluwarsa karena lama tidak ada kiriman. Matikan lalu nyalakan lagi untuk membuat tautan baru.",
+      "session-full": "Tautan sudah penuh. Matikan lalu nyalakan lagi untuk membuat tautan baru.",
+      "rejected": "Server menolak permintaan. Coba matikan lalu nyalakan lagi."
+    }
+  }
+}

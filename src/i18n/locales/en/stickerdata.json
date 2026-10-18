@@ -1,0 +1,92 @@
+{
+  "run": {
+    "effort": {
+      "light": "Light",
+      "moderate": "Moderate",
+      "hard": "Hard",
+      "max": "Max"
+    },
+    "pr": {
+      "subtitle": "Best in the last 120 days",
+      "label": {
+        "m400": "Fastest 400 m",
+        "k1": "Fastest 1K",
+        "mile1": "Fastest mile",
+        "k5": "Fastest 5K",
+        "k10": "Fastest 10K",
+        "half": "Fastest half marathon"
+      }
+    }
+  },
+  "strength": {},
+  "sleep": {
+    "heading": "Share sleep",
+    "verdict": {
+      "short": "Short night",
+      "fair": "Decent",
+      "good": "Well rested",
+      "long": "Long night"
+    }
+  },
+  "ready": {
+    "heading": "Share today"
+  },
+  "load": {
+    "heading": "Share training load",
+    "status": {
+      "up": "Ramping up",
+      "balanced": "Balanced",
+      "down": "Easing off"
+    }
+  },
+  "week": {
+    "heading": "Share your week",
+    "longest": "Longest: {{distance}}"
+  },
+  "plan": {
+    "heading": "Share plan",
+    "weekDone": "Week {{week}} done",
+    "goal": {
+      "run5k": "Heading to 5K",
+      "run10k": "Heading to 10K",
+      "runHalf": "Heading to a half marathon",
+      "runRoutine": "Running routine",
+      "strengthFull": "Getting stronger"
+    },
+    "phase": {
+      "build": "Building",
+      "cutback": "Easy week",
+      "taper": "Tapering"
+    }
+  },
+  "badge": {
+    "heading": "Share milestone",
+    "streakUnit": "day streak",
+    "title": {
+      "firstWorkout": "First workout",
+      "distance": "{{value}} km total",
+      "workouts": "{{value}} workouts",
+      "time": "{{value}} hours moving",
+      "streak": "{{value}} day streak"
+    },
+    "subtitle": {
+      "firstWorkout": "A great start",
+      "distance": "Distance you have covered",
+      "workouts": "Logged in JoyoFit",
+      "time": "Your active time so far",
+      "streak": "You are consistent, keep going"
+    },
+    "unit": {
+      "distance": "km",
+      "workouts": "workouts",
+      "time": "hours",
+      "streak": "days"
+    },
+    "value": {
+      "distance": "{{value}} km",
+      "workouts": "{{value}} workouts",
+      "time": "{{value}} hours",
+      "streak": "{{value}} days"
+    }
+  }
+}

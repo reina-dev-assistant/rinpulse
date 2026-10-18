@@ -47,7 +47,7 @@ const STATIC_PAGES = {
     ogTitle: "JoyoFit: Jam-mu. Data-mu. HP-mu.",
     name: "Beranda",
     description:
-      "Pengganti Huawei Health open source: sinkron langkah, tidur, detak jantung, SpO2, dan olahraga dari Huawei Watch Fit 4 Pro (jam lain eksperimen) ke HP Android dan iPhone.",
+      "Pengganti Huawei Health open source: sinkron langkah, tidur, detak jantung, SpO2, dan olahraga dari Huawei Watch Fit 4 Pro (jam lain eksperimen) ke HP Android dan iPhone. Ada pencatat latihan beban yang jalan tanpa jam, Coach, dan roadmap terbuka.",
   },
   [PANDUAN_PATH]: {
     title: "Pakai Huawei Watch Fit 4 Pro Tanpa Huawei Health | Panduan JoyoFit",

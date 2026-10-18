@@ -34,13 +34,12 @@ android {
       assets.srcDirs += file('../schema')
     }
   }
-  lintOptions {
-    abortOnError false
-  }
   testOptions {
     unitTests.returnDefaultValues = true
   }
 }
+
+apply from: '../../newapi-lint.gradle'
 
 dependencies {
   implementation 'org.slf4j:slf4j-api:2.0.17'
@@ -51,4 +50,6 @@ dependencies {
   testImplementation 'junit:junit:4.13.2'
   // android.jar ships org.json as stubs; JVM unit tests need the real implementation.
   testImplementation 'org.json:json:20250517'
+  // A real SQLite on the JVM: the multi-watch write rules run against the shipped schema (MultiWatchSqlTest). Test classpath only.
+  testImplementation 'org.xerial:sqlite-jdbc:3.46.1.3'
 }

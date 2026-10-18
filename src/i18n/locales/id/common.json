@@ -51,6 +51,22 @@
     "watch": "Jam",
     "settings": "Pengaturan"
   },
+  "dbRecovery": {
+    "inline": "Data di ponsel kamu sedang diperbaiki. Tunggu sebentar lalu coba lagi.",
+    "repairingTitle": "Memperbaiki data",
+    "repairingBody": "Berkas data di ponsel kamu rusak. Kami selamatkan dulu yang masih terbaca.",
+    "repairedTitle": "Data kamu sudah diperbaiki",
+    "repairedBody": "Berkas data di ponsel sempat rusak. Semua yang masih terbaca sudah diselamatkan dan tidak ada yang hilang.",
+    "lostTitle": "Sebagian data sudah diselamatkan",
+    "lostBody": "Berkas data di ponsel sempat rusak. Yang masih terbaca sudah diselamatkan. Sisanya kami ambil lagi dari cloud kalau kamu sudah masuk, dan dari jam saat sinkronisasi berikutnya. Berkas lamanya kami simpan, tidak dihapus.",
+    "recreatedTitle": "Data di ponsel dibuat ulang",
+    "recreatedBody": "Berkas data di ponsel rusak dan tidak bisa dibaca sama sekali, jadi kami buat yang baru. Latihan kembali dari cloud kalau kamu sudah masuk, dan data jam diambil lagi saat sinkronisasi berikutnya. Berkas lamanya kami simpan, tidak dihapus.",
+    "failedTitle": "Data belum bisa diperbaiki",
+    "failedBody": "Berkas data di ponsel rusak dan perbaikan otomatis belum berhasil. Data kamu tidak dihapus. Coba lagi, atau tutup aplikasi lalu buka lagi.",
+    "pendingBody": "Berkas data di ponsel rusak. Versi barunya sudah disiapkan dan dipasang saat aplikasi dibuka lagi. Tutup aplikasi sepenuhnya lalu buka lagi. Data kamu tidak dihapus.",
+    "retry": "Coba lagi",
+    "dismiss": "Mengerti"
+  },
   "language": {
     "title": "Bahasa",
     "auto": "Otomatis",
@@ -127,5 +143,10 @@
       "name": "Ocean",
       "tagline": "Biru dan putih yang bersih. Mengikuti HP."
     }
+  },
+  "notFound": {
+    "title": "Halaman tidak ditemukan",
+    "description": "Tautan ini tidak mengarah ke halaman mana pun di JoyoFit. Kalau baru ada pembaruan, tutup aplikasi lalu buka lagi.",
+    "home": "Ke beranda"
   }
 }

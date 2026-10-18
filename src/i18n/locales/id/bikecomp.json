@@ -1,0 +1,451 @@
+{
+  "field": {
+    "speed": {
+      "name": "Kecepatan",
+      "short": "Kecepatan",
+      "desc": "Kecepatan saat ini, dirata-rata 5 detik terakhir."
+    },
+    "avgSpeed": {
+      "name": "Kecepatan rata-rata",
+      "short": "Kec. rata-rata",
+      "desc": "Kecepatan rata-rata sepanjang gowes, hanya saat bergerak."
+    },
+    "maxSpeed": {
+      "name": "Kecepatan maksimum",
+      "short": "Kec. maks",
+      "desc": "Kecepatan tertinggi yang tercatat di gowes ini."
+    },
+    "lapSpeed": {
+      "name": "Kecepatan lap",
+      "short": "Kec. lap",
+      "desc": "Kecepatan rata-rata lap yang sedang berjalan."
+    },
+    "cadence": {
+      "name": "Kadens",
+      "short": "Kadens",
+      "desc": "Putaran pedal per menit sekarang."
+    },
+    "avgCadence": {
+      "name": "Kadens rata-rata",
+      "short": "Kad. rata-rata",
+      "desc": "Kadens rata-rata sepanjang gowes."
+    },
+    "hr": {
+      "name": "Detak jantung",
+      "short": "Detak jantung",
+      "desc": "Detak jantung sekarang dari sensor atau jam-mu."
+    },
+    "avgHr": {
+      "name": "Detak jantung rata-rata",
+      "short": "Detak rata-rata",
+      "desc": "Rata-rata detak jantung sepanjang gowes."
+    },
+    "hrZone": {
+      "name": "Zona detak jantung",
+      "short": "Zona HR",
+      "desc": "Zona 1 sampai 5 dari detak jantung dan detak maksimum-mu, berwarna."
+    },
+    "power": {
+      "name": "Daya",
+      "short": "Daya",
+      "desc": "Daya pedal sekarang dari power meter."
+    },
+    "power3s": {
+      "name": "Daya 3 detik",
+      "short": "Daya 3 dtk",
+      "desc": "Rata-rata daya 3 detik terakhir, lebih tenang dari daya sesaat."
+    },
+    "power10s": {
+      "name": "Daya 10 detik",
+      "short": "Daya 10 dtk",
+      "desc": "Rata-rata daya 10 detik terakhir."
+    },
+    "avgPower": {
+      "name": "Daya rata-rata",
+      "short": "Daya rata-rata",
+      "desc": "Rata-rata daya sepanjang gowes."
+    },
+    "normPower": {
+      "name": "Daya ternormalisasi",
+      "short": "Daya NP",
+      "desc": "Daya setara untuk usaha yang naik-turun; lebih jujur dari rata-rata."
+    },
+    "powerZone": {
+      "name": "Zona daya",
+      "short": "Zona daya",
+      "desc": "Zona 1 sampai 7 dari dayamu dan FTP, berwarna. Perlu FTP di pengaturan."
+    },
+    "estPower": {
+      "name": "Daya perkiraan",
+      "short": "Daya perk.",
+      "desc": "Daya yang dihitung dari kecepatan, tanjakan, dan berat badan-mu. Cukup untuk acuan tanpa power meter.",
+      "estimate": "perkiraan"
+    },
+    "distance": {
+      "name": "Jarak",
+      "short": "Jarak",
+      "desc": "Jarak yang sudah kamu tempuh."
+    },
+    "lapDistance": {
+      "name": "Jarak lap",
+      "short": "Jarak lap",
+      "desc": "Jarak lap yang sedang berjalan."
+    },
+    "distanceToFinish": {
+      "name": "Jarak ke finis",
+      "short": "Ke finis",
+      "desc": "Sisa jarak sampai akhir rute. Perlu rute."
+    },
+    "distanceToTurn": {
+      "name": "Jarak ke belokan",
+      "short": "Ke belokan",
+      "desc": "Jarak ke belokan berikutnya di rute. Perlu rute."
+    },
+    "movingTime": {
+      "name": "Waktu bergerak",
+      "short": "Waktu gerak",
+      "desc": "Waktu saat kamu benar-benar bergerak; jeda tidak dihitung."
+    },
+    "elapsedTime": {
+      "name": "Waktu berlalu",
+      "short": "Waktu total",
+      "desc": "Waktu sejak mulai, termasuk berhenti."
+    },
+    "lapTime": {
+      "name": "Waktu lap",
+      "short": "Waktu lap",
+      "desc": "Waktu lap yang sedang berjalan."
+    },
+    "timeOfDay": {
+      "name": "Jam",
+      "short": "Jam",
+      "desc": "Jam sekarang."
+    },
+    "eta": {
+      "name": "Perkiraan tiba",
+      "short": "Tiba",
+      "desc": "Jam kamu tiba di finis kalau kecepatan-mu tetap. Perlu rute."
+    },
+    "altitude": {
+      "name": "Ketinggian",
+      "short": "Ketinggian",
+      "desc": "Ketinggian dari GPS, sudah dihaluskan."
+    },
+    "ascent": {
+      "name": "Total tanjakan",
+      "short": "Tanjakan",
+      "desc": "Total meter yang sudah kamu naik."
+    },
+    "descent": {
+      "name": "Total turunan",
+      "short": "Turunan",
+      "desc": "Total meter yang sudah kamu turun."
+    },
+    "grade": {
+      "name": "Kemiringan",
+      "short": "Kemiringan",
+      "desc": "Kemiringan jalan sekarang dalam persen, dihaluskan sekitar 150 m."
+    },
+    "climbRemaining": {
+      "name": "Sisa tanjakan",
+      "short": "Sisa tanjakan",
+      "desc": "Meter yang masih harus naik di tanjakan berikutnya. Perlu rute."
+    },
+    "calories": {
+      "name": "Kalori",
+      "short": "Kalori",
+      "desc": "Perkiraan energi yang sudah kamu bakar."
+    },
+    "battery": {
+      "name": "Baterai ponsel",
+      "short": "Baterai",
+      "desc": "Sisa baterai ponsel ini."
+    }
+  },
+  "picker": {
+    "group": {
+      "speed": "Kecepatan",
+      "hr": "Detak jantung dan irama",
+      "power": "Daya",
+      "distance": "Jarak dan waktu",
+      "terrain": "Medan",
+      "other": "Lainnya"
+    },
+    "title": "Pilih angka",
+    "close": "Tutup",
+    "rowA11y": "{{name}}. {{desc}}",
+    "toggle": {
+      "title": "Mode komputer sepeda",
+      "hint": "Layar gowes berisi angka besar, peta, tanjakan, dan peringatan."
+    }
+  },
+  "status": {
+    "recording": "Merekam",
+    "paused": "Dijeda",
+    "autoPaused": "Dijeda otomatis",
+    "gps": {
+      "searching": "GPS mencari",
+      "ready": "GPS siap",
+      "fair": "GPS cukup",
+      "weak": "GPS lemah",
+      "accuracy": "{{meters}} m"
+    },
+    "sensorsLost_other": "{{count}} sensor putus",
+    "battery": "{{pct}} %"
+  },
+  "a11y": {
+    "status": {
+      "battery": "Baterai ponsel {{pct}} persen",
+      "gps": "Status GPS: {{state}}",
+      "recording": "Sedang merekam"
+    },
+    "field": {
+      "value": "{{name}}: {{value}}",
+      "valueUnit": "{{name}}: {{value}} {{unit}}",
+      "valueSub": "{{name}}: {{value}}, {{sub}}",
+      "valueUnitSub": "{{name}}: {{value}} {{unit}}, {{sub}}"
+    },
+    "controls": "Kontrol gowes"
+  },
+  "controls": {
+    "pause": "Jeda",
+    "resume": "Lanjut",
+    "lap": "Lap",
+    "finish": "Selesai"
+  },
+  "page": {
+    "indicator": "Halaman {{current}} dari {{total}}",
+    "map": {
+      "offlineNotice": "Peta belum diunduh, memakai peta online",
+      "offlineAction": "Buka pengaturan",
+      "noPosition": "Menunggu posisi GPS",
+      "turnNone": "Tanpa belokan"
+    },
+    "climb": {
+      "empty": "Pilih rute di layar Siap untuk melihat tanjakan",
+      "noProfile": "Rute ini tidak punya data ketinggian, jadi tanjakannya tidak bisa dihitung",
+      "noneLeft": "Tidak ada tanjakan lagi di rute ini",
+      "category": "Kategori {{category}}",
+      "categoryNone": "Tanpa kategori",
+      "length": "Panjang",
+      "avgGrade": "Kemiringan",
+      "remainingAscent": "Sisa naik",
+      "startsIn": "Mulai {{distance}} lagi",
+      "inProgress": "Sedang menanjak",
+      "profileA11y": "Profil ketinggian rute dengan posisimu"
+    },
+    "laps": {
+      "current": "Lap {{number}} (berjalan)",
+      "empty": "Belum ada lap selesai. Tekan Lap untuk menandai.",
+      "row": "Lap {{number}}",
+      "stats": "{{distance}} dalam {{time}}",
+      "statsHr": "{{distance}} dalam {{time}}, {{hr}} bpm",
+      "finishedHeader": "Lap selesai"
+    }
+  },
+  "save": {
+    "failed": "Gagal menyimpan: {{error}}",
+    "again": "Simpan lagi",
+    "discard": "Buang rekaman"
+  },
+  "offCourse": {
+    "banner": "Keluar jalur, {{meters}} m dari rute",
+    "bannerNoDistance": "Keluar jalur"
+  },
+  "alert": {
+    "dismiss": "Ketuk untuk menutup",
+    "channel": "Peringatan gowes",
+    "hrHigh": "Detak jantung terlalu tinggi, zona {{value}}",
+    "hrLow": "Detak jantung rendah, zona {{value}}",
+    "powerHigh": "Daya terlalu tinggi, zona {{value}}",
+    "powerLow": "Daya rendah, zona {{value}}",
+    "cadenceLow": "Kadens rendah, {{value}} rpm",
+    "cadenceHigh": "Kadens tinggi, {{value}} rpm",
+    "eat": "Waktunya makan sesuatu",
+    "drink": "Waktunya minum",
+    "offCourse": "Kamu keluar jalur, {{value}} m dari rute",
+    "backOnCourse": "Kembali ke jalur",
+    "lowBattery": "Baterai ponsel tinggal {{value}} %",
+    "sensorLost": "Sensor terputus",
+    "gpsLost": "Sinyal GPS hilang",
+    "gpsBack": "GPS kembali",
+    "autoLap": "Lap {{value}} dimulai",
+    "turn": "Belokan di depan"
+  },
+  "turn": {
+    "slightLeft": "Belok kiri sedikit",
+    "left": "Belok kiri",
+    "sharpLeft": "Belok kiri tajam",
+    "slightRight": "Belok kanan sedikit",
+    "right": "Belok kanan",
+    "sharpRight": "Belok kanan tajam",
+    "uTurn": "Putar balik",
+    "start": "Mulai",
+    "finish": "Finis"
+  },
+  "unit": {
+    "percent": "{{value}} %",
+    "minutes": "{{value}} menit",
+    "seconds": "{{value}} detik",
+    "kilometres": "{{value}} km",
+    "metres": "{{value}} m",
+    "rpmValue": "{{value}} rpm"
+  },
+  "stepper": {
+    "decrease": "Kurangi {{label}}",
+    "increase": "Tambah {{label}}"
+  },
+  "settings": {
+    "title": "Komputer sepeda",
+    "link": {
+      "title": "Komputer sepeda",
+      "row": "Pengaturan komputer sepeda",
+      "subtitle": "Layar gowes, halaman data, peta, dan peringatan"
+    },
+    "mode": {
+      "title": "Mode",
+      "enabled": "Mode komputer sepeda",
+      "hint": "Pakai layar komputer sepeda saat merekam Bersepeda",
+      "body": "Saat kamu merekam gowes dengan ponsel, layar berubah jadi komputer sepeda: angka besar, halaman data yang bisa kamu atur, peta, tanjakan, dan peringatan. Mode ini hanya untuk Bersepeda; olahraga lain tetap memakai layar biasa."
+    },
+    "display": {
+      "title": "Tampilan",
+      "theme": "Tema layar gowes",
+      "themeAuto": "Otomatis",
+      "themeDay": "Siang",
+      "themeNight": "Malam",
+      "themeHint": "Siang: latar putih supaya terbaca di terik matahari. Malam: latar hitam. Otomatis mengikuti tema aplikasi.",
+      "dim": "Redupkan layar",
+      "dimHint": "Layar meredup kalau tidak disentuh dan menyala lagi saat kamu menyentuhnya atau ada peringatan. Hemat baterai.",
+      "dimAfter": "Redup setelah",
+      "dimLevel": "Tingkat redup",
+      "dimNote": "Meredupkan layar butuh aplikasi versi toko. Di versi lama, pengaturan ini tidak berpengaruh."
+    },
+    "pages": {
+      "title": "Halaman data",
+      "body": "Atur halaman yang kamu geser saat gowes: berapa angka per halaman dan angka apa saja.",
+      "open": "Atur halaman data",
+      "count_other": "{{count}} halaman"
+    },
+    "ride": {
+      "title": "Fitur gowes",
+      "autoPause": "Jeda otomatis",
+      "autoPauseHint": "Rekaman berhenti saat kamu berhenti dan lanjut saat kamu jalan lagi.",
+      "autoLap": "Lap otomatis",
+      "autoLapOff": "Mati",
+      "autoLapDistance": "Jarak",
+      "autoLapStart": "Titik awal",
+      "autoLapEvery": "Lap setiap",
+      "autoLapHintStart": "Lap baru saat kamu kembali ke titik awal setelah menjauh.",
+      "offCourse": "Batas keluar jalur",
+      "offCourseHint": "Kamu diperingatkan kalau lebih jauh dari ini dari rute."
+    },
+    "alerts": {
+      "title": "Peringatan",
+      "hr": "Zona detak jantung",
+      "hrHint": "Peringatan kalau detak jantungmu di luar zona yang kamu pilih.",
+      "power": "Zona daya",
+      "powerHint": "Peringatan kalau dayamu di luar zona yang kamu pilih. Perlu FTP.",
+      "minZone": "Zona terendah",
+      "maxZone": "Zona tertinggi",
+      "zoneValue": "Zona {{value}}",
+      "cadence": "Kadens",
+      "cadenceHint": "Peringatan kalau kadensmu di bawah atau di atas batas.",
+      "minRpm": "Kadens terendah",
+      "maxRpm": "Kadens tertinggi",
+      "eat": "Ingatkan makan",
+      "drink": "Ingatkan minum",
+      "byTime": "Waktu",
+      "byDistance": "Jarak",
+      "everyMinutes": "Setiap",
+      "everyKm": "Setiap",
+      "offCourse": "Keluar jalur",
+      "lowBattery": "Baterai ponsel rendah",
+      "sensorLost": "Sensor terputus",
+      "gpsLost": "Sinyal GPS hilang",
+      "vibrate": "Getar",
+      "vibrateHint": "Pola getar untuk setiap peringatan.",
+      "sound": "Suara",
+      "soundHint": "Suara lewat notifikasi. Bunyi di dalam aplikasi belum ada."
+    },
+    "share": {
+      "title": "Bagikan lokasi"
+    }
+  },
+  "editor": {
+    "title": "Halaman data",
+    "pageTitle": "Halaman {{n}}",
+    "kind": {
+      "fields_other": "{{count}} angka",
+      "map": "Peta",
+      "climb": "Tanjakan",
+      "laps": "Lap"
+    },
+    "moveUp": "Naikkan halaman {{n}}",
+    "moveDown": "Turunkan halaman {{n}}",
+    "remove": "Hapus halaman {{n}}",
+    "edit": "Ubah halaman {{n}}",
+    "add": "Tambah halaman",
+    "addKind": {
+      "fields": "Halaman angka",
+      "map": "Peta",
+      "climb": "Tanjakan",
+      "laps": "Lap"
+    },
+    "maxPages": "Maksimal {{count}} halaman.",
+    "gridLabel": "Jumlah angka di halaman ini",
+    "slotHint": "Ketuk satu angka untuk menggantinya.",
+    "slotA11y": "Angka {{n}}: {{name}}. Ketuk untuk mengganti.",
+    "preview": "Contoh",
+    "previewNote": "Angka contoh, bukan data gowesmu.",
+    "specialNote": {
+      "map": "Halaman peta: posisimu, rute, dan belokan berikutnya.",
+      "climb": "Halaman tanjakan: profil ketinggian rute dan tanjakan berikutnya. Perlu rute.",
+      "laps": "Halaman lap: lap yang sedang berjalan dan lap yang sudah selesai."
+    },
+    "reset": "Atur ulang",
+    "resetTitle": "Atur ulang halaman?",
+    "resetMessage": "Halaman data kembali ke susunan bawaan. Susunanmu sekarang hilang."
+  },
+  "ready": {
+    "battery": {
+      "estimate": "Perkiraan baterai: {{hours}} jam, {{pct}} % per jam",
+      "unknown": "Perkiraan baterai belum tersedia",
+      "tight": "Baterai pas-pasan untuk rute ini: butuh sekitar {{need}} jam, baterai tahan sekitar {{have}} jam",
+      "short": "Baterai tidak cukup untuk rute ini: butuh sekitar {{need}} jam, baterai tahan sekitar {{have}} jam",
+      "saverHint": "Hemat baterai bisa menambah waktu tahan.",
+      "title": "Baterai"
+    },
+    "route": {
+      "none": "Tanpa rute: layar tetap menampilkan peta dan posisimu."
+    },
+    "saver": {
+      "title": "Mode hemat baterai",
+      "hint": "Halaman peta mati, layar lebih redup."
+    },
+    "live": {
+      "title": "Bagikan lokasi"
+    }
+  },
+  "route": {
+    "row": "Rute",
+    "pick": "Pilih rute",
+    "none": "Tanpa rute",
+    "chosen": "Rute: {{name}}",
+    "change": "Ganti rute",
+    "clear": "Lepas rute",
+    "offCourse": "Keluar jalur, {{meters}} m dari rute",
+    "backOn": "Kembali ke jalur",
+    "empty": "Belum ada rute tersimpan. Impor GPX di tab Rute.",
+    "close": "Tutup",
+    "sheetCaption": "Dipakai untuk mengikuti jalur, belokan, dan tanjakan."
+  },
+  "saver": {
+    "title": "Hemat baterai?",
+    "proposal": "Baterai tinggal {{pct}} %. Matikan halaman peta dan redupkan layar supaya gowesmu sampai selesai?",
+    "accept": "Hemat baterai",
+    "dismiss": "Nanti saja",
+    "forced": "Baterai tinggal {{pct}} %, mode hemat baterai menyala",
+    "active": "Mode hemat baterai menyala"
+  }
+}

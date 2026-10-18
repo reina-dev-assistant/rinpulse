@@ -113,7 +113,7 @@ final class WorkoutStoreTests: XCTestCase {
 
     func testSavesTheRowAndItsPointsWithNullsWhereASourceHadNone() throws {
         let store = SyncStore(url: temporaryDatabaseURL())
-        let workouts = WorkoutStore(store)
+        let workouts = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
         let points = [
             WorkoutPoint(ts: 1_700_000_000, lat: nil, lon: nil, alt: 5.5, hr: 120),
             WorkoutPoint(ts: 1_700_000_010, lat: -6.2, lon: 106.8, alt: nil, hr: nil),
@@ -137,7 +137,7 @@ final class WorkoutStoreTests: XCTestCase {
 
     func testSavesSpeedCadenceStrideAndPowerOfEachPoint() throws {
         let store = SyncStore(url: temporaryDatabaseURL())
-        let workouts = WorkoutStore(store)
+        let workouts = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
         let points = [
             WorkoutPoint(ts: 1_700_000_000, lat: nil, lon: nil, alt: nil, hr: 150, speed: 3.1, cadence: 172, stride: 1.05, power: 240),
             WorkoutPoint(ts: 1_700_000_010, lat: -6.2, lon: 106.8, alt: nil, hr: nil),
@@ -153,7 +153,7 @@ final class WorkoutStoreTests: XCTestCase {
 
     func testSavingAgainReplacesTheWorkoutAndItsPointsKeepingTheId() throws {
         let store = SyncStore(url: temporaryDatabaseURL())
-        let workouts = WorkoutStore(store)
+        let workouts = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
         XCTAssertTrue(try workouts.save(record(complete: false, points: [WorkoutPoint(ts: 1, lat: nil, lon: nil, alt: nil, hr: 90)])))
         let id = try rows(store, "SELECT id FROM workouts") { $0.int(0) }
 
@@ -169,7 +169,7 @@ final class WorkoutStoreTests: XCTestCase {
 
     func testRevColumnAdvancesOnEveryReplaceForTheCloudCursor() throws {
         let store = SyncStore(url: temporaryDatabaseURL())
-        let workouts = WorkoutStore(store)
+        let workouts = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
         _ = try workouts.save(record())
         let first = try rows(store, "SELECT rev FROM workouts") { $0.int(0) }[0]
         _ = try workouts.save(record(steps: 7))
@@ -190,7 +190,7 @@ final class WorkoutStoreTests: XCTestCase {
 
     func testAWorkoutThisStoreWritesIsAnAutomaticStravaCandidateUntilTheJsAppSettlesItAndAReSyncKeepsThat() throws {
         let store = SyncStore(url: temporaryDatabaseURL())
-        let workouts = WorkoutStore(store)
+        let workouts = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
         _ = try workouts.save(record(start: 1_700_000_000, end: 1_700_000_600))
         _ = try workouts.save(record(start: 1_700_001_000, end: 1_700_001_600, complete: false))
         func candidates(connectedAt: Int64, maxAttempts: Int64 = 3) throws -> [Int64] {
@@ -221,7 +221,7 @@ final class WorkoutStoreTests: XCTestCase {
     }
 
     func testIsCompleteNeedsStartEndAndTheCompleteFlag() throws {
-        let workouts = WorkoutStore(SyncStore(url: temporaryDatabaseURL()))
+        let workouts = WorkoutStore(SyncStore(url: temporaryDatabaseURL()), address: "AA:AA:AA:AA:AA:01")
         _ = try workouts.save(record(complete: true))
         _ = try workouts.save(record(start: 5_000, end: 5_600, complete: false))
 
@@ -232,7 +232,7 @@ final class WorkoutStoreTests: XCTestCase {
     }
 
     func testSyncStartIsTheGbDefaultThenAfterTheNewestWorkoutOrTheOldestIncomplete() throws {
-        let workouts = WorkoutStore(SyncStore(url: temporaryDatabaseURL()))
+        let workouts = WorkoutStore(SyncStore(url: temporaryDatabaseURL()), address: "AA:AA:AA:AA:AA:01")
         XCTAssertEqual(try workouts.syncStart(), 1_654_819_200)
 
         _ = try workouts.save(record(start: 1_700_000_000, end: 1_700_000_600))
@@ -249,7 +249,7 @@ final class WorkoutStoreTests: XCTestCase {
     }
 
     func testSyncStartIsClampedToTheWireRange() throws {
-        let workouts = WorkoutStore(SyncStore(url: temporaryDatabaseURL()))
+        let workouts = WorkoutStore(SyncStore(url: temporaryDatabaseURL()), address: "AA:AA:AA:AA:AA:01")
         _ = try workouts.save(record(start: 5_000_000_000, end: 5_000_000_100))
         XCTAssertEqual(try workouts.syncStart(), Int(Int32.max))
     }
@@ -274,7 +274,7 @@ final class WorkoutStoreTests: XCTestCase {
         }
 
         func run(nowSec: Int64) async throws -> Int {
-            try await WorkoutPhase.run(session: session, caps: caps, syncStore: store, events: events, nowSec: nowSec)
+            try await WorkoutPhase.run(session: session, caps: caps, syncStore: store, address: "AA:AA:AA:AA:AA:01", events: events, nowSec: nowSec)
         }
     }
 
@@ -323,7 +323,7 @@ final class WorkoutStoreTests: XCTestCase {
         // Every request waits 10 s like GB's; shorten the wait on the sync object the phase would use.
         let sync = WorkoutSync(session: rig.session, caps: rig.caps, log: rig.events.sink)
         sync.requestTimeoutMs = 100
-        let sink = WorkoutStore(rig.store)
+        let sink = WorkoutStore(rig.store, address: "AA:AA:AA:AA:AA:01")
         do {
             try await sync.sync(startSec: Int(start) - 10, endSec: Int(start) + 10_000, sink: sink)
             XCTFail("expected a timeout")

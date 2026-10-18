@@ -12,7 +12,7 @@ import { fmtDecimal, fmtDuration, fmtInt, fmtPercent, t } from '@/i18n';
  *  - HRV against your 30-day baseline (see `recovery.ts`), from the watch's own RMSSD during last night's sleep or a 1-minute reading.
  *  - Resting heart rate against your own 30-day average (Lamberts: a resting heart rate a few beats above baseline
  *    goes with fatigue or illness).
- *  - Last night's sleep against a need of 7 h 30 min plus up to 1 h after a hard day (yesterday's strain / 21).
+ *  - The day's sleep (night plus naps) against a need of 7 h 30 min plus up to 1 h after a hard day (yesterday's strain / 21).
  *  - Training load balance: the mean daily TRIMP of the last 7 days against the last 28 (acute:chronic workload ratio,
  *    Gabbett 2016; above 1.5 raises injury risk, below 0.8 is detraining). `fitness/trainingLoad.ts` computes it.
  */
@@ -146,8 +146,7 @@ export function readiness(input: {
   if (!sleep) {
     missing.push(t('today:readiness.missing.sleepNone'));
   } else {
-    const awake = sleep.byStage.find((s) => s.stage === 'awake')?.seconds ?? 0;
-    const slept = sleep.byStage.length > 0 ? sleep.totalSeconds - awake : sleep.totalSeconds;
+    const slept = sleep.dayAsleepSeconds;
     const need = sleepNeedSec(yesterday);
     const share = slept / need;
     signals.push({

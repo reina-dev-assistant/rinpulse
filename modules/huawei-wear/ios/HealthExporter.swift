@@ -265,7 +265,7 @@ public final class HealthExporter: @unchecked Sendable {
 
     private func deviceInfo() throws -> HealthDevice {
         let (name, productModel): (String?, String?) = try syncStore.read { db in
-            try db.query("SELECT name, product_model FROM device ORDER BY last_sync DESC LIMIT 1") { ($0.text(0), $0.text(1)) }.first ?? (nil, nil)
+            try db.query("SELECT name, product_model FROM device ORDER BY is_primary DESC, last_sync DESC LIMIT 1") { ($0.text(0), $0.text(1)) }.first ?? (nil, nil)
         }
         let manufacturer = (name?.trimmingCharacters(in: .whitespaces).lowercased().hasPrefix("honor") == true) ? "Honor" : "Huawei"
         // "Watch GT 4" without the brand, which is the manufacturer field.

@@ -23,6 +23,7 @@ import {
   type StoredMeta,
   type StoredPoints,
 } from './routeStorage';
+import { notifyRouteChange } from './routeChanges';
 
 /** A saved route with the few points its list thumbnail is drawn from. */
 export interface RouteCard {
@@ -94,6 +95,7 @@ export async function saveRoute(draft: RouteDraft): Promise<SavedRoute> {
   const stored: StoredPoints = { v: 1, pts: encodePoints(points) };
   pointsFile(meta.route.id).write(JSON.stringify(stored));
   writeMeta(meta);
+  notifyRouteChange(meta.route.id);
   return meta.route;
 }
 
@@ -106,6 +108,7 @@ export async function renameRoute(id: string, name: string): Promise<SavedRoute 
   if (cleaned === '') return meta.route;
   const route = { ...meta.route, name: cleaned };
   writeMeta({ ...meta, route });
+  notifyRouteChange(id);
   return route;
 }
 
@@ -115,6 +118,7 @@ export async function deleteRoute(id: string): Promise<void> {
   if (meta.exists) meta.delete();
   const points = pointsFile(id);
   if (points.exists) points.delete();
+  notifyRouteChange(id);
 }
 
 /** Records that the route reached the watch just now; null when there is no such route. */
@@ -125,4 +129,32 @@ export async function markRouteSent(id: string): Promise<SavedRoute | null> {
   const route = { ...meta.route, lastSentAt: Date.now() };
   writeMeta({ ...meta, route });
   return route;
+}
+
+/** A route's files are on disk, even when the facts file is damaged (`listRoutes` leaves such a route out, but it is not deleted). */
+export function routeFilesExist(id: string): boolean {
+  return isRouteId(id) && (metaFile(id).exists || pointsFile(id).exists);
+}
+
+/** The facts file as stored, and (when asked) the points file's flat array; null when the facts are missing or damaged, or the points are. For the cloud sync. */
+export function readStoredRoute(id: string, withPoints: boolean): { meta: StoredMeta; pts: StoredPoints['pts'] | null } | null {
+  if (!isRouteId(id)) return null;
+  const meta = readMeta(metaFile(id));
+  if (!meta) return null;
+  if (!withPoints) return { meta, pts: null };
+  const file = pointsFile(id);
+  if (!file.exists) return null;
+  try {
+    const points = decodePoints(JSON.parse(file.textSync()));
+    return points && points.length >= 2 ? { meta, pts: encodePoints(points) } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Stores a route that came from the account as it is: same id, same facts. Not reported as a local edit. */
+export function writeStoredRoute(meta: StoredMeta, pts: StoredPoints['pts']): void {
+  const stored: StoredPoints = { v: 1, pts };
+  pointsFile(meta.route.id).write(JSON.stringify(stored));
+  writeMeta(meta);
 }

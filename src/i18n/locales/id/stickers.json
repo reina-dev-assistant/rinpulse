@@ -1,0 +1,346 @@
+{
+  "label": {
+    "distance": "Jarak",
+    "time": "Waktu",
+    "pace": "Pace",
+    "speed": "Kecepatan",
+    "avgHr": "Detak rata-rata",
+    "maxHr": "Detak maks",
+    "hr": "Detak",
+    "kcal": "Kalori",
+    "elevation": "Elevasi",
+    "cadence": "Kadensi",
+    "effort": "Beban",
+    "steps": "Langkah",
+    "sleep": "Tidur",
+    "recovery": "Pemulihan",
+    "strain": "Beban",
+    "volume": "Volume",
+    "reps": "Repetisi",
+    "sets": "Set",
+    "duration": "Durasi",
+    "workouts": "Latihan",
+    "activeDays": "Hari aktif"
+  },
+  "unit": {
+    "perKm": "/km",
+    "per100m": "/100 m",
+    "kmh": "km/j",
+    "bpm": "bpm",
+    "kcal": "kcal",
+    "m": "m",
+    "spm": "spm",
+    "kg": "kg",
+    "km": "km"
+  },
+  "ui": {
+    "filter": {
+      "all": "Semua",
+      "card": "Kartu",
+      "sticker": "Stiker",
+      "photo": "Foto",
+      "badge": "Lencana"
+    },
+    "canvas": {
+      "story": "Story 9:16",
+      "square": "Persegi 1:1"
+    },
+    "mode": {
+      "dark": "Gelap",
+      "light": "Terang"
+    },
+    "routePrivacy": {
+      "label": "Sembunyikan awal dan akhir rute",
+      "hint": "Memotong 200 m pertama dan terakhir supaya rumahmu tidak kelihatan."
+    },
+    "watermark": {
+      "label": "Tampilkan logo JoyoFit",
+      "hintPro": "Kamu bisa mematikannya karena kamu Pro.",
+      "hintFree": "Hanya pengguna Pro yang bisa mematikannya."
+    },
+    "photo": {
+      "choose": "Pilih foto",
+      "change": "Ganti foto",
+      "take": "Ambil foto",
+      "placeholder": "Pilih foto dari galeri atau ambil foto baru.",
+      "failed": "Foto itu tidak bisa dimuat. Pilih foto lain.",
+      "needed": "Tambahkan fotomu dulu untuk membagikan kartu ini."
+    },
+    "hint": {
+      "sticker": "PNG transparan. Kirim ke Story Instagram sebagai stiker, atau salin lalu tempel di atas fotomu sendiri.",
+      "photo": "Fotomu dengan angka di atasnya.",
+      "card": "Kartu penuh untuk Story, WhatsApp, atau feed."
+    },
+    "preparing": "Menyiapkan gambar",
+    "entry": {
+      "sleep": "Bagikan tidurmu",
+      "week": "Bagikan minggu ini",
+      "badges": "Bagikan pencapaian",
+      "plan": "Bagikan progres rencana"
+    }
+  },
+  "tpl": {
+    "strength": {
+      "bold": "Tebal",
+      "poster": "Poster",
+      "minimal": "Minimal",
+      "muscle": "Beban otot",
+      "photo": "Foto",
+      "receipt": "Struk",
+      "stats": "Statistik",
+      "text": {
+        "newPr_other": "{{count}} PR baru",
+        "exercises_other": "{{count}} gerakan",
+        "topSets": "Set terbaik",
+        "muscleLoad": "Beban otot, set",
+        "rpe": "RPE",
+        "pr": "PR",
+        "thanks": "Makasih sudah angkat. Sampai ketemu di rak."
+      }
+    },
+    "week": {
+      "bold": "Tebal",
+      "poster": "Poster",
+      "stats": "Statistik",
+      "text": {
+        "title": "Minggu ini",
+        "kicker": "Rekap mingguan"
+      }
+    },
+    "load": {
+      "bars": "Batang",
+      "stats": "Statistik",
+      "text": {
+        "title": "Beban latihan",
+        "status": "Status",
+        "ratio": "Rasio",
+        "total": "Total beban"
+      }
+    },
+    "plan": {
+      "ring": "Cincin",
+      "stats": "Statistik",
+      "text": {
+        "weekOf": "Minggu {{week}} dari {{weeks}}",
+        "complete": "selesai",
+        "next": "Berikutnya",
+        "sessionsDone": "{{done}} dari {{total}} sesi selesai",
+        "weekN": "Minggu {{week}}",
+        "weekKicker": "Minggu ke"
+      }
+    },
+    "badge": {
+      "medal": "Medali",
+      "streak": "Streak",
+      "pr": "Rekor",
+      "bold": "Tebal",
+      "text": {
+        "earned": "Pencapaian baru",
+        "best_other": "Terbaik: {{count}} hari",
+        "record": "Rekor pribadi",
+        "streakNow": "Streak kamu",
+        "streakBest": "Streak terbaik"
+      }
+    },
+    "run": {
+      "bold": "Tebal",
+      "poster": "Poster",
+      "minimal": "Minimal",
+      "photo": "Foto",
+      "glass": "Kaca",
+      "route": "Rute",
+      "stats": "Statistik",
+      "receipt": "Struk",
+      "map": "Peta",
+      "splits": "Split",
+      "zones": "Zona",
+      "text": {
+        "total": "Total",
+        "thanks": "Makasih sudah lari",
+        "splits": "Per km",
+        "zones": "Zona detak jantung"
+      }
+    },
+    "sleep": {
+      "ring": "Cincin skor",
+      "stages": "Fase tidur",
+      "poster": "Poster",
+      "stats": "Statistik",
+      "text": {
+        "night": "Semalam",
+        "asleep": "Tertidur",
+        "score": "Skor tidur",
+        "deep": "Dalam",
+        "rem": "REM",
+        "light": "Ringan",
+        "awake": "Terjaga",
+        "bedWake": "Tidur {{bed}}, bangun {{wake}}",
+        "awakenings_other": "{{count}}x terbangun",
+        "target": "Target 8 jam",
+        "poster": "Catatan tidur",
+        "vsMore": "{{time}} lebih lama dari rata-ratamu"
+      }
+    },
+    "ready": {
+      "rings": "Cincin",
+      "bold": "Tebal",
+      "stats": "Pemulihan",
+      "text": {
+        "today": "Hari ini",
+        "ofGoal": "dari {{goal}}"
+      }
+    },
+    "watch": {
+      "rings": "Cincin",
+      "tiles": "Ubin",
+      "text": {
+        "rhr": "Detak istirahat"
+      }
+    }
+  },
+  "threads": {
+    "heading": "Bagikan ke Threads",
+    "slide": {
+      "summary": "Ringkasan",
+      "lift": "Ringkasan",
+      "splits": "Split",
+      "splits2": "Split, lanjutan",
+      "splits3": "Split, lanjutan 2",
+      "charts": "Grafik",
+      "sensors": "Sensor",
+      "zones": "Zona dan beban",
+      "power": "Daya",
+      "climbs": "Tanjakan",
+      "lifts": "Gerakan",
+      "lifts2": "Gerakan, lanjutan",
+      "lifts3": "Gerakan, lanjutan 2",
+      "muscle": "Otot dan rekor",
+      "context": "Empat minggu terakhir",
+      "powerzones": "Zona daya",
+      "contextlift": "Empat minggu terakhir"
+    },
+    "col": {
+      "km": "KM",
+      "time": "Waktu",
+      "pace": "Pace",
+      "speed": "km/j",
+      "hr": "Detak",
+      "cad": "Kad",
+      "power": "Watt",
+      "gain": "Naik"
+    },
+    "label": {
+      "power": "Daya",
+      "avgPower": "Daya rata-rata",
+      "np": "NP",
+      "if": "IF",
+      "tss": "TSS",
+      "vi": "VI",
+      "work": "Kerja",
+      "wkg": "W/kg",
+      "maxPower": "Daya maks",
+      "aerobic": "Efek aerobik",
+      "anaerobic": "Efek anaerobik",
+      "recovery": "Pemulihan",
+      "ratio": "Rasio beban",
+      "trimp": "TRIMP",
+      "vo2max": "VO2max",
+      "exercises": "Gerakan",
+      "length": "Panjang",
+      "gain": "Naik",
+      "avgGrade": "Rata-rata",
+      "maxGrade": "Maks",
+      "vam": "VAM",
+      "volume4": "Volume 4 minggu",
+      "distance4": "Jarak 4 minggu",
+      "sessions": "Sesi",
+      "avgVolumeWeek": "Rata-rata per minggu",
+      "avgDistanceWeek": "Rata-rata per minggu",
+      "avgSessionsWeek": "Sesi per minggu",
+      "ftp": "FTP",
+      "nwkg": "NP per kg",
+      "balance": "Pedal kiri"
+    },
+    "unit": {
+      "w": "W",
+      "kj": "kJ",
+      "hours": "jam",
+      "of21": "/21",
+      "pct": "%"
+    },
+    "text": {
+      "device": "Direkam dengan {{device}}",
+      "splitStep": "Per {{km}} km",
+      "axisStart": "0",
+      "paceStats": "Rata-rata {{avg}}/km · Tercepat {{best}}/km",
+      "speedStats": "Rata-rata {{avg}} km/j · Maks {{max}} km/j",
+      "hrStats": "Min {{min}} · Rata-rata {{avg}} · Maks {{max}} bpm",
+      "elevStats": "Naik {{gain}} m · Turun {{loss}} m · {{min}} sampai {{max}} m",
+      "cadStats": "Rata-rata {{avg}} spm · Maks {{max}}",
+      "cadStatsRide": "Rata-rata {{avg}} rpm · Maks {{max}}",
+      "powerStats": "Rata-rata {{avg}} W · Maks {{max}}",
+      "zones": "Zona detak jantung",
+      "load": "Efek latihan dan beban",
+      "loadStatus": "Beban {{status}}: 7 hari {{acute}}, rata-rata mingguan {{chronic}}",
+      "curve": "Daya terbaik",
+      "powerZones": "Zona daya",
+      "category": "Kat. {{value}}",
+      "climbN": "Tanjakan {{n}}",
+      "climbPower": "Daya {{value}} W",
+      "climbHr": "Detak {{value}} bpm",
+      "liftMore": "+{{count}} gerakan lain",
+      "records": "Rekor baru",
+      "weeklyKm": "Jarak per minggu, km",
+      "weeklyMin": "Menit per minggu",
+      "weeklyVolume": "Volume per minggu, kg",
+      "weeklySessions": "Sesi per minggu",
+      "fourWeeks": "Empat minggu sampai latihan ini. Tiap batang adalah 7 hari.",
+      "ftpNote": "Zona dihitung dari FTP {{ftp}} W.",
+      "climbMax": "Maks {{value}}%"
+    },
+    "curve": {
+      "5": "5 dtk",
+      "60": "1 mnt",
+      "300": "5 mnt",
+      "1200": "20 mnt",
+      "3600": "60 mnt"
+    },
+    "caption": {
+      "part": {
+        "distance": "{{value}} km",
+        "pace": "pace {{value}}/km",
+        "speed": "{{value}} km/j",
+        "hr": "detak rata-rata {{avg}} bpm (maks {{max}})",
+        "hrAvg": "detak rata-rata {{avg}} bpm",
+        "elev": "naik {{value}} m",
+        "cadence": "kadensi {{value}} spm",
+        "power": "daya {{value}} W",
+        "kcal": "{{value}} kcal",
+        "volume": "volume {{value}} kg",
+        "sets_other": "{{count}} set",
+        "reps_other": "{{count}} repetisi",
+        "exercises_other": "{{count}} gerakan",
+        "prs_other": "{{count}} PR baru",
+        "rpe": "RPE rata-rata {{value}}"
+      },
+      "device": "Direkam dengan {{device}}.",
+      "context": {
+        "distance_other": "4 minggu terakhir: {{distance}} km dalam {{count}} sesi.",
+        "sessions_other": "4 minggu terakhir: {{count}} sesi.",
+        "volume_other": "4 minggu terakhir: volume {{volume}} kg dalam {{count}} sesi."
+      },
+      "swipe_other": "Data lengkapnya ada di {{count}} gambar, geser ya.",
+      "question": {
+        "runPace": "Minta saran: pace-ku segini, gimana?",
+        "runPlan": "Minta saran: rekomendasi latihan berikutnya buat naikin pace?",
+        "runHr": "Minta saran: detak jantung segini wajar nggak buat pace ini?",
+        "ridePower": "Minta saran: NP dan IF segini sudah pas belum?",
+        "rideSpeed": "Minta saran: kecepatan segini gimana, ada tips?",
+        "ridePlan": "Minta saran: rekomendasi latihan sepeda berikutnya?",
+        "liftProgress": "Minta saran: progres angkatanku segini, gimana?",
+        "liftPlan": "Minta saran: rekomendasi program latihan lanjutan?",
+        "generalPlan": "Minta saran: rekomendasi latihan berikutnya?"
+      }
+    }
+  }
+}

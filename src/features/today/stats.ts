@@ -142,39 +142,89 @@ export interface SleepStageSummary {
 
 const SLEEP_STAGES: readonly SleepStageSummary['stage'][] = ['light', 'deep', 'rem', 'awake'];
 
+/** A sleep session of the same wake day as the main sleep (a nap, however long). */
+export interface SleepNap {
+  start: number;
+  end: number;
+  /** Seconds asleep in it, awake excluded. */
+  seconds: number;
+}
+
 export interface SleepSummary {
   start: number;
   end: number;
-  /** Sum of segment durations (gaps between segments excluded). */
+  /** Sum of segment durations of the main sleep (gaps between segments excluded). */
   totalSeconds: number;
   byType: SleepTypeSummary[];
   /** Segments with a decoded stage, in light, deep, rem, awake order; empty when none carry one. */
   byStage: SleepStageSummary[];
+  /** Everything asleep on the main sleep's wake day, main sleep plus {@link naps}, awake excluded and overlaps counted once. */
+  dayAsleepSeconds: number;
+  /** The day's other sleep sessions, oldest first. */
+  naps: SleepNap[];
+}
+
+/** Seconds asleep (awake excluded) in `segments`; time covered by more than one segment counts once, the earlier-starting segment keeping it. */
+export function asleepUnionSeconds(segments: readonly SleepSegment[]): number {
+  const sorted = [...segments].sort((a, b) => a.start - b.start || a.end - b.end);
+  let cursor = -Infinity;
+  let total = 0;
+  for (const seg of sorted) {
+    const start = Math.max(seg.start, cursor);
+    if (start >= seg.end) continue;
+    if (seg.stage !== 'awake') total += seg.end - start;
+    cursor = seg.end;
+  }
+  return total;
+}
+
+/** Splits cleaned segments (sorted by start) into sessions: a gap over {@link SESSION_GAP_SEC} or a `breakBefore` starts a new one. */
+function splitSessions(sorted: readonly SleepSpan[]): SleepSpan[][] {
+  const sessions: SleepSpan[][] = [];
+  let reach = -Infinity;
+  for (const seg of sorted) {
+    const current = sessions[sessions.length - 1];
+    if (current && !seg.breakBefore && seg.start - reach <= SESSION_GAP_SEC) {
+      current.push(seg);
+      reach = Math.max(reach, seg.end);
+    } else {
+      sessions.push([seg]);
+      reach = seg.end;
+    }
+  }
+  return sessions;
 }
 
 /**
- * Summarises the most recent sleep session: the latest segment plus earlier segments chained to it
- * with gaps up to {@link SESSION_GAP_SEC}. Expects `segments` oldest-first.
+ * Summarises the sleep of the most recent wake day: every session that ends on the same local day as the latest one
+ * (the day a main sleep is filed under, see `buildNights`). The longest of them is the main sleep that the stages,
+ * range and types describe; the others are naps. `dayAsleepSeconds` is the day's total, main sleep and naps together.
+ * Expects `segments` oldest-first.
  */
 export function lastSleepSession(segments: readonly SleepSpan[]): SleepSummary | null {
-  const sorted = withoutBlips(withoutStrayUnstaged(segments));
-  if (sorted.length === 0) return null;
-  let first = sorted.length - 1;
-  let earliestStart = sorted[first].start;
-  while (first > 0 && !sorted[first].breakBefore && earliestStart - sorted[first - 1].end <= SESSION_GAP_SEC) {
-    first--;
-    earliestStart = Math.min(earliestStart, sorted[first].start);
-  }
-  const session = sorted.slice(first);
+  const sessions = splitSessions(withoutBlips(withoutStrayUnstaged(segments)));
+  if (sessions.length === 0) return null;
+  const endOf = (session: readonly SleepSpan[]) => Math.max(...session.map((s) => s.end));
+  const day = startOfLocalDay(endOf(sessions[sessions.length - 1]));
+  const ofDay = sessions.filter((session) => startOfLocalDay(endOf(session)) === day);
+  const asleep = ofDay.map(asleepUnionSeconds);
+  let mainIndex = 0;
+  asleep.forEach((seconds, i) => {
+    if (seconds >= asleep[mainIndex]) mainIndex = i;
+  });
+  const session = ofDay[mainIndex];
+
   const byType = new Map<number, SleepTypeSummary>();
   const byStage = Object.fromEntries(
     SLEEP_STAGES.map((stage) => [stage, { stage, count: 0, seconds: 0 }]),
   ) as Record<SleepStageSummary['stage'], SleepStageSummary>;
   let totalSeconds = 0;
+  let start = Infinity;
   let end = 0;
   for (const seg of session) {
     const seconds = Math.max(0, seg.end - seg.start);
     totalSeconds += seconds;
+    start = Math.min(start, seg.start);
     end = Math.max(end, seg.end);
     const entry = byType.get(seg.type) ?? { type: seg.type, count: 0, seconds: 0 };
     entry.count += 1;
@@ -186,10 +236,15 @@ export function lastSleepSession(segments: readonly SleepSpan[]): SleepSummary |
     }
   }
   return {
-    start: earliestStart,
+    start,
     end,
     totalSeconds,
     byType: [...byType.values()].sort((a, b) => a.type - b.type),
     byStage: SLEEP_STAGES.map((stage) => byStage[stage]).filter((entry) => entry.count > 0),
+    dayAsleepSeconds: asleepUnionSeconds(ofDay.flat()),
+    naps: ofDay
+      .map((other, i) => ({ other, i }))
+      .filter(({ i }) => i !== mainIndex)
+      .map(({ other, i }) => ({ start: Math.min(...other.map((s) => s.start)), end: endOf(other), seconds: asleep[i] })),
   };
 }

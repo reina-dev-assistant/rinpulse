@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/Button';
 import { KeyValue } from '@/components/KeyValue';
 import { Section } from '@/components/Screen';
@@ -22,7 +23,7 @@ export function AppleHealthImportSection() {
 
   return (
     <>
-      <Section title={t('appleImport.title')} icon="heart" tint="heart">
+      <Section title={t('appleImport.title')} leading={<BrandMark brand="apple-health" size={32} />}>
         <AppText variant="caption" muted>
           {t('appleImport.intro')}
         </AppText>

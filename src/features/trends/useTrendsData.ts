@@ -11,6 +11,7 @@ import {
 } from '@/db/queries';
 import { errorMessage } from '@/format';
 import { startOfLocalDay } from '@/features/today/stats';
+import { withRideLoad } from '@/features/cycling/load';
 import { strainFromLoads, zoneThresholds, type DayStrain } from '@/features/today/strain';
 import { addDays, dayBounds, dayStarts, type TrendRange } from '@/features/trends/series';
 import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
@@ -57,8 +58,9 @@ export function useTrendsData(range: TrendRange, dataVersion: number): TrendsSta
         // A night that ends on the first day started the evening before.
         listSleepSince(db, days[0] - 12 * 3600),
       ]).then(
-        ([loads, resting, hrv, sleep]) => {
-          if (!cancelled) setState({ data: { range, days, maxHr, strain: strainFromLoads(loads), resting, hrv, sleep }, error: null });
+        async ([loads, resting, hrv, sleep]) => {
+          const strain = await withRideLoad(db, strainFromLoads(loads), Math.floor(Date.now() / 1000));
+          if (!cancelled) setState({ data: { range, days, maxHr, strain, resting, hrv, sleep }, error: null });
         },
         (e: unknown) => {
           if (!cancelled) setState({ data: null, error: errorMessage(e) });

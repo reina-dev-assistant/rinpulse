@@ -14,6 +14,7 @@ export default function WatchLayout() {
       <Stack.Screen name="faces" options={{ title: t('screens.faces') }} />
       <Stack.Screen name="face-edit" options={{ title: t('screens.faceEdit') }} />
       <Stack.Screen name="photos" options={{ title: t('screens.photo') }} />
+      <Stack.Screen name="sensors" options={{ title: t('screens.sensors') }} />
     </Stack>
   );
 }

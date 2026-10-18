@@ -1,0 +1,15 @@
+{
+  "title": "Strength cloud",
+  "kcal": {
+    "name": "Strength: {{name}}",
+    "nameEmpty": "Strength training"
+  },
+  "status": {
+    "synced": "Your strength history is saved to your JoyoRogo cloud.",
+    "localOnly": "Strength history stays on this phone. Pro keeps it in the cloud.",
+    "offline": "Offline. Changes wait for a connection to upload.",
+    "notSignedIn": "Sign in to JoyoRogo to keep your strength history in the cloud.",
+    "pending_one": "{{count}} change waiting to upload.",
+    "pending_other": "{{count}} changes waiting to upload."
+  }
+}

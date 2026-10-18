@@ -98,7 +98,8 @@ const SECTIONS = [
   { key: "izin", id: "6. Izin yang diminta", en: "6. Permissions" },
   { key: "fitur", id: "7. Sinkron, Strava, impor riwayat", en: "7. Sync, Strava, history import" },
   { key: "social", id: "8. Social dan berbagi", en: "8. Social and sharing" },
-  { key: "faq", id: "9. Jika ada masalah", en: "9. Troubleshooting" },
+  { key: "coach", id: "9. Coach (Pro)", en: "9. Coach (Pro)" },
+  { key: "faq", id: "10. Jika ada masalah", en: "10. Troubleshooting" },
 ] as const;
 
 type FaqItem = { q: Pair<string>; a: Pair };
@@ -397,7 +398,7 @@ function Pairing({ lang }: { lang: Lang }) {
                   izinkan. Kalau sudah terlanjur ditolak, ketuk <B>Open app settings</B>.
                 </>,
                 <>
-                  Di <B>Available watches</B> pilih jammu. Belum ada? Ketuk <B>Scan nearby devices</B>, atau pasangkan dulu di
+                  Di <B>Available watches</B> pilih jam-mu. Belum ada? Ketuk <B>Scan nearby devices</B>, atau pasangkan dulu di
                   Pengaturan Android → Bluetooth.
                 </>,
                 <>
@@ -906,6 +907,56 @@ function Faq({ lang }: { lang: Lang }) {
   );
 }
 
+function CoachGuide({ lang }: { lang: Lang }) {
+  const id = lang === "id";
+  return (
+    <>
+      <p>
+        {id
+          ? "Coach adalah fitur JoyoRogo Pro. Buka dari kartu Saran hari ini di layar Hari Ini, atau lewat Coach. Kamu perlu masuk dengan akun JoyoRogo."
+          : "Coach is a JoyoRogo Pro feature. Open it from the Today's suggestion card on the Today screen. You need to be signed in with your JoyoRogo account."}
+      </p>
+      <ul className="list-disc space-y-1 pl-5">
+        <li>
+          {id
+            ? "Saran harian: dari kesiapan, HRV, tidur, beban latihan, dan beban kemarin. Aturannya terbuka dan tanpa AI; alasannya ditampilkan di kartu."
+            : "Daily suggestion: from readiness, HRV, sleep, training load and yesterday's strain. The rules are open and there is no AI; the reasons show on the card."}
+        </li>
+        <li>
+          {id
+            ? "Rencana: lari 5K, 10K, half marathon, lari rutin 3x seminggu, atau kekuatan full body 2 atau 3 kali seminggu di rumah atau gym. Pilih tujuan, level, dan hari latihan; tiap minggu volumenya disesuaikan dengan sesi yang selesai dan pemulihanmu."
+            : "Plans: 5K, 10K, half marathon, regular running 3 times a week, or full-body strength 2 or 3 times a week at home or in the gym. Pick a goal, a level and your days; each week the volume is adjusted to the sessions you finished and your recovery."}
+        </li>
+        <li>
+          {id
+            ? "Sesi lari dicocokkan otomatis dengan latihan dari jam, dan detail latihan membandingkannya dengan rencana (durasi, zona detak jantung, pace, jarak)."
+            : "Running sessions are matched automatically to the workouts from your watch, and the workout detail compares them with the plan (duration, heart-rate zone, pace, distance)."}
+        </li>
+        <li>
+          {id
+            ? "Sesi kekuatan dimulai di pencatat latihan. Jam Huawei tidak melaporkan jumlah ulangan dari latihan kekuatan, jadi ulangan dan beban dicatat manual."
+            : "Strength sessions start in the workout logger. A Huawei watch does not report repetitions from strength workouts, so reps and loads are logged by hand."}
+        </li>
+        <li>
+          {id
+            ? "Perpustakaan latihan: sekitar 100 gerakan dengan langkah, otot, dan kesalahan umum. Gambar dari wger.de (CC BY-SA)."
+            : "Exercise library: about 100 exercises with steps, muscles and common mistakes. Images from wger.de (CC BY-SA)."}
+        </li>
+        <li>
+          {id
+            ? "Tanya coach: chat tentang latihan, pemulihan, dan rencanamu, maksimal 20 pesan per hari. Pesan dan ringkasan datamu dikirim ke AI JoyoRogo untuk dijawab dan tidak disimpan di server; obrolan hanya tersimpan di ponselmu."
+            : "Ask coach: a chat about your training, recovery and plan, up to 20 messages a day. Your message and a summary of your data go to JoyoRogo's AI to be answered and are not stored on the server; the chat is kept only on your phone."}
+        </li>
+      </ul>
+      <p>
+        {id
+          ? "Coach bukan saran medis. Kalau ada nyeri, pusing, atau cedera, berhenti dan temui dokter. Dalam mode Hamil jawabannya lebih berhati-hati dan selalu menyarankan bertanya ke dokter atau bidan."
+          : "Coach is not medical advice. If you feel pain, dizziness or an injury, stop and see a doctor. In Hamil mode the answers are more careful and always point to a doctor or midwife."}
+      </p>
+    </>
+  );
+}
+
 function Guide({ lang }: { lang: Lang }) {
   const prefix = lang === "id" ? "" : "en-";
   const body: Record<(typeof SECTIONS)[number]["key"], React.ReactNode> = {
@@ -917,6 +968,7 @@ function Guide({ lang }: { lang: Lang }) {
     izin: <Permissions lang={lang} />,
     fitur: <Features lang={lang} />,
     social: <SocialGuide lang={lang} />,
+    coach: <CoachGuide lang={lang} />,
     faq: null,
   };
   return (

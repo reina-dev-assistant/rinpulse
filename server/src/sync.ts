@@ -22,12 +22,12 @@ interface TableSpec {
 const STEP_SAMPLES: TableSpec = {
   table: "step_samples",
   keys: ["timestamp"],
-  values: ["steps", "calories", "distance", "heart_rate", "spo2", "resting_heart_rate"],
+  values: ["steps", "calories", "distance", "heart_rate", "spo2", "resting_heart_rate", "device"],
 };
 const SLEEP_SEGMENTS: TableSpec = {
   table: "sleep_segments",
   keys: ["start", "type"],
-  values: ["end", "stage"],
+  values: ["end", "stage", "device"],
 };
 const WORKOUTS: TableSpec = {
   table: "workouts",
@@ -46,6 +46,7 @@ const WORKOUTS: TableSpec = {
     "summary_json",
     "complete",
     "point_count",
+    "device",
   ],
 };
 const DEVICES: TableSpec = {
@@ -70,8 +71,8 @@ ON CONFLICT (user_id, ${spec.keys.map(q).join(", ")}) DO UPDATE SET ${assign}, r
 WHERE (${current}) IS NOT (${incoming})`;
 }
 
-const stepRow = (s: StepSampleInput) => [s.timestamp, s.steps, s.calories, s.distance, s.heartRate, s.spo2, s.restingHeartRate];
-const sleepRow = (s: SleepSegmentInput) => [s.start, s.type, s.end, s.stage];
+const stepRow = (s: StepSampleInput) => [s.timestamp, s.steps, s.calories, s.distance, s.heartRate, s.spo2, s.restingHeartRate, s.device];
+const sleepRow = (s: SleepSegmentInput) => [s.start, s.type, s.end, s.stage, s.device];
 const workoutRow = (w: WorkoutInput) => [
   w.start,
   w.workoutNumber,
@@ -87,6 +88,7 @@ const workoutRow = (w: WorkoutInput) => [
   w.summaryJson,
   w.complete ? 1 : 0,
   w.points.length,
+  w.device,
 ];
 const deviceRow = (d: DeviceInput) => [d.address, d.name, d.productModel, d.softwareVersion, d.lastSync];
 
@@ -189,6 +191,7 @@ interface StepSampleRow {
   heart_rate: number | null;
   spo2: number | null;
   resting_heart_rate: number | null;
+  device: string | null;
   rev: number;
 }
 interface SleepSegmentRow {
@@ -196,6 +199,7 @@ interface SleepSegmentRow {
   end: number;
   type: number;
   stage: string | null;
+  device: string | null;
   rev: number;
 }
 interface WorkoutRow {
@@ -212,6 +216,7 @@ interface WorkoutRow {
   steps: number;
   summary_json: string;
   complete: number;
+  device: string | null;
   rev: number;
 }
 interface WorkoutPointRow {
@@ -255,11 +260,11 @@ export async function pullSync(db: D1Database, userId: string, since: number, li
       .prepare(`SELECT ${columns}, rev FROM ${table} WHERE user_id = ?1 AND rev > ?2 ORDER BY rev LIMIT ?3`)
       .bind(userId, since, n);
   const [steps, sleep, workouts, devices] = await db.batch([
-    page("step_samples", 'timestamp, steps, calories, distance, heart_rate, spo2, resting_heart_rate', limit),
-    page("sleep_segments", 'start, "end", type, stage', limit),
+    page("step_samples", 'timestamp, steps, calories, distance, heart_rate, spo2, resting_heart_rate, device', limit),
+    page("sleep_segments", 'start, "end", type, stage, device', limit),
     page(
       "workouts",
-      'start, workout_number, "end", sport_type, sport_name, duration, distance, calories, avg_hr, max_hr, steps, summary_json, complete',
+      'start, workout_number, "end", sport_type, sport_name, duration, distance, calories, avg_hr, max_hr, steps, summary_json, complete, device',
       workoutLimit,
     ),
     page("device", "address, name, product_model, software_version, last_sync", limit),
@@ -319,11 +324,12 @@ export async function pullSync(db: D1Database, userId: string, since: number, li
           heartRate: t.row.heart_rate,
           spo2: t.row.spo2,
           restingHeartRate: t.row.resting_heart_rate,
+          device: t.row.device,
           rev: t.rev,
         });
         break;
       case "sleep":
-        result.sleepSegments.push({ start: t.row.start, end: t.row.end, type: t.row.type, stage: t.row.stage, rev: t.rev });
+        result.sleepSegments.push({ start: t.row.start, end: t.row.end, type: t.row.type, stage: t.row.stage, device: t.row.device, rev: t.rev });
         break;
       case "workout":
         result.workouts.push({
@@ -340,6 +346,7 @@ export async function pullSync(db: D1Database, userId: string, since: number, li
           steps: t.row.steps,
           summaryJson: t.row.summary_json,
           complete: t.row.complete !== 0,
+          device: t.row.device,
           points: (pointsByWorkout.get(t.row.start) ?? []).map((p) => ({
             ts: p.ts,
             lat: p.lat,
@@ -363,4 +370,67 @@ export async function pullSync(db: D1Database, userId: string, since: number, li
     }
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Windowed restore
+
+/** Sleep rows are keyed by `start`, filtered by `end`: a night is assumed to end less than a day after it starts. */
+const SLEEP_MAX_SPAN_S = 86_400;
+
+export interface RestorePage {
+  rows: unknown[];
+  /** Pass as `after` for the next page; null on an empty page. */
+  cursor: string | number | null;
+  hasMore: boolean;
+}
+
+/** Steps with `timestamp >= from`, by timestamp, after the keyset cursor `after` (a timestamp). One primary-key range scan. */
+export async function restoreSteps(db: D1Database, userId: string, from: number, after: number | null, limit: number): Promise<RestorePage> {
+  const result = await db
+    .prepare(
+      `SELECT timestamp, steps, calories, distance, heart_rate, spo2, resting_heart_rate, device FROM step_samples
+       WHERE user_id = ?1 AND timestamp >= ?2 AND timestamp > ?3 ORDER BY timestamp LIMIT ?4`,
+    )
+    .bind(userId, from, after ?? -1, limit + 1)
+    .all<Omit<StepSampleRow, "rev">>();
+  const page = result.results.slice(0, limit);
+  return {
+    rows: page.map((r) => ({
+      timestamp: r.timestamp,
+      steps: r.steps,
+      calories: r.calories,
+      distance: r.distance,
+      heartRate: r.heart_rate,
+      spo2: r.spo2,
+      restingHeartRate: r.resting_heart_rate,
+      device: r.device,
+    })),
+    cursor: page[page.length - 1]?.timestamp ?? null,
+    hasMore: result.results.length > limit,
+  };
+}
+
+/** Sleep with `end >= from`, by (start, type), after the cursor `start:type`. One primary-key range scan on `start`. */
+export async function restoreSleep(
+  db: D1Database,
+  userId: string,
+  from: number,
+  after: { start: number; type: number } | null,
+  limit: number,
+): Promise<RestorePage> {
+  const result = await db
+    .prepare(
+      `SELECT start, "end", type, stage, device FROM sleep_segments
+       WHERE user_id = ?1 AND start >= ?2 AND "end" >= ?3 AND (start, type) > (?4, ?5) ORDER BY start, type LIMIT ?6`,
+    )
+    .bind(userId, Math.max(0, from - SLEEP_MAX_SPAN_S), from, after?.start ?? -1, after?.type ?? -1, limit + 1)
+    .all<Omit<SleepSegmentRow, "rev">>();
+  const page = result.results.slice(0, limit);
+  const last = page[page.length - 1];
+  return {
+    rows: page.map((r) => ({ start: r.start, end: r.end, type: r.type, stage: r.stage, device: r.device })),
+    cursor: last ? `${last.start}:${last.type}` : null,
+    hasMore: result.results.length > limit,
+  };
 }

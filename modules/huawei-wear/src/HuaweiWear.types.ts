@@ -170,6 +170,8 @@ export interface NotificationApp {
   packageName: string;
   label: string;
   enabled: boolean;
+  /** file:// URI of a cached 96 px PNG of the app icon; absent when it could not be rendered. */
+  iconUri?: string | null;
 }
 
 export type UserSex = 'male' | 'female' | 'unknown';

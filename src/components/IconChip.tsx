@@ -10,8 +10,8 @@ const SIZES = { sm: 32, md: 40, lg: 48 } as const;
 
 interface IconChipProps {
   icon: IconName;
-  /** A data color, or neutral for chrome that is not a metric. */
-  tint?: Tint | 'neutral';
+  /** A data color, `neutral` for chrome that is not a metric, or `destructive` for an action that deletes or signs out. */
+  tint?: Tint | 'neutral' | 'destructive';
   size?: keyof typeof SIZES;
   /** Fill behind the glyph; defaults to the tint's soft color. Pass `card` on tinted tiles. */
   background?: string;
@@ -24,7 +24,9 @@ export function IconChip({ icon, tint = 'neutral', size = 'md', background }: Ic
   const scheme =
     tint === 'neutral'
       ? { soft: colors.muted, glyph: colors.foreground }
-      : { soft: tintColors(colors, tint).soft, glyph: tintColors(colors, tint).text };
+      : tint === 'destructive'
+        ? { soft: colors.destructiveSoft, glyph: colors.destructive }
+        : { soft: tintColors(colors, tint).soft, glyph: tintColors(colors, tint).text };
   return (
     <View
       accessible={false}

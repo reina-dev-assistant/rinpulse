@@ -108,6 +108,8 @@ interface SectionProps {
   title: string;
   icon?: IconName;
   tint?: Tint | 'neutral';
+  /** Replaces the icon chip, e.g. a `BrandMark`. */
+  leading?: ReactNode;
   /** Right of the title, e.g. a count. */
   trailing?: ReactNode;
   /** Makes the whole card a button that opens more detail; the header gets a chevron. */
@@ -116,12 +118,12 @@ interface SectionProps {
 }
 
 /** A titled card. The title row carries an icon chip so every section is findable at a glance. */
-export function Section({ title, icon, tint = 'neutral', trailing, onPress, children }: SectionProps) {
+export function Section({ title, icon, tint = 'neutral', leading, trailing, onPress, children }: SectionProps) {
   const colors = useColors();
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader} accessibilityRole="header">
-        {icon ? <IconChip icon={icon} tint={tint} size="sm" /> : null}
+        {leading ?? (icon ? <IconChip icon={icon} tint={tint} size="sm" /> : null)}
         <AppText variant="heading" style={styles.sectionTitle}>
           {title}
         </AppText>

@@ -1,0 +1,40 @@
+{
+  "product": "JoyoFit",
+  "updated": "2026-10-18",
+  "groups": [
+    {
+      "id": "doing",
+      "title": "Sedang dikerjakan",
+      "items": [
+        "Sambungkan lebih dari satu jam, ganti jam aktif dengan cepat",
+        "Sensor Bluetooth: chest strap detak jantung, sensor kadens/kecepatan sepeda, power meter, foot pod",
+        "Rekam latihan langsung dari HP (GPS + sensor), tetap jalan saat layar terkunci",
+        "Data bersepeda kelas pro: Normalized Power, TSS, FTP, kurva power, deteksi tanjakan",
+        "Kartu dan stiker share yang baru (banyak gaya, stiker transparan untuk Story)",
+        "Bagikan latihan sebagai gambar seperti Strava",
+        "Riwayat dari Apple Health di iPhone",
+        "Unduh data dari Huawei Health"
+      ]
+    },
+    {
+      "id": "next",
+      "title": "Berikutnya",
+      "items": [
+        "Sticker Studio: bikin stiker share sendiri",
+        "Dukungan jam Huawei lain: Watch Fit 3, Watch Fit 5 / 5 Pro, GT series, Band",
+        "Impor riwayat Huawei Health dari file ekspor",
+        "Sambung jam di iPhone tanpa bolak-balik ke pengaturan Bluetooth",
+        "Tarik aktivitas dari Garmin Connect / Wahoo / Strava"
+      ]
+    },
+    {
+      "id": "later",
+      "title": "Nanti",
+      "items": [
+        "Peta di jam (basemap di bawah rute)",
+        "Dukungan Huawei Watch Fit 1 / Fit SE",
+        "Fitur gym di jam: timer istirahat dan log set dari jam"
+      ]
+    }
+  ]
+}

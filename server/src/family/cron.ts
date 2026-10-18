@@ -1,6 +1,7 @@
 import type { AppEnv } from "../env";
 import { matchLocale, serverT } from "../i18n";
 import { deliver, effectiveRules, evaluateLink } from "./alerts";
+import { purgeLive } from "../live";
 import { fetchRogoUsers } from "./joyorogo";
 import { frozenLinkIds } from "./plan";
 import { loadRules, linksOf, toLink, historyDays } from "./store";
@@ -87,8 +88,10 @@ export async function sendDigests(env: AppEnv, now: number): Promise<number> {
   return sent;
 }
 
-/** Drops history past what a plan keeps: 90 days when any live watcher is Pro, else 30; old log rows and invites too. */
+/** Drops history past what a plan keeps: 90 days when any live watcher is Pro, else 30; old log rows and invites too; live tracking sessions 24 h after their last point or end. */
 export async function purge(env: AppEnv, now: number): Promise<void> {
+  // First: it needs no JoyoRogo answer, so an outage below cannot keep location data past its 24 h.
+  await purgeLive(env.DB, now);
   const dayStr = (daysAgo: number) => new Date(now - daysAgo * DAY_MS).toISOString().slice(0, 10);
   await env.DB.prepare("DELETE FROM family_day WHERE date < ?1").bind(dayStr(historyDays(true))).run();
   const { results } = await env.DB.prepare("SELECT monitored_id, watcher_id FROM family_link WHERE status = 'active'").all<{ monitored_id: string; watcher_id: string }>();

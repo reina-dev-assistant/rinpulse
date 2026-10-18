@@ -40,7 +40,7 @@ final class SyncStoreTests: XCTestCase {
         let (store, url) = store()
         let user = try store.read { db in try db.userVersion }
         XCTAssertEqual(user, try SyncStore.sharedMigrations().count)
-        XCTAssertEqual(user, 13)
+        XCTAssertEqual(user, 14)
         let tables: [String] = try store.read { db in
             try db.query("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name") { $0.text(0)! }
         }

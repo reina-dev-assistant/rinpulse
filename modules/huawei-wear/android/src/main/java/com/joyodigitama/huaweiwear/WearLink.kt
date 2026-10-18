@@ -381,8 +381,10 @@ internal class WearLink(
    * `disconnected` (the transport released), so an immediate retry starts clean. [allowFirstBind] lets this attempt start a
    * first bind with the watch (which replaces its current phone pairing); without it the connect stops with
    * ERR_BIND_CONFIRMATION before anything on the watch changes. Only the interactive connect the user confirmed passes true.
+   * [remember] false is a visit to a watch that is not the one background mode follows ([BackgroundController]): it neither
+   * becomes the remembered watch nor touches its `device` row.
    */
-  suspend fun connect(rawAddress: String, allowFirstBind: Boolean = false): Map<String, Any?> {
+  suspend fun connect(rawAddress: String, allowFirstBind: Boolean = false, remember: Boolean = true): Map<String, Any?> {
     stopScan()
     val address = rawAddress.trim().uppercase(Locale.ROOT)
     val adapter = requireAdapter()
@@ -494,7 +496,7 @@ internal class WearLink(
         connection.handle = LinkHandle(address, connection.session, init.notificationState, connection.operationLock)
         state = LinkState.CONNECTED
       }
-      rememberWatch(address, name, info)
+      if (remember) rememberWatch(address, name, info)
       events.state(LinkState.CONNECTED, null)
       init.batteryLevel?.let { events.battery(it) }
       connection.ready.complete(info)
@@ -565,8 +567,18 @@ internal class WearLink(
 
   // Disconnect / teardown
 
+  /** True while a sync, battery read or watch face operation holds the live connection's operation lock. */
+  fun operationRunning(): Boolean = synchronized(lock) { current?.operationLock?.isLocked == true }
+
   fun disconnect() {
     val connection = synchronized(lock) { current } ?: return
+    events.log(LogDirection.INFO, null, null, null, "Disconnecting from ${connection.address}")
+    teardown(connection, WearException(ErrorCodes.DISCONNECTED, "Disconnected"), null)
+  }
+
+  /** [disconnect], but only when the link (or the attempt in progress) is with [address]: a visit never tears down someone else's link. */
+  fun disconnectIfConnectedTo(address: String) {
+    val connection = synchronized(lock) { current }?.takeIf { it.address == address } ?: return
     events.log(LogDirection.INFO, null, null, null, "Disconnecting from ${connection.address}")
     teardown(connection, WearException(ErrorCodes.DISCONNECTED, "Disconnected"), null)
   }
@@ -669,6 +681,7 @@ internal class WearLink(
       }
       events.state(LinkState.SYNCING, null)
       try {
+        if (!storage { syncStore.tracksHealth(connection.address) }) return@withLock syncWithoutHealth(connection)
         val last = if (fullHistory) null else storage { syncStore.lastSync(connection.address) }
         val nowSec = System.currentTimeMillis() / 1000
         val slices = syncSlices(syncWindowStart(last), nowSec)
@@ -744,6 +757,18 @@ internal class WearLink(
     return summary
   }
 
+  /**
+   * The sync of a watch whose `tracks_health` is off (a family member's band, a guest watch): no step, sleep, workout,
+   * night HRV or health metric row is stored and no extension runs, but the sync still counts (`device.last_sync`) and
+   * completes with zero totals; the caller refreshes the battery as for any sync.
+   */
+  private suspend fun syncWithoutHealth(connection: Connection): SyncSummary {
+    val nowSec = System.currentTimeMillis() / 1000
+    storage { syncStore.touchLastSync(connection.address, nowSec) }
+    events.log(LogDirection.INFO, null, null, null, "History: ${connection.address} does not track health, no rows stored")
+    return SyncSummary(from = nowSec, to = nowSec, samples = 0, sleep = 0, totalSteps = 0, totalCalories = 0, totalDistance = 0)
+  }
+
   /** Database access off the caller's thread; a failed read or write surfaces as ERR_STORAGE. */
   private suspend fun <T> storage(block: () -> T): T =
     try {
@@ -757,7 +782,7 @@ internal class WearLink(
    * does not fail the sync: the steps, sleep and totals are already committed.
    */
   private suspend fun syncWorkouts(connection: Connection, fullHistory: Boolean): Int {
-    val workouts = WorkoutStore(syncStore)
+    val workouts = WorkoutStore(syncStore, connection.address)
     val sync = WorkoutSync(connection.session, events)
     try {
       val now = (System.currentTimeMillis() / 1000).toInt()
@@ -788,7 +813,7 @@ internal class WearLink(
    */
   private suspend fun syncNightHrv(connection: Connection, fullHistory: Boolean) {
     try {
-      NightHrvSync(connection.session, events, syncStore, settings).sync(System.currentTimeMillis() / 1000, fullHistory)
+      NightHrvSync(connection.session, events, syncStore, settings, connection.address).sync(System.currentTimeMillis() / 1000, fullHistory)
     } catch (e: CancellationException) {
       throw e
     } catch (e: WearException) {

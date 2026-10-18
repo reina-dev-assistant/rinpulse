@@ -5,7 +5,8 @@
     "alarms": "Alarm",
     "faces": "Tampilan jam",
     "faceEdit": "Atur tampilan",
-    "photo": "Tampilan foto"
+    "photo": "Tampilan foto",
+    "sensors": "Sensor"
   },
   "link": {
     "disconnected": "Terputus",
@@ -91,14 +92,15 @@
     },
     "bonded": {
       "forgetTitle": "Lupakan pairing?",
-      "forgetMessage": "Ini menghapus kunci autentikasi jam ini dari HP. Hubungan berikutnya jadi pairing pertama dan harus dikonfirmasi di jam. Pairing Bluetooth Android tidak berubah.",
+      "forgetMessage": "Ini menghapus kunci autentikasi jam ini dari HP dan jam dihapus dari daftar jam kamu. Data kesehatan yang sudah tersimpan tetap ada. Hubungan berikutnya jadi pairing pertama dan harus dikonfirmasi di jam. Pairing Bluetooth Android tidak berubah.",
       "forget": "Lupakan",
       "forgetPairing": "Lupakan pairing",
       "unnamed": "Perangkat tanpa nama",
       "systemConnected": "Sudah terhubung ke iPhone ini. Ketuk Hubungkan untuk memakainya di sini.",
       "notInReach": "Di luar jangkauan. Kalau jam ada di HP lain, putuskan dulu di sana.",
       "disconnect": "Putuskan",
-      "connect": "Hubungkan"
+      "connect": "Hubungkan",
+      "switchHere": "Ganti ke sini"
     },
     "list": {
       "title": "Jam yang tersedia",
@@ -146,8 +148,8 @@
     },
     "support": {
       "shareTitle": "Laporan dukungan JoyoFit",
-      "title": "Bantu dukung jammu",
-      "intro": "JoyoFit diuji di Huawei Watch Fit 4 Pro. Jam Huawei dan Honor lainnya masih eksperimental. Kalau ada yang tidak jalan, hubungkan sekali, lalu kirim laporan. Isinya jawaban jammu saat terakhir terhubung, tanpa alamat Bluetooth atau nomor seri.",
+      "title": "Bantu dukung jam-mu",
+      "intro": "JoyoFit diuji di Huawei Watch Fit 4 Pro. Jam Huawei dan Honor lainnya masih eksperimental. Kalau ada yang tidak jalan, hubungkan sekali, lalu kirim laporan. Isinya jawaban jam-mu saat terakhir terhubung, tanpa alamat Bluetooth atau nomor seri.",
       "copied": "Laporan lengkap ada di clipboard. Di GitHub, ceritakan apa yang jalan dan apa yang tidak, lalu tempel laporan ke kolom Log.",
       "github": "Lapor ke GitHub",
       "share": "Bagikan teks"
@@ -222,7 +224,7 @@
     "maxVersion": "Format tampilan terbaru {{version}}",
     "readAt": "Dibaca {{time}}",
     "installTitle": "Pasang tampilan jam",
-    "installAbout": "Buat tampilan jam di Huawei Theme Studio Pro dan ekspor sebagai file .hwt. Buat sesuai ukuran layar jammu. Tampilan untuk layar lain ditolak sebelum dikirim.\n\nBelum diketahui apakah jam menerima tampilan yang tidak ditandatangani Huawei. Kalau ditolak, kode status persis dari jam ditampilkan di sini dan di log.",
+    "installAbout": "Buat tampilan jam di Huawei Theme Studio Pro dan ekspor sebagai file .hwt. Buat sesuai ukuran layar jam-mu. Tampilan untuk layar lain ditolak sebelum dikirim.\n\nBelum diketahui apakah jam menerima tampilan yang tidak ditandatangani Huawei. Kalau ditolak, kode status persis dari jam ditampilkan di sini dan di log.",
     "installAboutSized": "Buat tampilan jam di Huawei Theme Studio Pro dan ekspor sebagai file .hwt. Layar jam ini {{width}} x {{height}} px. Tampilan untuk layar lain ditolak sebelum dikirim.\n\nBelum diketahui apakah jam menerima tampilan yang tidak ditandatangani Huawei. Kalau ditolak, kode status persis dari jam ditampilkan di sini dan di log.",
     "connect": "Hubungkan jam untuk mengelola tampilannya.",
     "install": "Pasang dari file",
@@ -230,9 +232,9 @@
     "waiting": "Menunggu jam menerima file...",
     "onWatch": "Di jam",
     "notConnected": "Jam belum terhubung",
-    "notConnectedHint": "Tampilan di jammu muncul di sini setelah terhubung.",
+    "notConnectedHint": "Tampilan di jam-mu muncul di sini setelah terhubung.",
     "notRead": "Tampilan belum dibaca",
-    "notReadHint": "Baca daftar dari jammu untuk melihat tampilannya.",
+    "notReadHint": "Baca daftar dari jam-mu untuk melihat tampilannya.",
     "read": "Baca dari jam",
     "none": "Tidak ada tampilan jam",
     "noneHint": "Jam tidak mencantumkan tampilan apa pun. Pasang satu dari file di atas.",
@@ -241,7 +243,58 @@
     "tagVideo": "video",
     "tagPhoto": "foto",
     "setActive": "Jadikan aktif",
-    "customize": "Atur"
+    "customize": "Atur",
+    "activeOnWrist": "Aktif di Pergelangan",
+    "onWatchTab": "Di jam",
+    "library": "Koleksi jam",
+    "storageTitle": "Penyimpanan Jam",
+    "storageEstimateTitle": "Estimasi Penyimpanan",
+    "storageTelemetry": "Telemetri Perangkat",
+    "storagePredicted": "Estimasi",
+    "storageRemaining": "Tersisa ~{{freeMb}} MB · ~{{slots}} slot",
+    "storageBreakdown": "{{custom}} kustom · {{factory}} bawaan",
+    "storageTelemetryFootnote": "Kapasitas penyimpanan dilaporkan langsung oleh perangkat jam.",
+    "storageEstimateFootnote": "Model Band tidak menyiarkan sisa penyimpanan lewat BLE. Metrik diperkirakan dari batas flash.",
+    "installRejected": "Pemasangan Ditolak",
+    "installRejectedHint": "Jam menolak \"{{name}}\". Memori jam mungkin penuh, atau file tidak sesuai dengan ukuran layar.",
+    "deleteFromStorage": "Hapus dari Penyimpanan",
+    "deleteFromStorageOnWatch": "Hapus \"{{title}}\" dari penyimpanan ponsel?\n\nTampilan ini sedang terpasang di jam dan akan tetap ada di jam sampai dihapus dari jam.",
+    "deleteFromStorageOnly": "Hapus permanen \"{{title}}\" dari penyimpanan ponsel? Untuk memasangnya lagi di masa depan, kamu perlu mengimpornya kembali.",
+    "deleteFromPhone": "Hapus dari Ponsel",
+    "personalLibrary": "Koleksi pribadi",
+    "personalLibraryHint": "Tampilan jam yang disimpan di ponselmu. Simpan favoritmu di sini dan pasang ke jam kapan saja.",
+    "updateApp": "Perbarui aplikasi untuk fitur ini",
+    "importHwt": "Impor file .hwt",
+    "noSaved": "Belum ada tampilan tersimpan",
+    "noSavedHint": "Impor file .hwt dari penyimpanan ponsel untuk mulai mengoleksi secara offline.",
+    "installed": "Terpasang",
+    "installedOnWatch": "Terpasang di Jam",
+    "wrongSize": "Ukuran salah",
+    "matchesScreen": "Cocok dengan layar",
+    "incompatible": "Tidak cocok",
+    "noPreview": "Tidak ada pratinjau",
+    "savedToMyWatch": "Disimpan ke Koleksi Jam",
+    "savedIncompatibleHint": "\"{{title}}\" telah disimpan ke koleksi jam-mu.\n\nCatatan: Tampilan jam ini ({{faceW}}×{{faceH}}) tidak cocok dengan resolusi layar jam-mu ({{watchW}}×{{watchH}}) dan tidak dapat dipasang ke jam ini.",
+    "savedInstallPrompt": "\"{{title}}\" telah disimpan ke koleksi jam-mu.\n\nApakah kamu ingin memasangnya ke jam sekarang?",
+    "installToWatchNow": "Pasang ke Jam Sekarang",
+    "keepInMyWatch": "Simpan di Koleksi Saja",
+    "invalidFileExt": "Ekstensi File Tidak Valid",
+    "zipWarning": "\"{{name}}\" adalah arsip .zip, bukan file .hwt.\n\nBanyak tampilan jam dibagikan di dalam file .zip. Silakan ekstrak file .zip lewat pengelola file ponsel dan impor file .hwt di dalamnya.",
+    "notHwtWarning": "\"{{name}}\" tidak berekstensi .hwt. Pilih file tampilan jam Huawei (.hwt) yang valid.",
+    "invalidPackage": "Paket Tampilan Jam Tidak Valid",
+    "invalidPackageHint": "Tidak dapat memproses \"{{name}}\":\n\n{{error}}",
+    "installToWatch": "Pasang ke Jam",
+    "installingToWatch": "Memasang ke Jam...",
+    "incompatibleResolution": "Tidak cocok ({{width}}×{{height}})",
+    "installAction": "Pasang",
+    "missingFile": "File tidak ada",
+    "noDescription": "Tidak ada deskripsi.",
+    "byAuthor": "oleh {{author}}",
+    "customImport": "Impor Kustom",
+    "customSize": "Ukuran kustom",
+    "unknownResolution": "Resolusi tidak diketahui",
+    "savedUnknownHint": "\"{{title}}\" telah disimpan ke koleksi My watch Anda.\n\nCatatan: Tampilan jam ini memiliki resolusi layar yang tidak diketahui dan tidak dapat dipasang ke jam ini ({{watchW}}×{{watchH}}).",
+    "onWatchCount_other": "{{count}} di jam"
   },
   "faceEdit": {
     "reported": "Jam melaporkan opsi baru untuk tampilan ini.",
@@ -296,8 +349,8 @@
     "none": "Belum ada foto",
     "noneHint": "Tampilan ini belum punya foto. Tambah dari galeri lalu potong sesuai layar jam.",
     "notRead": "Tampilan foto belum dibaca",
-    "notReadHint": "Baca tampilan dari jammu untuk melihat fotonya.",
-    "notConnectedHint": "Tampilan foto jammu muncul di sini setelah terhubung.",
+    "notReadHint": "Baca tampilan dari jam-mu untuk melihat fotonya.",
+    "notConnectedHint": "Tampilan foto jam-mu muncul di sini setelah terhubung.",
     "crop": {
       "title": "Potong foto",
       "hint": "Geser untuk memindah, cubit untuk memperbesar. Bingkai adalah yang tampil di jam, {{width}} x {{height}} px.",
@@ -430,5 +483,202 @@
     "file": "File",
     "fileValue": "{{name}}, {{bytes}} byte",
     "statusHint": "Huawei Health menganggap status unggah 1 sebagai diterima. Periksa programnya di jam."
+  },
+  "multi": {
+    "title": "Jam kamu",
+    "primaryHint": "Jam utama memegang data seharian: langkah, detak jantung, SpO2, dan tidur. Jam lain mengisi menit yang kosong. Latihan dari semua jam disimpan, dan latihan yang sama dari dua jam hanya dihitung sekali.",
+    "add": "Tambah jam lain",
+    "addHint": "Pasangkan jam kedua di pengaturan Bluetooth, lalu ketuk Hubungkan di daftar di bawah. Jam yang sudah ada tetap tersimpan dengan kuncinya. Hanya satu jam yang terhubung dalam satu waktu.",
+    "badge": {
+      "primary": "Utama",
+      "active": "Aktif"
+    },
+    "lastSync": "Sinkron terakhir {{time}}",
+    "neverSynced": "Belum pernah sinkron",
+    "notTracked": "Data kesehatannya tidak disimpan",
+    "switchTo": "Ganti ke jam ini",
+    "manage": "Atur jam ini",
+    "makePrimary": "Jadikan utama",
+    "rename": {
+      "title": "Nama jam",
+      "placeholder": "Contoh: Jam lari",
+      "save": "Simpan",
+      "action": "Ubah nama",
+      "reset": "Pakai nama dari jam"
+    },
+    "tracksHealth": {
+      "label": "Simpan data kesehatan jam ini",
+      "hint": "Matikan untuk jam orang lain, misalnya band keluarga: langkah, tidur, detak jantung, dan latihannya tidak disimpan di HP ini. Notifikasi, wajah jam, dan alarm tetap jalan."
+    },
+    "background": {
+      "label": "Sinkron di latar belakang",
+      "hint": "Android saja. Di sela sinkronisasi jam aktif, jam ini disambungkan sebentar lalu disinkronkan. Jam aktif terputus beberapa detik."
+    },
+    "remove": {
+      "action": "Hapus jam",
+      "title": "Hapus jam ini?",
+      "message": "{{name}} dihapus dari daftar dan kunci pairing-nya dibuang dari HP. Data kesehatan yang sudah tersimpan tetap ada. Menghubungkannya lagi jadi pairing pertama dan harus dikonfirmasi di jam.",
+      "confirm": "Hapus"
+    }
+  },
+  "sensors": {
+    "title": "Sensor",
+    "kind": {
+      "hr": "Detak jantung",
+      "csc": "Kecepatan dan kadence",
+      "power": "Daya",
+      "rsc": "Pod lari"
+    },
+    "battery": "Baterai {{value}}",
+    "unnamed": "Sensor tanpa nama ({{tail}})",
+    "reading": {
+      "rpm": "{{value}} rpm",
+      "kmh": "{{value}} km/j"
+    },
+    "status": {
+      "idle": "Tidak tersambung",
+      "connecting": "Menyambung",
+      "searching": "Mencari sensor",
+      "failed": "Gagal tersambung",
+      "waiting": "Tersambung, menunggu data",
+      "receiving": "Tersambung, data masuk",
+      "quiet": "Tersambung, belum ada data baru",
+      "lastValue": "nilai terakhir {{age}}"
+    },
+    "age": {
+      "now": "baru saja",
+      "seconds": "{{value}} dtk lalu",
+      "minutes": "{{value}} mnt lalu",
+      "hours": "{{value}} jam lalu"
+    },
+    "mode": {
+      "speed": "Mode kecepatan",
+      "cadence": "Mode kadence",
+      "both": "Kecepatan dan kadence"
+    },
+    "signal": {
+      "strong": "Sinyal kuat",
+      "good": "Sinyal bagus",
+      "fair": "Sinyal cukup",
+      "weak": "Sinyal lemah"
+    },
+    "hint": {
+      "notFound": "Sensor tidak ditemukan, pastikan sensor aktif: putar pedal",
+      "lost": "Sinyal sensor terputus. Putar pedal supaya sensor aktif lagi, aplikasi menyambung ulang sendiri.",
+      "failed": "Gagal tersambung. Pastikan sensor menyala, dekat, dan tidak tersambung ke aplikasi atau jam lain.",
+      "contactLost": "Strap tidak menyentuh kulit. Basahi elektrodanya dan kencangkan di dada.",
+      "waitingHr": "Belum ada detak. Pakai strap di dada dan basahi elektrodanya.",
+      "waitingBike": "Belum ada data. Putar pedal atau roda supaya sensor bangun.",
+      "waitingPod": "Belum ada data. Mulai jalan atau lari supaya pod bangun.",
+      "speedMode": "Sensor dalam mode kecepatan: hanya putaran roda yang terkirim, jadi tidak ada kadence. Kalau dipasang di engkol, ganti ke mode kadence di aplikasi sensornya (XOSS Vortex: aplikasi XOSS)."
+    },
+    "hub": {
+      "empty": "Pasangkan strap detak jantung, sensor kecepatan dan kadence, power meter, atau pod lari lewat Bluetooth. Latihan yang direkam di HP memakainya, jam tidak wajib.",
+      "add": "Tambah sensor",
+      "manage": "Kelola sensor",
+      "manageSub": "Pasangkan, ganti nama, tes sambungan"
+    },
+    "intro": {
+      "title": "Punya sensor detak jantung atau sensor sepeda?",
+      "subtitle": "Pasangkan langsung ke HP, tanpa jam."
+    },
+    "paired": {
+      "title": "Sensor kamu",
+      "empty": "Belum ada sensor yang dipasangkan. Cari sensor di bawah.",
+      "connect": "Sambungkan",
+      "cancel": "Batal",
+      "disconnect": "Putuskan",
+      "connectHint": "Sambungkan untuk melihat angka langsung. Sambungan tetap aktif sampai kamu putuskan.",
+      "autoConnect": {
+        "label": "Sambungkan otomatis saat latihan",
+        "hint": "Sensor ini ikut tersambung saat kamu mulai latihan di HP."
+      },
+      "kinds": "Jenis",
+      "batteryLabel": "Baterai",
+      "maker": "Pabrikan",
+      "model": "Model",
+      "rename": {
+        "action": "Ganti nama",
+        "title": "Nama sensor",
+        "placeholder": "Contoh: Strap dada",
+        "save": "Simpan",
+        "reset": "Pakai nama asli"
+      },
+      "remove": {
+        "action": "Hapus sensor",
+        "title": "Hapus sensor ini?",
+        "message": "{{name}} dihapus dari daftar dan sambungannya diputus. Latihan lama tetap menyimpan datanya. Pasangkan lagi kapan saja lewat Cari sensor.",
+        "confirm": "Hapus"
+      }
+    },
+    "scan": {
+      "title": "Cari sensor",
+      "intro": "Cari sensor Bluetooth di dekatmu. HP akan minta izin Bluetooth dulu. Izin ini hanya dipakai untuk menemukan dan menyambung ke sensor.",
+      "continue": "Lanjut",
+      "start": "Cari sensor",
+      "again": "Cari lagi",
+      "stop": "Berhenti",
+      "scanning": "Mencari sensor di sekitar",
+      "found_other": "{{count}} ditemukan",
+      "none": "Belum ada sensor yang ketemu. Coba tips di bawah, lalu cari lagi.",
+      "pair": "Pasangkan",
+      "paired": "Sudah dipasangkan",
+      "tips": "Strap dada: basahi elektrodanya dan pakai di dada. Sensor sepeda: putar pedal atau roda supaya sensornya bangun. Dekatkan sensor ke HP dan lepas dari aplikasi atau jam lain."
+    },
+    "problem": {
+      "bluetoothOff": "Bluetooth mati. Nyalakan Bluetooth di HP, lalu coba lagi.",
+      "unsupported": "HP ini tidak mendukung Bluetooth LE, jadi sensor tidak bisa dipakai.",
+      "permission": "Izin Bluetooth belum diberikan, jadi sensor tidak bisa dicari atau disambungkan. Izinkan di pengaturan aplikasi.",
+      "openSettings": "Buka pengaturan",
+      "scanFailed": "Pencarian sensor gagal. Matikan lalu nyalakan Bluetooth, lalu coba lagi.",
+      "connectFailed": "Tidak bisa menyambung ke sensor. Coba lagi."
+    },
+    "wheel": {
+      "title": "Ukuran roda",
+      "body": "Kecepatan dan jarak dari sensor roda dihitung dari keliling roda. Pilih ukuran ban, atau isi kelilingnya sendiri.",
+      "presets": "Ukuran ban",
+      "field": "Keliling roda (mm)",
+      "hint": "Antara {{min}} dan {{max}} mm. Hasil ukur sendiri paling akurat.",
+      "invalid": "Isi keliling roda dengan angka bulat {{min}} sampai {{max}} mm."
+    },
+    "notes": {
+      "title": "Perlu tahu",
+      "ant": "ANT+ tidak didukung (butuh perangkat keras ANT). Pakai sensor Bluetooth.",
+      "huawei": "Jam Huawei tidak bisa menerima strap dari luar. Strap dipakai oleh latihan yang direkam di HP."
+    }
+  },
+  "agps": {
+    "title": "Data satelit (A-GPS)",
+    "lastUpdated": "Terakhir diperbarui",
+    "size": "Ukuran",
+    "asked": "Yang diminta jam-mu",
+    "askedNever": "Belum ada",
+    "never": "Belum pernah",
+    "refresh": "Perbarui sekarang",
+    "cancel": "Batal",
+    "phoneCopy": "Salinan di HP ini",
+    "details": "Jam-mu memakai data satelit supaya GPS cepat menemukan posisi. Datanya berlaku sekitar 7 hari. Kalau jam-mu meminta jenis Broadcom, JoyoFit mengunduhnya dari server publik Broadcom tanpa akun, lalu memberikannya ke jam. Jenis lain hanya disiapkan aplikasi Huawei sendiri; JoyoFit tidak pernah mengirim jam-mu sesuatu yang tidak diminta.",
+    "retryAt": "Percobaan otomatis berikutnya sekitar {{time}}.",
+    "sizeValue": "{{kb}} KB",
+    "status": {
+      "never": "Jam-mu belum pernah mengambil data satelit dari JoyoFit.",
+      "delivered": "Jam-mu sudah punya data satelit terbaru.",
+      "expired": "Data satelit di jam-mu sudah kedaluwarsa. Ketuk Perbarui sekarang.",
+      "stored": "Data sudah diunduh ke HP ini. Data dikirim ke jam-mu saat jam-mu terhubung dan memintanya.",
+      "watchSilent": "Data sudah siap di HP ini, tetapi jam-mu tidak menanggapi. Data dikirim saat jam-mu memintanya.",
+      "noNetwork": "HP ini tidak punya internet. Coba lagi saat sudah tersambung.",
+      "downloadFailed": "Data satelit gagal diunduh.",
+      "invalidFile": "Yang terunduh bukan data satelit yang valid, jadi tidak dikirim ke jam-mu.",
+      "unsupported": "Jam-mu butuh data satelit yang hanya bisa disiapkan aplikasi Huawei sendiri, dan JoyoFit tidak bisa menyediakannya.",
+      "watchRefused": "Jam-mu tidak ikut dalam pertukaran ini. Pembaruan dimulai dari jam sendiri.",
+      "timeout": "Pengiriman ke jam-mu berhenti di tengah jalan, jadi dibatalkan.",
+      "cancelled": "Pembaruan dibatalkan.",
+      "busy": "Pembaruan sedang berjalan.",
+      "linkLost": "Koneksi ke jam-mu terputus saat pembaruan.",
+      "asking": "Menanyakan jam-mu...",
+      "downloading": "Mengunduh data satelit...",
+      "waiting": "Data siap, menunggu jam-mu mengambilnya...",
+      "sending": "Mengirim ke jam-mu..."
+    }
   }
 }

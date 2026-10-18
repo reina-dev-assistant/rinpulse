@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/Button';
 import { Details } from '@/components/Details';
 import { KeyValue } from '@/components/KeyValue';
@@ -10,7 +11,7 @@ import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
 import { SwitchRow } from '@/components/SwitchRow';
 import { formatDateTime } from '@/format';
-import { spacing } from '@/theme';
+import { spacing, useTheme } from '@/theme';
 import { useCloud } from '@/state/CloudProvider';
 import { useStrava } from '@/state/StravaProvider';
 
@@ -31,10 +32,11 @@ export function StravaSection() {
   const { t: tg } = useTranslation('gear');
   const strava = useStrava();
   const cloud = useCloud();
+  const { scheme } = useTheme();
   const connected = strava.settings.connectedAt !== null;
 
   return (
-    <Section title="Strava" icon="fitness" tint="workouts">
+    <Section title="Strava" leading={<BrandMark brand="strava" size={32} />}>
       <AppText variant="caption" muted>
         {t('strava.intro')}
       </AppText>
@@ -115,12 +117,15 @@ export function StravaSection() {
           ) : null}
         </>
       ) : null}
-      <Image
-        source={COMPATIBLE_LOGO}
-        style={[LOGO_SIZE, styles.logo]}
-        accessibilityLabel={t('strava.compatible')}
-        accessibilityIgnoresInvertColors
-      />
+      {/* The artwork has dark lettering, so on a dark card it sits on a white plate; the artwork itself stays unmodified. */}
+      <View style={[styles.logo, scheme === 'dark' && styles.plate]}>
+        <Image
+          source={COMPATIBLE_LOGO}
+          style={LOGO_SIZE}
+          accessibilityLabel={t('strava.compatible')}
+          accessibilityIgnoresInvertColors
+        />
+      </View>
       <Details>{t('strava.legal')}</Details>
     </Section>
   );
@@ -130,4 +135,5 @@ const styles = StyleSheet.create({
   connect: { alignSelf: 'flex-start', height: BUTTON_SIZE.height, marginVertical: spacing.xs },
   dim: { opacity: 0.5 },
   logo: { alignSelf: 'flex-start' },
+  plate: { backgroundColor: '#FFFFFF', borderRadius: 6, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
 });

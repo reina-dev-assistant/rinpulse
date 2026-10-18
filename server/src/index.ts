@@ -11,10 +11,12 @@ import { family, familyDevice } from "./family/routes";
 import { runScheduled } from "./family/cron";
 import { gear } from "./gear";
 import { imports } from "./imports";
-import { MAX_SYNC_BODY_BYTES, PULL_DEFAULT_LIMIT, PULL_MAX_LIMIT } from "./limits";
+import { livePage, livePublic, liveSession } from "./live";
+import { MAX_SYNC_BODY_BYTES, PULL_DEFAULT_LIMIT, PULL_MAX_LIMIT, RESTORE_DEFAULT_LIMIT, RESTORE_MAX_AGE_DAYS, RESTORE_MAX_LIMIT } from "./limits";
 import { syncBodySchema } from "./schemas";
+import { ride } from "./ride/routes";
 import { strava, stravaPublic } from "./strava";
-import { applySync, pullSync } from "./sync";
+import { applySync, pullSync, restoreSleep, restoreSteps } from "./sync";
 import { waitlist } from "./waitlist";
 
 const app = new Hono<AppContext>();
@@ -25,6 +27,13 @@ app.get("/", (c) => c.json({ service: "joyofit-api", ok: true }));
 app.route("/v1/waitlist", waitlist);
 // Device-token auth, not a session: the monitored phone uploads from native background code.
 app.route("/v1/family", familyDevice);
+// Live tracking link: the phone posts with its write key (Bearer) and anyone with the link reads; neither uses a session.
+// Only `POST /v1/live` (start) needs the session, so it is mounted under `v1` below.
+app.route("/v1/live", livePublic);
+app.route("/live", livePage);
+
+// "Ride on the web" relay (docs/ride.md): public room creation, phone join with a session, WebSocket by token.
+app.route("/ride", ride);
 
 const v1 = new Hono<AppContext>();
 v1.use("*", requireUser);
@@ -65,11 +74,38 @@ v1.get("/sync", async (c) => {
   return c.json(await pullSync(c.env.DB, c.get("user").id, since, limit));
 });
 
+/** A new phone's windowed history: `from` bounds the window, `after` is the keyset cursor of the previous page. */
+v1.get("/restore", async (c) => {
+  const table = c.req.query("table");
+  const from = Number(c.req.query("from") ?? "");
+  const afterRaw = c.req.query("after");
+  const limit = Number(c.req.query("limit") ?? RESTORE_DEFAULT_LIMIT);
+  if (table !== "steps" && table !== "sleep") return c.json({ error: "invalid_table" }, 400);
+  if (!Number.isInteger(from) || from < 0) return c.json({ error: "invalid_from" }, 400);
+  if (from < Date.now() / 1000 - RESTORE_MAX_AGE_DAYS * 86_400) {
+    return c.json({ error: "from_too_old", maxDays: RESTORE_MAX_AGE_DAYS }, 400);
+  }
+  if (!Number.isInteger(limit) || limit < 1 || limit > RESTORE_MAX_LIMIT) {
+    return c.json({ error: "invalid_limit", max: RESTORE_MAX_LIMIT }, 400);
+  }
+  const userId = c.get("user").id;
+  if (table === "steps") {
+    const after = afterRaw === undefined ? null : Number(afterRaw);
+    if (after !== null && (!Number.isInteger(after) || after < 0)) return c.json({ error: "invalid_after" }, 400);
+    return c.json(await restoreSteps(c.env.DB, userId, from, after, limit));
+  }
+  const match = afterRaw === undefined ? null : /^(\d+):(\d+)$/.exec(afterRaw);
+  if (afterRaw !== undefined && !match) return c.json({ error: "invalid_after" }, 400);
+  const after = match ? { start: Number(match[1]), type: Number(match[2]) } : null;
+  return c.json(await restoreSleep(c.env.DB, userId, from, after, limit));
+});
+
 v1.route("/account", account);
 v1.route("/data", syncedData);
 v1.route("/imports", imports);
 v1.route("/strava", strava);
 v1.route("/gear", gear);
+v1.route("/live", liveSession);
 v1.route("/family", family);
 app.route("/v1", v1);
 app.route("/strava", stravaPublic);
@@ -86,6 +122,10 @@ app.onError((error, c) => {
   console.error(JSON.stringify({ event: "unhandled", path: c.req.path, message: error.message }));
   return c.json({ error: "internal_error" }, 500);
 });
+
+// Durable Object classes of the ride relay; wrangler.jsonc binds them (RIDE_ROOM, RIDE_INDEX).
+export { RideIndex } from "./ride/lookup";
+export { RideRoom } from "./ride/room";
 
 export default {
   fetch: app.fetch,

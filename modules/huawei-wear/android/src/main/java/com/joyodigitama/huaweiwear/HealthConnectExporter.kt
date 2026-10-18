@@ -288,7 +288,7 @@ internal class HealthConnectExporter(
 
   private fun deviceInfo(): Device {
     val (name, productModel) = syncStore.read { db ->
-      db.rawQuery("SELECT name, product_model FROM device ORDER BY last_sync DESC LIMIT 1", null).use {
+      db.rawQuery("SELECT name, product_model FROM device ORDER BY is_primary DESC, last_sync DESC LIMIT 1", null).use {
         if (it.moveToFirst()) it.getString(0) to (if (it.isNull(1)) null else it.getString(1)) else null to null
       }
     }

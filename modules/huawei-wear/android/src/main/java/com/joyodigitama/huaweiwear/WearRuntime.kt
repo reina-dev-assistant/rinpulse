@@ -90,6 +90,8 @@ internal class WearRuntime private constructor(context: Context) {
       status.update { it.copy(lastSyncSec = summary.to) }
       healthConnect.onSyncComplete(summary)
       extras.onSyncComplete(summary)
+      // Satellite data: keeps the phone's copy fresh (app syncs and the background loop alike) so the watch's next request is answered at once.
+      ephemeris.onSyncCycle()
       listeners.forEach { it.syncComplete(summary) }
     }
 
@@ -182,7 +184,7 @@ internal class WearRuntime private constructor(context: Context) {
   val extras = WatchExtras(appContext, syncStore, link, events, scope)
   val p2p = P2pController(appContext, P2pSettings(appContext), link, settings, syncStore, events, scope)
   val family = FamilyUploader(appContext, FamilySettings(appContext), FamilyStoreSource(syncStore), { status.value.battery }, events, scope)
-  val ephemeris = EphemerisLink(appContext, link, events, scope)
+  val ephemeris = EphemerisLink(appContext, link, events, scope, settings)
 
   init {
     DataSyncFeatures.install(this)
@@ -247,6 +249,8 @@ internal class WearRuntime private constructor(context: Context) {
   /** Single use: the consent ends with this connect, whatever its outcome. */
   suspend fun connectFromApp(address: String): Map<String, Any?> {
     paused = false
+    // A background visit to another watch gives the link back to the user.
+    controller?.abortVisit()
     return link.connect(address, allowFirstBind = bindConsent.take(address))
   }
 

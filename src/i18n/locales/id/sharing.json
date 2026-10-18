@@ -2,63 +2,14 @@
   "share": {
     "caption": "Dicatat dengan JoyoFit · https://fit.joyorogo.com",
     "workout": {
-      "heading": "Bagikan latihan",
-      "hint": "Angka kamu di kartu JoyoFit gelap. Latihan ini tidak punya rute GPS."
+      "heading": "Bagikan latihan"
     },
-    "today": {
-      "heading": "Bagikan hari ini",
-      "title": "Hari ini",
-      "hint": "Langkah, tidur, dan skor kamu di kartu JoyoFit gelap."
-    },
-    "stats": {
-      "distance": "Jarak",
-      "time": "Waktu",
-      "avgPace": "Pace rata-rata",
-      "avgSpeed": "Kecepatan rata-rata",
-      "avgHr": "Detak jantung rata-rata",
-      "calories": "Kalori",
-      "elevation": "Elevasi",
-      "steps": "Langkah",
-      "sleep": "Tidur",
-      "recovery": "Pemulihan",
-      "strain": "Beban",
-      "readiness": "Kesiapan"
-    },
-    "units": {
-      "steps": "langkah",
-      "per100m": "/100 m",
-      "perKm": "/km",
-      "strainMax": "/ {{max}}"
-    },
-    "sleepShort": {
-      "hm": "{{h}}j {{m}}mnt",
-      "m": "{{m}}mnt"
-    },
-    "backgrounds": {
-      "route": "Rute",
-      "card": "Kartu",
-      "photo": "Foto",
-      "sticker": "Stiker"
-    },
-    "formats": {
-      "story": "Story 9:16",
-      "square": "Persegi 1:1"
-    },
-    "hints": {
-      "route": "Rute dan angka kamu di kartu JoyoFit gelap.",
-      "photo": "Fotomu dengan angka di atasnya.",
-      "sticker": "PNG transparan. Kirim ke Story Instagram sebagai stiker, atau salin lalu tempel di atas fotomu sendiri."
-    },
-    "photoPlaceholder": "Pilih foto dari galeri atau ambil foto baru.",
-    "photoChoose": "Pilih foto",
-    "photoChange": "Ganti foto",
-    "photoTake": "Ambil foto",
-    "photoFailed": "Foto itu tidak bisa dimuat. Pilih foto lain.",
     "targets": {
       "instagram": "Instagram",
       "copy": "Salin",
       "save": "Simpan",
-      "more": "Lainnya"
+      "more": "Lainnya",
+      "threads": "Threads"
     },
     "toasts": {
       "copied": "Tersalin",

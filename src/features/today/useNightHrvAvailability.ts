@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { countNightHrvSince, listSleepSince } from '@/db/queries';
+import { rememberedWatch } from '@/features/device/rememberedWatch';
 import { useNativeRefresh } from '@/features/settings/useNativeRefresh';
 import {
   countNightsSince,
@@ -39,8 +40,9 @@ export function useNightHrvAvailability(dataVersion: number): NightHrvAvailabili
       countNightHrvSince(db, windowStart),
       countNightHrvSince(db, setupStart),
       listSleepSince(db, setupStart - NIGHT_LOOKBACK_SEC),
+      rememberedWatch(db),
     ]).then(
-      ([inWindow, sinceSetup, sleep]) => {
+      ([inWindow, sinceSetup, sleep, hasWatch]) => {
         if (request !== latest.current) return;
         setInput({
           platform: Platform.OS === 'ios' ? 'ios' : 'android',
@@ -50,6 +52,7 @@ export function useNightHrvAvailability(dataVersion: number): NightHrvAvailabili
           nightsSinceSetup: countNightsSince(sleep, [], status.lastCalibratedAt ?? windowStart),
           nightRowsSinceSetup: sinceSetup,
           anyNightRowInHistory: inWindow > 0,
+          noWatch: !hasWatch,
         });
       },
       // Without the counts the old text is shown, which is what happened before this hook existed.

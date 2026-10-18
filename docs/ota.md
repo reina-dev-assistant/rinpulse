@@ -104,9 +104,45 @@ bunx eas-cli update:list --branch production                  # find group ids
 
 Or just publish a corrected fix with `scripts/ota.sh`. Roll Android and iOS back separately (two groups).
 
+## Which branch publishes to which runtime
+
+Written 2026-10-18. Master carries native changes (BLE sensors, phone recording, native module edits) since merge `4a2aeb4`, so its fingerprint differs from the binaries installed before it. One rule keeps both groups of devices fixable:
+
+| Installed build | Runtime | Publish from |
+| --- | --- | --- |
+| Store and TestFlight builds made before the sensors merge (including JoyoFit 1.0 build 0830 in review) | Android `e542e6f1...`, iOS `43df410f...` | branch **`ota/1.0`**, created at tag `ota-base-e542e6f1` (master as it was the last OTA source for them, `5bf951f`) |
+| Builds made from master after the sensors merge | the "New runtimes" below | **`master`** |
+
+- **Old runtimes: `ota/1.0` only.** Cherry-pick JS-only fixes onto it from master (`git cherry-pick -x <sha>`). A fix that touches native code, `app.json` native settings or a native dependency does not belong there and cannot reach those binaries anyway. Publish from a checkout of `ota/1.0` with `scripts/ota.sh --platform <p> --runtime-version <hash> "message"`, with the hash read from the binary (see "When the printed runtime does not match the installed one": the fingerprint printed for a clean tree is not always what the Gradle build embedded). `ota/1.0` is not an allowed branch of the `release` environment, so the **OTA update** workflow cannot run from it; use the script locally. Never merge `ota/1.0` into master.
+- **New runtime: master only.** `scripts/ota.sh` and the **OTA update** workflow on master publish for the runtime master resolves to. A master commit that changes the runtime (native code, `app.json`, a native dependency, `version`) needs a new store build before its updates reach anyone.
+- A master commit never reaches an old binary by accident: the server only offers an update whose runtime equals the one the binary embeds.
+- Features go to master as soon as they are green. No long-lived feature branches: they are what stopped master from being a safe OTA source.
+
+### New runtimes
+
+Read from the binaries of the store build cut from master `8461444` (2026-10-18), not from `scripts/ota.sh --runtime` (see "When the printed runtime does not match the installed one"):
+
+| Platform | Build | Runtime embedded in the binary | `ota.sh --runtime` on `8461444` |
+| --- | --- | --- | --- |
+| Android | AAB versionCode 1470815 (`assets/fingerprint`) | `1fe3a3e01c827e0364b68fcef03752c681b8cdbe` | `71b7dc6b9006dfd9ee793ecbe4e92837130a8628` |
+| iOS | TestFlight 1.0 (202610180938) (`EXUpdates.bundle/fingerprint`) | `62b33b49c9d0ac991f023d22487f71d7c60b63c0` | `b805b384f29fabf875bf568341b487e32c88bf23` |
+
+Publish for the embedded values: `scripts/ota.sh --platform <p> --runtime-version <hash> "message"`.
+
+### Runtimes of the 2026-10-18 store build (master `375f052`)
+
+Read from the binaries of the Release Android run 39135259956 (AAB versionCode 1471097, Play internal + alpha) and the Release iOS run 39135263189 (TestFlight 1.0 build 202610181417, Internal + Publik):
+
+| Platform | Build | Runtime embedded in the binary |
+| --- | --- | --- |
+| Android | AAB versionCode 1471097 (`assets/fingerprint`); the sideload APK of the same commit carries the same value | `81a992248b4f15cc3f439a19323d19ae4e6c9252` |
+| iOS | TestFlight 1.0 (202610181417) (`EXUpdates.bundle/fingerprint`) | `60ae9d289f32d564fee79956251795a11e147d56` |
+
+**Master OTAs target these new hashes.** Older lines stay for stragglers: `ota/1.0` for Android `e542e6f1...` and iOS `43df410f...`, `ota/tf-938` for iOS `62b33b49...`, `ota/test-c6a262a2` for the sideload build 1470978.
+
 ## When OTA is not enough
 
-Anything that changes the runtimeVersion, or is on the "not over the air" list above, needs a new binary: build through `scripts/build-release.sh` / `scripts/build-ios-mac.sh` / the `Release *` workflows, and from that commit on updates target the new runtime. To keep fixing an older binary over the air, publish from a checkout of the commit that binary was built from.
+Anything that changes the runtimeVersion, or is on the "not over the air" list above, needs a new binary: build through `scripts/build-release.sh` / `scripts/build-ios-mac.sh` / the `Release *` workflows, and from that commit on updates target the new runtime. Binaries that stay on an older runtime keep getting updates from their own branch, see "Which branch publishes to which runtime" (`ota/1.0` for the pre-sensors builds).
 
 Binaries built before expo-updates was added have no OTA and never will.
 

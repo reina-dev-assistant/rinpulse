@@ -1,0 +1,92 @@
+{
+  "run": {
+    "effort": {
+      "light": "Ringan",
+      "moderate": "Sedang",
+      "hard": "Berat",
+      "max": "Maksimal"
+    },
+    "pr": {
+      "subtitle": "Terbaik dalam 120 hari terakhir",
+      "label": {
+        "m400": "400 m tercepat",
+        "k1": "1K tercepat",
+        "mile1": "1 mil tercepat",
+        "k5": "5K tercepat",
+        "k10": "10K tercepat",
+        "half": "Half marathon tercepat"
+      }
+    }
+  },
+  "strength": {},
+  "sleep": {
+    "heading": "Bagikan tidur",
+    "verdict": {
+      "short": "Kurang tidur",
+      "fair": "Lumayan",
+      "good": "Cukup",
+      "long": "Panjang"
+    }
+  },
+  "ready": {
+    "heading": "Bagikan hari ini"
+  },
+  "load": {
+    "heading": "Bagikan beban latihan",
+    "status": {
+      "up": "Naik cepat",
+      "balanced": "Seimbang",
+      "down": "Turun"
+    }
+  },
+  "week": {
+    "heading": "Bagikan minggu ini",
+    "longest": "Terpanjang: {{distance}}"
+  },
+  "plan": {
+    "heading": "Bagikan rencana",
+    "weekDone": "Minggu {{week}} selesai",
+    "goal": {
+      "run5k": "Menuju 5K",
+      "run10k": "Menuju 10K",
+      "runHalf": "Menuju half marathon",
+      "runRoutine": "Lari rutin",
+      "strengthFull": "Makin kuat"
+    },
+    "phase": {
+      "build": "Membangun",
+      "cutback": "Pekan ringan",
+      "taper": "Tapering"
+    }
+  },
+  "badge": {
+    "heading": "Bagikan pencapaian",
+    "streakUnit": "hari berturut-turut",
+    "title": {
+      "firstWorkout": "Latihan pertama",
+      "distance": "{{value}} km total",
+      "workouts": "{{value}} latihan",
+      "time": "{{value}} jam bergerak",
+      "streak": "{{value}} hari berturut-turut"
+    },
+    "subtitle": {
+      "firstWorkout": "Awal yang bagus",
+      "distance": "Jarak yang sudah kamu tempuh",
+      "workouts": "Sudah kamu catat di JoyoFit",
+      "time": "Waktu aktif kamu sejauh ini",
+      "streak": "Kamu konsisten, terus jalan"
+    },
+    "unit": {
+      "distance": "km",
+      "workouts": "latihan",
+      "time": "jam",
+      "streak": "hari"
+    },
+    "value": {
+      "distance": "{{value}} km",
+      "workouts": "{{value}} latihan",
+      "time": "{{value}} jam",
+      "streak": "{{value}} hari"
+    }
+  }
+}

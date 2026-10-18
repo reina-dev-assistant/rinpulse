@@ -28,6 +28,7 @@ internal class WatchfaceDescription(
   val fontCn: String,
   /** Root element `HnTheme` (Honor) instead of `HwTheme` (Huawei). */
   val isHonor: Boolean,
+  val briefinfo: String = "",
 )
 
 /** A validated `.hwt` package: the description and the `watchface.bin` the watch is sent. */
@@ -105,7 +106,12 @@ internal object WatchfacePackages {
     // GB: a nested zip with watchface.bin, else the entry itself is the binary.
     val binary = entry(outer, "watchface.bin") ?: outer
     if (binary.isEmpty()) bad("The watch face package contains an empty watch face.")
-    return WatchfacePackage(description, binary, entry(bytes, "preview/cover.jpg"))
+    val preview = entry(bytes, "preview/cover.jpg")
+      ?: entry(bytes, "preview/cover.png")
+      ?: entry(bytes, "preview/icon_small.jpg")
+      ?: entry(bytes, "cover.jpg")
+      ?: entry(bytes, "cover.png")
+    return WatchfacePackage(description, binary, preview)
   }
 
   fun parseDescription(raw: ByteArray): WatchfaceDescription {
@@ -143,6 +149,25 @@ internal object WatchfacePackages {
       font = element("font"),
       fontCn = element("font-cn"),
       isHonor = isHonor,
+      briefinfo = run {
+        val raw = element("briefinfo").ifBlank { element("description") }
+        if (raw.startsWith("{") && raw.endsWith("}")) {
+          try {
+            val obj = org.json.JSONObject(raw)
+            obj.optString("en_US")
+              .ifEmpty { obj.optString("default") }
+              .ifEmpty { obj.optString("zh_CN") }
+              .ifEmpty {
+                val it = obj.keys()
+                if (it.hasNext()) obj.optString(it.next()) else ""
+              }
+          } catch (_: Exception) {
+            ""
+          }
+        } else {
+          raw
+        }
+      },
     )
     if (description.screen.isEmpty()) bad("description.xml names no screen (theme version).")
     return description
@@ -169,13 +194,114 @@ internal object WatchfacePackages {
           return out.toByteArray()
         }
       }
-    } catch (e: ZipException) {
+    } catch (_: ZipException) {
       return null
-    } catch (e: IOException) {
+    } catch (_: IOException) {
       return null
     }
   }
 
+  /** Flexible case- and slash-insensitive matcher for preview extraction and nested archives. */
+  private fun entryFlexible(zip: ByteArray, name: String): ByteArray? {
+    val target = name.replace('\\', '/').trim().lowercase(Locale.ROOT)
+    try {
+      ZipInputStream(ByteArrayInputStream(zip)).use { stream ->
+        while (true) {
+          val entry = stream.nextEntry ?: return null
+          if (entry.isDirectory) continue
+          val cleanName = entry.name.replace('\\', '/').trim().lowercase(Locale.ROOT)
+          if (cleanName == target || cleanName.endsWith("/$target")) {
+            val out = ByteArrayOutputStream()
+            val buffer = ByteArray(16384)
+            while (true) {
+              val n = stream.read(buffer)
+              if (n < 0) break
+              out.write(buffer, 0, n)
+            }
+            return out.toByteArray()
+          }
+        }
+      }
+    } catch (_: Exception) {
+      return null
+    }
+  }
+
+  /**
+   * Extracts the best preview image from a .hwt ZIP package with flexible, case-insensitive,
+   * slash-normalized matching. Inspects outer zip and falls back to nested watchface archives.
+   */
+  fun extractPreview(bytes: ByteArray, targetW: Int = 194, targetH: Int = 368): Pair<ByteArray, String>? {
+    return extractPreviewFromZip(bytes) ?: run {
+      val innerZip = entryFlexible(bytes, "com.huawei.watchface")
+        ?: entryFlexible(bytes, "com.honor.watchface")
+      if (innerZip != null && innerZip.isNotEmpty()) {
+        extractPreviewFromZip(innerZip) ?: WatchfaceBitmapDecoder.extractPreviewFromBinary(innerZip, targetW, targetH)
+      } else null
+    }
+  }
+  private fun extractPreviewFromZip(bytes: ByteArray): Pair<ByteArray, String>? {
+    try {
+      ZipInputStream(ByteArrayInputStream(bytes)).use { stream ->
+        var fallback: Pair<ByteArray, String>? = null
+        var fallbackIsIcon = false
+        var anyImage: Pair<ByteArray, String>? = null
+        while (true) {
+          val entry = stream.nextEntry ?: break
+          if (entry.isDirectory) continue
+          val cleanName = entry.name.replace('\\', '/').trim().lowercase(Locale.ROOT)
+          val isImage = cleanName.endsWith(".jpg") || cleanName.endsWith(".jpeg") ||
+            cleanName.endsWith(".png") || cleanName.endsWith(".bmp") || cleanName.endsWith(".webp")
+          if (!isImage) continue
+
+          val out = ByteArrayOutputStream()
+          val buffer = ByteArray(16384)
+          while (true) {
+            val n = stream.read(buffer)
+            if (n < 0) break
+            out.write(buffer, 0, n)
+          }
+          val data = out.toByteArray()
+          if (data.isEmpty()) continue
+          val mime = when {
+            cleanName.endsWith(".png") -> "image/png"
+            cleanName.endsWith(".webp") -> "image/webp"
+            cleanName.endsWith(".bmp") -> "image/bmp"
+            else -> "image/jpeg"
+          }
+          val pair = data to mime
+
+          // Priority 1: Direct cover or full screen preview
+          if (cleanName.endsWith("cover.jpg") || cleanName.endsWith("cover.jpeg") ||
+            cleanName.endsWith("cover.png") || cleanName.endsWith("screen.jpg") ||
+            cleanName.endsWith("screen.png") || cleanName.endsWith("preview.jpg") ||
+            cleanName.endsWith("preview.png")
+          ) {
+            return pair
+          }
+
+          // Priority 2: Preview folder, shot, thumbnail, icon
+          val isIcon = cleanName.contains("icon")
+          val isPreviewOrCover = cleanName.contains("preview") || cleanName.contains("cover") ||
+            cleanName.contains("screen") || cleanName.contains("shot") || cleanName.contains("thumb")
+
+          if (isPreviewOrCover) {
+            if (fallback == null || (!isIcon && fallbackIsIcon)) {
+              fallback = pair
+              fallbackIsIcon = isIcon
+            }
+          }
+
+          if (anyImage == null) {
+            anyImage = pair
+          }
+        }
+        return fallback ?: anyImage
+      }
+    } catch (_: Exception) {
+      return null
+    }
+  }
   /**
    * GB `HuaweiInstallHandler.validateInstallation`: the package's theme version has to name the
    * watch's screen (`height*width`). A theme version GB does not know is allowed through (the watch
@@ -196,7 +322,7 @@ internal object WatchfacePackages {
     }
   }
 
-  /** Huawei Health random version: three numbers from 1 to 10, joined by dots. */
+  /** Huawei Health `HwWatchFaceManager.getRandomVersion`: three numbers from 1 to 10, joined by dots. */
   fun randomVersion(random: Random = Random()): String =
     String.format(Locale.ROOT, "%d.%d.%d", random.nextInt(10) + 1, random.nextInt(10) + 1, random.nextInt(10) + 1)
 
@@ -223,7 +349,7 @@ internal object WatchfacePackages {
   }
 
   /**
-   * Huawei Health's face version check, with the watch's other versions as its compatible list: the
+   * Huawei Health `f2.d` (`verifyWatchFaceVersion`) with the watch's other versions as its compatible list: the
    * face's `<version>` has the watch's major version and a minor no higher than the watch's maximum, or is listed
    * among the other versions the watch accepts. A version that cannot be read on either side is left to the watch.
    */

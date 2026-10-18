@@ -1,0 +1,454 @@
+{
+  "field": {
+    "speed": {
+      "name": "Speed",
+      "short": "Speed",
+      "desc": "Current speed, averaged over the last 5 seconds."
+    },
+    "avgSpeed": {
+      "name": "Average speed",
+      "short": "Avg speed",
+      "desc": "Average speed over the ride, moving time only."
+    },
+    "maxSpeed": {
+      "name": "Maximum speed",
+      "short": "Max speed",
+      "desc": "The highest speed recorded in this ride."
+    },
+    "lapSpeed": {
+      "name": "Lap speed",
+      "short": "Lap speed",
+      "desc": "Average speed of the current lap."
+    },
+    "cadence": {
+      "name": "Cadence",
+      "short": "Cadence",
+      "desc": "Pedal revolutions per minute right now."
+    },
+    "avgCadence": {
+      "name": "Average cadence",
+      "short": "Avg cadence",
+      "desc": "Average cadence over the ride."
+    },
+    "hr": {
+      "name": "Heart rate",
+      "short": "Heart rate",
+      "desc": "Your heart rate right now, from a sensor or your watch."
+    },
+    "avgHr": {
+      "name": "Average heart rate",
+      "short": "Avg HR",
+      "desc": "Average heart rate over the ride."
+    },
+    "hrZone": {
+      "name": "Heart rate zone",
+      "short": "HR zone",
+      "desc": "Zone 1 to 5 from your heart rate and max heart rate, in colour."
+    },
+    "power": {
+      "name": "Power",
+      "short": "Power",
+      "desc": "Pedal power right now, from a power meter."
+    },
+    "power3s": {
+      "name": "Power, 3 s",
+      "short": "Power 3 s",
+      "desc": "Average power over the last 3 seconds, steadier than the instant reading."
+    },
+    "power10s": {
+      "name": "Power, 10 s",
+      "short": "Power 10 s",
+      "desc": "Average power over the last 10 seconds."
+    },
+    "avgPower": {
+      "name": "Average power",
+      "short": "Avg power",
+      "desc": "Average power over the ride."
+    },
+    "normPower": {
+      "name": "Normalized power",
+      "short": "Norm. power",
+      "desc": "The steady power that would cost the same effort; fairer than the average on a varied ride."
+    },
+    "powerZone": {
+      "name": "Power zone",
+      "short": "Power zone",
+      "desc": "Zone 1 to 7 from your power and FTP, in colour. Needs an FTP in settings."
+    },
+    "estPower": {
+      "name": "Estimated power",
+      "short": "Est. power",
+      "desc": "Power worked out from your speed, grade and weight. A rough guide when you have no power meter.",
+      "estimate": "estimated"
+    },
+    "distance": {
+      "name": "Distance",
+      "short": "Distance",
+      "desc": "How far you have ridden."
+    },
+    "lapDistance": {
+      "name": "Lap distance",
+      "short": "Lap dist.",
+      "desc": "Distance of the current lap."
+    },
+    "distanceToFinish": {
+      "name": "Distance to finish",
+      "short": "To finish",
+      "desc": "Distance left to the end of the route. Needs a route."
+    },
+    "distanceToTurn": {
+      "name": "Distance to turn",
+      "short": "To turn",
+      "desc": "Distance to the next turn on the route. Needs a route."
+    },
+    "movingTime": {
+      "name": "Moving time",
+      "short": "Moving",
+      "desc": "Time you were actually moving; pauses do not count."
+    },
+    "elapsedTime": {
+      "name": "Elapsed time",
+      "short": "Elapsed",
+      "desc": "Time since you started, stops included."
+    },
+    "lapTime": {
+      "name": "Lap time",
+      "short": "Lap time",
+      "desc": "Time of the current lap."
+    },
+    "timeOfDay": {
+      "name": "Time of day",
+      "short": "Clock",
+      "desc": "The current time."
+    },
+    "eta": {
+      "name": "Arrival time",
+      "short": "ETA",
+      "desc": "When you reach the finish at your current pace. Needs a route."
+    },
+    "altitude": {
+      "name": "Altitude",
+      "short": "Altitude",
+      "desc": "Altitude from GPS, smoothed."
+    },
+    "ascent": {
+      "name": "Total ascent",
+      "short": "Ascent",
+      "desc": "Total metres you have climbed."
+    },
+    "descent": {
+      "name": "Total descent",
+      "short": "Descent",
+      "desc": "Total metres you have descended."
+    },
+    "grade": {
+      "name": "Grade",
+      "short": "Grade",
+      "desc": "The road grade now in percent, smoothed over about 150 m."
+    },
+    "climbRemaining": {
+      "name": "Climb remaining",
+      "short": "Climb left",
+      "desc": "Metres still to climb on the next climb. Needs a route."
+    },
+    "calories": {
+      "name": "Calories",
+      "short": "Calories",
+      "desc": "Estimated energy you have burned."
+    },
+    "battery": {
+      "name": "Phone battery",
+      "short": "Battery",
+      "desc": "What is left of this phone's battery."
+    }
+  },
+  "picker": {
+    "group": {
+      "speed": "Speed",
+      "hr": "Heart rate and cadence",
+      "power": "Power",
+      "distance": "Distance and time",
+      "terrain": "Terrain",
+      "other": "Other"
+    },
+    "title": "Choose a number",
+    "close": "Close",
+    "rowA11y": "{{name}}. {{desc}}",
+    "toggle": {
+      "title": "Bike computer mode",
+      "hint": "The ride screen shows big numbers, a map, climbs and alerts."
+    }
+  },
+  "status": {
+    "recording": "Recording",
+    "paused": "Paused",
+    "autoPaused": "Auto-paused",
+    "gps": {
+      "searching": "GPS searching",
+      "ready": "GPS ready",
+      "fair": "GPS fair",
+      "weak": "GPS weak",
+      "accuracy": "{{meters}} m"
+    },
+    "sensorsLost_other": "{{count}} sensors lost",
+    "sensorsLost_one": "1 sensor lost",
+    "battery": "{{pct}} %"
+  },
+  "a11y": {
+    "status": {
+      "battery": "Phone battery {{pct}} percent",
+      "gps": "GPS status: {{state}}",
+      "recording": "Recording"
+    },
+    "field": {
+      "value": "{{name}}: {{value}}",
+      "valueUnit": "{{name}}: {{value}} {{unit}}",
+      "valueSub": "{{name}}: {{value}}, {{sub}}",
+      "valueUnitSub": "{{name}}: {{value}} {{unit}}, {{sub}}"
+    },
+    "controls": "Ride controls"
+  },
+  "controls": {
+    "pause": "Pause",
+    "resume": "Resume",
+    "lap": "Lap",
+    "finish": "Finish"
+  },
+  "page": {
+    "indicator": "Page {{current}} of {{total}}",
+    "map": {
+      "offlineNotice": "Map not downloaded, using the online map",
+      "offlineAction": "Open settings",
+      "noPosition": "Waiting for a GPS position",
+      "turnNone": "No turn ahead"
+    },
+    "climb": {
+      "empty": "Pick a route on the Ready screen to see climbs",
+      "noProfile": "This route has no elevation data, so its climbs cannot be worked out",
+      "noneLeft": "No more climbs on this route",
+      "category": "Category {{category}}",
+      "categoryNone": "Uncategorised",
+      "length": "Length",
+      "avgGrade": "Avg grade",
+      "remainingAscent": "Ascent left",
+      "startsIn": "Starts in {{distance}}",
+      "inProgress": "Climbing now",
+      "profileA11y": "Route elevation profile with your position"
+    },
+    "laps": {
+      "current": "Lap {{number}} (running)",
+      "empty": "No finished laps yet. Press Lap to mark one.",
+      "row": "Lap {{number}}",
+      "stats": "{{distance}} in {{time}}",
+      "statsHr": "{{distance}} in {{time}}, {{hr}} bpm",
+      "finishedHeader": "Finished laps"
+    }
+  },
+  "save": {
+    "failed": "Could not save: {{error}}",
+    "again": "Save again",
+    "discard": "Discard recording"
+  },
+  "offCourse": {
+    "banner": "Off course, {{meters}} m from the route",
+    "bannerNoDistance": "Off course"
+  },
+  "alert": {
+    "dismiss": "Tap to dismiss",
+    "channel": "Ride alerts",
+    "hrHigh": "Heart rate too high, zone {{value}}",
+    "hrLow": "Heart rate low, zone {{value}}",
+    "powerHigh": "Power too high, zone {{value}}",
+    "powerLow": "Power low, zone {{value}}",
+    "cadenceLow": "Cadence low, {{value}} rpm",
+    "cadenceHigh": "Cadence high, {{value}} rpm",
+    "eat": "Time to eat something",
+    "drink": "Time to drink",
+    "offCourse": "You are off course, {{value}} m from the route",
+    "backOnCourse": "Back on course",
+    "lowBattery": "Phone battery down to {{value}} %",
+    "sensorLost": "Sensor disconnected",
+    "gpsLost": "GPS signal lost",
+    "gpsBack": "GPS is back",
+    "autoLap": "Lap {{value}} started",
+    "turn": "Turn ahead"
+  },
+  "turn": {
+    "slightLeft": "Slight left",
+    "left": "Turn left",
+    "sharpLeft": "Sharp left",
+    "slightRight": "Slight right",
+    "right": "Turn right",
+    "sharpRight": "Sharp right",
+    "uTurn": "U-turn",
+    "start": "Start",
+    "finish": "Finish"
+  },
+  "unit": {
+    "percent": "{{value}} %",
+    "minutes": "{{value}} min",
+    "seconds": "{{value}} s",
+    "kilometres": "{{value}} km",
+    "metres": "{{value}} m",
+    "rpmValue": "{{value}} rpm"
+  },
+  "stepper": {
+    "decrease": "Decrease {{label}}",
+    "increase": "Increase {{label}}"
+  },
+  "settings": {
+    "title": "Bike computer",
+    "link": {
+      "title": "Bike computer",
+      "row": "Bike computer settings",
+      "subtitle": "Ride screen, data pages, map and alerts"
+    },
+    "mode": {
+      "title": "Mode",
+      "enabled": "Bike computer mode",
+      "hint": "Use the bike computer screen when recording a ride",
+      "body": "While you record a ride with your phone, the screen becomes a bike computer: big numbers, data pages you can arrange, a map, climbs and alerts. It only applies to Ride; other sports keep the normal screen."
+    },
+    "display": {
+      "title": "Display",
+      "theme": "Ride screen theme",
+      "themeAuto": "Auto",
+      "themeDay": "Day",
+      "themeNight": "Night",
+      "themeHint": "Day: a white background that reads in full sun. Night: a black background. Auto follows the app theme.",
+      "dim": "Dim the screen",
+      "dimHint": "The screen dims when untouched and wakes on a touch or an alert. Saves battery.",
+      "dimAfter": "Dim after",
+      "dimLevel": "Dim level",
+      "dimNote": "Dimming needs the store build of the app. Older builds ignore this setting."
+    },
+    "pages": {
+      "title": "Data pages",
+      "body": "Arrange the pages you swipe through while riding: how many numbers per page and which ones.",
+      "open": "Edit data pages",
+      "count_other": "{{count}} pages",
+      "count_one": "1 page"
+    },
+    "ride": {
+      "title": "Ride features",
+      "autoPause": "Auto-pause",
+      "autoPauseHint": "Recording stops when you stop and resumes when you move again.",
+      "autoLap": "Auto-lap",
+      "autoLapOff": "Off",
+      "autoLapDistance": "Distance",
+      "autoLapStart": "Start point",
+      "autoLapEvery": "Lap every",
+      "autoLapHintStart": "A new lap when you get back to the start point after riding away.",
+      "offCourse": "Off-course distance",
+      "offCourseHint": "You are warned when you are farther than this from the route."
+    },
+    "alerts": {
+      "title": "Alerts",
+      "hr": "Heart rate zone",
+      "hrHint": "An alert when your heart rate leaves the zones you pick.",
+      "power": "Power zone",
+      "powerHint": "An alert when your power leaves the zones you pick. Needs an FTP.",
+      "minZone": "Lowest zone",
+      "maxZone": "Highest zone",
+      "zoneValue": "Zone {{value}}",
+      "cadence": "Cadence",
+      "cadenceHint": "An alert when your cadence goes under or over the limits.",
+      "minRpm": "Lowest cadence",
+      "maxRpm": "Highest cadence",
+      "eat": "Eating reminder",
+      "drink": "Drinking reminder",
+      "byTime": "Time",
+      "byDistance": "Distance",
+      "everyMinutes": "Every",
+      "everyKm": "Every",
+      "offCourse": "Off course",
+      "lowBattery": "Low phone battery",
+      "sensorLost": "Sensor lost",
+      "gpsLost": "GPS signal lost",
+      "vibrate": "Vibrate",
+      "vibrateHint": "A vibration pattern for each alert.",
+      "sound": "Sound",
+      "soundHint": "Sound through a notification. In-app beeps are not available yet."
+    },
+    "share": {
+      "title": "Share location"
+    }
+  },
+  "editor": {
+    "title": "Data pages",
+    "pageTitle": "Page {{n}}",
+    "kind": {
+      "fields_other": "{{count}} fields",
+      "fields_one": "1 field",
+      "map": "Map",
+      "climb": "Climb",
+      "laps": "Laps"
+    },
+    "moveUp": "Move page {{n}} up",
+    "moveDown": "Move page {{n}} down",
+    "remove": "Remove page {{n}}",
+    "edit": "Edit page {{n}}",
+    "add": "Add a page",
+    "addKind": {
+      "fields": "Number page",
+      "map": "Map",
+      "climb": "Climb",
+      "laps": "Laps"
+    },
+    "maxPages": "At most {{count}} pages.",
+    "gridLabel": "Numbers on this page",
+    "slotHint": "Tap a number to change it.",
+    "slotA11y": "Number {{n}}: {{name}}. Tap to change.",
+    "preview": "Sample",
+    "previewNote": "Sample numbers, not your ride.",
+    "specialNote": {
+      "map": "Map page: your position, the route and the next turn.",
+      "climb": "Climb page: the route elevation profile and the next climb. Needs a route.",
+      "laps": "Laps page: the running lap and the finished ones."
+    },
+    "reset": "Reset",
+    "resetTitle": "Reset pages?",
+    "resetMessage": "The data pages go back to the default arrangement. Your current arrangement is lost."
+  },
+  "ready": {
+    "battery": {
+      "estimate": "Estimated battery: {{hours}} h, {{pct}} % per hour",
+      "unknown": "No battery estimate yet",
+      "tight": "Battery is tight for this route: it needs about {{need}} h, the battery lasts about {{have}} h",
+      "short": "Battery is not enough for this route: it needs about {{need}} h, the battery lasts about {{have}} h",
+      "saverHint": "Battery saver can make it last longer.",
+      "title": "Battery"
+    },
+    "route": {
+      "none": "No route: the screen still shows the map and your position."
+    },
+    "saver": {
+      "title": "Battery saver",
+      "hint": "The map page is off and the screen is dimmer."
+    },
+    "live": {
+      "title": "Share location"
+    }
+  },
+  "route": {
+    "row": "Route",
+    "pick": "Pick a route",
+    "none": "No route",
+    "chosen": "Route: {{name}}",
+    "change": "Change route",
+    "clear": "Clear route",
+    "offCourse": "Off course, {{meters}} m from the route",
+    "backOn": "Back on course",
+    "empty": "No saved routes yet. Import a GPX in the Routes tab.",
+    "close": "Close",
+    "sheetCaption": "Used to follow the track, turns and climbs."
+  },
+  "saver": {
+    "title": "Save battery?",
+    "proposal": "Battery is down to {{pct}} %. Turn off the map page and dim the screen so your ride lasts?",
+    "accept": "Save battery",
+    "dismiss": "Not now",
+    "forced": "Battery is down to {{pct}} %, battery saver is on",
+    "active": "Battery saver is on"
+  }
+}

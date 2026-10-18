@@ -166,6 +166,8 @@ internal class HrvSpot(
 
   private fun store(reading: HrvReadingData, collected: Collected) {
     val timeline = rriTimeline(collected.startMs, collected.beats)
+    // The measurement ran on the connected watch; the row says which one.
+    val device = link.handle()?.address
     try {
       val db = syncStore.db()
       db.beginTransaction()
@@ -174,8 +176,8 @@ internal class HrvSpot(
           db.execSQL("INSERT OR REPLACE INTO rri_samples (ts_ms, rri, sqi) VALUES (?, ?, ?)", arrayOf<Any>(tsMs, beat.rri, beat.sqi))
         }
         db.execSQL(
-          "INSERT OR REPLACE INTO hrv_readings (start, end, source, rmssd, sdnn, mean_rr, beats) VALUES (?, ?, 'spot', ?, ?, ?, ?)",
-          arrayOf<Any>(reading.start, reading.end, reading.rmssd, reading.sdnn, reading.meanRr, reading.beats),
+          WatchSql.INSERT_SPOT_HRV,
+          arrayOf<Any?>(reading.start, reading.end, reading.rmssd, reading.sdnn, reading.meanRr, reading.beats, device),
         )
         db.setTransactionSuccessful()
       } finally {

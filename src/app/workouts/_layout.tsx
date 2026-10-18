@@ -10,6 +10,8 @@ export default function WorkoutsLayout() {
   return (
     <Stack screenOptions={useStackOptions()}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="manual" options={{ title: t('manual.title') }} />
+      <Stack.Screen name="record" options={{ title: t('record.title') }} />
       <Stack.Screen name="[id]" options={{ title: t('detail.title') }} />
     </Stack>
   );

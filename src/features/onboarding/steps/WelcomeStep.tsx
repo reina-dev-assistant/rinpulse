@@ -3,17 +3,32 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { isIos } from '@/components/IosUnavailable';
+import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Card } from '@/components/Screen';
+import { SupportedWatches } from '@/features/device/SupportedWatches';
 import { Bullet, StepIntro } from '@/features/onboarding/StepIntro';
+import { useOnboarding } from '@/state/OnboardingProvider';
 import { spacing } from '@/theme';
 
 export function WelcomeStep() {
   const { t } = useTranslation('onboarding');
+  const guide = useOnboarding();
   return (
     <>
       <StepIntro icon="watch" tint="link" title={t('welcome.title')}>
         {t('welcome.intro')}
       </StepIntro>
+      <Card>
+        <AppText variant="heading">{t('welcome.noWatch.title')}</AppText>
+        <AppText variant="caption" muted>
+          {t('welcome.noWatch.body')}
+        </AppText>
+        <Button label={t('welcome.noWatch.button')} variant="secondary" icon="barbell" lines={2} onPress={guide.chooseNoWatch} />
+        <Details title={t('welcome.noWatch.supported')}>
+          <SupportedWatches />
+        </Details>
+      </Card>
       <Card>
         <AppText variant="heading">{t('welcome.beforeTitle')}</AppText>
         <View style={styles.list}>

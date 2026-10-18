@@ -10,6 +10,9 @@ export function useStackOptions() {
     headerStyle: { backgroundColor: colors.background },
     headerTintColor: colors.foreground,
     headerShadowVisible: false,
+    // No "index" (the previous route's name) next to the chevron: iOS shows the back title, Android usually does not.
+    headerBackTitle: '',
+    headerBackButtonDisplayMode: 'minimal',
     headerTitleStyle: { fontFamily: fonts.bold, fontSize: 18, color: colors.foreground },
     contentStyle: { backgroundColor: colors.background },
   } as const;

@@ -2,63 +2,14 @@
   "share": {
     "caption": "Tracked with JoyoFit · https://fit.joyorogo.com",
     "workout": {
-      "heading": "Share workout",
-      "hint": "Your numbers on a dark JoyoFit card. This workout has no GPS route."
+      "heading": "Share workout"
     },
-    "today": {
-      "heading": "Share today",
-      "title": "Today",
-      "hint": "Your steps, sleep and scores on a dark JoyoFit card."
-    },
-    "stats": {
-      "distance": "Distance",
-      "time": "Time",
-      "avgPace": "Avg pace",
-      "avgSpeed": "Avg speed",
-      "avgHr": "Avg HR",
-      "calories": "Calories",
-      "elevation": "Elevation",
-      "steps": "Steps",
-      "sleep": "Sleep",
-      "recovery": "Recovery",
-      "strain": "Strain",
-      "readiness": "Readiness"
-    },
-    "units": {
-      "steps": "steps",
-      "per100m": "/100 m",
-      "perKm": "/km",
-      "strainMax": "/ {{max}}"
-    },
-    "sleepShort": {
-      "hm": "{{h}}h {{m}}m",
-      "m": "{{m}}m"
-    },
-    "backgrounds": {
-      "route": "Route",
-      "card": "Card",
-      "photo": "Photo",
-      "sticker": "Sticker"
-    },
-    "formats": {
-      "story": "Story 9:16",
-      "square": "Square 1:1"
-    },
-    "hints": {
-      "route": "Your route and numbers on a dark JoyoFit card.",
-      "photo": "Your photo with the numbers on top.",
-      "sticker": "A transparent PNG. Send it to an Instagram Story as a sticker, or copy it and paste it over your own photo."
-    },
-    "photoPlaceholder": "Pick a photo from your gallery or take one.",
-    "photoChoose": "Choose photo",
-    "photoChange": "Change photo",
-    "photoTake": "Take photo",
-    "photoFailed": "That photo could not be loaded. Pick another one.",
     "targets": {
       "instagram": "Instagram",
       "copy": "Copy",
       "save": "Save",
-      "more": "More"
+      "more": "More",
+      "threads": "Threads"
     },
     "toasts": {
       "copied": "Copied",

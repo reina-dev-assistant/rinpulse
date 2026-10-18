@@ -73,6 +73,43 @@ enum WearMigrations {
   ],
   [
     "CREATE TABLE cloud_workout (start INTEGER PRIMARY KEY NOT NULL, rev INTEGER NOT NULL, engine_rev INTEGER NOT NULL, version INTEGER NOT NULL, hash TEXT NOT NULL, bytes INTEGER NOT NULL, uploaded_at INTEGER NOT NULL)"
+  ],
+  [
+    "ALTER TABLE device ADD COLUMN alias TEXT",
+    "ALTER TABLE device ADD COLUMN is_primary INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE device ADD COLUMN added_at INTEGER",
+    "ALTER TABLE device ADD COLUMN tracks_health INTEGER NOT NULL DEFAULT 1",
+    "ALTER TABLE device ADD COLUMN bg_sync INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE step_samples ADD COLUMN device TEXT",
+    "ALTER TABLE sleep_segments ADD COLUMN device TEXT",
+    "ALTER TABLE sleep_scores ADD COLUMN device TEXT",
+    "ALTER TABLE workouts ADD COLUMN device TEXT",
+    "ALTER TABLE health_metrics ADD COLUMN device TEXT",
+    "ALTER TABLE hrv_readings ADD COLUMN device TEXT",
+    "CREATE TABLE workout_shadow (device TEXT NOT NULL, start INTEGER NOT NULL, end INTEGER NOT NULL, kept_start INTEGER NOT NULL, PRIMARY KEY (device, start))",
+    "CREATE INDEX workouts_by_device_end ON workouts (device, end)",
+    "UPDATE device SET added_at = COALESCE(last_sync, CAST(strftime('%s', 'now') AS INTEGER))",
+    "UPDATE device SET is_primary = 1 WHERE address = (SELECT address FROM device ORDER BY last_sync IS NULL, last_sync DESC, address LIMIT 1)",
+    "DROP TRIGGER step_samples_rev_update",
+    "DROP TRIGGER sleep_segments_rev_update",
+    "DROP TRIGGER workouts_rev_update",
+    "UPDATE step_samples SET device = (SELECT address FROM device) WHERE imported = 0 AND (SELECT COUNT(*) FROM device) = 1",
+    "UPDATE sleep_segments SET device = (SELECT address FROM device) WHERE imported = 0 AND (SELECT COUNT(*) FROM device) = 1",
+    "UPDATE sleep_scores SET device = (SELECT address FROM device) WHERE (SELECT COUNT(*) FROM device) = 1",
+    "UPDATE workouts SET device = (SELECT address FROM device) WHERE imported = 0 AND (SELECT COUNT(*) FROM device) = 1",
+    "UPDATE health_metrics SET device = (SELECT address FROM device) WHERE (SELECT COUNT(*) FROM device) = 1",
+    "UPDATE hrv_readings SET device = (SELECT address FROM device) WHERE (SELECT COUNT(*) FROM device) = 1",
+    "CREATE TRIGGER step_samples_rev_update AFTER UPDATE ON step_samples WHEN NEW.rev = OLD.rev BEGIN UPDATE cloud_cursor SET seq = seq + 1 WHERE tbl = 'step_samples'; UPDATE step_samples SET rev = (SELECT seq FROM cloud_cursor WHERE tbl = 'step_samples') WHERE rowid = NEW.rowid; END",
+    "CREATE TRIGGER sleep_segments_rev_update AFTER UPDATE ON sleep_segments WHEN NEW.rev = OLD.rev BEGIN UPDATE cloud_cursor SET seq = seq + 1 WHERE tbl = 'sleep_segments'; UPDATE sleep_segments SET rev = (SELECT seq FROM cloud_cursor WHERE tbl = 'sleep_segments') WHERE rowid = NEW.rowid; END",
+    "CREATE TRIGGER workouts_rev_update AFTER UPDATE ON workouts WHEN NEW.rev = OLD.rev BEGIN UPDATE cloud_cursor SET seq = seq + 1 WHERE tbl = 'workouts'; UPDATE workouts SET rev = (SELECT seq FROM cloud_cursor WHERE tbl = 'workouts') WHERE rowid = NEW.rowid; END",
+    "CREATE TRIGGER step_samples_device_guard BEFORE UPDATE ON step_samples WHEN OLD.device IS NOT NULL AND NEW.device IS NOT NULL AND OLD.device <> NEW.device AND NOT (NOT (NEW.steps = 0 AND NEW.calories = 0 AND NEW.distance = 0 AND NEW.heart_rate IS NULL AND NEW.spo2 IS NULL AND NEW.resting_heart_rate IS NULL) AND (NEW.device IS (SELECT address FROM device WHERE is_primary = 1) OR (OLD.steps = 0 AND OLD.calories = 0 AND OLD.distance = 0 AND OLD.heart_rate IS NULL AND OLD.spo2 IS NULL AND OLD.resting_heart_rate IS NULL))) BEGIN SELECT RAISE(IGNORE); END",
+    "CREATE TRIGGER sleep_segments_claim_before BEFORE INSERT ON sleep_segments WHEN NEW.device IS NOT NULL AND NEW.device IS NOT (SELECT address FROM device WHERE is_primary = 1) AND EXISTS (SELECT 1 FROM sleep_segments o WHERE o.device IS NOT NULL AND o.device <> NEW.device AND o.start >= NEW.start - 172800 AND o.start < NEW.end AND o.end > NEW.start) BEGIN SELECT RAISE(IGNORE); END",
+    "CREATE TRIGGER sleep_segments_claim_after AFTER INSERT ON sleep_segments WHEN NEW.device IS NOT NULL AND NEW.device IS (SELECT address FROM device WHERE is_primary = 1) BEGIN DELETE FROM sleep_segments WHERE device IS NOT NULL AND device <> NEW.device AND start >= NEW.start - 172800 AND start < NEW.end AND end > NEW.start; END",
+    "CREATE TRIGGER sleep_scores_claim_before BEFORE INSERT ON sleep_scores WHEN NEW.device IS NOT NULL AND NEW.device IS NOT (SELECT address FROM device WHERE is_primary = 1) AND EXISTS (SELECT 1 FROM sleep_scores o WHERE o.device IS NOT NULL AND o.device <> NEW.device AND o.start >= NEW.start - 172800 AND o.start < NEW.end AND o.end > NEW.start) BEGIN SELECT RAISE(IGNORE); END",
+    "CREATE TRIGGER sleep_scores_claim_after AFTER INSERT ON sleep_scores WHEN NEW.device IS NOT NULL AND NEW.device IS (SELECT address FROM device WHERE is_primary = 1) BEGIN DELETE FROM sleep_scores WHERE device IS NOT NULL AND device <> NEW.device AND start >= NEW.start - 172800 AND start < NEW.end AND end > NEW.start; END",
+    "CREATE TRIGGER hrv_readings_claim_before BEFORE INSERT ON hrv_readings WHEN NEW.device IS NOT NULL AND NEW.source = 'night' AND NEW.device IS NOT (SELECT address FROM device WHERE is_primary = 1) AND EXISTS (SELECT 1 FROM hrv_readings o WHERE o.device IS NOT NULL AND o.device <> NEW.device AND o.source = NEW.source AND o.start >= NEW.start - 172800 AND o.start < NEW.end AND o.end > NEW.start) BEGIN SELECT RAISE(IGNORE); END",
+    "CREATE TRIGGER hrv_readings_claim_after AFTER INSERT ON hrv_readings WHEN NEW.device IS NOT NULL AND NEW.source = 'night' AND NEW.device IS (SELECT address FROM device WHERE is_primary = 1) BEGIN DELETE FROM hrv_readings WHERE device IS NOT NULL AND device <> NEW.device AND source = NEW.source AND start >= NEW.start - 172800 AND start < NEW.end AND end > NEW.start; END",
+    "CREATE TRIGGER health_metrics_device_guard BEFORE UPDATE ON health_metrics WHEN OLD.device IS NOT NULL AND NEW.device IS NOT NULL AND OLD.device <> NEW.device AND NEW.device IS NOT (SELECT address FROM device WHERE is_primary = 1) BEGIN SELECT RAISE(IGNORE); END"
   ]
 ]
 """#

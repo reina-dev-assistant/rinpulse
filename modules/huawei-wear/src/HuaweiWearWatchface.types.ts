@@ -28,6 +28,10 @@ export interface WatchfaceList {
   faces: WatchfaceInfo[];
   /** Unix milliseconds when the list was read. */
   updatedAt: number;
+  /** Free bytes reported by the watch; null when not provided. */
+  freeBytes?: number | null;
+  /** Total storage bytes on the watch; null when not provided. */
+  totalBytes?: number | null;
 }
 
 /** What `installWatchface` resolves with when the upload ran through (the watch may still not list the face; see `listed`). */
@@ -66,4 +70,19 @@ export interface UploadResultEvent {
   fileName: string;
   code: number | null;
   message: string;
+}
+
+/** Parsed metadata and preview image extracted from a .hwt package. */
+export interface ParsedWatchfacePackage {
+  title: string;
+  author: string;
+  designer: string;
+  description?: string;
+  version: string;
+  screen: string;
+  width: number;
+  height: number;
+  previewUri: string | null;
+  sizeBytes: number;
+  localUri?: string | null;
 }

@@ -8,24 +8,34 @@ import java.security.SecureRandom
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiCrypto
 import nodomain.freeyourgadget.gadgetbridge.util.StringUtils
 
+/** The private preference file of one watch's identity: one file per address, so two watches never share a key. */
+internal fun identityPrefsName(address: String): String = "huawei_wear_" + address.uppercase().replace(":", "")
+
+private fun labPrefsName(address: String, tag: String): String = "huawei_wear_lab_${tag}_" + address.uppercase().replace(":", "")
+
+private fun privatePrefs(context: Context): (String) -> SharedPreferences {
+  val app = context.applicationContext
+  return { name -> app.getSharedPreferences(name, Context.MODE_PRIVATE) }
+}
+
 /**
  * Per-device private SharedPreferences holding the identity the watch binds to: auth key, the fake
  * MAC and fake Android id Gadgetbridge presents to the watch, and whether a bind has completed.
  * Mirrors HuaweiSupportProvider.createSecretKey/getSecretKey/setSecretKey/createRandomMacAddress/
- * createAndroidID.
+ * createAndroidID. Every watch has its own file ([identityPrefsName]); nothing here reads or writes another watch's.
  */
-internal class DeviceStore(context: Context) {
-  private val appContext = context.applicationContext
+internal class DeviceStore internal constructor(private val openPrefs: (String) -> SharedPreferences) {
+  constructor(context: Context) : this(privatePrefs(context))
 
   fun forDevice(address: String): DeviceIdentity = DeviceIdentity(address, prefs(address))
 
   /** A throwaway client identity for the developer bind lab: its own auth key, fake MAC and android id, so the watch sees a new phone. */
   fun forLab(address: String, tag: String): DeviceIdentity =
-    DeviceIdentity(address, appContext.getSharedPreferences("huawei_wear_lab_${tag}_" + address.uppercase().replace(":", ""), Context.MODE_PRIVATE))
+    DeviceIdentity(address, openPrefs(labPrefsName(address, tag)))
 
   /** Makes a bound lab identity the stored one: the watch keeps one credential, so after the lab bound it the old key is dead. */
   fun adoptLab(address: String, tag: String) {
-    val lab = appContext.getSharedPreferences("huawei_wear_lab_${tag}_" + address.uppercase().replace(":", ""), Context.MODE_PRIVATE)
+    val lab = openPrefs(labPrefsName(address, tag))
     val editor = prefs(address).edit().clear()
     for ((key, value) in lab.all) {
       when (value) {
@@ -41,11 +51,7 @@ internal class DeviceStore(context: Context) {
     prefs(address).edit().clear().commit()
   }
 
-  private fun prefs(address: String): SharedPreferences =
-    appContext.getSharedPreferences(
-      "huawei_wear_" + address.uppercase().replace(":", ""),
-      Context.MODE_PRIVATE,
-    )
+  private fun prefs(address: String): SharedPreferences = openPrefs(identityPrefsName(address))
 }
 
 internal class DeviceIdentity(

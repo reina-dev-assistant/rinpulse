@@ -57,7 +57,7 @@ final class InertStatusTests: XCTestCase {
             settings: WearSettings(defaults: ephemeralDefaults()), syncStore: SyncStore(url: temporaryDatabaseURL()),
             deviceStore: DeviceStore(secrets: MemorySecretStore()), gate: AlwaysReadyGate(), environment: .init(app: "app 1 (1)", phone: "Apple test"),
             phoneModel: "test", transportFactory: { request, delegate in FakeTransport(.hangConnect, request: request, delegate: delegate) },
-            p2pDefaults: ephemeralDefaults()
+            p2pDefaults: ephemeralDefaults(), agpsDefaults: ephemeralDefaults()
         )
         let p2p = runtime.p2p!
         let populatedHealthyLiving: [String: Any] = {
@@ -130,6 +130,18 @@ final class InertStatusTests: XCTestCase {
         let populatedBody = BodyMetricsData(
             weightKg: 70.5, weightTsMs: 1_760_400_000_000, bodyFatPct: 22.5, bodyFatTsMs: 1_760_400_000_000, restingKcal: 1650, systolic: 120, diastolic: 80, bpTsMs: 5
         ).toJS()
+        let populatedAgps: [String: Any] = {
+            let store = AgpsStore(defaults: ephemeralDefaults())
+            store.recordAsk(nowMs: 1_792_110_600_000, version: 3, tags: "HW_AGNSS,HW_PGNSS_PRED")
+            store.recordDownloaded(nowMs: 1_792_110_650_000, dataMs: 1_792_100_000_000, size: 115_749, source: AgpsSources.broadcom)
+            store.recordDelivered(nowMs: 1_792_110_700_000, dataMs: 1_792_100_000_000, size: 115_749, source: AgpsSources.broadcom, address: "A")
+            store.recordOutcome(nowMs: 1_792_110_800_000, outcome: AgpsOutcome.downloadFailed, error: "LTO: HTTP 503", countsAsFailure: true)
+            let link = EphemerisLink(
+                link: RigSource(), events: events, settings: WearSettings(defaults: ephemeralDefaults()), store: store, source: FakeAgpsSource(files: []),
+                isOnline: { true }
+            )
+            return link.status()
+        }()
         let shapes: [String: Any] = [
             "PhoneFeatures": Inert.phoneFeatures(),
             "NotificationAccessStatus": Inert.notificationAccess(),
@@ -146,6 +158,9 @@ final class InertStatusTests: XCTestCase {
             "SafetyStatus": Inert.safety(),
             "SafetyStatus#live": liveSafety,
             "SosRelayTest": Inert.sosRelayTest(),
+            // The real satellite-data status: a fresh install, and one that has downloaded, been asked, and delivered.
+            "AgpsStatus": runtime.ephemeris.status(),
+            "AgpsStatus#populated": populatedAgps,
             "CycleOverview": try cycle.overview(),
             "CycleOverview#populated": try populatedCycle.overview(),
             "DietStatus": diet.status(),

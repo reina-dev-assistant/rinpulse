@@ -8,6 +8,8 @@ import { Details } from '@/components/Details';
 import { Section, Screen } from '@/components/Screen';
 import { Notice } from '@/components/States';
 import { SwitchRow } from '@/components/SwitchRow';
+import { showsWatchUi } from '@/features/device/presence';
+import { useWatchPresence } from '@/features/device/useWatchPresence';
 import { ensureBluetoothConnect, ensureBluetoothScan } from '@/features/device/useBluetoothPermission';
 import { useNativeRefresh } from '@/features/settings/useNativeRefresh';
 import { errorMessage } from '@/format';
@@ -18,6 +20,9 @@ export default function AdvancedScreen() {
   const { t } = useTranslation('settings');
   const theme = useTheme();
   const router = useRouter();
+  const presence = useWatchPresence();
+  // Courses and the Bluetooth link are for the watch; with none, only the log and About remain.
+  const withWatch = presence === null || showsWatchUi(presence);
   const [courses, setCourses] = useState(() => HuaweiWear.getCourses());
   const [coursesBusy, setCoursesBusy] = useState(false);
   const [coursesError, setCoursesError] = useState<string | null>(null);
@@ -75,27 +80,29 @@ export default function AdvancedScreen() {
           style={groupedRowStyle(theme, 1, 2)}
         />
       </View>
-      <Section title={t('advanced.experimental')} icon="flask" tint="workouts">
-        <SwitchRow
-          label={t('advanced.courses')}
-          value={courses.enabled}
-          disabled={coursesBusy}
-          onValueChange={(enabled) => void toggleCourses(enabled)}
-        />
-        {coursesError ? <Notice tone="danger">{coursesError}</Notice> : null}
-        {__DEV__ ? (
+      {withWatch ? (
+        <Section title={t('advanced.experimental')} icon="flask" tint="workouts">
           <SwitchRow
-            label={t('advanced.bleLink')}
-            value={forceBle}
-            onValueChange={(enabled) => void toggleForceBle(enabled)}
+            label={t('advanced.courses')}
+            value={courses.enabled}
+            disabled={coursesBusy}
+            onValueChange={(enabled) => void toggleCourses(enabled)}
           />
-        ) : null}
-        {__DEV__ && bleError ? <Notice tone="danger">{bleError}</Notice> : null}
-        <Details>
-          {__DEV__ ? t('advanced.detailsDev') : t('advanced.details')}
-        </Details>
-      </Section>
-      {courses.enabled ? (
+          {coursesError ? <Notice tone="danger">{coursesError}</Notice> : null}
+          {__DEV__ ? (
+            <SwitchRow
+              label={t('advanced.bleLink')}
+              value={forceBle}
+              onValueChange={(enabled) => void toggleForceBle(enabled)}
+            />
+          ) : null}
+          {__DEV__ && bleError ? <Notice tone="danger">{bleError}</Notice> : null}
+          <Details>
+            {__DEV__ ? t('advanced.detailsDev') : t('advanced.details')}
+          </Details>
+        </Section>
+      ) : null}
+      {withWatch && courses.enabled ? (
         <NavRow
           icon="walk"
           tint="workouts"

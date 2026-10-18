@@ -176,6 +176,8 @@ export interface FitActivity {
   avgPower: number | null;
   maxPower: number | null;
   normalizedPower: number | null;
+  /** Mean percent of the left pedal when the file has a power meter's pedal balance (the right pedal is the rest). */
+  balanceLeftPct: number | null;
   /** The file's laps in time order; empty unless it has at least two. */
   laps: FitLap[];
   points: FitPoint[];
@@ -244,6 +246,34 @@ function cadenceOf(cadence: unknown, fractional: unknown, foot: boolean): number
   return Math.round((whole + (nonNegative(fractional) ?? 0)) * (foot ? 2 : 1));
 }
 
+/**
+ * Left pedal share in percent from a record's `left_right_balance` (low 7 bits the percent, 0x80 set when that percent is the right
+ * pedal's) or a session's `left_right_balance_100` (low 14 bits hundredths of a percent, 0x8000 the right flag). Null when absent or
+ * not a share between 0 and 100.
+ */
+function leftShare(raw: unknown, wide: boolean): number | null {
+  const v = nonNegative(raw);
+  if (v === null) return null;
+  const rightFlag = wide ? 0x8000 : 0x80;
+  const share = wide ? (v & 0x3fff) / 100 : v & 0x7f;
+  if (share <= 0 || share >= 100) return null;
+  return v & rightFlag ? 100 - share : share;
+}
+
+/** Mean left pedal share over the records, else the session's own. */
+function balanceLeft(records: readonly RecordMesg[], sessions: readonly Session[]): number | null {
+  let sum = 0;
+  let count = 0;
+  for (const r of records) {
+    const share = leftShare(r.leftRightBalance, false);
+    if (share === null) continue;
+    sum += share;
+    count += 1;
+  }
+  if (count > 0) return sum / count;
+  return weighted(sessions, (s) => leftShare(s.leftRightBalance, true));
+}
+
 /** One lap of a file; null without a start or a length. */
 function lap(mesg: LapMesg, foot: boolean): FitLap | null {
   const start = seconds(mesg.startTime);
@@ -307,6 +337,11 @@ function extent(values: readonly (number | null)[]): { min: number | null; max: 
 }
 
 const rounded = (value: number | null): number | null => (value === null ? null : Math.round(value));
+
+function balanceLeftRounded(records: readonly RecordMesg[], sessions: readonly Session[]): number | null {
+  const share = balanceLeft(records, sessions);
+  return share === null ? null : Math.round(share * 10) / 10;
+}
 
 /**
  * Parses a FIT activity. Errors are values, not exceptions: the screen shows `message` as it is. An activity needs a
@@ -390,6 +425,7 @@ export function parseFitActivity(bytes: Uint8Array): FitActivity | FitImportErro
     avgPower: rounded(weighted(sessions, (s) => positive(s.avgPower))),
     maxPower: maxOf(sessions, (s) => positive(s.maxPower)),
     normalizedPower: rounded(weighted(sessions, (s) => positive(s.normalizedPower))),
+    balanceLeftPct: balanceLeftRounded(messages.recordMesgs ?? [], sessions),
     laps: laps.length >= 2 ? laps : [],
     points,
   };

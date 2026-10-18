@@ -49,22 +49,27 @@ function movingMean(values: readonly (number | null)[], stepSec: number, windowS
 }
 
 /**
- * Gain and loss of an altitude series sampled every `stepSec` seconds (see the constants above for the method). Null samples
- * carry the previous level.
+ * Gain and loss of an altitude series sampled every `stepSec` seconds (see the constants above for the method; a bike passes
+ * its own smoothing and hysteresis, see `features/cycling`). Null samples carry the previous level.
  */
-export function elevationProfile(alt: readonly (number | null)[], stepSec = 1): ElevationProfile {
+export function elevationProfile(
+  alt: readonly (number | null)[],
+  stepSec = 1,
+  smoothSec = ELEVATION_SMOOTH_SEC,
+  hysteresisM = ELEVATION_HYSTERESIS_M,
+): ElevationProfile {
   const cumGain: number[] = [];
   const cumLoss: number[] = [];
   let gain = 0;
   let loss = 0;
   let ref: number | null = null;
-  for (const a of movingMean(alt, stepSec, ELEVATION_SMOOTH_SEC)) {
+  for (const a of movingMean(alt, stepSec, smoothSec)) {
     if (a !== null) {
       if (ref === null) ref = a;
-      else if (a - ref >= ELEVATION_HYSTERESIS_M) {
+      else if (a - ref >= hysteresisM) {
         gain += a - ref;
         ref = a;
-      } else if (ref - a >= ELEVATION_HYSTERESIS_M) {
+      } else if (ref - a >= hysteresisM) {
         loss += ref - a;
         ref = a;
       }

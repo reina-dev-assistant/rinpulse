@@ -35,7 +35,7 @@
     "high": "Tertinggi",
     "noHeart": "Belum ada detak jantung tersimpan hari ini.",
     "stepsTitle": "Langkah per jam",
-    "sleepTitle": "Tidur semalam",
+    "sleepTitle": "Ringkasan tidur",
     "healthTitle": "Metrik kesehatan",
     "healthSubtitle": "Suhu kulit, HRV, stres, dan lainnya",
     "aboutTitle": "Tentang angka-angka ini",
@@ -53,6 +53,8 @@
     "emptyTitle": "Tidak ada tidur tersimpan",
     "emptyDescription": "Tidak ada data dalam 36 jam terakhir. Sinkron setelah bangun.",
     "sleptA11y": "Tidur {{duration}}",
+    "napsIncluded": "termasuk tidur siang {{duration}}",
+    "nap": "Tidur siang, {{start}} sampai {{end}}",
     "rangeStages": "{{start}} sampai {{end}}, tanpa waktu terjaga",
     "rangeNoStages": "{{start}} sampai {{end}}, tanpa tahap tidur",
     "stagesNote": "Tahap tidur berasal dari data tidur jam. Rentang tanpa tahap hanya dihitung di total.",
@@ -157,7 +159,11 @@
     },
     "trendEmpty": "Belum ada HRV malam tersimpan. Pakai jam saat tidur lalu sinkron.",
     "recoveryEmptyNoNight": "Belum ada pemulihan. {{message}}, jadi butuh pengukuran 1 menit: ukur HRV selama semenit di 5 hari berbeda.",
-    "recoveryEmpty": "Belum ada pemulihan. Butuh data HRV (semalam memakai jam, atau pengukuran 1 menit) dan 4 data sebelumnya dari jenis yang sama dalam 30 hari terakhir."
+    "recoveryEmpty": "Belum ada pemulihan. Butuh data HRV (semalam memakai jam, atau pengukuran 1 menit) dan 4 data sebelumnya dari jenis yang sama dalam 30 hari terakhir.",
+    "noWatch": {
+      "message": "Belum ada jam terhubung",
+      "detail": "HRV malam dan pemulihan berasal dari jam. Tanpa jam, Coach memakai jawabanmu soal badanmu."
+    }
   },
   "strain": {
     "title": "Strain",
@@ -272,6 +278,33 @@
       "easyPregnancy": "Pengingat mudah hamil",
       "detailsSupported": "Mengirim perkiraan dan gejalamu ke jam saat jam memintanya. Mati secara bawaan. Sakelar pengingat adalah sakelar utama untuk pengingat di bawahnya.",
       "detailsPending": "Dikirim saat berikutnya terhubung dengan jam yang mendukungnya. Sakelar pengingat adalah sakelar utama untuk pengingat di bawahnya."
+    }
+  },
+  "noWatch": {
+    "strength": {
+      "title": "Latihan",
+      "none": "Belum ada latihan tercatat. Mulai yang pertama, jam tidak diperlukan.",
+      "last_other": "Terakhir {{date}}: {{name}}. {{count}} latihan dalam 7 hari.",
+      "untitled": "Latihan",
+      "start": "Mulai latihan",
+      "routines": "Rutinitas"
+    },
+    "library": {
+      "title": "Perpustakaan gerakan",
+      "subtitle": "Cara melakukan tiap gerakan, dengan gambar"
+    },
+    "history": {
+      "title": "Riwayat latihan",
+      "subtitle": "Kalender, rekor, dan volume otot"
+    },
+    "connect": {
+      "title": "Sambungkan jam",
+      "subtitle": "Opsional. Langkah, tidur, dan detak jantung muncul di sini setelah jam Huawei atau Honor terhubung."
+    },
+    "rogo": {
+      "title": "Latihanmu di JoyoRogo",
+      "signedIn": "Kalori setiap latihan beban yang kamu simpan dikirim ke buku harian makan JoyoRogo, jadi sisa kalori harianmu ikut menghitung latihan.",
+      "signedOut": "Masuk dengan JoyoRogo supaya kalori latihanmu masuk ke buku harian makan dan riwayat latihan tersimpan di cloud (cloud butuh Pro)."
     }
   }
 }

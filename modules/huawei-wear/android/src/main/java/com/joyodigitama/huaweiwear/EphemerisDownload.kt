@@ -10,11 +10,14 @@ import java.net.URL
 import java.security.MessageDigest
 
 /** A download the watch asked for failed (no network, HTTP error, unreadable body); the message goes to the log. */
-internal class AgpsFetchException(message: String, cause: Throwable? = null) : IOException(message, cause)
+internal open class AgpsFetchException(message: String, cause: Throwable? = null) : IOException(message, cause)
+
+/** One HTTP body and the server's idea of when it was made (0 when it did not say). */
+internal class AgpsDownload(val body: ByteArray, val lastModifiedMs: Long)
 
 /**
- * The HTTP side of the watch's ephemeris requests: blocking, so callers run it on the IO dispatcher. Only https, bodies capped
- * at [MAX_BYTES], a plain GET with no credentials and no app identification.
+ * The HTTP side of the satellite-data job: blocking, so callers run it on the IO dispatcher. Only https, bodies capped by the
+ * caller, a plain GET with no credentials and no app identification.
  */
 internal object EphemerisNet {
   /** The public Broadcom LTO file (valid for 7 days) is the only thing downloaded. */
@@ -23,9 +26,8 @@ internal object EphemerisNet {
 
   private const val CONNECT_TIMEOUT_MS = 15_000
   private const val READ_TIMEOUT_MS = 30_000
-  private const val MAX_BYTES = 8 * 1024 * 1024
 
-  fun get(url: String): ByteArray {
+  fun get(url: String, maxBytes: Int): AgpsDownload {
     if (!url.startsWith("https://")) throw AgpsFetchException("refusing non-https url")
     val connection = try {
       URL(url).openConnection() as HttpURLConnection
@@ -48,7 +50,9 @@ internal object EphemerisNet {
         }
         throw AgpsFetchException("HTTP $status${if (reason.isNullOrBlank()) "" else ": $reason"}")
       }
-      return connection.inputStream.use { readCapped(it, MAX_BYTES) }
+      val declared = connection.contentLengthLong
+      if (declared > maxBytes) throw AgpsFetchException("response larger than $maxBytes bytes")
+      return AgpsDownload(connection.inputStream.use { readCapped(it, maxBytes) }, connection.lastModified)
     } catch (e: AgpsFetchException) {
       throw e
     } catch (e: IOException) {
@@ -79,7 +83,7 @@ internal object EphemerisNet {
  * Downloads kept in the app's files so the watch's repeated requests (it asks again every ~20 s while it is locating) do not
  * refetch. Keyed by URL; the age is the file's modification time.
  */
-internal class EphemerisCache(context: Context) {
+internal class EphemerisCache(context: Context) : AgpsCache {
   private val dir = File(context.applicationContext.filesDir, "agps")
 
   private fun file(url: String): File {
@@ -88,7 +92,7 @@ internal class EphemerisCache(context: Context) {
   }
 
   /** The cached body of [url] when it is younger than [maxAgeMs]. */
-  fun read(url: String, maxAgeMs: Long): ByteArray? {
+  override fun read(url: String, maxAgeMs: Long): ByteArray? {
     val f = file(url)
     if (!f.isFile || System.currentTimeMillis() - f.lastModified() > maxAgeMs) return null
     return try {
@@ -98,7 +102,7 @@ internal class EphemerisCache(context: Context) {
     }
   }
 
-  fun write(url: String, data: ByteArray) {
+  override fun write(url: String, data: ByteArray) {
     try {
       if (!dir.isDirectory && !dir.mkdirs()) return
       val target = file(url)
@@ -109,6 +113,10 @@ internal class EphemerisCache(context: Context) {
     } catch (e: IOException) {
       // A cache that cannot be written only costs a refetch.
     }
+  }
+
+  override fun delete(url: String) {
+    file(url).delete()
   }
 
   private fun prune() {

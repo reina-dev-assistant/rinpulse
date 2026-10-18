@@ -7,7 +7,7 @@
  * JoyoRogo design tokens v2.
  * - Canvas is warm paper; cards are white and borderless, separated from the
  *   canvas by value alone. Borders exist for inputs and dividers only.
- * - Primary = leaf green from the logo (actions, Makan, positive progress).
+ * - Primary = the JoyoFit app's ink-teal (Classic theme: #0A6580 light, #58C4DE dark).
  * - makan / bakar / tidur are DATA colors: they only tell the three daily
  *   numbers apart (rings, icon chips, tinted tiles). Each has a -soft tint
  *   for backgrounds and an -ink shade that passes AA as text on that tint.
@@ -22,8 +22,8 @@
   --card-foreground: oklch(0.22 0.012 85);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.012 85);
-  --primary: oklch(0.52 0.13 152);
-  --primary-foreground: oklch(0.99 0.005 152);
+  --primary: oklch(0.472 0.087 225);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.955 0.01 85);
   --secondary-foreground: oklch(0.22 0.012 85);
   --muted: oklch(0.955 0.01 85);
@@ -33,11 +33,11 @@
   --destructive: oklch(0.56 0.2 27);
   --border: oklch(0.91 0.01 85);
   --input: oklch(0.91 0.01 85);
-  --ring: oklch(0.52 0.13 152);
+  --ring: oklch(0.472 0.087 225);
 
-  --makan: oklch(0.52 0.13 152);
-  --makan-soft: oklch(0.95 0.035 152);
-  --makan-ink: oklch(0.4 0.1 152);
+  --makan: oklch(0.472 0.087 225);
+  --makan-soft: oklch(0.942 0.023 217);
+  --makan-ink: oklch(0.404 0.077 229);
   --bakar: oklch(0.64 0.17 40);
   --bakar-soft: oklch(0.95 0.03 50);
   --bakar-ink: oklch(0.47 0.14 40);
@@ -48,20 +48,20 @@
   --gram: oklch(0.5 0.12 235);
   --kcal: oklch(0.52 0.13 65);
 
-  --chart-1: oklch(0.52 0.13 152);
+  --chart-1: oklch(0.472 0.087 225);
   --chart-2: oklch(0.64 0.17 40);
   --chart-3: oklch(0.55 0.13 275);
-  --chart-4: oklch(0.75 0.08 152);
+  --chart-4: oklch(0.75 0.06 220);
   --chart-5: oklch(0.8 0.02 85);
   --radius: 0.875rem;
   --sidebar: oklch(0.975 0.008 85);
   --sidebar-foreground: oklch(0.22 0.012 85);
-  --sidebar-primary: oklch(0.52 0.13 152);
-  --sidebar-primary-foreground: oklch(0.99 0.005 152);
+  --sidebar-primary: oklch(0.472 0.087 225);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.955 0.01 85);
   --sidebar-accent-foreground: oklch(0.22 0.012 85);
   --sidebar-border: oklch(0.91 0.01 85);
-  --sidebar-ring: oklch(0.52 0.13 152);
+  --sidebar-ring: oklch(0.472 0.087 225);
 }
 
 .dark {
@@ -71,8 +71,8 @@
   --card-foreground: oklch(0.96 0.008 85);
   --popover: oklch(0.24 0.01 85);
   --popover-foreground: oklch(0.96 0.008 85);
-  --primary: oklch(0.72 0.15 152);
-  --primary-foreground: oklch(0.18 0.03 152);
+  --primary: oklch(0.767 0.105 216);
+  --primary-foreground: oklch(0.235 0.039 221);
   --secondary: oklch(0.27 0.01 85);
   --secondary-foreground: oklch(0.96 0.008 85);
   --muted: oklch(0.27 0.01 85);
@@ -82,11 +82,11 @@
   --destructive: oklch(0.7 0.18 25);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.72 0.15 152);
+  --ring: oklch(0.767 0.105 216);
 
-  --makan: oklch(0.72 0.15 152);
-  --makan-soft: oklch(0.3 0.05 152);
-  --makan-ink: oklch(0.85 0.1 152);
+  --makan: oklch(0.767 0.105 216);
+  --makan-soft: oklch(0.3 0.045 220);
+  --makan-ink: oklch(0.86 0.07 215);
   --bakar: oklch(0.74 0.15 45);
   --bakar-soft: oklch(0.31 0.05 45);
   --bakar-ink: oklch(0.86 0.09 50);
@@ -97,19 +97,19 @@
   --gram: oklch(0.76 0.1 235);
   --kcal: oklch(0.82 0.14 85);
 
-  --chart-1: oklch(0.72 0.15 152);
+  --chart-1: oklch(0.767 0.105 216);
   --chart-2: oklch(0.74 0.15 45);
   --chart-3: oklch(0.72 0.12 275);
-  --chart-4: oklch(0.5 0.08 152);
+  --chart-4: oklch(0.5 0.06 220);
   --chart-5: oklch(0.4 0.01 85);
   --sidebar: oklch(0.22 0.01 85);
   --sidebar-foreground: oklch(0.96 0.008 85);
-  --sidebar-primary: oklch(0.72 0.15 152);
-  --sidebar-primary-foreground: oklch(0.18 0.03 152);
+  --sidebar-primary: oklch(0.767 0.105 216);
+  --sidebar-primary-foreground: oklch(0.235 0.039 221);
   --sidebar-accent: oklch(0.27 0.01 85);
   --sidebar-accent-foreground: oklch(0.96 0.008 85);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.15 152);
+  --sidebar-ring: oklch(0.767 0.105 216);
 }
 
 @theme inline {
@@ -380,8 +380,8 @@ html {
   --scape-pulse-op: 0.85;
   --scape-mtn-mid: #8fa5a3;
   --scape-smoke: #e9e6e4;
-  --scape-word-a: #2f7d4a;
-  --scape-word-b: #1d5a34;
+  --scape-word-a: #0a6580;
+  --scape-word-b: #07506a;
   --scape-hill-1: #8fb56c;
   --scape-terrace: #c4da95;
   --scape-hill-2: #6e9d52;
@@ -424,8 +424,8 @@ html {
   --scape-pulse-op: 0.9;
   --scape-mtn-mid: #2a3a4a;
   --scape-smoke: #4a4f72;
-  --scape-word-a: #cfe8c4;
-  --scape-word-b: #8fc58f;
+  --scape-word-a: #bfe7f3;
+  --scape-word-b: #58c4de;
   --scape-hill-1: #233f30;
   --scape-terrace: #36573f;
   --scape-hill-2: #1d3628;

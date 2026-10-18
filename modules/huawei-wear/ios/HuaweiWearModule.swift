@@ -3,7 +3,8 @@
 // contract to it and forwards runtime events (onStateChange / onBattery / onLog / onSyncComplete) to JS while the module is alive.
 //
 // Implemented for real: the link (getBondedDevices, connect, disconnect, getState, getDevice, getSupportReport, refreshBattery, syncActivity,
-// forgetDevice), the background session, the user profile, the HealthKit export and the family monitoring upload. Everything else the Android module offers has no iOS
+// forgetDevice), the background session, the user profile, the HealthKit export, the family monitoring upload and the satellite data exchange
+// (getAgps, refreshAgps, cancelAgps). Everything else the Android module offers has no iOS
 // counterpart or no ported protocol layer yet and keeps its name: getters answer with the inert status of InertStatus.swift, commands reject
 // with ERR_UNSUPPORTED ("... not available on iOS yet"). Nothing claims to have reached the watch that did not.
 #if canImport(ExpoModulesCore) && canImport(CoreBluetooth) && (canImport(SQLite3) || canImport(CSQLite))
@@ -316,6 +317,7 @@ public final class HuaweiWearModule: Module {
         Function("getAlarms") { () -> [String: Any] in runtime.watchSettings.cachedAlarms() }
         Function("getSafety") { () -> [String: Any] in runtime.safety.status() }
         Function("testSosRelay") { () -> [String: Any] in Inert.sosRelayTest() }
+        Function("getAgps") { () -> [String: Any] in runtime.ephemeris.status() }
         Function("getDietStatus") { () -> [String: Any] in runtime.diet.status() }
         Function("getBodyMetrics") { () -> [String: Any] in runtime.bodyMetrics.load().toJS() }
         Function("getActivityGoals") { () -> [String: Any] in runtime.activityGoals.status() }
@@ -572,10 +574,22 @@ public final class HuaweiWearModule: Module {
         switchRejectingOn("setCallControlEnabled")
         switchRejectingOn("setSosRelayEnabled")
 
+        // MARK: satellite data (A-GPS)
+
+        AsyncFunction("refreshAgps") { () async throws -> [String: Any] in
+            await runtime.ephemeris.refreshNow()
+        }
+
+        AsyncFunction("cancelAgps") { () async throws -> Void in
+            await runtime.ephemeris.cancel()
+        }
+
         // MARK: commands that would reach the watch or Android-only screens: ERR_UNSUPPORTED
 
         rejects("openNotificationAccess")
         rejects("setNotificationAppEnabled", String.self, Bool.self)
+        rejects("parseWatchfacePackage", String.self, Bool?.self)
+        rejects("deleteLocalWatchfaceFile", String.self)
     }
 }
 

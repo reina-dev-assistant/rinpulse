@@ -3,7 +3,7 @@ package com.joyodigitama.huaweiwear
 /** [FamilySource] over the sync database: the rows the watch synced, `imported = 0` only. */
 internal class FamilyStoreSource(private val store: SyncStore) : FamilySource {
   override fun watchSyncSec(): Long? = store.read { db ->
-    db.rawQuery("SELECT MAX(last_sync) FROM device", null).use { if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else null }
+    db.rawQuery("SELECT MAX(last_sync) FROM device WHERE tracks_health = 1", null).use { if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else null }
   }
 
   override fun newestSampleSec(fromSec: Long, toSec: Long): Long? = store.read { db ->

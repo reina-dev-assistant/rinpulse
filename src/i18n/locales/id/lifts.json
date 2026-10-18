@@ -1,0 +1,189 @@
+{
+  "title": "Riwayat beban",
+  "group": {
+    "chest": "Dada",
+    "back": "Punggung",
+    "shoulders": "Bahu",
+    "biceps": "Biseps",
+    "triceps": "Triseps",
+    "forearms": "Lengan bawah",
+    "abs": "Perut",
+    "glutes": "Bokong",
+    "quads": "Paha depan",
+    "hamstrings": "Paha belakang",
+    "calves": "Betis",
+    "hips": "Pinggul"
+  },
+  "unit": {
+    "kg": "{{value}} kg",
+    "sec": "{{value}} dtk",
+    "kcal": "kcal",
+    "sets_other": "set",
+    "reps_other": "{{value}} repetisi"
+  },
+  "set": {
+    "weightReps": "{{weight}} × {{reps}}",
+    "weightSeconds": "{{weight}} × {{time}}",
+    "reps_other": "{{value}} repetisi"
+  },
+  "row": {
+    "dateTime": "{{date}}, {{time}}",
+    "untitled": "Latihan",
+    "a11y": "{{name}}, {{date}}",
+    "prs_other": "{{count}} rekor pribadi"
+  },
+  "week": {
+    "title": "Minggu ini",
+    "workouts": "Latihan",
+    "volume": "Volume",
+    "sets": "Set",
+    "streak_other": "{{count}} minggu berturut-turut. Kamu latihan di {{active}} dari {{weeks}} minggu terakhir.",
+    "steady": "Kamu latihan di {{active}} dari {{weeks}} minggu terakhir."
+  },
+  "history": {
+    "title": "Riwayat dan kalender",
+    "view": {
+      "list": "Daftar",
+      "calendar": "Kalender"
+    },
+    "empty": {
+      "title": "Belum ada latihan",
+      "description": "Latihan beban yang sudah selesai muncul di sini, lengkap dengan volume dan rekornya.",
+      "start": "Mulai latihan"
+    }
+  },
+  "calendar": {
+    "previous": "Bulan sebelumnya",
+    "next": "Bulan berikutnya",
+    "today": "Hari ini",
+    "monthCount": "Bulan ini: {{strength}} latihan beban, {{other}} lainnya",
+    "legend": {
+      "strength": "Latihan beban",
+      "other": "Olahraga lain"
+    },
+    "dayEmpty": "Tidak ada yang tercatat di hari ini.",
+    "pickDay": "Pilih satu hari untuk melihat latihannya.",
+    "day": {
+      "none": "{{date}}: tidak ada latihan",
+      "strength": "{{date}}: latihan beban {{strength}}",
+      "other": "{{date}}: olahraga lain {{other}}",
+      "both": "{{date}}: latihan beban {{strength}}, olahraga lain {{other}}"
+    }
+  },
+  "list": {
+    "history": "Riwayat dan kalender",
+    "strengthLine_other": "{{count}} set, {{volume}}"
+  },
+  "exercises": {
+    "title": "Latihan beban",
+    "removed": "Gerakan yang sudah dihapus",
+    "usedLine_other": "{{count}} sesi, terakhir {{date}}",
+    "tab": {
+      "done": "Yang pernah kamu lakukan",
+      "all": "Semua gerakan"
+    },
+    "searchLabel": "Cari gerakan",
+    "searchPlaceholder": "Cari gerakan",
+    "emptyDone": {
+      "title": "Belum ada gerakan",
+      "description": "Gerakan yang kamu selesaikan di latihan muncul di sini. Kamu juga bisa membuka gerakan apa saja dari daftar lengkap.",
+      "browse": "Lihat semua gerakan"
+    },
+    "noMatch": {
+      "title": "Tidak ketemu",
+      "description": "Coba kata lain atau cari dengan nama Inggris."
+    },
+    "rowA11y": "{{name}}, {{detail}}"
+  },
+  "exercise": {
+    "removed": "Gerakan yang sudah dihapus",
+    "removedHint": "Gerakan ini sudah dihapus. Riwayatnya tetap ada.",
+    "musclesLine": "{{muscles}} ({{equipment}})",
+    "summary_other": "{{count}} sesi, terakhir {{last}}",
+    "noSessions": {
+      "title": "Belum ada sesi",
+      "description": "Selesaikan satu set gerakan ini di latihan, lalu grafik dan rekornya muncul di sini."
+    },
+    "progress": "Perkembangan"
+  },
+  "metric": {
+    "bestSet": "Set terbaik",
+    "e1rm": "1RM perkiraan",
+    "volume": "Volume",
+    "reps": "Repetisi",
+    "time": "Waktu terlama",
+    "totalTime": "Total waktu"
+  },
+  "range": {
+    "3m": "3 bln",
+    "6m": "6 bln",
+    "1y": "1 thn",
+    "all": "Semua"
+  },
+  "chart": {
+    "label": "{{metric}}, {{exercise}}",
+    "emptyRange": "Belum ada data di rentang ini.",
+    "hint": "Geser ke atas atau ke bawah untuk pindah titik."
+  },
+  "records": {
+    "title": "Rekor",
+    "weight": "Beban terberat",
+    "e1rm": "1RM perkiraan terbaik",
+    "volume": "Volume set terbaik",
+    "time": "Waktu terlama",
+    "valueOn": "{{value}}, {{date}}",
+    "rowA11y": "{{label}}: {{value}}, {{date}}"
+  },
+  "repRecords": {
+    "title": "Rekor repetisi",
+    "caption": "Repetisi terbanyak di setiap beban.",
+    "weight": "Beban",
+    "reps": "Repetisi",
+    "date": "Tanggal",
+    "bodyweight": "Berat badan",
+    "showAll": "Tampilkan semua ({{n}})",
+    "showLess": "Tampilkan lebih sedikit",
+    "rowA11y": "{{weight}}, repetisi: {{reps}}, {{date}}"
+  },
+  "sessions": {
+    "title": "Sesi sebelumnya",
+    "rowA11y": "{{date}}, set: {{sets}}",
+    "best": "Terbaik: {{set}}",
+    "more": "Tampilkan {{n}} lagi"
+  },
+  "heat": {
+    "title": "Beban per otot",
+    "intro": "Set berat yang kamu selesaikan per kelompok otot tiap minggu. Set pemanasan tidak dihitung.",
+    "gridTitle_other": "{{count}} minggu terakhir",
+    "weekA11y": "Minggu mulai {{week}}",
+    "cellA11y_other": "{{group}}, minggu mulai {{week}}: {{value}} set",
+    "weekNote": "Angka di atas kolom adalah tanggal Senin tiap minggu. Kolom paling kanan adalah minggu ini.",
+    "legend": {
+      "none": "0",
+      "from": "{{from}}+",
+      "range": "{{from}}-{{to}}",
+      "a11y": "Set per minggu: {{list}}"
+    },
+    "target": "10 sampai 20 set berat per otot per minggu itu target yang umum.",
+    "thisWeek": "Minggu ini",
+    "thisWeekEmpty": "Belum ada set minggu ini.",
+    "rowA11y_other": "{{group}}: {{value}} set minggu ini",
+    "sets_other": "{{value}} set",
+    "secondaryNote": "Otot pendukung dihitung setengah set.",
+    "sheet": {
+      "title": "{{group}}, minggu {{week}}",
+      "empty": "Tidak ada set untuk otot ini di minggu itu.",
+      "rowA11y_other": "{{name}}: {{value}} set",
+      "secondary": "Otot pendukung, dihitung setengah"
+    }
+  },
+  "detail": {
+    "title": "Latihan beban",
+    "volume": "Volume",
+    "sets": "Set",
+    "reps": "Repetisi",
+    "setsCount_other": "{{count}} set",
+    "rowA11y_other": "{{name}}, {{count}} set, terbaik {{best}}",
+    "open": "Buka ringkasan latihan beban"
+  }
+}

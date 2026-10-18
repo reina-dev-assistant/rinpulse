@@ -27,6 +27,19 @@ export const FAQ: readonly FaqItem[] = [
         : ""),
   },
   {
+    q: "Bisa dipakai tanpa jam?",
+    a: "Bisa. Pencatat latihan beban, rutinitas, perpustakaan gerakan, riwayat, dan upload ke Strava jalan dari HP saja, dan panduan awal punya jalur tanpa jam. Kalori latihan beban diperkirakan dari jumlah set dengan metode MET. Coach (JoyoRogo Pro) memakai jawabanmu atas badan terasa bagaimana hari ini sebagai pengganti data kesiapan dari jam.",
+  },
+  {
+    q: "Apa yang gratis dan apa yang JoyoRogo Pro?",
+    a: "Sinkron jam, skor, analisis latihan, pencatat latihan beban, Strava, perlengkapan, dan membagikan latihan ke Social gratis. JoyoRogo Pro dipakai untuk Coach (saran harian, rencana lari dan beban, Tanya coach) dan salinan cloud untuk olahraga, riwayat beban, perlengkapan, dan rencana Coach.",
+  },
+  {
+    q: "Kapan dukungan lebih dari satu jam dan sensor Bluetooth rilis?",
+    a: "Belum ada tanggal. Keduanya, plus data bersepeda kelas pro, sudah dikerjakan di cabang pengembangan dan dicatat di bagian Roadmap. Kami menandainya Segera hadir sampai ada di aplikasi yang bisa kamu pasang.",
+    link: { href: "/#roadmap", label: "Lihat roadmap" },
+  },
+  {
     q: "Bisa dipakai di iPhone?",
     a: "Bisa, sebagai beta publik lewat TestFlight; versi App Store 1.0 sedang menunggu review Apple, jadi belum ada di App Store. Baru diuji dengan Huawei Watch Fit 4 Pro, dan beberapa fitur iPhone masih baru diuji di komputer.",
     link: { href: "/iphone", label: "Lihat cara pasang di iPhone", goal: { name: "iphone_waitlist_click", location: "faq" } },

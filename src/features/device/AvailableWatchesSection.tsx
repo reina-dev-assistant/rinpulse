@@ -146,7 +146,7 @@ export function AvailableWatchesSection({ permission, bonded }: AvailableWatches
                       activeAddress={watch.activeAddress}
                       onConnect={(address) => {
                         void bonded.stopScan();
-                        void watch.connect(address);
+                        void watch.switchTo(address);
                       }}
                       onDisconnect={() => void watch.disconnect()}
                       onForget={(address) => {

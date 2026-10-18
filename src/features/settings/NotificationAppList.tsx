@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, StyleSheet, Switch, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { FlatList, Image, StyleSheet, Switch, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Chip } from '@/components/Chip';
 import { Details } from '@/components/Details';
-import { IconChip } from '@/components/IconChip';
 import { isIos } from '@/components/IosUnavailable';
 import { Field } from '@/components/Input';
 import { groupedRowStyle } from '@/components/NavRow';
@@ -17,6 +17,29 @@ import { HuaweiWear, type NotificationApp } from '@/wear';
 
 const ROW_HEIGHT = 64;
 const SKELETON_ROWS = 8;
+const ICON_SIZE = 32;
+
+/** The app's icon, or a neutral circle with a glyph when it is missing or fails to load. */
+function AppIcon({ uri }: { uri?: string | null }) {
+  const { colors } = useTheme();
+  const [failed, setFailed] = useState(false);
+  if (uri && !failed) {
+    return (
+      <Image
+        accessible={false}
+        source={{ uri }}
+        onError={() => setFailed(true)}
+        style={styles.icon}
+        fadeDuration={0}
+      />
+    );
+  }
+  return (
+    <View accessible={false} style={[styles.icon, styles.iconPlaceholder, { backgroundColor: colors.muted }]}>
+      <Ionicons name="apps" size={18} color={colors.mutedForeground} />
+    </View>
+  );
+}
 
 /** Per-app forwarding switches: searchable, windowed, with a sticky header. Loads the apps once. */
 export function NotificationAppList() {
@@ -145,7 +168,7 @@ function NotificationAppListAndroid() {
       removeClippedSubviews
       renderItem={({ item, index }) => (
         <View style={[styles.row, groupedRowStyle(theme, index, visible.length)]}>
-          <IconChip icon="apps" size="md" />
+          <AppIcon uri={item.iconUri} />
           <View style={styles.text}>
             <AppText variant="bodyStrong" numberOfLines={1}>
               {item.label}
@@ -199,5 +222,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
   },
+  icon: { width: ICON_SIZE, height: ICON_SIZE, borderRadius: ICON_SIZE / 2 },
+  iconPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
 });

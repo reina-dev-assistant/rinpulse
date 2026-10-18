@@ -1,0 +1,44 @@
+{
+  "pager": {
+    "position": "Slide {{n}} of {{total}}"
+  },
+  "slides": {
+    "title": "Slides",
+    "hint": "Choose which slides go out and set their order. Threads accepts at most {{max}} images per post.",
+    "empty": "This workout has no data to make slides from yet.",
+    "limit": "Threads accepts at most {{max}} images per post. Turn another slide off first.",
+    "moveUp": "Move slide {{name}} up",
+    "moveDown": "Move slide {{name}} down"
+  },
+  "route": {
+    "show": {
+      "label": "Show the route",
+      "hint": "Turn off to use numbers only, with no route map."
+    }
+  },
+  "name": {
+    "label": "Show your name",
+    "hint": "Your first name appears on the slides."
+  },
+  "caption": {
+    "title": "Post text",
+    "label": "Post text",
+    "counter": "{{n}} of {{max}} characters",
+    "question": "Question for readers",
+    "noQuestion": "No question",
+    "hashtag": {
+      "label": "#JoyoFit tag",
+      "hint": "Placed on the last line of the text."
+    }
+  },
+  "branding": "The JoyoFit logo always stays on Threads slides, Pro accounts included.",
+  "actions": {
+    "share": "Share to Threads",
+    "saveOpen": "Save all and open Threads",
+    "copy": "Copy text",
+    "saveOpenHint": "The text is copied too: paste it in Threads if its text field is empty. If Threads does not take all the images at once, use the save button: the images go to your photos, the text is copied, and the photo button in Threads picks them all."
+  },
+  "progress": {
+    "title": "Preparing image {{n}}/{{total}}"
+  }
+}

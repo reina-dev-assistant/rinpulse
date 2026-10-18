@@ -4,6 +4,7 @@ import * as Crypto from 'expo-crypto';
 import { authClient } from '@/cloud/auth';
 import { t } from '@/i18n';
 import { CLOUD_CONFIGURED, CLOUD_URL, JOYOROGO_URL } from '@/cloud/config';
+import { rogoCall } from '@/cloud/rogo';
 import { NotSignedInError } from '@/cloud/api';
 import { isIos } from '@/components/IosUnavailable';
 
@@ -93,6 +94,9 @@ export async function deleteJoyoRogoAccount(): Promise<boolean> {
       throw new Error(t('common:errors.deleteCloudFailed', { status: wiped.status }));
     }
   }
+
+  // The synced preferences, templates, routes and health records live in JoyoRogo's `sync_record` and go the same way.
+  await rogoCall<unknown>('sync/wipe', { ns: 'fit' });
 
   const response = await fetch(`${JOYOROGO_URL}/rpc/privacy/deleteMyAccount`, {
     method: 'POST',

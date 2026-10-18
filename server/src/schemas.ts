@@ -29,6 +29,8 @@ const nullableText = (max: number) =>
     .nullish()
     .transform((v) => v ?? null);
 
+const device = nullableText(64);
+
 export const stepSampleSchema = z.object({
   timestamp: unixSeconds,
   steps: counter,
@@ -37,6 +39,7 @@ export const stepSampleSchema = z.object({
   heartRate: nullableInt(0, 300),
   spo2: nullableInt(0, 100),
   restingHeartRate: nullableInt(0, 300),
+  device,
 });
 
 export const sleepSegmentSchema = z.object({
@@ -44,6 +47,7 @@ export const sleepSegmentSchema = z.object({
   end: unixSeconds,
   type: z.number().int().min(0).max(1_000),
   stage: nullableText(32),
+  device,
 });
 
 export const workoutPointSchema = z.object({
@@ -83,6 +87,7 @@ export const workoutSchema = z.object({
   steps: counter,
   summaryJson: z.string().max(200_000),
   complete: z.boolean(),
+  device,
   points: z.array(workoutPointSchema).max(MAX_POINTS_PER_WORKOUT).default([]),
 });
 

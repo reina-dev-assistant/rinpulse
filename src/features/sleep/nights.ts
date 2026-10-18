@@ -1,5 +1,5 @@
 import type { SleepScoreRow } from '@/db/queries';
-import { SESSION_GAP_SEC, withoutBlips, withoutStrayUnstaged, type SleepSpan } from '@/features/today/stats';
+import { SESSION_GAP_SEC, startOfLocalDay, withoutBlips, withoutStrayUnstaged, type SleepSpan } from '@/features/today/stats';
 import type { SleepStage } from '@/wear';
 
 /** A decoded stage, or `asleep` for a segment the watch stored without one. */
@@ -107,6 +107,32 @@ export function buildNights(segments: readonly SleepSpan[], scores: readonly Sle
       };
     })
     .reverse();
+}
+
+export interface DaySleep {
+  /** Asleep seconds of every session that ended on the day, night and naps together. */
+  asleepSeconds: number;
+  /** The part of {@link asleepSeconds} that came from naps. */
+  napSeconds: number;
+  /** The day has a main sleep (a session of {@link MIN_NIGHT_SEC} or more); a day with only naps has no night on record. */
+  hasNight: boolean;
+}
+
+/**
+ * Sleep per wake day, keyed by local midnight (unix seconds) of the day a session ends on: a nap belongs to the day it
+ * ends, like the main sleep. {@link buildNights} already cuts overlaps, so nothing is counted twice.
+ */
+export function sleepByDay(nights: readonly Night[]): Map<number, DaySleep> {
+  const days = new Map<number, DaySleep>();
+  for (const n of nights) {
+    const key = startOfLocalDay(n.end);
+    const day = days.get(key) ?? { asleepSeconds: 0, napSeconds: 0, hasNight: false };
+    day.asleepSeconds += n.asleepSeconds;
+    if (n.nap) day.napSeconds += n.asleepSeconds;
+    else day.hasNight = true;
+    days.set(key, day);
+  }
+  return days;
 }
 
 export interface HourStages {

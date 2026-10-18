@@ -82,10 +82,11 @@ NO SIGN-IN, NO DEMO ACCOUNT. Every feature of the app works without an account. 
 WITHOUT A WATCH you can still see: the four tabs (Today, Workouts, Watch, Settings) with their empty states; the Watch tab's "Before you connect" steps and the scan, which finds nothing when no watch is in range; every Settings screen (background sync, weather, Strava, Apple Health, profile and daily step goal, About with the privacy policy link, Log). Screens for features iOS does not allow (find my phone, calls, SOS texts) explain that instead of showing controls that would fail.
 
 PERMISSIONS and why:
-- Bluetooth: connect to the user's own Huawei watch (prompt appears when the user taps to scan or connect on the Watch tab).
+- Bluetooth: connect to the user's own Huawei watch (prompt appears when the user taps to scan or connect on the Watch tab) and, optionally, to heart rate straps, cycling sensors and running pods the user pairs under Watch, Sensor (the prompt appears after the "Lanjut" explanation).
 - Apple Health (write only): saves steps, distance, active energy, heart rate, SpO2, sleep and workouts (with routes) recorded by the watch. JoyoFit never reads Apple Health. The prompt appears only when the user switches the export on in Settings.
-- Location (when in use): optional, for weather on the watch (coordinates are rounded to about 1 km before they go to Open-Meteo) and, while a workout you started on the watch is running and the app is open, for sending your position to the watch. Never leaves the phone otherwise.
-- Background mode bluetooth-central: reconnect and sync with the remembered watch when iOS wakes the app.
+- Location (when in use): optional, for weather on the watch (coordinates are rounded to about 1 km before they go to Open-Meteo), for sending your position to the watch while a workout you started on the watch is running and the app is open, and for recording the route of an outdoor workout the user starts on the phone (Workouts, Rekam latihan). Never leaves the phone otherwise (it is part of the workout, which stays on the phone unless the user turns on the optional cloud backup or Strava upload).
+- Background mode bluetooth-central: reconnect and sync with the remembered watch when iOS wakes the app; keep receiving a paired heart rate strap or cycling sensor during a workout recorded on the phone.
+- Background mode location: only while a workout the user started on the phone with the GPS is running (the blue status-bar indicator is shown); it records the route with the screen locked. It stops when the workout is finished or discarded.
 - Encryption: the protocol with the watch implements AES and HMAC itself; ITSAppUsesNonExemptEncryption is false (the encryption only protects the Bluetooth link to the user's watch; it is not used for anything else).
 
 TRADEMARK: JoyoFit is an independent, open-source app (AGPL-3.0, https://github.com/dzulfikar08/joyofit). It is not affiliated with Huawei; "Huawei" appears only to say which watches it works with. The app name and icon do not use Huawei marks.
@@ -102,7 +103,7 @@ Contact: Dzulfikar Ats Tsauri, +6285156160345, dzulfikar@joyorogo.com. No demo a
 ## App Privacy (published)
 
 Collected, all for App Functionality only, no tracking: Name, Email Address, User ID, Device ID (the watch's Bluetooth address), Health, Fitness, Precise Location (workout GPS tracks): linked to the user, and only after the user signs in to the optional JoyoRogo cloud.
-Coarse Location (weather position rounded to about 1 km, sent to Open-Meteo): not linked. Apple Health data is written only and never read, so it is not a collected row.
+Coarse Location (weather position rounded to about 1 km, sent to Open-Meteo): not linked. The optional AI connection (JoyoRogo Pro; Claude, ChatGPT or another MCP app the user connects, read-only, only when the user asks a question there, never GPS routes or Strava data) lets the AI provider the user chose read their diary, weight, workouts, sleep and recovery data: decide in App Store Connect whether the label needs a third-party row for it [INFERENCE: not checked]. Apple Health data is written only and never read, so it is not a collected row.
 
 ## Family monitoring (disclosure checklist)
 

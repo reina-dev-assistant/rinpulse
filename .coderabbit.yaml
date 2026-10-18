@@ -1,0 +1,31 @@
+# CodeRabbit review settings (https://docs.coderabbit.ai/reference/configuration)
+language: en-US
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!**/*.lock"
+    - "!bun.lock"
+    - "!**/generated/**"
+  path_instructions:
+    - path: "modules/huawei-wear/**"
+      instructions: >-
+        Native Huawei watch protocol code (Kotlin and Swift). Treat watch safety as blocking:
+        bounded transfer sizes, malformed input handling, timeouts, no state that can hang the
+        watch or break its pairing/bond, no leaked BLE/RFCOMM connections, cancellation honored.
+    - path: "src/**"
+      instructions: >-
+        Expo/React Native app. User-facing strings must go through i18next with keys in both
+        id and en; no emojis in UI copy; icons are Ionicons; use the app's styled components,
+        not native Alert dialogs.
+    - path: "server/**"
+      instructions: >-
+        Cloudflare Worker. Check auth on every route, input validation, and that no secrets
+        or personal data are logged.
+chat:
+  auto_reply: true

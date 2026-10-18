@@ -3,9 +3,12 @@ import * as SystemUI from 'expo-system-ui';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
+import { notePrefChanged, subscribePrefApplied } from '@/cloud/prefsSync';
+
 import { DEFAULT_THEME_ID, getTheme, parseThemeId, resolveScheme, type Colors, type Scheme, type Theme, type ThemeId } from './themes';
 
-const THEME_KEY = 'app_theme';
+/** The kv-store key of the choice; also the synced preference `theme` (`src/cloud/syncInventory.ts`). */
+export const THEME_KEY = 'app_theme';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -74,7 +77,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } catch {
       // The choice still applies for this session.
     }
+    void notePrefChanged('theme');
   }, []);
+
+  // A theme pulled from the account was just written to the kv store: show it without a restart.
+  useEffect(
+    () =>
+      subscribePrefApplied('theme', () => {
+        const next = getTheme(readStoredThemeId());
+        applyNativeScheme(next);
+        setId(next.id);
+      }),
+    [],
+  );
 
   const value = useMemo<ThemeContextValue>(
     () => ({

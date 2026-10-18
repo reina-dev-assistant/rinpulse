@@ -473,9 +473,11 @@ final class P2pControllerTests: XCTestCase {
         await connect(h)
         h.hrvPages = [Harness.answer(500044, [[1_700_000_000_000, 1_700_000_060_000]], 500044831, 61)]
         try await h.extensions[0](h.link.session)
-        let metrics = HealthMetricsStore(store: h.sync)
+        let address = h.link.handleValue.address
+        let metrics = HealthMetricsStore(store: h.sync, address: { address })
         XCTAssertEqual(metrics.count("hrv"), 1)
         XCTAssertEqual(metrics.lastFetchTimestamp("hrv"), 1_700_000_060_000)
+        XCTAssertEqual(try h.sync.read { try $0.query("SELECT device FROM health_metrics") { $0.text(0) } }, [address], "the rows are attributed to the connected watch")
         XCTAssertTrue(h.events.messages().contains { $0.contains("Health metrics: 1 rows stored") })
         // Healthy Living is told afterwards; without a request from the watch it stays quiet.
         XCTAssertTrue(h.events.messages().contains { $0.contains("not pushing (activity sync)") })

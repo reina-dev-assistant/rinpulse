@@ -75,6 +75,18 @@ export async function forgetCloudWorkouts(db: SQLiteDatabase): Promise<void> {
   await setCloudState(db, { [WORKOUT_PULL_CURSOR_KEY]: null, [WORKOUT_FAILED_KEY]: null });
 }
 
+/** `cloud_state` key: ms of the moment this phone's existing data was kept apart from the account that signed in afterwards (`detachLocalData`). */
+export const DETACHED_AT_KEY = 'detached_at';
+
+/** The detach time, or null when this phone's data was never kept apart. Gear and the coach plan hold back what is not newer than it. */
+export async function getDetachedAt(db: Pick<SQLiteDatabase, 'getFirstAsync'>): Promise<number | null> {
+  const value = Number(await getCloudValue(db, DETACHED_AT_KEY));
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+/** `cloud_workout.hash` of a workout that was only marked as uploaded so the next account never receives it; it has no cloud copy, so it must not count in the size estimates. */
+export const DETACHED_HASH = 'detached';
+
 /**
  * Remembers which JoyoRogo account the cloud bookkeeping belongs to. A different account has none of the rows and none of
  * the workouts, so everything is sent to it again and its changes are pulled from the start. True when the account changed.
@@ -181,6 +193,11 @@ export async function clearCloudWorkouts(db: Pick<SQLiteDatabase, 'runAsync'>): 
   await db.runAsync('DELETE FROM cloud_workout');
 }
 
+/** Every stored workout with its current `rev`: what `detachLocalData` records as already uploaded. */
+export function listWorkoutsForBaseline(db: Pick<SQLiteDatabase, 'getAllAsync'>): Promise<{ start: number; rev: number }[]> {
+  return db.getAllAsync<{ start: number; rev: number }>('SELECT start, rev FROM workouts');
+}
+
 /** A workout still to send. `points` is its stored point count, for the size estimate. */
 export interface PendingWorkout {
   id: number;
@@ -234,11 +251,13 @@ export interface UploadedStats {
 
 export async function getUploadedStats(db: Pick<SQLiteDatabase, 'getFirstAsync'>): Promise<UploadedStats> {
   const sums = await db.getFirstAsync<{ workouts: number; bytes: number }>(
-    'SELECT COUNT(*) AS workouts, COALESCE(SUM(bytes), 0) AS bytes FROM cloud_workout',
+    'SELECT COUNT(*) AS workouts, COALESCE(SUM(bytes), 0) AS bytes FROM cloud_workout WHERE hash != ?',
+    DETACHED_HASH,
   );
   const points = await db.getFirstAsync<{ n: number }>(
     `SELECT COUNT(*) AS n FROM workout_points
-     WHERE workout_id IN (SELECT w.id FROM workouts w JOIN cloud_workout c ON c.start = w.start)`,
+     WHERE workout_id IN (SELECT w.id FROM workouts w JOIN cloud_workout c ON c.start = w.start WHERE c.hash != ?)`,
+    DETACHED_HASH,
   );
   return { workouts: sums?.workouts ?? 0, bytes: sums?.bytes ?? 0, points: points?.n ?? 0 };
 }

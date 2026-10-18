@@ -10,7 +10,7 @@ export const social: Post = {
   body: [
     {
       kind: "p",
-      text: "Tab Social menampilkan feed JoyoRogo di dalam JoyoFit. Latihan dari jammu, makanan yang dicatat teman, dan postingan grup ada di satu layar, tanpa pindah aplikasi.",
+      text: "Tab Social menampilkan feed JoyoRogo di dalam JoyoFit. Latihan dari jam-mu, makanan yang dicatat teman, dan postingan grup ada di satu layar, tanpa pindah aplikasi.",
     },
     { kind: "h2", text: "Yang ada di tab Social" },
     {

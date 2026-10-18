@@ -37,7 +37,7 @@ public final class P2pController: LinkObserver, @unchecked Sendable {
         self.wearSettings = wearSettings
         self.syncStore = syncStore
         self.events = events
-        self.metrics = HealthMetricsStore(store: syncStore)
+        self.metrics = HealthMetricsStore(store: syncStore, address: { [link] in link.handle()?.address })
         self.nowMs = nowMs
         self.pingWaitMs = pingWaitMs
         self.answerWaitMs = answerWaitMs

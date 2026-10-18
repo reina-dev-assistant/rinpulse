@@ -461,7 +461,7 @@ final class SyncSlicesTests: XCTestCase {
 
 final class FullHistoryTests: XCTestCase {
     func testAFullHistoryWorkoutWindowStartsAt2000AndTheIncrementalOneIsUnchanged() throws {
-        let store = WorkoutStore(SyncStore(url: temporaryDatabaseURL()))
+        let store = WorkoutStore(SyncStore(url: temporaryDatabaseURL()), address: "AA:AA:AA:AA:AA:01")
         XCTAssertEqual(try store.syncStart(fullHistory: true), 946_684_800)
         XCTAssertEqual(try store.syncStart(), Int(WorkoutStore.defaultStartSec))
         _ = try store.save(WorkoutRecord(

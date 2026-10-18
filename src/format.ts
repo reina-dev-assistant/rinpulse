@@ -1,4 +1,5 @@
-import { fmtAgo, fmtClock, fmtDateTime, fmtDistance, fmtDuration, fmtInt, fmtSyncTime } from '@/i18n';
+import { isCorruptionError } from '@/db/recovery/corruption';
+import { fmtAgo, fmtClock, fmtDateTime, fmtDistance, fmtDuration, fmtInt, fmtSyncTime, t } from '@/i18n';
 
 // Locale-aware wrappers kept under their old names so screens keep one import. The work is in src/i18n/format.ts.
 
@@ -23,7 +24,9 @@ export const formatDistance = (meters: number) => fmtDistance(meters);
 
 export const formatDateTime = (sec: number) => fmtDateTime(sec);
 
+/** The text of an error for the screen. A damaged database file is never shown as SQLite's words: it has its own notice and repair (`src/db/recovery`). */
 export function errorMessage(e: unknown): string {
+  if (isCorruptionError(e)) return t('common:dbRecovery.inline');
   return e instanceof Error ? e.message : String(e);
 }
 

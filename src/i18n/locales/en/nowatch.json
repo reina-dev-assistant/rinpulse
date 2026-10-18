@@ -1,0 +1,20 @@
+{
+  "supported": {
+    "title": "Supported watches",
+    "intro": "JoyoFit talks directly to Huawei and Honor watches. Only one model has been tested on a real watch.",
+    "status": {
+      "tested": "Tested on a real watch",
+      "experimental": "Experimental: in the list, never tried with JoyoFit",
+      "notYet": "Not yet: the newer pairing is not built"
+    },
+    "footer": "A Huawei or Honor watch that is not listed is still tried. Other brands, and earbuds, cannot be paired. JoyoFit is useful without a watch too: log strength workouts, use Coach and browse the exercise library.",
+    "fullList": "Full list",
+    "request": "Request support for my watch"
+  },
+  "intro": {
+    "title": "A watch is optional",
+    "body": "Strength logging, Coach and the exercise library work without a watch. A Huawei or Honor watch adds steps, sleep, heart rate and daily readiness to Today.",
+    "permission": "If you continue, your phone may ask for Bluetooth permission so JoyoFit can find watches nearby.",
+    "continue": "Continue"
+  }
+}

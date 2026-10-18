@@ -9,10 +9,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useSQLiteContext } from 'expo-sqlite';
 import { AppState } from 'react-native';
 
 import { authClient } from '@/cloud/auth';
 import { rogo } from '@/cloud/rogo';
+import { rememberedWatch } from '@/features/device/rememberedWatch';
 import { bodyMetricsFrom, buildDay, localDate, rogoMealFor } from '@/features/meals/mealMap';
 import { errorMessage } from '@/format';
 import { t } from '@/i18n';
@@ -62,6 +64,7 @@ export function useMeals(): MealsContextValue {
  * answers the watch from the last day stored here (native `diet_day`) and rolls it over to an empty new day.
  */
 export function MealsProvider({ children }: { children: ReactNode }) {
+  const db = useSQLiteContext();
   const { dataVersion, linkState } = useWatch();
   const session = authClient.useSession();
   const signedIn = session.data?.user != null;
@@ -173,12 +176,21 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     }
   }, [signedIn, refresh, reloadStatus]);
 
+  // The refresh exists to feed the watch's calorie card. With no watch on this phone (a strength-only install) it would only spend
+  // three JoyoRogo reads and write a diary day nobody reads on every start and foreground, so the automatic triggers skip it.
+  const refreshIfWatch = useCallback(
+    async (reason: string) => {
+      if (await rememberedWatch(db)) await refresh(reason);
+    },
+    [db, refresh],
+  );
+
   // First render with a session, and after every local sync (the watch may have logged meals; the diary may have changed).
   useEffect(() => {
     if (!signedIn) return;
-    const timer = setTimeout(() => void refresh('sync'), REFRESH_DEBOUNCE_MS);
+    const timer = setTimeout(() => void refreshIfWatch('sync'), REFRESH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [signedIn, dataVersion, refresh]);
+  }, [signedIn, dataVersion, refreshIfWatch]);
 
   // The watch just connected: push even if nothing changed (native also pushes its stored day on connect).
   useEffect(() => {
@@ -188,10 +200,10 @@ export function MealsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!signedIn) return;
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void refresh('foreground');
+      if (state === 'active') void refreshIfWatch('foreground');
     });
     return () => subscription.remove();
-  }, [signedIn, refresh]);
+  }, [signedIn, refreshIfWatch]);
 
   // The watch quick-logged a meal: native stored it; write it to JoyoRogo and read the diary back.
   useEventListener(HuaweiWear, 'onWatchMealLogged', () => {

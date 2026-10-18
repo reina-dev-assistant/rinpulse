@@ -18,11 +18,30 @@ export async function hasStoredWatch(db: SQLiteDatabase): Promise<boolean> {
   return (await db.getFirstAsync<{ address: string }>('SELECT address FROM device LIMIT 1')) !== null;
 }
 
+/** The database holds anything a watch (or a Huawei Health, FIT or Health export) produced: steps, sleep, or a workout that was not logged here. */
+export async function hasWatchData(db: SQLiteDatabase): Promise<boolean> {
+  const row = await db.getFirstAsync<{ present: number }>(
+    `SELECT (EXISTS (SELECT 1 FROM step_samples) OR EXISTS (SELECT 1 FROM sleep_segments) OR EXISTS (SELECT 1 FROM workouts WHERE imported = 0)) AS present`,
+  );
+  return (row?.present ?? 0) === 1;
+}
+
 export function listStepSamplesSince(db: SQLiteDatabase, sinceSec: number): Promise<StepSample[]> {
   return db.getAllAsync<StepSample>(
     `SELECT timestamp, steps, calories, distance,
             heart_rate AS heartRate, spo2, resting_heart_rate AS restingHeartRate
      FROM step_samples WHERE timestamp >= ? ORDER BY timestamp`,
+    sinceSec,
+  );
+}
+
+/**
+ * The watch's own minutes that carry energy since `sinceSec` (`imported = 0`: restored, FIT and strap minutes are not the
+ * watch's all-day energy), `calories` in small calories (1/1000 kcal). What JoyoRogo's day active-energy total sums.
+ */
+export function listWatchCaloriesSince(db: SQLiteDatabase, sinceSec: number): Promise<{ timestamp: number; calories: number }[]> {
+  return db.getAllAsync<{ timestamp: number; calories: number }>(
+    'SELECT timestamp, calories FROM step_samples WHERE timestamp >= ? AND imported = 0 AND calories > 0 ORDER BY timestamp',
     sinceSec,
   );
 }

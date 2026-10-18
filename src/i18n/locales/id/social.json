@@ -38,9 +38,22 @@
     "figure": {
       "time": "Waktu",
       "distance": "Jarak",
+      "pace": "Pace",
+      "paceValue": "{{pace}} /km",
+      "speed": "Kecepatan",
+      "speedValue": "{{kmh}} km/j",
+      "elevation": "Tanjakan",
       "energy": "Energi",
       "avgHr": "Detak rata-rata",
       "maxHr": "Detak maks"
+    },
+    "map": {
+      "alt": "Peta rute {{title}}",
+      "start": "Mulai",
+      "finish": "Selesai",
+      "hint": "Garis disederhanakan. 200 m pertama dan terakhir tidak ditampilkan.",
+      "show": "Tampilkan peta",
+      "showHint": "Rute disederhanakan, 200 m awal dan akhir dipotong."
     }
   },
   "comments": {
@@ -60,7 +73,9 @@
     "private": "Profil ini bersifat pribadi.",
     "posts": "Postingan",
     "followers": "Pengikut",
-    "following": "Mengikuti"
+    "following": "Mengikuti",
+    "shareMaps": "Peta rute di postingan",
+    "shareMapsHint": "Latihan ber-GPS tampil dengan peta rute. Garis disederhanakan dan 200 m awal dan akhir dipotong."
   },
   "groups": {
     "memberCount_other": "{{count}} anggota",
@@ -115,8 +130,8 @@
     "hintGroup": "Hanya orang yang satu grup JoyoRogo denganmu.",
     "hintPublic": "Siapa saja di JoyoRogo. Profil JoyoRogo kamu harus publik.",
     "includeHr": "Data detak jantung",
-    "includeRoute": "Rute",
-    "includeRouteHint": "Menunjukkan di mana kamu mulai dan selesai.",
+    "includeRoute": "Tampilkan peta",
+    "includeRouteHint": "Garis disederhanakan dan 200 m awal dan akhir dipotong, sama seperti stiker. Kalau dimatikan, rute tidak ikut terkirim.",
     "includeComparison": "Perbandingan dengan latihan sebelumnya",
     "note": "Semua yang kamu bagikan melihat ringkasannya. Analisis lengkap (peta, grafik, split, zona, best effort, dan lainnya) hanya terlihat oleh anggota JoyoRogo Pro dan kamu.",
     "post": "Kirim"

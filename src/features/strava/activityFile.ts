@@ -35,6 +35,35 @@ export interface StravaWorkout {
   elevationLoss?: number | null;
   /** Metres per second, from the watch's summary. */
   maxSpeed?: number | null;
+  /** Watts, from `summary_json` (a power meter's recording or an imported file). */
+  avgPower?: number | null;
+  maxPower?: number | null;
+  normalizedPower?: number | null;
+  /** Steps per minute on foot, rpm on a bike, from `summary_json`; a foot sport without `steps` takes its cadence from here. */
+  avgCadence?: number | null;
+  maxCadence?: number | null;
+  /** The person marked this ride as an e-bike ride: Strava's `EBikeRide` instead of `Ride`. */
+  ebike?: boolean;
+  /** Ride metrics of a bike workout (`cycling/analyzeRide`) that the session carries where FIT has a field for them. */
+  ride?: StravaRideMetrics;
+}
+
+/** What FIT's session message can hold of a ride's analysis; everything is optional and a missing value is not written. */
+export interface StravaRideMetrics {
+  /** Training stress score. */
+  tss?: number | null;
+  /** Intensity factor, 0.00 to about 1.5. */
+  intensityFactor?: number | null;
+  /** Functional threshold power the TSS and IF were computed with, watts. */
+  ftp?: number | null;
+  /** Mechanical work, kJ. */
+  workKj?: number | null;
+  /** Mean percent of the left pedal. */
+  balanceLeftPct?: number | null;
+  /** Net grade over the ride, and the steepest ascent and descent, percent. */
+  avgGradePct?: number | null;
+  maxGradePct?: number | null;
+  minGradePct?: number | null;
 }
 
 export interface StravaPoint {
@@ -43,6 +72,21 @@ export interface StravaPoint {
   lon: number | null;
   alt: number | null;
   hr: number | null;
+  /** Metres per second. */
+  speed?: number | null;
+  /** Steps per minute on foot, rpm on a bike (as `workout_points.cadence`). */
+  cadence?: number | null;
+  power?: number | null;
+}
+
+/** One lap of a workout with several (a `summary_json.laps` entry); a workout with fewer than two laps is written as one lap. */
+export interface StravaLap {
+  startTs: number;
+  endTs: number;
+  distanceM: number | null;
+  avgHr: number | null;
+  maxHr: number | null;
+  avgCadence: number | null;
 }
 
 export interface StravaSport {
@@ -85,6 +129,7 @@ const FIT_SUB_SPORT = {
   treadmill: 1,
   trail: 3,
   indoorCycling: 6,
+  eBikeFitness: 28,
   indoorRowing: 14,
   elliptical: 15,
   stairClimbing: 16,
@@ -114,7 +159,7 @@ const SPORTS: Readonly<Record<number, StravaSport>> = {
   4: entry('Hike', FIT_SPORT.hiking, FIT_SUB_SPORT.generic),
   5: entry('Run', FIT_SPORT.running, FIT_SUB_SPORT.treadmill, true),
   6: entry('Swim', FIT_SPORT.swimming, FIT_SUB_SPORT.lapSwimming),
-  7: entry('Ride', FIT_SPORT.cycling, FIT_SUB_SPORT.indoorCycling, true),
+  7: entry('VirtualRide', FIT_SPORT.cycling, FIT_SUB_SPORT.indoorCycling),
   8: entry('Swim', FIT_SPORT.swimming, FIT_SUB_SPORT.openWater),
   11: entry('TrailRun', FIT_SPORT.running, FIT_SUB_SPORT.trail),
   13: entry('Walk', FIT_SPORT.walking, FIT_SUB_SPORT.indoorWalking, true),
@@ -129,7 +174,7 @@ const SPORTS: Readonly<Record<number, StravaSport>> = {
   137: entry('Yoga', FIT_SPORT.training, FIT_SUB_SPORT.yoga),
   138: entry('Pilates', FIT_SPORT.training, FIT_SUB_SPORT.pilates),
   140: entry('WeightTraining', FIT_SPORT.training, FIT_SUB_SPORT.strengthTraining),
-  141: entry('Ride', FIT_SPORT.cycling, FIT_SUB_SPORT.indoorCycling, true),
+  141: entry('VirtualRide', FIT_SPORT.cycling, FIT_SUB_SPORT.indoorCycling),
   143: entry('HighIntensityIntervalTraining', FIT_SPORT.hiit, FIT_SUB_SPORT.generic),
   145: entry('Crossfit', FIT_SPORT.training, FIT_SUB_SPORT.generic),
   163: entry('InlineSkate', FIT_SPORT.inlineSkating, FIT_SUB_SPORT.generic),
@@ -145,8 +190,15 @@ const SPORTS: Readonly<Record<number, StravaSport>> = {
   210: entry('RockClimbing', FIT_SPORT.rockClimbing, FIT_SUB_SPORT.generic),
 };
 
-export function stravaSport(huaweiSportType: number): StravaSport {
-  return SPORTS[huaweiSportType] ?? entry('Workout', FIT_SPORT.training, FIT_SUB_SPORT.generic);
+/**
+ * Strava activity type and FIT sport of a Huawei sport. A bike ride outdoors is `Ride`, one indoors (trainer, spinning: the
+ * Huawei indoor-cycling sports) is `VirtualRide`, and an outdoor ride the person marked as an e-bike ride is `EBikeRide` (FIT sport
+ * stays cycling, so gear and the sport kind do not change; the sub sport says e-bike). Strava takes the `sport_type` upload field
+ * over the file's sport.
+ */
+export function stravaSport(huaweiSportType: number, ebike = false): StravaSport {
+  const sport = SPORTS[huaweiSportType] ?? entry('Workout', FIT_SPORT.training, FIT_SUB_SPORT.generic);
+  return ebike && sport.sportType === 'Ride' ? entry('EBikeRide', FIT_SPORT.cycling, FIT_SUB_SPORT.eBikeFitness) : sport;
 }
 
 /** Stable per workout (its start is unique), so Strava refuses a second upload of the same workout as a duplicate. */
@@ -160,6 +212,9 @@ interface Sample {
   lon: number | null;
   alt: number | null;
   hr: number | null;
+  speed: number | null;
+  cadence: number | null;
+  power: number | null;
   /** Cumulative metres, filled in by `withDistance`. */
   distance: number;
 }
@@ -189,7 +244,7 @@ function collectSamples(workout: StravaWorkout, points: readonly StravaPoint[]):
   const at = (ts: number): Sample => {
     let sample = bySecond.get(ts);
     if (!sample) {
-      sample = { ts, lat: null, lon: null, alt: null, hr: null, distance: 0 };
+      sample = { ts, lat: null, lon: null, alt: null, hr: null, speed: null, cadence: null, power: null, distance: 0 };
       bySecond.set(ts, sample);
     }
     return sample;
@@ -203,6 +258,9 @@ function collectSamples(workout: StravaWorkout, points: readonly StravaPoint[]):
     }
     if (p.alt !== null && Number.isFinite(p.alt)) sample.alt = p.alt;
     if (p.hr !== null && p.hr > 0 && p.hr < 255) sample.hr = Math.round(p.hr);
+    if (p.speed !== null && p.speed !== undefined && Number.isFinite(p.speed) && p.speed >= 0 && p.speed < 100) sample.speed = p.speed;
+    if (p.cadence !== null && p.cadence !== undefined && Number.isFinite(p.cadence) && p.cadence >= 0 && p.cadence < 500) sample.cadence = Math.round(p.cadence);
+    if (p.power !== null && p.power !== undefined && Number.isFinite(p.power) && p.power >= 0 && p.power < 4000) sample.power = Math.round(p.power);
   }
   at(workout.start);
   at(end);
@@ -246,6 +304,27 @@ function findPause(workout: StravaWorkout, samples: readonly Sample[]): Pause | 
 }
 
 /**
+ * Cumulative distance from the per-sample speed (m/s), scaled so the last sample is `total`. False (nothing written) when fewer than
+ * half of the samples carry a speed or they are all zero. A gap of more than 5 s between samples (a pause) adds nothing.
+ */
+function speedDistance(samples: Sample[], total: number): boolean {
+  const withSpeed = samples.filter((s) => s.speed !== null).length;
+  if (withSpeed * 2 < samples.length) return false;
+  const cumulative: number[] = [0];
+  for (let i = 1; i < samples.length; i++) {
+    const s = samples[i] as Sample;
+    const dt = s.ts - (samples[i - 1] as Sample).ts;
+    cumulative.push((cumulative[i - 1] as number) + (dt <= 5 ? (s.speed ?? 0) * dt : 0));
+  }
+  const sum = cumulative[cumulative.length - 1] as number;
+  if (!(sum > 0)) return false;
+  samples.forEach((s, i) => {
+    s.distance = ((cumulative[i] as number) * total) / sum;
+  });
+  return true;
+}
+
+/**
  * Fills `distance` on every sample. Distance is spread over the *active* time (the workout without its pause), so the
  * stream reads as moving the whole time the watch was running and as stopped exactly while it was paused:
  * - GPS fixes get the haversine path length scaled so the last fix is at the watch's total; the stretch before the first
@@ -274,8 +353,9 @@ function withDistance(samples: Sample[], total: number, pause: Pause | null): vo
   }
   const gpsTotal = cumulative[cumulative.length - 1] as number;
   if (fixes.length < 2 || !(gpsTotal > 0) || !(activeTotal > 0)) {
-    // No path to scale (no fixes, one fix, or all fixes on one spot): fall back to time.
-    for (const s of samples) s.distance = linear(s);
+    // No path to scale (no fixes, one fix, or all fixes on one spot): the samples' own speed if most have one (a bike trainer or
+    // a treadmill pod), else time.
+    if (!speedDistance(samples, total)) for (const s of samples) s.distance = linear(s);
     last.distance = total;
     return;
   }
@@ -309,7 +389,7 @@ function withDistance(samples: Sample[], total: number, pause: Pause | null): vo
 }
 
 /** FIT message numbers of the global profile. */
-const MESG = { fileId: 0, session: 18, lap: 19, record: 20, event: 21, deviceInfo: 23, activity: 34 } as const;
+const MESG = { fileId: 0, session: 18, lap: 19, record: 20, event: 21, deviceInfo: 23, activity: 34, set: 225 } as const;
 
 /** FIT enum values used below. */
 const FIT = {
@@ -321,6 +401,7 @@ const FIT = {
   eventTypeStart: 0,
   eventTypeStop: 1,
   eventTypeStopAll: 4,
+  lapTriggerManual: 0,
   lapTriggerSessionEnd: 7,
   sessionTriggerActivityEnd: 0,
   intensityActive: 0,
@@ -330,6 +411,8 @@ const FIT = {
   deviceSoftware: 1,
   /** `source_type` `local`: the device is the recorder itself, not a paired sensor. */
   sourceLocal: 6,
+  /** `set_type` of a set message: 0 rest, 1 active. */
+  setActive: 1,
 } as const;
 
 /** The software that writes the file; the recording device is the watch when it is known (`options.device`). */
@@ -340,6 +423,22 @@ type Entry = readonly [num: number, type: FitFieldType, value: FitValue];
 
 /** A whole number above zero, or null: what the watch did not measure is not written. */
 const positive = (value: number | null | undefined): number | null => (value !== null && value !== undefined && value > 0 ? Math.round(value) : null);
+
+/**
+ * One set of a strength workout as a FIT `set` message (global message 225). Times are epoch milliseconds; `buildFit` rounds them
+ * to seconds and keeps them inside the workout. `category` is a FIT `exercise_category` (see `exerciseCategory`).
+ */
+export interface FitSet {
+  startMs: number;
+  endMs: number;
+  /** Repetitions; null for a timed set. */
+  reps: number | null;
+  /** Load in kg; null or 0 = bodyweight (no weight field is written). */
+  weightKg: number | null;
+  /** Active time in ms: the set's `duration` field. */
+  durationMs: number;
+  category: number;
+}
 
 export interface BuiltFit {
   bytes: Uint8Array;
@@ -358,13 +457,20 @@ export interface BuiltFit {
  * workout; it defaults to this device's. `device` is the watch that recorded the workout (`stravaDevice`): it becomes
  * the file's manufacturer, product and product name and the creator `device_info`, with JoyoFit as a second device
  * (the software that wrote the file). Without it the file is JoyoFit's own, manufacturer 255.
+ * `sets` (a strength workout) are written as `set` messages in time order between the last record and the timer stop: the
+ * timestamp is the end of the set, `start_time` its start, both clamped to the file's span, `duration` its active time in ms,
+ * `weight` kg x 16, `category` one `exercise_category` (a one element uint16 array) and `message_index` the position.
  */
-export function buildFit(workout: StravaWorkout, points: readonly StravaPoint[], options: { utcOffsetSeconds?: number; device?: StravaDevice | null } = {}): BuiltFit {
+export function buildFit(
+  workout: StravaWorkout,
+  points: readonly StravaPoint[],
+  options: { utcOffsetSeconds?: number; device?: StravaDevice | null; sets?: readonly FitSet[]; laps?: readonly StravaLap[] } = {},
+): BuiltFit {
   const samples = collectSamples(workout, points);
   const total = workout.distance > 0 ? workout.distance : 0;
   const pause = findPause(workout, samples);
   withDistance(samples, total, pause);
-  const sport = stravaSport(workout.sportType);
+  const sport = stravaSport(workout.sportType, workout.ebike);
   // `collectSamples` always has a sample at the start and at the end.
   const start = (samples[0] as Sample).ts;
   const end = (samples[samples.length - 1] as Sample).ts;
@@ -379,7 +485,11 @@ export function buildFit(workout: StravaWorkout, points: readonly StravaPoint[],
   const maxSpeed = workout.maxSpeed && workout.maxSpeed > 0 ? Math.max(workout.maxSpeed, avgSpeed ?? 0) : null;
   const foot = sport.fitSport === FIT_SPORT.running || sport.fitSport === FIT_SPORT.walking || sport.fitSport === FIT_SPORT.hiking;
   const strides = foot && workout.steps && workout.steps > 0 ? Math.round(workout.steps / 2) : null;
-  const avgCadence = strides !== null && timer > 0 ? Math.round(strides / (timer / 60)) : null;
+  /** FIT counts running and walking cadence per leg (strides per minute); the app keeps steps per minute on foot, rpm on a bike. */
+  const fitCadence = (c: number | null | undefined): number | null => (c === null || c === undefined || c < 0 ? null : Math.min(254, Math.round(foot ? c / 2 : c)));
+  const cadenceOf = (c: number | null | undefined): number | null => (c !== null && c !== undefined && c > 0 ? fitCadence(c) : null);
+  const avgCadence = strides !== null && timer > 0 ? Math.round(strides / (timer / 60)) : cadenceOf(workout.avgCadence);
+  const maxCadence = cadenceOf(workout.maxCadence);
   const ascent = workout.elevationGain !== null && workout.elevationGain !== undefined && workout.elevationGain >= 0 ? Math.round(workout.elevationGain) : null;
   const descent = workout.elevationLoss !== null && workout.elevationLoss !== undefined && workout.elevationLoss >= 0 ? Math.round(workout.elevationLoss) : null;
 
@@ -447,6 +557,13 @@ export function buildFit(workout: StravaWorkout, points: readonly StravaPoint[],
   if (total > 0) recordFields.push({ num: 5, type: 'uint32' });
   if (hasAlt) recordFields.push({ num: 2, type: 'uint16' }, { num: 78, type: 'uint32' });
   if (hasHr) recordFields.push({ num: 3, type: 'uint8' });
+  const hasCadence = samples.some((s) => s.cadence !== null);
+  const hasSpeed = samples.some((s) => s.speed !== null);
+  const hasPower = samples.some((s) => s.power !== null);
+  if (hasCadence) recordFields.push({ num: 4, type: 'uint8' });
+  // Speed is metres per second x 1000 in both the 16-bit and the enhanced 32-bit field.
+  if (hasSpeed) recordFields.push({ num: 6, type: 'uint16' }, { num: 73, type: 'uint32' });
+  if (hasPower) recordFields.push({ num: 7, type: 'uint16' });
   const record = fit.define(3, MESG.record, recordFields);
   // The watch's pause, if any, as a timer stop after the last record at or before its start and a timer start before the
   // first record at or after its end; Strava takes the moving time of a run from these events when a file has any.
@@ -468,7 +585,41 @@ export function buildFit(workout: StravaWorkout, points: readonly StravaPoint[],
     // Altitude is `(metres + 500) * 5` in both the 16-bit and the enhanced 32-bit field.
     if (hasAlt) values.push(s.alt === null ? null : (s.alt + 500) * 5, s.alt === null ? null : (s.alt + 500) * 5);
     if (hasHr) values.push(s.hr);
+    if (hasCadence) values.push(fitCadence(s.cadence));
+    if (hasSpeed) values.push(s.speed === null ? null : s.speed * 1000, s.speed === null ? null : s.speed * 1000);
+    if (hasPower) values.push(s.power);
     fit.write(record, values);
+  }
+
+  if (options.sets && options.sets.length > 0) {
+    const definition = fit.define(8, MESG.set, [
+      { num: 254, type: 'uint32' },
+      { num: 0, type: 'uint32' },
+      { num: 3, type: 'uint16' },
+      { num: 4, type: 'uint16' },
+      { num: 5, type: 'uint8' },
+      { num: 6, type: 'uint32' },
+      // `category` is an array field: its size is two bytes per element, so one uint16 is an array of one.
+      { num: 7, type: 'uint16' },
+      { num: 10, type: 'uint16' },
+    ]);
+    const within = (seconds: number) => Math.min(end, Math.max(start, Math.round(seconds)));
+    [...options.sets]
+      .sort((a, b) => a.endMs - b.endMs)
+      .forEach((set, index) => {
+        const stop = within(set.endMs / 1000);
+        const begin = Math.min(stop, within(set.startMs / 1000));
+        fit.write(definition, [
+          toFitTime(stop),
+          Math.min(set.durationMs, (stop - start) * 1000),
+          set.reps,
+          set.weightKg !== null && set.weightKg > 0 ? set.weightKg * 16 : null,
+          FIT.setActive,
+          toFitTime(begin),
+          set.category,
+          index,
+        ]);
+      });
   }
 
   event(end, FIT.eventTypeStopAll);
@@ -478,34 +629,102 @@ export function buildFit(workout: StravaWorkout, points: readonly StravaPoint[],
     [long, 'sint32', fix && fix.lon !== null ? toSemicircles(fix.lon) : null],
   ];
   const calories = positive(workout.calories);
+  const laps = options.laps && options.laps.length >= 2 ? options.laps : null;
+  /** Average and peak of a channel over some samples; whole numbers, null when the stretch has no reading. */
+  const stats = (inLap: readonly Sample[], pick: (s: Sample) => number | null): { avg: number | null; max: number | null } => {
+    const values = inLap.map(pick).filter((v): v is number => v !== null);
+    return values.length === 0 ? { avg: null, max: null } : { avg: Math.round(values.reduce((a, b) => a + b, 0) / values.length), max: Math.max(...values) };
+  };
+  const power = stats(samples, (s) => s.power);
+  const sessionPower = {
+    avg: positive(workout.avgPower) ?? positive(power.avg),
+    max: positive(workout.maxPower) ?? positive(power.max),
+    normalized: positive(workout.normalizedPower),
+  };
 
-  message(4, MESG.lap, [
-    [253, 'uint32', toFitTime(end)],
-    [2, 'uint32', toFitTime(start)],
-    ...position(firstFix, 3, 4),
-    ...position(lastFix, 5, 6),
-    [7, 'uint32', elapsed * 1000],
-    [8, 'uint32', timer * 1000],
-    [9, 'uint32', total > 0 ? total * 100 : null],
-    [10, 'uint32', strides],
-    [11, 'uint16', calories],
-    [13, 'uint16', avgSpeed === null ? null : avgSpeed * 1000],
-    [14, 'uint16', maxSpeed === null ? null : maxSpeed * 1000],
-    [15, 'uint8', positive(workout.avgHr)],
-    [16, 'uint8', positive(workout.maxHr)],
-    [17, 'uint8', avgCadence],
-    [21, 'uint16', ascent],
-    [22, 'uint16', descent],
-    [0, 'enum', FIT.eventLap],
-    [1, 'enum', FIT.eventTypeStop],
-    [23, 'enum', FIT.intensityActive],
-    [24, 'enum', FIT.lapTriggerSessionEnd],
-    [25, 'enum', sport.fitSport],
-    [39, 'enum', sport.fitSubSport],
-    [110, 'uint32', avgSpeed === null ? null : avgSpeed * 1000],
-    [111, 'uint32', maxSpeed === null ? null : maxSpeed * 1000],
-    [254, 'uint16', 0],
-  ]);
+  const ride = workout.ride;
+  /** FIT `left_right_balance_100`: the percent x 100 in the low 14 bits and 0x8000 when the share is the right pedal's; ours is the left's. */
+  const balance = ride?.balanceLeftPct != null && ride.balanceLeftPct > 0 && ride.balanceLeftPct < 100 ? Math.round(ride.balanceLeftPct * 100) : null;
+
+  if (laps) {
+    laps.forEach((lap, index) => {
+      const last = index === laps.length - 1;
+      const lapStart = index === 0 ? start : Math.min(Math.max(lap.startTs, start), end);
+      const lapEnd = last ? end : Math.min(Math.max(lap.endTs, lapStart), end);
+      const inLap = samples.filter((s) => s.ts >= lapStart && s.ts <= lapEnd);
+      const lapFixes = inLap.filter((s) => s.lat !== null && s.lon !== null);
+      const lapElapsed = lapEnd - lapStart;
+      const lapPause = pause ? Math.max(0, Math.min(lapEnd, pause.end) - Math.max(lapStart, pause.start)) : 0;
+      const lapTimer = Math.max(0, lapElapsed - lapPause);
+      const firstSample = inLap[0];
+      const lastSample = inLap[inLap.length - 1];
+      const lapDistance =
+        lap.distanceM !== null && lap.distanceM > 0
+          ? lap.distanceM
+          : firstSample && lastSample && total > 0
+            ? lastSample.distance - firstSample.distance
+            : 0;
+      const lapSpeed = lapDistance > 0 && lapTimer > 0 ? lapDistance / lapTimer : null;
+      const lapSpeedMax = stats(inLap, (s) => s.speed).max;
+      const lapPower = stats(inLap, (s) => s.power);
+      message(4, MESG.lap, [
+        [253, 'uint32', toFitTime(lapEnd)],
+        [2, 'uint32', toFitTime(lapStart)],
+        ...position(lapFixes[0], 3, 4),
+        ...position(lapFixes[lapFixes.length - 1], 5, 6),
+        [7, 'uint32', lapElapsed * 1000],
+        [8, 'uint32', lapTimer * 1000],
+        [9, 'uint32', lapDistance > 0 ? lapDistance * 100 : null],
+        [13, 'uint16', lapSpeed === null ? null : lapSpeed * 1000],
+        [14, 'uint16', lapSpeedMax === null ? null : Math.max(lapSpeedMax, lapSpeed ?? 0) * 1000],
+        [15, 'uint8', positive(lap.avgHr)],
+        [16, 'uint8', positive(lap.maxHr)],
+        [17, 'uint8', cadenceOf(lap.avgCadence)],
+        [19, 'uint16', positive(lapPower.avg)],
+        [20, 'uint16', positive(lapPower.max)],
+        [0, 'enum', FIT.eventLap],
+        [1, 'enum', FIT.eventTypeStop],
+        [23, 'enum', FIT.intensityActive],
+        [24, 'enum', last ? FIT.lapTriggerSessionEnd : FIT.lapTriggerManual],
+        [25, 'enum', sport.fitSport],
+        [39, 'enum', sport.fitSubSport],
+        [110, 'uint32', lapSpeed === null ? null : lapSpeed * 1000],
+        [254, 'uint16', index],
+      ]);
+    });
+  } else {
+    message(4, MESG.lap, [
+      [253, 'uint32', toFitTime(end)],
+      [2, 'uint32', toFitTime(start)],
+      ...position(firstFix, 3, 4),
+      ...position(lastFix, 5, 6),
+      [7, 'uint32', elapsed * 1000],
+      [8, 'uint32', timer * 1000],
+      [9, 'uint32', total > 0 ? total * 100 : null],
+      [10, 'uint32', strides],
+      [11, 'uint16', calories],
+      [13, 'uint16', avgSpeed === null ? null : avgSpeed * 1000],
+      [14, 'uint16', maxSpeed === null ? null : maxSpeed * 1000],
+      [15, 'uint8', positive(workout.avgHr)],
+      [16, 'uint8', positive(workout.maxHr)],
+      [17, 'uint8', avgCadence],
+      [18, 'uint8', maxCadence],
+      [19, 'uint16', sessionPower.avg],
+      [20, 'uint16', sessionPower.max],
+      [21, 'uint16', ascent],
+      [22, 'uint16', descent],
+      [33, 'uint16', sessionPower.normalized],
+      [0, 'enum', FIT.eventLap],
+      [1, 'enum', FIT.eventTypeStop],
+      [23, 'enum', FIT.intensityActive],
+      [24, 'enum', FIT.lapTriggerSessionEnd],
+      [25, 'enum', sport.fitSport],
+      [39, 'enum', sport.fitSubSport],
+      [110, 'uint32', avgSpeed === null ? null : avgSpeed * 1000],
+      [111, 'uint32', maxSpeed === null ? null : maxSpeed * 1000],
+      [254, 'uint16', 0],
+    ]);
+  }
 
   message(5, MESG.session, [
     [253, 'uint32', toFitTime(end)],
@@ -523,11 +742,23 @@ export function buildFit(workout: StravaWorkout, points: readonly StravaPoint[],
     [16, 'uint8', positive(workout.avgHr)],
     [17, 'uint8', positive(workout.maxHr)],
     [18, 'uint8', avgCadence],
+    [19, 'uint8', maxCadence],
+    [20, 'uint16', sessionPower.avg],
+    [21, 'uint16', sessionPower.max],
     [22, 'uint16', ascent],
     [23, 'uint16', descent],
     [25, 'uint16', 0],
-    [26, 'uint16', 1],
+    [26, 'uint16', laps ? laps.length : 1],
     [28, 'enum', FIT.sessionTriggerActivityEnd],
+    [34, 'uint16', sessionPower.normalized],
+    [35, 'uint16', ride?.tss != null && ride.tss > 0 ? ride.tss * 10 : null],
+    [36, 'uint16', ride?.intensityFactor != null && ride.intensityFactor > 0 ? ride.intensityFactor * 1000 : null],
+    [37, 'uint16', balance],
+    [45, 'uint16', positive(ride?.ftp)],
+    [48, 'uint32', ride?.workKj != null && ride.workKj > 0 ? ride.workKj * 1000 : null],
+    [52, 'sint16', ride?.avgGradePct != null ? ride.avgGradePct * 100 : null],
+    [55, 'sint16', ride?.maxGradePct != null ? ride.maxGradePct * 100 : null],
+    [56, 'sint16', ride?.minGradePct != null ? ride.minGradePct * 100 : null],
     [0, 'enum', FIT.eventSession],
     [1, 'enum', FIT.eventTypeStop],
     [124, 'uint32', avgSpeed === null ? null : avgSpeed * 1000],
@@ -568,16 +799,24 @@ export interface UploadForm {
  * (`{ uri }`), and the file here exists only in memory, so the body is assembled by hand and sent with fetch (a
  * `Uint8Array` body goes out as binary).
  */
-export function buildUploadForm(workout: StravaWorkout, file: Uint8Array, options: { addLink: boolean }): UploadForm {
-  const sport = stravaSport(workout.sportType);
+export function buildUploadForm(
+  workout: StravaWorkout,
+  file: Uint8Array,
+  options: { addLink: boolean; /** Replaces the sport name as the activity title. */ name?: string; /** Text above the optional link. */ description?: string },
+): UploadForm {
+  const sport = stravaSport(workout.sportType, workout.ebike);
   const boundary = `----joyofit${workout.start.toString(36)}${file.length.toString(36)}`;
   const fields: Record<string, string> = {
     data_type: 'fit',
-    name: workout.sportName,
+    name: options.name ?? workout.sportName,
     external_id: externalId(workout.start),
     sport_type: sport.sportType,
     ...(sport.trainer ? { trainer: '1' } : {}),
-    ...(options.addLink ? { description: DESCRIPTION_LINK } : {}),
+    ...(options.description
+      ? { description: options.addLink ? `${options.description}\n\n${DESCRIPTION_LINK}` : options.description }
+      : options.addLink
+        ? { description: DESCRIPTION_LINK }
+        : {}),
   };
   let head = '';
   for (const [name, value] of Object.entries(fields)) {

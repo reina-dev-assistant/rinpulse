@@ -1,0 +1,20 @@
+{
+  "supported": {
+    "title": "Jam yang didukung",
+    "intro": "JoyoFit bicara langsung dengan jam Huawei dan Honor. Hanya satu model yang sudah diuji di jam asli.",
+    "status": {
+      "tested": "Sudah diuji di jam asli",
+      "experimental": "Eksperimen: ada di daftar, belum pernah dicoba dengan JoyoFit",
+      "notYet": "Belum didukung: pemasangan barunya belum dibuat"
+    },
+    "footer": "Jam Huawei atau Honor yang tidak ada di daftar tetap dicoba. Jam merek lain, dan earbuds, tidak bisa dipasangkan. Tanpa jam pun JoyoFit tetap berguna: catat latihan beban, pakai Coach, dan lihat perpustakaan gerakan.",
+    "fullList": "Daftar lengkap",
+    "request": "Minta dukungan jamku"
+  },
+  "intro": {
+    "title": "Jam itu opsional",
+    "body": "Latihan beban, Coach, dan perpustakaan gerakan jalan tanpa jam. Jam Huawei atau Honor menambah langkah, tidur, detak jantung, dan kesiapan harian ke layar Hari ini.",
+    "permission": "Kalau lanjut, HP-mu mungkin meminta izin Bluetooth supaya JoyoFit bisa menemukan jam di sekitar.",
+    "continue": "Lanjut"
+  }
+}

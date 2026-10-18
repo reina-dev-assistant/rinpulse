@@ -1,0 +1,358 @@
+{
+  "label": {
+    "distance": "Distance",
+    "time": "Time",
+    "pace": "Pace",
+    "speed": "Speed",
+    "avgHr": "Avg heart rate",
+    "maxHr": "Max heart rate",
+    "hr": "Heart rate",
+    "kcal": "Calories",
+    "elevation": "Elevation",
+    "cadence": "Cadence",
+    "effort": "Effort",
+    "steps": "Steps",
+    "sleep": "Sleep",
+    "recovery": "Recovery",
+    "strain": "Strain",
+    "volume": "Volume",
+    "reps": "Reps",
+    "sets": "Sets",
+    "duration": "Duration",
+    "workouts": "Workouts",
+    "activeDays": "Active days"
+  },
+  "unit": {
+    "perKm": "/km",
+    "per100m": "/100 m",
+    "kmh": "km/h",
+    "bpm": "bpm",
+    "kcal": "kcal",
+    "m": "m",
+    "spm": "spm",
+    "kg": "kg",
+    "km": "km"
+  },
+  "ui": {
+    "filter": {
+      "all": "All",
+      "card": "Cards",
+      "sticker": "Stickers",
+      "photo": "Photo",
+      "badge": "Badges"
+    },
+    "canvas": {
+      "story": "Story 9:16",
+      "square": "Square 1:1"
+    },
+    "mode": {
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "routePrivacy": {
+      "label": "Hide the start and end of the route",
+      "hint": "Cuts the first and last 200 m so your home does not show."
+    },
+    "watermark": {
+      "label": "Show the JoyoFit logo",
+      "hintPro": "You can turn it off because you are Pro.",
+      "hintFree": "Only Pro users can turn it off."
+    },
+    "photo": {
+      "choose": "Choose photo",
+      "change": "Change photo",
+      "take": "Take photo",
+      "placeholder": "Pick a photo from your gallery or take a new one.",
+      "failed": "That photo could not be loaded. Pick another one.",
+      "needed": "Add your photo first to share this card."
+    },
+    "hint": {
+      "sticker": "Transparent PNG. Send it to an Instagram Story as a sticker, or copy it and paste it over your own photo.",
+      "photo": "Your photo with the numbers on top.",
+      "card": "A full card for Story, WhatsApp or your feed."
+    },
+    "preparing": "Preparing the image",
+    "entry": {
+      "sleep": "Share your sleep",
+      "week": "Share this week",
+      "badges": "Share achievements",
+      "plan": "Share plan progress"
+    }
+  },
+  "tpl": {
+    "strength": {
+      "bold": "Bold",
+      "poster": "Poster",
+      "minimal": "Minimal",
+      "muscle": "Muscle load",
+      "photo": "Photo",
+      "receipt": "Receipt",
+      "stats": "Stats",
+      "text": {
+        "newPr_one": "{{count}} new PR",
+        "newPr_other": "{{count}} new PRs",
+        "exercises_one": "{{count}} exercise",
+        "exercises_other": "{{count}} exercises",
+        "topSets": "Top sets",
+        "muscleLoad": "Muscle load, sets",
+        "rpe": "RPE",
+        "pr": "PR",
+        "thanks": "Thanks for lifting. See you at the rack."
+      }
+    },
+    "week": {
+      "bold": "Bold",
+      "poster": "Poster",
+      "stats": "Stats",
+      "text": {
+        "title": "This week",
+        "kicker": "Weekly recap"
+      }
+    },
+    "load": {
+      "bars": "Bars",
+      "stats": "Stats",
+      "text": {
+        "title": "Training load",
+        "status": "Status",
+        "ratio": "Ratio",
+        "total": "Total strain"
+      }
+    },
+    "plan": {
+      "ring": "Ring",
+      "stats": "Stats",
+      "text": {
+        "weekOf": "Week {{week}} of {{weeks}}",
+        "complete": "complete",
+        "next": "Up next",
+        "sessionsDone": "{{done}} of {{total}} sessions done",
+        "weekN": "Week {{week}}",
+        "weekKicker": "Current week"
+      }
+    },
+    "badge": {
+      "medal": "Medal",
+      "streak": "Streak",
+      "pr": "Record",
+      "bold": "Bold",
+      "text": {
+        "earned": "New achievement",
+        "best_one": "Best: {{count}} day",
+        "best_other": "Best: {{count}} days",
+        "record": "Personal best",
+        "streakNow": "Your streak",
+        "streakBest": "Best streak"
+      }
+    },
+    "run": {
+      "bold": "Bold",
+      "poster": "Poster",
+      "minimal": "Minimal",
+      "photo": "Photo",
+      "glass": "Glass",
+      "route": "Route",
+      "stats": "Stats",
+      "receipt": "Receipt",
+      "map": "Map",
+      "splits": "Splits",
+      "zones": "Zones",
+      "text": {
+        "total": "Total",
+        "thanks": "Thanks for running",
+        "splits": "Per km",
+        "zones": "Heart rate zones"
+      }
+    },
+    "sleep": {
+      "ring": "Score ring",
+      "stages": "Stages",
+      "poster": "Poster",
+      "stats": "Stats",
+      "text": {
+        "night": "Last night",
+        "asleep": "Asleep",
+        "score": "Sleep score",
+        "deep": "Deep",
+        "rem": "REM",
+        "light": "Light",
+        "awake": "Awake",
+        "bedWake": "Bed {{bed}}, up {{wake}}",
+        "awakenings_one": "{{count}} awakening",
+        "awakenings_other": "{{count}} awakenings",
+        "target": "8 h target",
+        "poster": "Sleep log",
+        "vsMore": "{{time}} more than your average"
+      }
+    },
+    "ready": {
+      "rings": "Rings",
+      "bold": "Bold",
+      "stats": "Recovery",
+      "text": {
+        "today": "Today",
+        "ofGoal": "of {{goal}}"
+      }
+    },
+    "watch": {
+      "rings": "Rings",
+      "tiles": "Tiles",
+      "text": {
+        "rhr": "Resting HR"
+      }
+    }
+  },
+  "threads": {
+    "heading": "Share to Threads",
+    "slide": {
+      "summary": "Summary",
+      "lift": "Summary",
+      "splits": "Splits",
+      "splits2": "Splits, continued",
+      "splits3": "Splits, continued 2",
+      "charts": "Charts",
+      "sensors": "Sensors",
+      "zones": "Zones and load",
+      "power": "Power",
+      "climbs": "Climbs",
+      "lifts": "Exercises",
+      "lifts2": "Exercises, continued",
+      "lifts3": "Exercises, continued 2",
+      "muscle": "Muscles and records",
+      "context": "Last four weeks",
+      "powerzones": "Power zones",
+      "contextlift": "Last four weeks"
+    },
+    "col": {
+      "km": "KM",
+      "time": "Time",
+      "pace": "Pace",
+      "speed": "km/h",
+      "hr": "HR",
+      "cad": "Cad",
+      "power": "Watt",
+      "gain": "Gain"
+    },
+    "label": {
+      "power": "Power",
+      "avgPower": "Average power",
+      "np": "NP",
+      "if": "IF",
+      "tss": "TSS",
+      "vi": "VI",
+      "work": "Work",
+      "wkg": "W/kg",
+      "maxPower": "Max power",
+      "aerobic": "Aerobic effect",
+      "anaerobic": "Anaerobic effect",
+      "recovery": "Recovery",
+      "ratio": "Load ratio",
+      "trimp": "TRIMP",
+      "vo2max": "VO2max",
+      "exercises": "Exercises",
+      "length": "Length",
+      "gain": "Gain",
+      "avgGrade": "Average",
+      "maxGrade": "Max",
+      "vam": "VAM",
+      "volume4": "4-week volume",
+      "distance4": "4-week distance",
+      "sessions": "Sessions",
+      "avgVolumeWeek": "Average per week",
+      "avgDistanceWeek": "Average per week",
+      "avgSessionsWeek": "Sessions per week",
+      "ftp": "FTP",
+      "nwkg": "NP per kg",
+      "balance": "Left pedal"
+    },
+    "unit": {
+      "w": "W",
+      "kj": "kJ",
+      "hours": "h",
+      "of21": "/21",
+      "pct": "%"
+    },
+    "text": {
+      "device": "Recorded with {{device}}",
+      "splitStep": "Per {{km}} km",
+      "axisStart": "0",
+      "paceStats": "Average {{avg}}/km · Fastest {{best}}/km",
+      "speedStats": "Average {{avg}} km/h · Max {{max}} km/h",
+      "hrStats": "Min {{min}} · Average {{avg}} · Max {{max}} bpm",
+      "elevStats": "Up {{gain}} m · Down {{loss}} m · {{min}} to {{max}} m",
+      "cadStats": "Average {{avg}} spm · Max {{max}}",
+      "cadStatsRide": "Average {{avg}} rpm · Max {{max}}",
+      "powerStats": "Average {{avg}} W · Max {{max}}",
+      "zones": "Heart-rate zones",
+      "load": "Training effect and load",
+      "loadStatus": "Load {{status}}: 7 days {{acute}}, weekly average {{chronic}}",
+      "curve": "Best power",
+      "powerZones": "Power zones",
+      "category": "Cat. {{value}}",
+      "climbN": "Climb {{n}}",
+      "climbPower": "Power {{value}} W",
+      "climbHr": "Heart rate {{value}} bpm",
+      "liftMore": "+{{count}} more exercises",
+      "records": "New records",
+      "weeklyKm": "Distance per week, km",
+      "weeklyMin": "Minutes per week",
+      "weeklyVolume": "Volume per week, kg",
+      "weeklySessions": "Sessions per week",
+      "fourWeeks": "The four weeks up to this workout. Each bar is 7 days.",
+      "ftpNote": "Zones are based on an FTP of {{ftp}} W.",
+      "climbMax": "Max {{value}}%"
+    },
+    "curve": {
+      "5": "5 s",
+      "60": "1 min",
+      "300": "5 min",
+      "1200": "20 min",
+      "3600": "60 min"
+    },
+    "caption": {
+      "part": {
+        "distance": "{{value}} km",
+        "pace": "pace {{value}}/km",
+        "speed": "{{value}} km/h",
+        "hr": "average heart rate {{avg}} bpm (max {{max}})",
+        "hrAvg": "average heart rate {{avg}} bpm",
+        "elev": "{{value}} m climbed",
+        "cadence": "cadence {{value}} spm",
+        "power": "power {{value}} W",
+        "kcal": "{{value}} kcal",
+        "volume": "volume {{value}} kg",
+        "sets_one": "{{count}} set",
+        "sets_other": "{{count}} sets",
+        "reps_one": "{{count}} rep",
+        "reps_other": "{{count}} reps",
+        "exercises_one": "{{count}} exercise",
+        "exercises_other": "{{count}} exercises",
+        "prs_one": "{{count}} new PR",
+        "prs_other": "{{count}} new PRs",
+        "rpe": "average RPE {{value}}"
+      },
+      "device": "Recorded with {{device}}.",
+      "context": {
+        "distance_one": "Last 4 weeks: {{distance}} km in {{count}} session.",
+        "distance_other": "Last 4 weeks: {{distance}} km in {{count}} sessions.",
+        "sessions_one": "Last 4 weeks: {{count}} session.",
+        "sessions_other": "Last 4 weeks: {{count}} sessions.",
+        "volume_one": "Last 4 weeks: {{volume}} kg of volume in {{count}} session.",
+        "volume_other": "Last 4 weeks: {{volume}} kg of volume in {{count}} sessions."
+      },
+      "swipe_one": "The full data is in the image.",
+      "swipe_other": "The full data is in the {{count}} images, swipe through.",
+      "question": {
+        "runPace": "Looking for advice: how does my pace look?",
+        "runPlan": "Looking for advice: what should I train next to get faster?",
+        "runHr": "Looking for advice: is this heart rate normal for this pace?",
+        "ridePower": "Looking for advice: are this NP and IF about right?",
+        "rideSpeed": "Looking for advice: how is this speed, any tips?",
+        "ridePlan": "Looking for advice: what ride should I do next?",
+        "liftProgress": "Looking for advice: how does my progress look?",
+        "liftPlan": "Looking for advice: what program should I follow next?",
+        "generalPlan": "Looking for advice: what should I train next?"
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import { EMPTY_GEAR_DOC, type GearDoc } from './model';
-import { syncGearDoc, type GearSyncIo, type RemoteGear } from './syncDoc';
+import { syncGearDoc, withholdDetached, type GearSyncIo, type RemoteGear } from './syncDoc';
 
 const shoe = (id: string, updatedAt: number, name = id) => ({
   id,
@@ -21,11 +21,17 @@ const shoe = (id: string, updatedAt: number, name = id) => ({
 });
 const doc = (...gear: ReturnType<typeof shoe>[]): GearDoc => ({ ...EMPTY_GEAR_DOC, gear });
 
-function fake(local: GearDoc, remotes: RemoteGear[], outcome: (baseRev: number) => 'ok' | 'conflict' | 'locked' = () => 'ok') {
+function fake(
+  local: GearDoc,
+  remotes: RemoteGear[],
+  outcome: (baseRev: number) => 'ok' | 'conflict' | 'locked' = () => 'ok',
+  detachedAt: number | null = null,
+) {
   const calls = { put: [] as { baseRev: number; doc: GearDoc }[], written: [] as GearDoc[] };
   let stored = local;
   let fetched = 0;
   const io: GearSyncIo = {
+    detachedAt: async () => detachedAt,
     fetchRemote: async () => remotes[Math.min(fetched++, remotes.length - 1)]!,
     putRemote: async (baseRev, d) => {
       calls.put.push({ baseRev, doc: d });
@@ -98,5 +104,58 @@ describe('syncGearDoc', () => {
     const always = fake(doc(shoe('a', 5)), [{ rev: 1, doc: doc(shoe('a', 1)) }], () => 'conflict');
     await expect(syncGearDoc(always.io)).rejects.toThrow();
     expect(always.calls.put).toHaveLength(3);
+  });
+});
+
+describe('gear after "keep separate" (detached_at)', () => {
+  const assignment = (workoutStart: number, updatedAt: number) => ({ workoutStart, gearId: 'a', source: 'manual' as const, updatedAt });
+
+  it('holds back every item that is not newer than the detach and sends the ones edited after', () => {
+    const merged: GearDoc = {
+      version: 1,
+      gear: [shoe('old', 100), shoe('edge', 200), shoe('new', 201)],
+      defaults: [{ sport: 'run', gearId: 'old', since: 0, updatedAt: 50 }],
+      assignments: [assignment(1, 100), { ...assignment(2, 500), gearId: 'new' }],
+    };
+    const sent = withholdDetached(merged, null, 200);
+    expect(sent.gear.map((g) => g.id)).toEqual(['new']);
+    expect(sent.defaults).toEqual([]);
+    expect(sent.assignments.map((a) => a.workoutStart)).toEqual([2]);
+  });
+
+  it('keeps the cloud version of a held-back item the cloud already has, so the PUT does not delete it', () => {
+    const merged = doc(shoe('a', 100, 'old name'), shoe('b', 100));
+    const remote = doc(shoe('a', 90, 'cloud name'));
+    const sent = withholdDetached(merged, remote, 200);
+    expect(sent.gear.map((g) => [g.id, g.name])).toEqual([['a', 'cloud name']]);
+  });
+
+  it('does not send an assignment made after the detach for gear that stayed behind', () => {
+    const merged: GearDoc = { version: 1, gear: [shoe('a', 100), shoe('fresh', 300)], defaults: [], assignments: [{ ...assignment(7, 400), gearId: 'a' }, { ...assignment(8, 400), gearId: 'fresh' }, { ...assignment(9, 400), gearId: null }] };
+    expect(withholdDetached(merged, null, 200).assignments.map((a) => a.workoutStart)).toEqual([8, 9]);
+  });
+
+  it('changes nothing when this phone was never detached', () => {
+    const merged = doc(shoe('a', 1));
+    expect(withholdDetached(merged, null, null)).toBe(merged);
+  });
+
+  it('uploads nothing of the previous account to a new account, but takes the new account gear', async () => {
+    const t = fake(doc(shoe('mine', 100)), [{ rev: 4, doc: doc(shoe('theirs', 50)) }], () => 'ok', 200);
+    expect(await syncGearDoc(t.io)).toBe('downloaded');
+    expect(t.calls.put).toEqual([]);
+    expect(t.calls.written[0]?.gear.map((g) => g.id)).toEqual(['mine', 'theirs']);
+  });
+
+  it('uploads an edit made after the detach together with what the cloud holds, without the old gear', async () => {
+    const t = fake(doc(shoe('mine', 100), shoe('fresh', 300)), [{ rev: 4, doc: doc(shoe('theirs', 50)) }], () => 'ok', 200);
+    expect(await syncGearDoc(t.io)).toBe('uploaded');
+    expect(t.calls.put[0]?.doc.gear.map((g) => g.id)).toEqual(['fresh', 'theirs']);
+  });
+
+  it('sends nothing to an empty cloud when everything local is older than the detach', async () => {
+    const t = fake(doc(shoe('mine', 100)), [{ rev: 0, doc: null }], () => 'ok', 200);
+    expect(await syncGearDoc(t.io)).toBe('unchanged');
+    expect(t.calls.put).toEqual([]);
   });
 });

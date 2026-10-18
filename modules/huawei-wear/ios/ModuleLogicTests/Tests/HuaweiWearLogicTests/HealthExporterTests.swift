@@ -432,7 +432,8 @@ final class HealthExporterTests: XCTestCase {
 
     func testHonorWatchesAreManufacturedByHonor() async throws {
         try store.upsertDevice(address: "B", name: "HONOR Band 9-123", productModel: nil, softwareVersion: nil)
-        try store.read { db in try db.run("UPDATE device SET last_sync = 5 WHERE address = 'B'") }
+        // The primary watch describes the export, not the most recently synced one.
+        try store.read { db in try db.run("UPDATE device SET last_sync = 5, is_primary = (address = 'B')") }
         try insertSamples([(60, 5, 0, 0, nil, nil, nil)])
         _ = try await exporter.backfill()
         XCTAssertEqual(writer.devices.first, HealthDevice(manufacturer: "Honor", model: "Band 9", name: "HONOR Band 9-123"))

@@ -12,6 +12,7 @@ import { useBump } from '@/components/motion';
 import { PressableScale } from '@/components/PressableScale';
 import { Card } from '@/components/Screen';
 import { Notice } from '@/components/States';
+import { RouteMapPreview } from '@/features/social/RouteMapPreview';
 import { PillRow, StatPill } from '@/features/social/StatPill';
 import { postFigures } from '@/features/social/postStats';
 import { useAgo } from '@/features/social/useAgo';
@@ -33,10 +34,12 @@ interface PostCardProps {
   onOpen?: () => void;
   /** Make the author's name open their profile; off on a profile screen. */
   linkAuthor?: boolean;
+  /** Draw the route map under the title when the post has one; off on the post's own screen, which shows a larger map. */
+  inlineMap?: boolean;
 }
 
 /** One post: author, what was done, the numbers, the caption, and the kudos and comment counts. */
-export function PostCard({ post, onChange, onOpen, linkAuthor = true }: PostCardProps) {
+export function PostCard({ post, onChange, onOpen, linkAuthor = true, inlineMap = true }: PostCardProps) {
   const { t } = useTranslation('social');
   const router = useRouter();
   const colors = useColors();
@@ -90,6 +93,7 @@ export function PostCard({ post, onChange, onOpen, linkAuthor = true }: PostCard
           {post.title}
         </AppText>
       </View>
+      {inlineMap && post.mapLine ? <RouteMapPreview line={post.mapLine} title={post.title} size="card" /> : null}
       {figures.length > 0 ? (
         <PillRow>
           {figures.map((figure) => (

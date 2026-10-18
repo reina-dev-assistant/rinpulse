@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/AppText';
+import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/Button';
 import { ButtonRow } from '@/components/ButtonRow';
 import { Details } from '@/components/Details';
@@ -81,7 +82,7 @@ export function HealthConnectSection() {
   const grantedCount = status?.granted.length ?? 0;
 
   return (
-    <Section title={STORE} icon="heart" tint="heart">
+    <Section title={STORE} leading={<BrandMark brand={isIos ? 'apple-health' : 'health-connect'} size={32} />}>
       <SwitchRow
         icon="heart"
         label={t('healthConnect.write', { store: STORE })}

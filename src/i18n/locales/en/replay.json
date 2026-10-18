@@ -1,0 +1,79 @@
+{
+  "entry": {
+    "button": "Replay",
+    "a11y": "Replay the workout route as a video"
+  },
+  "title": "Replay",
+  "unit": {
+    "km": "km",
+    "kmh": "km/h",
+    "bpm": "bpm",
+    "m": "m",
+    "w": "W",
+    "pace": "/km"
+  },
+  "effort": {
+    "400m": "400 m",
+    "1k": "1 km",
+    "1mi": "1 mi",
+    "5k": "5 km",
+    "10k": "10 km",
+    "half": "Half"
+  },
+  "callout": {
+    "pr": "{{effort}} record",
+    "climb": "Climb"
+  },
+  "summary": {
+    "distance": "Distance",
+    "elevation": "Elevation gain",
+    "time": "Time"
+  },
+  "ui": {
+    "player": "Workout replay player",
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart",
+    "speed": "Speed {{speed}}x",
+    "speedLabel": "Speed",
+    "theme": {
+      "label": "Theme",
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "showName": {
+      "label": "Show my name",
+      "hint": "The name of your JoyoRogo account appears on the summary card. No name by default."
+    },
+    "loadingMap": "Preparing the map {{done}}/{{total}}",
+    "offline": "The map could not be loaded, so your route is drawn on a plain background.",
+    "noRoute": "This workout has no GPS route, so it cannot be replayed yet.",
+    "tooShort": "Your route is too short to replay with route privacy on. Turn route privacy off to see it.",
+    "caption": "Replay of my workout on JoyoFit",
+    "length": "The video lasts about {{seconds}} seconds"
+  },
+  "export": {
+    "button": "Make video",
+    "preparing": "Preparing the video",
+    "progress": "Making the video {{percent}}%",
+    "cancel": "Cancel",
+    "cancelled": "Video export cancelled.",
+    "done": "Your video is ready",
+    "size": "{{size}} MB, 1080 x 1920, {{fps}} fps",
+    "save": "Save",
+    "instagram": "Instagram",
+    "share": "More",
+    "saved": "Saved to your photos",
+    "photosDialog": {
+      "save": "JoyoFit adds this video to your photos. Photos you already have are not read. Your phone will ask for permission next.",
+      "instagram": "Instagram opens videos from your photo library, so JoyoFit saves this video there first. Your phone will ask for permission next."
+    },
+    "errors": {
+      "unsupported": "This phone cannot make MP4 videos yet.",
+      "render": "Could not make the video: {{error}}",
+      "save": "Could not save the video: {{error}}",
+      "share": "Could not share the video: {{error}}",
+      "saveUnavailable": "Saving to the gallery needs Android 11 or newer. Use More to share the video."
+    }
+  }
+}

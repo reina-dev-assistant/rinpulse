@@ -345,7 +345,7 @@ describe('sport mapping and upload form', () => {
     expect(stravaSport(3).sportType).toBe('Ride');
     expect(stravaSport(14).sportType).toBe('Hike');
     expect(stravaSport(6).sportType).toBe('Swim');
-    expect(stravaSport(7)).toMatchObject({ sportType: 'Ride', trainer: true });
+    expect(stravaSport(7)).toMatchObject({ sportType: 'VirtualRide', trainer: false });
     expect(stravaSport(5)).toMatchObject({ sportType: 'Run', trainer: true });
     expect(stravaSport(255).sportType).toBe('Workout');
     expect(stravaSport(9999).sportType).toBe('Workout');
@@ -377,7 +377,7 @@ describe('sport mapping and upload form', () => {
   });
 
   it('builds a binary multipart body with the fields Strava needs and the file untouched', () => {
-    const form = buildUploadForm({ ...walk, sportType: 7 }, file, { addLink: false });
+    const form = buildUploadForm({ ...walk, sportType: 5 }, file, { addLink: false });
     const boundary = /boundary=(.*)$/.exec(form.contentType)?.[1] ?? '';
     expect(boundary).not.toBe('');
     const text = latin1(form.body);
@@ -386,7 +386,7 @@ describe('sport mapping and upload form', () => {
     for (const [name, value] of [
       ['data_type', 'fit'],
       ['external_id', `joyofit-${START}`],
-      ['sport_type', 'Ride'],
+      ['sport_type', 'Run'],
       ['trainer', '1'],
     ] as const) {
       expect(text).toContain(`name="${name}"\r\n\r\n${value}\r\n`);

@@ -44,13 +44,19 @@ if (serverResult.status !== 0) failed = true;
 // ── 2. literals ─────────────────────────────────────────────────────────────
 
 const SKIP_DIR = new Set(['node_modules', 'locales', '__fixtures__']);
+/**
+ * The sticker engine core is shared byte-for-byte with JoyoRogo, so it cannot carry `// i18n-ok` marks; its strings are
+ * developer-facing issue messages, never shown to people. Its tests and tools are not UI either. Templates hold `{path|filter}`
+ * bindings, not words; `templates.test.ts` fails on any letter outside a binding or an i18n key.
+ */
+const SKIP_PATH = /src[\\/]features[\\/]stickers[\\/](core|testing|tools|templates)$/;
 const SKIP_FILE = /(\.test\.[tj]sx?|\.d\.ts|[Ff]ixtures?\.tsx?)$/;
 
 function* walk(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
     const path = join(dir, name);
     if (statSync(path).isDirectory()) {
-      if (!SKIP_DIR.has(name)) yield* walk(path);
+      if (!SKIP_DIR.has(name) && !SKIP_PATH.test(path)) yield* walk(path);
     } else if (/\.tsx?$/.test(name) && !SKIP_FILE.test(name)) {
       yield path;
     }
