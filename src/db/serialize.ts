@@ -1,7 +1,9 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { BUSY_TIMEOUT_MS } from '@/db/migrations';
 import { waitForHold } from '@/db/recovery/gate';
 import { reportDatabaseError } from '@/db/recovery';
+import { createTransactionLane } from '@/db/transactionLane';
 
 /**
  * expo-sqlite on Android releases a statement's native object while another query on the same handle is still in
@@ -27,6 +29,22 @@ function watch<T>(promise: Promise<T>): Promise<T> {
   return promise;
 }
 
+interface TransactionConnection {
+  execAsync(sql: string): Promise<void>;
+}
+
+/**
+ * The connection of an exclusive transaction is a new one with no busy wait, and the native writer shares the file with a
+ * really working lock (same SQLite library), so its first write would fail with SQLITE_BUSY while a sync is storing rows. The
+ * wait is set before the task's first statement (BEGIN takes no lock yet).
+ */
+function waitForLocks(task: unknown): (txn: TransactionConnection) => Promise<unknown> {
+  return async (txn) => {
+    await txn.execAsync(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS}`);
+    return (task as (txn: TransactionConnection) => Promise<unknown>)(txn);
+  };
+}
+
 export function serializeQueries(db: SQLiteDatabase): void {
   let tail: Promise<unknown> = Promise.resolve();
   for (const name of GATED) {
@@ -42,8 +60,14 @@ export function serializeQueries(db: SQLiteDatabase): void {
     };
     Object.defineProperty(db, name, { value: gated, configurable: true, writable: true });
   }
+  // One transaction at a time on this handle (`transactionLane.ts`); the exclusive kind has a connection of its own and stays outside.
+  const lane = createTransactionLane();
   for (const name of TRANSACTIONS) {
     const original = db[name].bind(db) as (...args: unknown[]) => Promise<unknown>;
-    Object.defineProperty(db, name, { value: (...args: unknown[]) => watch(original(...args)), configurable: true, writable: true });
+    const wrapped =
+      name === 'withExclusiveTransactionAsync'
+        ? (...args: unknown[]) => watch(original(waitForLocks(args[0])))
+        : (...args: unknown[]) => watch(lane(() => original(...args)));
+    Object.defineProperty(db, name, { value: wrapped, configurable: true, writable: true });
   }
 }

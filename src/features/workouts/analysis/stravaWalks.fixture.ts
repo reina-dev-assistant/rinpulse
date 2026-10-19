@@ -6,7 +6,7 @@
 
 /** The owner's walk of 2026-10-18 07:35 (Strava activity 20628405451). */
 export const WALK = {
-  /** `workouts.end - workouts.start`; Strava's elapsed and moving time are this. */
+  /** `workouts.end - workouts.start`; Strava showed this for moving and elapsed time of the first file (no pause events). */
   elapsedSec: 1526,
   /** `workouts.duration`, the watch's timer (the header showed 25:23). */
   durationSec: 1523,
@@ -20,6 +20,8 @@ export const WALK = {
   lastFixSec: 1519,
   /** What the Strava page showed. */
   strava: { distanceM: 2010, movingSec: 1526, elapsedSec: 1526, gainM: 23.5704, paceSecKm: 759, kcal: 143, avgHr: 127, maxHr: 156, steps: 2672 },
+  /** What JoyoFit shows since the watch timer is the time: 25:23 and 2010 m / 1523 s. */
+  watch: { movingSec: 1523, paceSecKm: 758 },
   /** What the app showed before: header 25:23, analysis 1.97 km, 24:18 moving, +59/-59 m, 12:38 per km. */
   before: { distanceM: 1970, movingSec: 1458, durationSec: 1523, gainM: 59, lossM: 59, paceSecKm: 758 },
   /** One altitude (m) and one heart rate (bpm, 0 for none) every 5 s from +5 s, as the watch wrote them. */

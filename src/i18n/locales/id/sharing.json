@@ -34,6 +34,7 @@
   },
   "strava": {
     "title": "Strava",
+    "recordedWith": "Direkam dengan {{device}}",
     "viewOn": "View on Strava",
     "connectHint": "Hubungkan Strava untuk mengirim latihan ini lengkap dengan jarak, kalori, detak jantung, dan rute.",
     "setUp": "Atur Strava",

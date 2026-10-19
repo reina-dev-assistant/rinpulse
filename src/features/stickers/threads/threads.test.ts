@@ -196,14 +196,14 @@ describe('caption', () => {
     expect(lines[1]).toContain('detak rata-rata 158 bpm (maks 179)');
     expect(text).toContain('Direkam dengan HUAWEI WATCH FIT 4 Pro.');
     expect(text).toMatch(/4 minggu terakhir: [\d,]+ km dalam 10 sesi\./);
-    expect(text).toContain('Data lengkapnya ada di 6 gambar, geser ya.');
-    expect(lines.at(-2)).toBe('Minta saran: pace-ku segini, gimana?');
+    expect(text).toContain('Data lengkap ada di 6 gambar.');
+    expect(lines.at(-2)).toBe('Ada saran soal pace ini?');
     expect(lines.at(-1)).toBe('#JoyoFit');
   });
 
   test('the question and the tag are optional', () => {
     const text = buildCaption(RUN_SPLITS(), { locale: 'id', question: null, hashtag: false });
-    expect(text).not.toContain('Minta saran');
+    expect(text).not.toContain('Ada saran');
     expect(text).not.toContain('#JoyoFit');
   });
 
@@ -211,7 +211,7 @@ describe('caption', () => {
     await applyLocale('en');
     const ride = buildCaption(RIDE_POWER(), { locale: 'en', question: 'ridePower', hashtag: true });
     expect(ride).toContain('km/h');
-    expect(ride).toContain('Looking for advice: are this NP and IF about right?');
+    expect(ride).toContain('Are this NP and IF about right?');
     const lift = buildCaption(STRENGTH_PUSH(), { locale: 'en', question: null, hashtag: false });
     expect(lift.split('\n')[0]).toBe('Push day: volume 5,856 kg · 25 sets · 226 reps · 1:02:00');
     expect(lift).toContain('2 new PRs');
@@ -228,7 +228,7 @@ describe('caption', () => {
     const long = { ...subject, data: { ...subject.data, th: { ...th(subject.data), device: 'x'.repeat(60) } } };
     const text = buildCaption(long, { locale: 'id', question: 'runPlan', hashtag: true, slideCount: 9 });
     expect(text.length).toBeLessThanOrEqual(THREADS_TEXT_MAX);
-    expect(text).toContain('Minta saran');
+    expect(text).toContain('Ada saran');
     const squeezed = buildCaption({ ...long, data: { ...long.data, run: { ...(long.data.run as JsonObject), sport: 'S'.repeat(520) } } }, { locale: 'id', question: null, hashtag: false });
     expect(squeezed.length).toBeLessThanOrEqual(THREADS_TEXT_MAX);
   });

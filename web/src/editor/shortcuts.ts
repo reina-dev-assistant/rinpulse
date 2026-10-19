@@ -1,19 +1,8 @@
 import { useEffect } from "react";
 import { useEditor } from "./store";
 
-export const SHORTCUTS: Array<{ keys: string; action: string }> = [
-  { keys: "Ctrl Z", action: "Undo" },
-  { keys: "Ctrl Shift Z  /  Ctrl Y", action: "Redo" },
-  { keys: "Del  /  Backspace", action: "Delete the selected layer" },
-  { keys: "Ctrl D", action: "Duplicate" },
-  { keys: "Arrow keys", action: "Nudge 1 px (hold Shift for 10 px)" },
-  { keys: "Ctrl ]  /  Ctrl [", action: "Bring forward / send backward" },
-  { keys: "H", action: "Hide or show the layer" },
-  { keys: "L", action: "Lock or unlock the layer" },
-  { keys: "+  /  -  /  0", action: "Zoom in / out / fit" },
-  { keys: "Alt while dragging", action: "Bypass snapping" },
-  { keys: "Esc", action: "Deselect" },
-];
+/** Help-dialog rows; the key caps and the action text live in the `help` namespace under `shortcuts.<id>`. */
+export const SHORTCUTS = ["undo", "redo", "delete", "duplicate", "nudge", "stack", "hide", "lock", "zoom", "snap", "deselect"] as const;
 
 function typing(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;

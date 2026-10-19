@@ -67,3 +67,20 @@ export const LIVE_EXPIRE_MS = 12 * 3_600_000;
 export const LIVE_PURGE_MS = 24 * 3_600_000;
 /** The most track points `GET /v1/live/:token` returns (first and last always kept). */
 export const LIVE_MAX_TRACK_POINTS = 300;
+
+/** `GET /v1/sleep`: the widest window a request may ask for, in WIB calendar days. */
+export const SLEEP_MAX_WINDOW_DAYS = 92;
+
+/** Watchface library (src/watchfaces.ts): the largest upload, the faces one user may keep, the inflated size a package may declare. */
+export const MAX_WATCHFACE_BYTES = 8 * 1024 * 1024;
+export const MAX_WATCHFACES_PER_USER = 40;
+export const MAX_WATCHFACE_UNZIPPED_BYTES = 32 * 1024 * 1024;
+/** The display name of a face is cut to this many characters. */
+export const WATCHFACE_NAME_MAX = 80;
+
+/** Studio cloud projects (src/studio.ts): the largest request body, the projects one user may keep, the name and thumbnail caps. */
+export const MAX_STUDIO_BODY_BYTES = 5 * 1024 * 1024;
+export const MAX_STUDIO_PROJECTS_PER_USER = 100;
+export const STUDIO_NAME_MAX = 80;
+/** The longest `thumb` data URL, in characters. */
+export const STUDIO_THUMB_MAX = 16 * 1024;

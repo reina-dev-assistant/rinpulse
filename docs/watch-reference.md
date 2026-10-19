@@ -177,6 +177,32 @@ Sync results are written to the database by native code, so data accumulates whi
   runs but its notification is hidden.
 - Battery optimisation: if your phone kills the service, exempt JoyoFit from battery restrictions.
 
+### Reconnecting a known watch (watch off, app closed)
+
+JoyoFit stores the address of the last watch it connected to (`WearSettings.watchAddress`, a peripheral identifier on iOS) and its keys (`DeviceStore`, one
+preference file per watch). A reconnect uses those; **it never scans**, because a watch that holds a phone does not advertise (the hint on the Watch tab says so), and
+nothing in the app removes a pairing or deletes a key on its own: only the person's **Forget pairing** or **Remove watch** does.
+
+- **Background mode on**: the service reconnects, as above.
+- **Background mode off** (the default): the link ends with the app, so on the next open the app reconnects the remembered watch by itself
+  (`src/state/useAutoReconnect.ts`, rules in `src/features/device/autoReconnect.ts`): a first attempt 1.5 s after the app opens or comes forward, then 30 s and
+  2 min after each failure, then it waits for the next time the app comes forward; a link that drops while the app is open starts again from the first. It asks for
+  nothing and shows no error: a watch that is off just stays disconnected. It does not run when the person tapped **Disconnect** (remembered across launches, until
+  they connect again), without the Bluetooth permission (it never asks), or for a watch that needs a first bind (that stays a tap on **Connect** and its confirmation).
+  It also does not run on Android for a Classic watch Android has no pairing with, because a connect would make Android open its pairing dialog by itself: it reads
+  `paired` and `classic` from the native list (`androidPairingAllowsAutoReconnect`), and a row without them (an Android build from before that list existed, which
+  also leaves an unpaired remembered watch out) counts as not safe, so such a build never reconnects by itself. iOS has no such pairing and needs no new build. While a
+  connect, a sync or the first-bind question is open it looks again every 5 s; a failed connect the person started themselves settles it until the app comes forward.
+- **The list**: the remembered watch is always a row in the Watch tab's list, also when Android does not list it as paired (a band is never paired in Android;
+  a Classic watch whose pairing Android dropped) and when no scan sees it. Its row connects by the stored address. Android rows carry `paired`, `remembered` and
+  `classic`; a remembered Classic watch without an Android pairing says so.
+- **Classic watches (RFCOMM)** need Android's own pairing. If a connect to one fails and Android has no pairing with it, the error is `ERR_NOT_PAIRED` (worded in the app:
+  pair it in Android's Bluetooth settings, or remove the phone once on the watch) instead of the "busy elsewhere" hint. The connect log line says `Android pairing:
+  paired / not paired / pairing in progress`, so a support report shows whether Android still had the pairing when a connect failed.
+- **Bluetooth LE bands**: the GATT link is two direct attempts of at most 8 s each, then one with autoConnect, which Android keeps pending until the watch answers,
+  within `Timeouts.CONNECT_MS` (`LeConnectPlan`). Before, a direct attempt waited the ~30 s Android gives it, longer than the whole connect, so the autoConnect
+  attempt was never reached. A Classic watch whose RFCOMM failed gets the same LE attempt with `Timeouts.LE_AFTER_RFCOMM_MS` for its autoConnect step.
+
 ### Watch history and how long the watch keeps it
 
 The first sync after binding pulls everything the watch still holds (steps and heart rate, sleep, night HRV, workouts), not a fixed week. The
@@ -221,8 +247,9 @@ when the watch connects, whenever the watch asks for it (opening its weather app
   fresh network fix, else the last position it stored. Without background location access Android may
   give the background service no fresh fix, so the last position is reused. Choose **A city** if that is not good enough.
 - Temperatures are always sent in °C, like Gadgetbridge; the unit setting tells the watch which one to show.
-- Open-Meteo has no moon rise/set, air quality or place name for a coordinate: the moon phase is computed,
-  the others are not sent, and a current-location name comes from Android's `Geocoder` when the phone has one.
+- Moon rise and set come from Open-Meteo's daily `moonrise` / `moonset` (unix seconds, null on a day the moon skips one) and are sent
+  with the sun times, so a watch that does not list sun rise/set (bit 0 of `0f/0a`) gets neither. The moon phase is computed.
+  Air quality is not sent, and a current-location name comes from Android's `Geocoder` when the phone has one.
 - Settings → Weather says what the watch did with the forecast of the last push: sent (24 hours, 8 days), refused (the code it
   answered), not confirmed, or "takes current weather only" when the watch does not list the forecast command. The support
   report carries the same lines, the commands the watch lists and every step of the last push, so a watch that shows today's
@@ -347,9 +374,9 @@ ExpandCapability 83 / 84 / 85 / 173). **None of it has been seen working on the 
 
 ## JoyoFit Studio
 
-[`web/`](../web/README.md) is a watch face editor for the Fit 4 and Fit 4 Pro, hosted as a Cloudflare Worker with static assets. You design a 408 x 480 face in the browser (time, date, analog hands,
+[`web/`](../web/README.md) is a watch face editor for the Fit 4 and Fit 4 Pro, hosted as a Cloudflare Worker with static assets at <https://app.fit.joyorogo.com/studio/> (a route on the JoyoFit web app's hostname). You design a 408 x 480 face in the browser (time, date, analog hands,
 data fields such as steps, heart rate, battery, altitude and temperature, progress rings, images, solid, gradient or photo
-backgrounds, six templates) against a simulated watch. Nothing leaves the browser. It builds on
+backgrounds, six templates) against a simulated watch. Nothing leaves the browser unless you save a project to your account (*Cloud projects* below). It builds on
 [`packages/hwt`](../packages/hwt/README.md), the TypeScript `.hwt` codec.
 
 - **Photo face (the export that works with JoyoFit).** Export gives a `<Name>.photo.png`: the picture layers (background and
@@ -365,5 +392,14 @@ backgrounds, six templates) against a simulated watch. Nothing leaves the browse
   Elements whose ids are known only from sample faces are marked *Unconfirmed* and can be left out of the `.hwt`; elements with no
   known id (calories, AM/PM) are *Preview only* and never exported. The export dialog lists both, plus the package size against
   Huawei's limits.
+- **Cloud projects (Pro).** A signed-in JoyoFit account can keep Studio `.project.json` documents in the cloud: `GET|POST /v1/studio/projects`,
+  `GET|PUT|DELETE /v1/studio/projects/:id` on joyofit-api, reached from the browser through JoyoRogo's `/api/fit/studio/projects` proxy (the
+  session cookie is host-only on `api.joyorogo.com`). Saving (`POST`, `PUT`) needs Pro like the other cloud writes (`402 founder_required`);
+  listing, opening and deleting stay open to every signed-in account, so a lapsed Pro keeps its projects. At most 100 projects per
+  account and 5 MiB per request; updates are optimistic (`PUT` carries the `rev` last seen, a stale one is `409 rev_conflict`). Metadata
+  (name, `rev`, size, 16 KiB thumbnail) is a D1 row, the document an R2 object under `studio/<userId>/<id>/<uuid>`, replaced under a fresh
+  key on every save; account deletion removes both. Contract and limits: [`server/README.md`](../server/README.md) → *Studio cloud projects*.
+  In Studio the header's cloud button opens the dialog (save, open, rename, delete, optional autosave; sign-in and Pro prompts); the client is `web/src/cloud/`.
+- **Language.** Indonesian (default) and English, with i18next like JoyoFit Web. The choice is localStorage `jfit-locale` on `app.fit.joyorogo.com`, the key JoyoFit Web uses, so one pick serves both; without it the browser language decides, then Indonesian. The header's `ID`/`EN` button switches it. Details: [`web/README.md`](../web/README.md) → *Language*.
 - Setup, tests, deploy and the element-to-layout mapping are in [`web/README.md`](../web/README.md).
 

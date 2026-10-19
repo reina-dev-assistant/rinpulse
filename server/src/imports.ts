@@ -7,7 +7,7 @@ import { DEFAULT_MAX_IMPORT_BYTES, IMPORT_LIST_LIMIT } from "./limits";
 /** Raw uploads of the Huawei export. The file is stored untouched in R2; a later importer parses it. Mounted under `/v1`, behind `requireUser`. */
 export const imports = new Hono<AppContext>();
 
-function cleanFilename(raw: string | undefined): string | null {
+export function cleanFilename(raw: string | undefined): string | null {
   if (!raw) return null;
   const name = raw.replace(/[\u0000-\u001f\u007f/\\]/g, "_").trim().slice(0, 255);
   return name === "" ? null : name;

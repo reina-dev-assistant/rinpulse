@@ -105,40 +105,74 @@ describe('distance: the watch total, everywhere', () => {
     const records = decoded.messages.recordMesgs ?? [];
     expect(session?.totalDistance).toBe(WALK.strava.distanceM);
     expect(records[records.length - 1]?.distance).toBe(WALK.strava.distanceM);
-    // The timer time of the file is the moving time shown: no 3 s shorter than the timer events and the elapsed time.
+    // The timer time of the file is the watch timer; the 3 s to the elapsed time are a timer stop and start, no record dropped.
     expect(session?.totalElapsedTime).toBe(WALK.elapsedSec);
-    expect(session?.totalTimerTime).toBe(WALK.strava.movingSec);
-    // What Strava makes of it: no pause events, so its own estimate from the record stream, which sees it moving throughout.
+    expect(session?.totalTimerTime).toBe(WALK.durationSec);
+    // Strava respects the file's pause events (its support page) and takes the timer time as the moving time.
     const strava = estimateMovingTime(records, decoded.messages.eventMesgs ?? []);
-    expect(strava.from).toBe('record stream');
-    expect(Math.abs(strava.seconds - WALK.strava.movingSec)).toBeLessThanOrEqual(15);
+    expect(strava).toEqual({ seconds: WALK.durationSec, from: 'timer events' });
+    expect(records.length).toBe(new Set([...stravaPoints.map((p) => p.ts), T0, T0 + WALK.elapsedSec]).size);
   });
 });
 
-describe('time: moving and elapsed as Strava has them', () => {
-  it('is 25:26 in the header, the analysis, the share card and the post; the watch timer 25:23 is not a pause', () => {
+describe('time: the watch timer everywhere, elapsed kept apart', () => {
+  it('is 25:23 in the header, the analysis, the share card and the post; 25:26 stays the total', () => {
     const times = workoutTimes(workout);
-    expect(times).toEqual({ elapsedSec: WALK.strava.elapsedSec, movingSec: WALK.strava.movingSec });
-    expect(formatElapsed(times.movingSec)).toBe('25:26');
-    expect(analysis.elapsedSec).toBe(WALK.strava.elapsedSec);
-    expect(analysis.movingSec).toBe(WALK.strava.movingSec);
-    expect(sticker().movingSec).toBe(WALK.strava.movingSec);
+    expect(times).toEqual({ elapsedSec: WALK.elapsedSec, movingSec: WALK.durationSec });
+    expect(formatElapsed(times.movingSec)).toBe('25:23');
+    expect(analysis.elapsedSec).toBe(WALK.elapsedSec);
+    expect(analysis.movingSec).toBe(WALK.durationSec);
+    expect(sticker().movingSec).toBe(WALK.durationSec);
     const post = buildWatchPost(workout, points, { caption: '', visibility: 'grup', includeHr: true, includeRoute: true, includeComparison: true }, analysis);
     expect(post.workout.durationMin).toBe(25);
   });
 
-  it('shows elapsed separately only when a pause of 30 s or more explains it', () => {
-    expect(workoutTimes({ ...workout, duration: WALK.elapsedSec - 29 }).movingSec).toBe(WALK.elapsedSec);
-    expect(workoutTimes({ ...workout, duration: WALK.elapsedSec - 30 })).toEqual({ elapsedSec: WALK.elapsedSec, movingSec: WALK.elapsedSec - 30 });
-    expect(analysis.elapsedSec).toBe(analysis.movingSec);
+  it('falls back to the elapsed time only when the watch gave no timer', () => {
+    expect(workoutTimes({ ...workout, duration: 0 })).toEqual({ elapsedSec: WALK.elapsedSec, movingSec: WALK.elapsedSec });
+    expect(workoutTimes({ ...workout, duration: WALK.elapsedSec - 29 }).movingSec).toBe(WALK.elapsedSec - 29);
+  });
+});
+
+/** The run of 2026-10-19 (workout 14, Fit 4 Pro): the watch showed 1.01 km, 00:10:53, 10'47"/km; log `dur=653s dist=1010m`. */
+describe('the run of 19 Oct: 655 s elapsed, 653 s on the watch', () => {
+  const run: WorkoutRow = workoutRow({
+    start: 1_792_414_805,
+    end: 1_792_415_460,
+    sportType: 1,
+    sportName: 'Outdoor run',
+    duration: 653,
+    distance: 1010,
+  });
+  const runAnalysis = analyzeWorkout({ workout: run, summary: {}, points: [], maxHr: 190, daySamples: [], history: NO_HISTORY }, ALL);
+
+  it('shows 10:53 and 10\'47"/km on the header, the analysis and the sticker, with 10:55 as the total', () => {
+    expect(workoutTimes(run)).toEqual({ elapsedSec: 655, movingSec: 653 });
+    expect(formatElapsed(653)).toBe('10:53');
+    expect(runAnalysis.movingSec).toBe(653);
+    expect(runAnalysis.elapsedSec).toBe(655);
+    expect(formatElapsed(runAnalysis.stats.avgPaceSecKm!)).toBe('10:47');
+    const card = buildRunSubject({ workout: run, summary: {}, analysis: runAnalysis, route: [], gearLine: null }, 'id').data.run as Record<string, unknown>;
+    expect(card.movingSec).toBe(653);
+    expect(formatElapsed(card.paceSecKm as number)).toBe('10:47');
+  });
+
+  it('writes the 2 s as a timer stop and start so Strava counts 10:53, with every sample kept', () => {
+    const fixes: StravaPoint[] = Array.from({ length: 100 }, (_, i) => ({ ts: 1_792_414_810 + i * 6, lat: -7.9 + i * 0.0001, lon: 112.6, alt: null, hr: null }));
+    const decoded = decodeFit(buildFit(run, fixes, { utcOffsetSeconds: 0 }).bytes);
+    const session = decoded.messages.sessionMesgs?.[0];
+    expect(session?.totalElapsedTime).toBe(655);
+    expect(session?.totalTimerTime).toBe(653);
+    const records = decoded.messages.recordMesgs ?? [];
+    expect(estimateMovingTime(records, decoded.messages.eventMesgs ?? [])).toEqual({ seconds: 653, from: 'timer events' });
+    expect(records.length).toBe(102);
   });
 });
 
 describe('pace, calories, heart rate', () => {
-  it('pace is the watch distance over the moving time: 12:39 per km as Strava, not 12:38', () => {
-    expect(analysis.stats.avgPaceSecKm).toBe(WALK.strava.paceSecKm);
-    expect(formatElapsed(analysis.stats.avgPaceSecKm!)).toBe('12:39');
-    expect(formatElapsed(sticker().paceSecKm as number)).toBe('12:39');
+  it('pace is the watch distance over the watch timer: 12:38 per km, as the watch, not the 12:39 of Strava over elapsed time', () => {
+    expect(analysis.stats.avgPaceSecKm).toBe(WALK.watch.paceSecKm);
+    expect(formatElapsed(analysis.stats.avgPaceSecKm!)).toBe('12:38');
+    expect(formatElapsed(sticker().paceSecKm as number)).toBe('12:38');
   });
 
   it('calories, heart rate and steps are the watch totals Strava shows', () => {

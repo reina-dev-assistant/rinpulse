@@ -122,4 +122,69 @@ describe('createDbHealth', () => {
     expect(health.getState().notice).toMatchObject({ kind: 'recreated', lost: true });
     expect(t.store.has(SWAP_KEY)).toBe(false);
   });
+
+  it('stops the native writer before the repair and starts it after the queries are released', async () => {
+    const t = setup([repaired]);
+    t.deps.quiesce = async () => {
+      t.log.push('pause');
+      return async () => {
+        t.log.push('resume');
+      };
+    };
+    const health = createDbHealth(t.deps);
+    await health.repair();
+    expect(t.log).toEqual(['hold', 'pause', 'recover', 'release', 'resume']);
+  });
+
+  it('repairs anyway when the native writer cannot be stopped or started again', async () => {
+    const t = setup([repaired]);
+    t.deps.quiesce = async () => {
+      throw new Error('no service');
+    };
+    const health = createDbHealth(t.deps);
+    expect(await health.repair()).toMatchObject({ kind: 'repaired' });
+    const u = setup([repaired]);
+    u.deps.quiesce = async () => async () => {
+      throw new Error('permission');
+    };
+    const other = createDbHealth(u.deps);
+    expect(await other.repair()).toMatchObject({ kind: 'repaired' });
+    expect(other.getState().repairing).toBe(false);
+  });
+
+  it('keeps why a repair failed in the notice, across starts', async () => {
+    const t = setup([{ kind: 'failed', keptAs: null, reason: 'disk full', swapPending: null }]);
+    const health = createDbHealth(t.deps);
+    await health.repair();
+    expect(health.getState().notice).toMatchObject({ kind: 'failed', reason: 'disk full' });
+    expect(createDbHealth(t.deps).getState().notice).toMatchObject({ reason: 'disk full' });
+  });
+
+  it('starts the native writers again only after the outcome is stored, so they can see a prepared swap', async () => {
+    const failed: RecoveryResult = { kind: 'failed', keptAs: null, reason: 'prepared', swapPending: 'joyofit.db.salvage-9' };
+    const t = setup([failed]);
+    let pendingWhenResumed: string | null = 'unset';
+    t.deps.quiesce = async () => async () => {
+      pendingWhenResumed = t.store.get(SWAP_KEY) ?? null;
+    };
+    const health = createDbHealth(t.deps);
+    await health.repair();
+    expect(pendingWhenResumed).toBe('joyofit.db.salvage-9');
+  });
+
+  it('ignores corruption reports while a prepared copy waits for the next start, and says "repaired" once it went in', async () => {
+    const failed: RecoveryResult = { kind: 'failed', keptAs: 'joyofit.db.corrupt-9', reason: 'prepared', swapPending: 'joyofit.db.salvage-9' };
+    const t = setup([failed, repaired]);
+    const health = createDbHealth(t.deps);
+    await health.repair();
+    t.advance(COOLDOWN_MS + 1);
+    health.report(CORRUPT);
+    expect(t.calls()).toBe(1);
+    health.clearPendingSwap();
+    expect(health.getState().notice).toMatchObject({ kind: 'repaired', pendingSwap: false, keptAs: 'joyofit.db.corrupt-9' });
+    expect(JSON.parse(t.store.get(NOTICE_KEY) ?? 'null')).toMatchObject({ kind: 'repaired', pendingSwap: false });
+    health.report(CORRUPT);
+    await health.repair();
+    expect(t.calls()).toBe(2);
+  });
 });

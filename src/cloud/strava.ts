@@ -195,7 +195,7 @@ async function doSend(db: SQLiteDatabase, workoutId: number): Promise<StravaUplo
     let status: UploadStatus;
     if (uploadId === null) {
       const points = await listWorkoutPoints(db, workoutId);
-      const { addLink } = await getStravaSettings(db);
+      const { addLink, addDevice } = await getStravaSettings(db);
       const summary = parseSummary(summaryJson);
       // The ascent and descent the app shows (smoothed, see `elevation.ts`), not the barometer's raw sum.
       const elevation = workoutElevation(workout, summary, points);
@@ -227,8 +227,12 @@ async function doSend(db: SQLiteDatabase, workoutId: number): Promise<StravaUplo
           ...(summary.source === 'phone' && summary.laps ? { laps: summary.laps } : {}),
         },
       );
+      // Like Huawei Health's own description, the watch is named; a workout the phone recorded names none.
+      const device = addDevice && summary.source !== 'phone' ? stravaDevice(watch) : null;
+      const deviceLine = device ? t('sharing:strava.recordedWith', { device: device.name }) : null;
       const form = buildUploadForm({ ...workout, ebike: isEbike(workout.start) }, fit.bytes, {
         addLink,
+        ...(deviceLine ? { deviceLine } : {}),
         ...(strength ? { ...(strength.name ? { name: strength.name } : {}), description: strength.description } : {}),
       });
       try {

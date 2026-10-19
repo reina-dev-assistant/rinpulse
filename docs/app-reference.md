@@ -74,6 +74,12 @@ two days before it (`src/features/today/rogoActive.ts`, `useRogoActiveKcal`, `ro
 push is corrected. A day with no samples or a 0 total leaves the field out (JoyoRogo keeps what it stored; the server keeps the larger
 of the old and new value). JoyoRogo counts it in Sisa as exercise credit (its own percentage and cap). Pure JS: no native change.
 
+JoyoFit also sends the **hours slept** (`sleepHours`, 0..24, rounded to 0.1 h) with the daily scores: today's with the body metrics, and
+each of the six days before it as an entry of its own (`rogoSleepHoursByDate`, `ROGO_SLEEP_DAYS`), the day being the night that ended on it
+plus that day's naps. A night the phone read after that day's last push, and a day before this was sent at all, still reach JoyoRogo; a day
+with only naps sends nothing. JoyoRogo shows the hours as that day's "Tidur" (Beranda tile, Tidur screen) unless the person logged the night by hand.
+Pure JS: no native change.
+
 ## Cloud sync
 
 Settings → Health & cloud → **Cloud sync** signs in with your **JoyoRogo account**. Steps and sleep go to a separate
@@ -323,7 +329,7 @@ the watch gave none, JoyoFit's estimate is shown and labelled "perkiraan". Nothi
 | HRV status | | mean ln(RMSSD) of the last 7 nights against the mean ± 1 SD of the 60 days before them (Plews 2013, Buchheit 2014; spread floor 0.05): inside balanced, below low, above unbalanced | Android night HRV: 14 baseline nights, 3 recent; iPhone shows the "not read on iPhone yet" note |
 | Intensity minutes | | Monday to Sunday: minutes in Edwards zones 2 and 3 (60 to 80 % of max HR) count 1, zones 4 and 5 count 2; target 150 (WHO 2020, ACSM 2018) | per-minute heart rate |
 | Sleep need tonight | | `readiness.ts`: 7 h 30 min + up to 1 h from today's strain ÷ 21 + a quarter of the 7-night sleep debt (at most 1 h) | 3 nights for the debt |
-| Sleep of the day | | `stats.ts` `lastSleepSession` (Today summary, readiness sleep signal, JoyoRogo `sleepPct`) and `nights.ts` `sleepByDay` (debt, trend, Sleep screen need %, JoyoRogo `sleepHours`): night plus naps, a nap belonging to the day it ends on like the main sleep, overlaps counted once; the watch's sleep score, stages and awakenings stay on the main sleep; a day with only naps has no night for debt, trend and `sleepHours` | |
+| Sleep of the day | | `stats.ts` `lastSleepSession` (Today summary, readiness sleep signal, JoyoRogo `sleepPct`) and `nights.ts` `sleepByDay` (debt, trend, Sleep screen need %, JoyoRogo `sleepHours`, today's and each earlier day of the week's): night plus naps, a nap belonging to the day it ends on like the main sleep, overlaps counted once; the watch's sleep score, stages and awakenings stay on the main sleep; a day with only naps has no night for debt, trend and `sleepHours` | |
 | Energi Tubuh | | 0 to 100, own model: wake level 30 + 60 × min(1, asleep ÷ need) + up to ±10 from the HRV z-score, minus 0.8 per hour awake, minus up to 55 from strain since waking, minus up to 1 per hour from stress above 40, plus 5 per hour of naps and 0.4 per hour of still minutes near resting HR; clamped | last night's sleep |
 
 Max heart rate is `userMaxHr()` everywhere (Sleep, Today, workouts and these metrics), from the profile's birth year, or 220 − 35 without one. The watch's
@@ -424,6 +430,8 @@ instructions are sent. The P2P push is native (`modules/huawei-wear`, `HuaweiWea
   `.gpx`/`.tcx` name; iOS declares `com.joyodigitama.joyofit.gpx` and `.tcx`; `src/features/sharedfile/` classifies by name,
   MIME type or the first 1 KB), Gambar di peta (`src/features/routes/map/`, OpenFreeMap tiles, FOSSGIS OSRM, Open-Meteo
   elevation), Dari latihan (GPS rows of a stored workout; also a button on the workout screen).
+  Loop baru dari rumah (`src/features/loops/`, [loops.md](loops.md)): a dotted round trip of a chosen number of steps, kilometres,
+  minutes or kcal from the phone's position or a saved Home point, on streets the person has not walked.
 - **Parsers.** `gpx.ts` (track, else `rte`), `tcx.ts` (course, else activity), on a small tolerant scanner (`xml.ts`, no
   dependency, no DTD, namespaces and CDATA handled). Points without a position or at 0,0 and consecutive repeats are dropped; fewer
   than 2 points is an error. Fixtures: `routeFixtures.ts` (Strava, Garmin Connect with extensions, planned route, TCX course and activity).
@@ -432,6 +440,15 @@ instructions are sent. The P2P push is native (`modules/huawei-wear`, `HuaweiWea
   (`alreadyOnWatch`): the screen offers to rename and send again. Error codes are mapped in `pushOutcome.ts`.
 - **Limits.** Only watches that list route support (`getRoutes().deliver`) take routes; the watch simplifies long routes to a few
   hundred points. Not verified on a watch yet. Tests: `src/features/routes/*.test.ts`, `src/features/sharedfile/`.
+
+## Watch faces from the web (Watch → Tampilan jam → Koleksi → "Dari web", Android, free to read)
+
+The Koleksi tab of the watch faces screen has a "Dari web" section with the watch faces the account uploaded at `app.fit.joyorogo.com` (the web upload is a JoyoRogo Pro benefit; reading the list is open to any signed-in account, so the app gates nothing).
+
+- List: `GET /v1/watchfaces` with the session `Cookie` (`cloudRequest`, so the usual retry rules apply) -> `{ watchfaces: [{ id, name, filename, size, sha256, createdAt }] }`, shown newest first with size and date.
+- Install: `GET /v1/watchfaces/:id/file` with the same `Cookie` is downloaded into the cache (`File.downloadFileAsync`), then goes through the same step as a picked `.hwt` (`useWatchfaceImport.importPackage`: extension check, native package parse, save to the phone library with the usual same-title replace, then the install prompt and BLE install with its progress and errors).
+- States: cloud not set up in the build (explanation), signed out (link to Settings → Akun), loading, error with "Coba lagi", empty (tells to upload at `app.fit.joyorogo.com`), list. A face whose name already matches a face on the watch shows "Terpasang" and is disabled; without a connected watch the buttons are disabled with "Sambungkan jam untuk memasang". The section is hidden where the picker import is unavailable (iOS, old native build).
+- Logic without UI: `src/features/watchfaces/webLibraryModel.ts`; the requests: `src/cloud/webWatchfaces.ts`. JS-only.
 
 ## Tab bar
 

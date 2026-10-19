@@ -11,7 +11,7 @@
  */
 
 import { type FitFieldDef, type FitFieldType, type FitValue, FitWriter, toFitTime, toSemicircles } from './fitEncoder';
-import { movingOf, PAUSE_MIN_SEC } from '../workouts/times';
+import { movingOf } from '../workouts/times';
 import { FIT_MANUFACTURER_DEVELOPMENT, type StravaDevice } from './device';
 
 export interface StravaWorkout {
@@ -274,19 +274,21 @@ interface Pause {
 }
 
 /**
- * Where the watch's pause was. The watch only gives the active time, so the pause is `elapsed - active` seconds long;
- * where it sat is not stored, but nothing is recorded while the watch is paused, so it lies around the longest stretch
- * the samples leave empty: the longest gap between GPS fixes when the workout has at least two (the watch stops the GPS
- * when it pauses; heart-rate samples may run on or stop a little later), else between any samples. The window is centred
- * on that gap (a gap shorter than the pause is widened to the pause's length, a longer one is cut to it) and kept inside
- * the workout. Null when the watch reports no pause or the samples have no gap of at least half of it.
+ * Where the watch's pause was. The watch only gives its timer (`duration`), so the pause is `elapsed - timer` seconds long
+ * (2 s on a run whose end stamp is 2 s after the timer stopped, minutes for a real pause); Strava reads its moving time from
+ * the timer events once a file has a pause (see `activityFile` docs in `times.ts`), so the file always writes it. Where it sat is
+ * not stored, but nothing is recorded while the watch is paused, so it lies around the longest stretch the samples leave
+ * empty: the longest gap between GPS fixes when the workout has at least two (the watch stops the GPS when it pauses;
+ * heart-rate samples may run on or stop a little later), else between any samples. The window is centred on that gap (a gap
+ * shorter than the pause is widened to the pause's length, a longer one is cut to it) and kept inside the workout; no
+ * sample is dropped. Null only when the watch reports no timer or the timer is not shorter than the elapsed time.
  */
 function findPause(workout: StravaWorkout, samples: readonly Sample[]): Pause | null {
   const first = samples[0];
   const last = samples[samples.length - 1];
   if (!first || !last || !(workout.duration > 0)) return null;
   const length = last.ts - first.ts - Math.round(workout.duration);
-  if (length < PAUSE_MIN_SEC) return null;
+  if (length < 1) return null;
   const fixes = samples.filter((s) => s.lat !== null);
   const candidates = fixes.length >= 2 ? fixes : samples;
   let gapStart = first.ts;
@@ -298,7 +300,6 @@ function findPause(workout: StravaWorkout, samples: readonly Sample[]): Pause | 
       gapStart = (candidates[i - 1] as Sample).ts;
     }
   }
-  if (gap < PAUSE_MIN_SEC || gap < length / 2) return null;
   const start = Math.min(last.ts - length, Math.max(first.ts, Math.round(gapStart + gap / 2 - length / 2)));
   return { start, end: start + length };
 }
@@ -450,8 +451,8 @@ export interface BuiltFit {
  * The FIT activity of one workout: file_id, device_info, a timer start event, one record per sample, a timer stop event
  * (and, when the watch was paused, a stop and start around the pause, see `findPause`), one lap, one session and the
  * activity. The record timestamps run from the workout's start to its end, the session's
- * `total_elapsed_time` is that span, `total_timer_time` the moving time (`movingOf`: the watch's active time when a pause of
- * 30 s or more explains it, else the elapsed time, so the file agrees with itself and with the app) and `total_distance` the watch's
+ * `total_elapsed_time` is that span, `total_timer_time` the watch's timer (`movingOf`, the time the app shows; the gap to the
+ * elapsed time is a timer stop and start, see `findPause`, so the file agrees with itself and with the app) and `total_distance` the watch's
  * distance. Foot sports get the watch's step count as strides (a stride is two steps) and an average cadence of strides
  * per minute over the active time, as Garmin devices write it. `utcOffsetSeconds` is the wearer's offset from UTC at the
  * workout; it defaults to this device's. `device` is the watch that recorded the workout (`stravaDevice`): it becomes
@@ -475,7 +476,8 @@ export function buildFit(
   const start = (samples[0] as Sample).ts;
   const end = (samples[samples.length - 1] as Sample).ts;
   const elapsed = end - start;
-  const timer = movingOf(elapsed, Math.round(workout.duration));
+  // A FIT timer is never longer than the elapsed time.
+  const timer = Math.min(elapsed, movingOf(elapsed, Math.round(workout.duration)));
   const fixes = samples.filter((s) => s.lat !== null && s.lon !== null);
   const firstFix = fixes[0];
   const lastFix = fixes[fixes.length - 1];
@@ -802,9 +804,18 @@ export interface UploadForm {
 export function buildUploadForm(
   workout: StravaWorkout,
   file: Uint8Array,
-  options: { addLink: boolean; /** Replaces the sport name as the activity title. */ name?: string; /** Text above the optional link. */ description?: string },
+  options: {
+    addLink: boolean;
+    /** Replaces the sport name as the activity title. */
+    name?: string;
+    /** Text above the device line and the optional link. */
+    description?: string;
+    /** The line naming the recording watch, e.g. `Recorded with HUAWEI WATCH FIT 4 Pro`; appended below the description. */
+    deviceLine?: string;
+  },
 ): UploadForm {
   const sport = stravaSport(workout.sportType, workout.ebike);
+  const description = [options.description, options.deviceLine, options.addLink ? DESCRIPTION_LINK : undefined].filter((part) => part).join('\n\n');
   const boundary = `----joyofit${workout.start.toString(36)}${file.length.toString(36)}`;
   const fields: Record<string, string> = {
     data_type: 'fit',
@@ -812,11 +823,7 @@ export function buildUploadForm(
     external_id: externalId(workout.start),
     sport_type: sport.sportType,
     ...(sport.trainer ? { trainer: '1' } : {}),
-    ...(options.description
-      ? { description: options.addLink ? `${options.description}\n\n${DESCRIPTION_LINK}` : options.description }
-      : options.addLink
-        ? { description: DESCRIPTION_LINK }
-        : {}),
+    ...(description ? { description } : {}),
   };
   let head = '';
   for (const [name, value] of Object.entries(fields)) {

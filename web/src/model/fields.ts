@@ -1,5 +1,9 @@
 import { VALUE_TYPE, WIDGET_DATA_TYPE } from "@joyofit/hwt";
+import { i18n } from "@/i18n";
+import type fieldsId from "@/i18n/locales/id/fields";
 import type { IconName, Sim } from "./types";
+
+type FieldLabelKey = keyof (typeof fieldsId)["label"];
 
 /**
  * The data fields Studio can draw, keyed by the codec's `value_type` id (`packages/hwt` VALUE_TYPES). A widget, ring or
@@ -67,10 +71,10 @@ export const LEGACY_CALORIES_ID = 1;
 
 const ALTITUDE_SCALE_M = 8848;
 
-export const FIELDS: readonly FieldDef[] = [
+const RAW_FIELDS: ReadonlyArray<Omit<FieldDef, "label"> & { labelKey: FieldLabelKey }> = [
   {
     id: VALUE_TYPE.steps,
-    label: "Steps",
+    labelKey: "steps",
     icon: "steps",
     color: "#5FD3EE",
     slot: WIDGET_DATA_TYPE.steps,
@@ -79,7 +83,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.heartRate,
-    label: "Heart rate",
+    labelKey: "heartRate",
     icon: "heart",
     color: "#FF8FA4",
     slot: WIDGET_DATA_TYPE.heartRate,
@@ -88,7 +92,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.altitude,
-    label: "Altitude",
+    labelKey: "altitude",
     icon: "mountain",
     color: "#C3A6FF",
     slot: WIDGET_DATA_TYPE.altitude,
@@ -97,7 +101,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.temperature,
-    label: "Temperature",
+    labelKey: "temperature",
     icon: "thermometer",
     color: "#FF9F5A",
     slot: WIDGET_DATA_TYPE.weather,
@@ -106,7 +110,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.temperatureMax,
-    label: "Temperature max",
+    labelKey: "temperatureMax",
     icon: "thermometer",
     color: "#FF7A6B",
     slot: WIDGET_DATA_TYPE.weather,
@@ -115,7 +119,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.temperatureMin,
-    label: "Temperature min",
+    labelKey: "temperatureMin",
     icon: "thermometer",
     color: "#6BB8FF",
     slot: WIDGET_DATA_TYPE.weather,
@@ -124,7 +128,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.power,
-    label: "Battery",
+    labelKey: "battery",
     icon: "battery",
     color: "#6EE7A0",
     slot: WIDGET_DATA_TYPE.power,
@@ -133,7 +137,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: LEGACY_CALORIES_ID,
-    label: "Calories",
+    labelKey: "calories",
     icon: "flame",
     color: "#F5B35A",
     number: { digits: 4, min: 0, max: 9999 },
@@ -142,7 +146,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.stepsRatio,
-    label: "Steps goal",
+    labelKey: "stepsGoal",
     icon: "steps",
     color: "#5FD3EE",
     slot: WIDGET_DATA_TYPE.steps,
@@ -150,7 +154,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.heartRateRatio,
-    label: "Heart rate",
+    labelKey: "heartRate",
     icon: "heart",
     color: "#FF8FA4",
     slot: WIDGET_DATA_TYPE.heartRate,
@@ -159,7 +163,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.powerRatio,
-    label: "Battery",
+    labelKey: "battery",
     icon: "battery",
     color: "#6EE7A0",
     slot: WIDGET_DATA_TYPE.power,
@@ -167,7 +171,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.altitudeRatio,
-    label: "Altitude",
+    labelKey: "altitude",
     icon: "mountain",
     color: "#C3A6FF",
     slot: WIDGET_DATA_TYPE.altitude,
@@ -176,7 +180,7 @@ export const FIELDS: readonly FieldDef[] = [
   },
   {
     id: VALUE_TYPE.powerEnum,
-    label: "Battery level",
+    labelKey: "batteryLevel",
     icon: "battery",
     color: "#6EE7A0",
     slot: WIDGET_DATA_TYPE.power,
@@ -185,43 +189,59 @@ export const FIELDS: readonly FieldDef[] = [
   },
 ];
 
+/** Registry entries; `label` is looked up when read, so it follows the language switch. */
+export const FIELDS: readonly FieldDef[] = RAW_FIELDS.map(({ labelKey, ...def }) => ({
+  ...def,
+  get label() {
+    return i18n.t(`fields:label.${labelKey}`);
+  },
+}));
+
 const BY_ID = new Map(FIELDS.map((f) => [f.id, f]));
 
 export function fieldDef(id: number): FieldDef | undefined {
   return BY_ID.get(id);
 }
 
-/** Why an id has no element of its own: another element already writes it, or Studio has no way to draw it. */
-export const HOSTED_BY: Readonly<Record<number, string>> = {
-  [VALUE_TYPE.hour]: "Written by the Time element.",
-  [VALUE_TYPE.minute]: "Written by the Time element.",
-  [VALUE_TYPE.hourHigh]: "A digit of the Time element; Studio writes the combined hour (12) instead.",
-  [VALUE_TYPE.hourLow]: "A digit of the Time element; Studio writes the combined hour (12) instead.",
-  [VALUE_TYPE.minuteHigh]: "A digit of the Time element; Studio writes the combined minute (13) instead.",
-  [VALUE_TYPE.minuteLow]: "A digit of the Time element; Studio writes the combined minute (13) instead.",
-  [VALUE_TYPE.secondHigh]: "Written by the Time element (Seconds).",
-  [VALUE_TYPE.secondLow]: "Written by the Time element (Seconds).",
-  [VALUE_TYPE.date]: "Written by the Date element.",
-  [VALUE_TYPE.week]: "Written by the Date element.",
-  [VALUE_TYPE.month]: "Written by the Date element.",
-  [VALUE_TYPE.dateHigh]: "A digit of the Date element; Studio writes the combined day (17) instead.",
-  [VALUE_TYPE.dateLow]: "A digit of the Date element; Studio writes the combined day (17) instead.",
-  [VALUE_TYPE.hourRatio]: "A clock hand: add it from Add, Analog hands.",
-  [VALUE_TYPE.minuteRatio]: "A clock hand: add it from Add, Analog hands.",
-  [VALUE_TYPE.secondRatio]: "A clock hand: add it from Add, Analog hands.",
+type ReasonKey = Exclude<keyof (typeof fieldsId)["reason"], "unknownId" | "noMethod" | "noImages" | "noElement" | "cannotDrawImages" | "noSlot">;
+
+/** Why an id has no element of its own: another element already writes it, or Studio has no way to draw it (keys of `fields:reason`). */
+export const HOSTED_BY: Readonly<Record<number, ReasonKey>> = {
+  [VALUE_TYPE.hour]: "timeElement",
+  [VALUE_TYPE.minute]: "timeElement",
+  [VALUE_TYPE.hourHigh]: "timeHourDigit",
+  [VALUE_TYPE.hourLow]: "timeHourDigit",
+  [VALUE_TYPE.minuteHigh]: "timeMinuteDigit",
+  [VALUE_TYPE.minuteLow]: "timeMinuteDigit",
+  [VALUE_TYPE.secondHigh]: "timeSeconds",
+  [VALUE_TYPE.secondLow]: "timeSeconds",
+  [VALUE_TYPE.date]: "dateElement",
+  [VALUE_TYPE.week]: "dateElement",
+  [VALUE_TYPE.month]: "dateElement",
+  [VALUE_TYPE.dateHigh]: "dateDigit",
+  [VALUE_TYPE.dateLow]: "dateDigit",
+  [VALUE_TYPE.hourRatio]: "hand",
+  [VALUE_TYPE.minuteRatio]: "hand",
+  [VALUE_TYPE.secondRatio]: "hand",
 };
 
-export const NO_ELEMENT: Readonly<Record<number, string>> = {
-  [VALUE_TYPE.weatherType]: "Needs an image set: the order of its 11 weather images is not known, so Studio cannot draw them.",
-  [VALUE_TYPE.temperatureRatio]: "A gauge hand in the samples; Studio has no data-driven hand.",
-  [VALUE_TYPE.dateYesterday]: "Written as arc text on the dial in the samples; Studio has no such layer.",
-  [VALUE_TYPE.dateTomorrow]: "Written as arc text on the dial in the samples; Studio has no such layer.",
+export const NO_ELEMENT: Readonly<Record<number, ReasonKey>> = {
+  [VALUE_TYPE.weatherType]: "weatherType",
+  [VALUE_TYPE.temperatureRatio]: "gauge",
+  [VALUE_TYPE.dateYesterday]: "dateArc",
+  [VALUE_TYPE.dateTomorrow]: "dateArc",
 };
+
+/** The reason text for an id that has no element of its own, in the active language. */
+export function noElementReason(id: number): string | undefined {
+  const key = HOSTED_BY[id] ?? NO_ELEMENT[id];
+  return key === undefined ? undefined : i18n.t(`fields:reason.${key}`);
+}
 
 /** Name of a container slot, for the browser. */
 export function slotName(slot: number): string {
   const name = (Object.keys(WIDGET_DATA_TYPE) as Array<keyof typeof WIDGET_DATA_TYPE>).find((k) => WIDGET_DATA_TYPE[k] === slot);
-  return name ? `${slot} (${name === "power" ? "battery" : name === "heartRate" ? "heart rate" : name})` : String(slot);
+  return name ? `${slot} (${i18n.t(`fields:slot.${name}`)})` : String(slot);
 }
 
 /** Project files written before the registry stored a named source. */

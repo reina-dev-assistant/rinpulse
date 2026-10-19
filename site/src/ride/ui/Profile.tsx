@@ -8,6 +8,8 @@ interface ProfileProps {
   /** Rider position in metres; omit for a static preview. */
   positionM?: number;
   ghostPositionM?: number | null;
+  /** Other riders (pacer bots), metres. */
+  otherPositionsM?: readonly number[];
   /** Show the sprint and KOM bands. */
   segments?: boolean;
   label: string;
@@ -20,7 +22,7 @@ const PAD_TOP = 18;
 const PAD_BOTTOM = 8;
 
 /** The route's elevation profile as an SVG area, with the rider (and ghost) positioned on it. */
-export function Profile({ route, positionM, ghostPositionM, segments = false, label, className }: ProfileProps) {
+export function Profile({ route, positionM, ghostPositionM, otherPositionsM, segments = false, label, className }: ProfileProps) {
   const geometry = useMemo(() => {
     const points = profileOf(route, Math.max(20, route.lengthM / 240));
     const elevations = points.map((p) => p.e);
@@ -78,6 +80,7 @@ export function Profile({ route, positionM, ghostPositionM, segments = false, la
       {ghost && <line x1={ghost.px} x2={ghost.px} y1={ghost.py} y2={H} className="rd-prof-ghost" vectorEffect="non-scaling-stroke" />}
       {rider && <line x1={rider.px} x2={rider.px} y1={rider.py} y2={H} className="rd-prof-rider-stem" vectorEffect="non-scaling-stroke" />}
     </svg>
+      {otherPositionsM?.map((m, i) => (m >= 0 && m <= route.lengthM ? <i key={i} className="rd-prof-dot rd-prof-dot-bot" style={pct(at(m))} /> : null))}
       {ghost && <i className="rd-prof-dot rd-prof-dot-ghost" style={pct(ghost)} />}
       {rider && <i className="rd-prof-dot rd-prof-dot-rider" style={pct(rider)} />}
     </div>

@@ -5,6 +5,7 @@ import { SCREEN_H, SCREEN_W, type Element } from "@/model/types";
 import { drawProject, elementBounds, type Rect } from "@/render/scene";
 import { shownSim } from "@/render/values";
 import type { Ctx2D } from "@/render/canvas";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/ui/utils";
 import { useEditor } from "./store";
 import { hitTest, isScalable, otherBounds, scaleElement, snapMove, snapTargets, type Corner, type SnapTargets } from "./geometry";
@@ -40,6 +41,7 @@ export function useStageZoom(container: React.RefObject<HTMLElement | null>): nu
 }
 
 export function Stage({ zoom: z }: { zoom: number }) {
+  const { t } = useTranslation("editor");
   const fullProject = useEditor((s) => s.project);
   const photoPreview = useEditor((s) => s.photoPreview);
   // Photo face preview: only the pictures a photo face carries; the watch draws its own clock and data over them.
@@ -244,7 +246,7 @@ export function Stage({ zoom: z }: { zoom: number }) {
             boxShadow: `0 0 0 ${Math.max(6, px(9))}px #121a1d, 0 0 0 ${Math.max(7, px(10))}px rgb(255 255 255 / 9%), 0 24px 60px rgb(0 0 0 / 55%)`,
           }}
         >
-          <canvas ref={canvas} data-testid="face-canvas" role="img" aria-label="Watch face preview" className="block size-full" />
+          <canvas ref={canvas} data-testid="face-canvas" role="img" aria-label={t("stage.preview")} className="block size-full" />
         </div>
 
         {/* Overlay: selection, handles, guides. Not clipped, so handles near the corners stay reachable. */}

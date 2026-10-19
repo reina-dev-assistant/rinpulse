@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { emptyProject } from "@/model/defaults";
@@ -33,6 +34,7 @@ function Preview({ project }: { project: Project | null }) {
 }
 
 function Card({ template, project, onPick }: { template: Template | null; project: Project | null; onPick: () => void }) {
+  const { t } = useTranslation("templates");
   return (
     <button
       type="button"
@@ -48,18 +50,19 @@ function Card({ template, project, onPick }: { template: Template | null; projec
         <Preview project={project} />
       ) : (
         <div className="mx-auto grid aspect-[408/480] w-full max-w-36 place-items-center rounded-[22%/18.5%] bg-black text-xs font-semibold text-white/50">
-          {template ? <Loader2 className="size-4 animate-spin" /> : "Empty"}
+          {template ? <Loader2 className="size-4 animate-spin" /> : t("empty")}
         </div>
       )}
       <span>
-        <span className="block text-sm font-bold">{template?.name ?? "Blank face"}</span>
-        <span className="block text-[0.8125rem] text-muted-foreground">{template?.blurb ?? "Black screen with a time. Add what you need."}</span>
+        <span className="block text-sm font-bold">{template?.name ?? t("blank.name")}</span>
+        <span className="block text-[0.8125rem] text-muted-foreground">{template?.blurb ?? t("blank.blurb")}</span>
       </span>
     </button>
   );
 }
 
 export function TemplatesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation("templates");
   const loadProject = useEditor((s) => s.loadProject);
   const [built, setBuilt] = useState<Record<string, Project>>({});
 
@@ -87,15 +90,15 @@ export function TemplatesDialog({ open, onClose }: { open: boolean; onClose: () 
   const apply = (project: Project, name: string) => {
     loadProject(project);
     onClose();
-    toast.success(`${name} loaded`, { description: "Press Ctrl+Z to go back to your previous face." });
+    toast.success(t("loaded", { name }), { description: t("loadedHint") });
   };
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Start from a template"
-      description="Each one is a normal face you can change. Loading it replaces the current face, and Undo brings yours back."
+      title={t("title")}
+      description={t("description")}
       className="max-w-3xl"
       testId="templates-dialog"
     >
@@ -103,7 +106,7 @@ export function TemplatesDialog({ open, onClose }: { open: boolean; onClose: () 
         {TEMPLATES.map((t) => (
           <Card key={t.id} template={t} project={built[t.id] ?? null} onPick={() => built[t.id] && apply(built[t.id]!, t.name)} />
         ))}
-        <Card template={null} project={null} onPick={() => apply(emptyProject(), "Blank face")} />
+        <Card template={null} project={null} onPick={() => apply(emptyProject(), t("blank.name"))} />
       </div>
     </Dialog>
   );

@@ -33,6 +33,7 @@ function bannerText(banner: UpdateBannerModel, t: TFunction<'settings'>): { titl
   if (banner.kind === 'downloading') {
     return { title: t('updates.banner.downloading'), body: banner.percent === null ? null : `${banner.percent}%` };
   }
+  if (banner.kind === 'newer') return { title: t('updates.banner.newerTitle'), body: t('updates.banner.newerBody') };
   return { title: t('updates.banner.readyTitle'), body: t('updates.banner.readyBody') };
 }
 

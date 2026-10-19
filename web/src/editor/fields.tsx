@@ -1,5 +1,6 @@
 import { useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { Upload } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Segmented } from "@/ui/surface";
@@ -126,6 +127,7 @@ export function ColorField({
   onChange: (v: string) => void;
   swatches?: boolean;
 }) {
+  const { t } = useTranslation("props");
   const hex = /^#[0-9a-f]{6}$/i.test(value) ? value : "#000000";
   return (
     <Field label={label} className="space-y-2">
@@ -133,14 +135,14 @@ export function ColorField({
         <label className="relative size-8 shrink-0 cursor-pointer overflow-hidden rounded-lg ring-1 ring-foreground/15">
           <input
             type="color"
-            aria-label={`${label} picker`}
+            aria-label={t("color.picker", { label })}
             value={hex}
             onChange={(e) => onChange(e.currentTarget.value.toUpperCase())}
             className="absolute -inset-2 size-12 cursor-pointer border-0 bg-transparent p-0"
           />
         </label>
         <Input
-          aria-label={`${label} hex`}
+          aria-label={t("color.hex", { label })}
           value={value.toUpperCase()}
           maxLength={7}
           className={cn(smallInput, "w-24 font-mono uppercase")}
@@ -156,7 +158,7 @@ export function ColorField({
             <button
               key={c}
               type="button"
-              aria-label={`Use ${c}`}
+              aria-label={t("color.use", { color: c })}
               onClick={() => onChange(c)}
               className={cn(
                 "size-5 rounded-full ring-1 ring-foreground/20 transition-transform duration-150 hover:scale-110 active:scale-95",
@@ -198,12 +200,13 @@ export function SegmentedField<T extends string>({
 }
 
 export function FontField({ value, onChange }: { value: FontRef; onChange: (v: FontRef) => void }) {
+  const { t } = useTranslation("props");
   const choice = fontChoice(value.family);
   return (
     <div className="space-y-2">
-      <Field label="Font">
+      <Field label={t("font.label")}>
         <select
-          aria-label="Font family"
+          aria-label={t("font.family")}
           value={value.family}
           onChange={(e) => {
             const family = e.currentTarget.value;
@@ -213,14 +216,14 @@ export function FontField({ value, onChange }: { value: FontRef; onChange: (v: F
         >
           {FONTS.map((f) => (
             <option key={f.family} value={f.family}>
-              {f.label} · {f.note}
+              {f.label} · {t(`fontNote.${f.note}`)}
             </option>
           ))}
         </select>
       </Field>
       {choice && choice.weights.length > 1 && (
         <Segmented
-          label="Font weight"
+          label={t("font.weight")}
           value={String(value.weight)}
           options={choice.weights.map((w) => ({ value: String(w), label: String(w) }))}
           onChange={(w) => onChange({ ...value, weight: Number(w) })}
@@ -231,13 +234,14 @@ export function FontField({ value, onChange }: { value: FontRef; onChange: (v: F
 }
 
 export function OutlineField({ value, onChange, fallback }: { value: Outline; onChange: (v: Outline) => void; fallback: string }) {
+  const { t } = useTranslation("props");
   return (
     <div className="space-y-2">
-      <ToggleRow label="Outline" checked={value !== null} onChange={(on) => onChange(on ? { color: fallback, width: 2 } : null)} />
+      <ToggleRow label={t("outline.label")} checked={value !== null} onChange={(on) => onChange(on ? { color: fallback, width: 2 } : null)} />
       {value && (
         <>
-          <ColorField label="Outline color" value={value.color} onChange={(color) => onChange({ ...value, color })} swatches={false} />
-          <SliderField label="Outline width" value={value.width} min={1} max={8} onChange={(width) => onChange({ ...value, width })} unit="px" />
+          <ColorField label={t("outline.color")} value={value.color} onChange={(color) => onChange({ ...value, color })} swatches={false} />
+          <SliderField label={t("outline.width")} value={value.width} min={1} max={8} onChange={(width) => onChange({ ...value, width })} unit="px" />
         </>
       )}
     </div>

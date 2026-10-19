@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   PlusJakartaSans_500Medium,
   PlusJakartaSans_600SemiBold,
@@ -25,6 +25,7 @@ import {
 } from '@/components/tabBarMetrics';
 import { initLocale, refreshAutoLocale } from '@/i18n/native';
 import { DATABASE_NAME } from '@/db/appSchema';
+import { BUSY_TIMEOUT_MS } from '@/db/migrations';
 import { serializeQueries } from '@/db/serialize';
 import { DatabaseGate } from '@/features/dbhealth/DatabaseGate';
 import { DbHealthNotice } from '@/features/dbhealth/DbHealthNotice';
@@ -33,6 +34,8 @@ import { BikeRideProvider } from '@/features/bikecomputer/BikeRideProvider';
 import { lockPortrait } from '@/features/bikecomputer/ui/orientation';
 import { LivePill } from '@/features/record/ui/LivePill';
 import { UpdateBanner } from '@/features/updates/UpdateBanner';
+import { UpdateGateProvider, useUpdateGate } from '@/features/updates/UpdateGateProvider';
+import { LaunchUpdateScreen, UpdateRequiredScreen } from '@/features/updates/UpdateRequiredScreen';
 import { DeleteSnackbar } from '@/features/workouts/ui/DeleteSnackbar';
 import { CloudProvider } from '@/state/CloudProvider';
 import { LiveWorkoutProvider } from '@/state/LiveWorkoutProvider';
@@ -40,6 +43,7 @@ import { OnboardingProvider } from '@/state/OnboardingProvider';
 import { MealsProvider } from '@/state/MealsProvider';
 import { RecorderProvider } from '@/state/RecorderProvider';
 import { RideProvider } from '@/state/RideProvider';
+import { ScaleProvider } from '@/state/ScaleProvider';
 import { SensorsProvider } from '@/state/SensorsProvider';
 import { StravaProvider } from '@/state/StravaProvider';
 import { WatchProvider } from '@/state/WatchProvider';
@@ -48,8 +52,13 @@ import { ThemeProvider, useTheme } from '@/theme';
 // Stored language choice (or the phone's) applies before the first screen is drawn.
 initLocale();
 
-/** The schema is built before this handle opens (`DatabaseGate`, which repairs a damaged file first); from here on one query at a time (see `serialize.ts`). */
+/**
+ * The schema is built before this handle opens (`DatabaseGate`, which repairs a damaged file first); from here on one query at a
+ * time (see `serialize.ts`). The native writer opens the same file with the same SQLite library, so the two really do lock each
+ * other: a statement waits for the other's transaction instead of failing with SQLITE_BUSY.
+ */
 async function initDatabase(db: SQLiteDatabase): Promise<void> {
+  await db.execAsync(`PRAGMA busy_timeout = ${BUSY_TIMEOUT_MS}`);
   serializeQueries(db);
 }
 
@@ -59,7 +68,9 @@ void SplashScreen.preventAutoHideAsync().catch(() => {});
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <RootNavigator />
+      <UpdateGateProvider>
+        <RootNavigator />
+      </UpdateGateProvider>
     </ThemeProvider>
   );
 }
@@ -105,8 +116,10 @@ function RootNavigator() {
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
     ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
   });
   const ready = fontsReady || fontError !== null;
+  const { launch, decision, blockedAtLaunch } = useUpdateGate();
 
   // The phone language may change while the app sleeps; "Otomatis" follows it.
   useEffect(() => {
@@ -121,11 +134,16 @@ function RootNavigator() {
     void lockPortrait();
   }, []);
 
+  // The splash also covers the cold-start update gate (server minimum build, newer OTA bundle; at most ~8 s).
+  const launched = ready && launch !== 'gate';
   useEffect(() => {
-    if (ready) void SplashScreen.hideAsync().catch(() => {});
-  }, [ready]);
+    if (launched) void SplashScreen.hideAsync().catch(() => {});
+  }, [launched]);
 
-  if (!ready) return null;
+  if (!launched) return null;
+  // A blocked cold start never mounts the app (no database, no sync, no sensors); see docs/force-update.md.
+  if (blockedAtLaunch && decision.kind === 'block') return <UpdateRequiredScreen cover={false} />;
+  if (launch === 'ota') return <LaunchUpdateScreen />;
 
   return (
     <DatabaseGate>
@@ -135,6 +153,7 @@ function RootNavigator() {
           <CloudProvider>
             <StravaProvider>
               <SensorsProvider>
+              <ScaleProvider>
               <RecorderProvider>
               <BikeRideProvider>
               <RideProvider>
@@ -234,6 +253,8 @@ function RootNavigator() {
                   </Tabs>
                   {/* Android installs from Google Play only: flexible in-app update. */}
                   <UpdateBanner />
+                  {/* A block found when the app returns to the foreground covers the running app instead of unmounting it. */}
+                  <UpdateRequiredScreen cover />
                   <DeleteSnackbar />
                   <DbHealthNotice />
                   </View>
@@ -244,6 +265,7 @@ function RootNavigator() {
               </RideProvider>
               </BikeRideProvider>
               </RecorderProvider>
+              </ScaleProvider>
               </SensorsProvider>
             </StravaProvider>
           </CloudProvider>

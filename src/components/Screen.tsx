@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { IconChip, type IconName } from '@/components/IconChip';
 import { PressableScale } from '@/components/PressableScale';
+import { useKeyboardOverlap } from '@/components/useKeyboardOverlap';
 import { spacing, useColors, useTheme, type Tint } from '@/theme';
 
 export interface RefreshProps {
@@ -77,15 +78,21 @@ interface ScreenProps {
   refresh?: RefreshProps;
   /** False freezes the scroll, e.g. while a chart is being scrubbed. */
   scrollEnabled?: boolean;
+  /** The scroll view, for `scrollTo`. */
+  scrollRef?: RefObject<ScrollView | null>;
+  /** A bar pinned under the scrolling content, lifted above the keyboard (a comment composer). */
+  footer?: ReactNode;
   children: ReactNode;
 }
 
-export function Screen({ title, caption, right, refresh, scrollEnabled = true, children }: ScreenProps) {
+export function Screen({ title, caption, right, refresh, scrollEnabled = true, scrollRef, footer, children }: ScreenProps) {
   const colors = useColors();
   const padding = useContentPadding(title !== undefined);
   const refreshControl = useRefreshControl(refresh);
-  return (
+  const keyboard = useKeyboardOverlap();
+  const scroll = (
     <ScrollView
+      ref={scrollRef}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[styles.content, padding]}
       keyboardShouldPersistTaps="handled"
@@ -95,6 +102,13 @@ export function Screen({ title, caption, right, refresh, scrollEnabled = true, c
       {title ? <PageHeader title={title} caption={caption} right={right} /> : null}
       {children}
     </ScrollView>
+  );
+  if (!footer) return scroll;
+  return (
+    <View ref={keyboard.ref} collapsable={false} style={[styles.fill, { backgroundColor: colors.background, paddingBottom: keyboard.lift }]}>
+      {scroll}
+      {footer}
+    </View>
   );
 }
 
@@ -147,6 +161,7 @@ export function Divider() {
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
   content: { gap: spacing.lg },
   pageHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 40 },
   pageHeaderText: { flex: 1, gap: 2 },

@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n";
 import { assetsToDataUrls, importAssetDataUrls } from "./assets";
 import { LEGACY_RING_SOURCES, LEGACY_WIDGET_SOURCES, fieldDef } from "./fields";
 import { PROJECT_VERSION, type Element, type Project } from "./types";
@@ -61,16 +62,16 @@ function migrateElement(value: unknown): unknown {
  * project is not usable; every element is checked, so a damaged save cannot reach the renderer.
  */
 export function restoreProject(raw: unknown): Project {
-  if (typeof raw !== "object" || raw === null) throw new ProjectFileError("This is not a JoyoFit Studio project file.");
+  if (typeof raw !== "object" || raw === null) throw new ProjectFileError(i18n.t("file.notProject"));
   const project = raw as Partial<Project>;
   if (project.version !== PROJECT_VERSION) {
-    throw new ProjectFileError(`Project version ${String(project.version)} is not supported (expected ${PROJECT_VERSION}).`);
+    throw new ProjectFileError(i18n.t("file.version", { version: String(project.version), expected: PROJECT_VERSION }));
   }
   const elements = Array.isArray(project.elements) ? project.elements.map(migrateElement) : null;
-  if (!elements || !elements.every(isElement)) throw new ProjectFileError("The project's layers are damaged.");
+  if (!elements || !elements.every(isElement)) throw new ProjectFileError(i18n.t("file.damaged"));
   return {
     version: PROJECT_VERSION,
-    name: typeof project.name === "string" ? project.name : "My face",
+    name: typeof project.name === "string" ? project.name : i18n.t("file.defaultName"),
     author: typeof project.author === "string" ? project.author : "",
     elements,
   };
@@ -82,11 +83,11 @@ export async function parseProjectFile(text: string): Promise<Project> {
   try {
     raw = JSON.parse(text);
   } catch {
-    throw new ProjectFileError("This file is not valid JSON.");
+    throw new ProjectFileError(i18n.t("file.notJson"));
   }
   const file = raw as Partial<ProjectFile>;
   if (file?.format !== "joyofit-studio-project" || typeof file.project !== "object" || file.project === null) {
-    throw new ProjectFileError("This is not a JoyoFit Studio project file.");
+    throw new ProjectFileError(i18n.t("file.notProject"));
   }
   const project = restoreProject(file.project);
   if (file.assets) await importAssetDataUrls(file.assets);

@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n";
 import { DEFAULT_FONT } from "@/render/fonts";
 import { VALUE_TYPE } from "@joyofit/hwt";
 import { fieldDef, type FieldDef } from "./fields";
@@ -31,7 +32,7 @@ export function newBackground(): BackgroundElement {
   return {
     id: uid(),
     type: "background",
-    name: "Background",
+    name: i18n.t("editor:defaults.background"),
     visible: true,
     locked: false,
     x: 0,
@@ -44,7 +45,7 @@ export function newTime(patch: Partial<TimeElement> = {}): TimeElement {
   return {
     id: uid(),
     type: "time",
-    name: "Time",
+    name: i18n.t("editor:defaults.time"),
     visible: true,
     locked: false,
     x: 58,
@@ -67,7 +68,7 @@ export function newDate(patch: Partial<DateElement> = {}): DateElement {
   return {
     id: uid(),
     type: "date",
-    name: "Date",
+    name: i18n.t("editor:defaults.date"),
     visible: true,
     locked: false,
     x: 120,
@@ -85,9 +86,9 @@ export function newDate(patch: Partial<DateElement> = {}): DateElement {
 
 export function newHand(hand: HandKind, patch: Partial<HandElement> = {}): HandElement {
   const base: Record<HandKind, Pick<HandElement, "length" | "width" | "tail" | "color" | "shape" | "name">> = {
-    hour: { length: 100, width: 14, tail: 18, color: "#F2F7F8", shape: "classic", name: "Hour hand" },
-    minute: { length: 160, width: 10, tail: 22, color: "#F2F7F8", shape: "classic", name: "Minute hand" },
-    second: { length: 175, width: 3, tail: 36, color: "#FF8FA4", shape: "needle", name: "Second hand" },
+    hour: { length: 100, width: 14, tail: 18, color: "#F2F7F8", shape: "classic", name: i18n.t("editor:defaults.hourHand") },
+    minute: { length: 160, width: 10, tail: 22, color: "#F2F7F8", shape: "classic", name: i18n.t("editor:defaults.minuteHand") },
+    second: { length: 175, width: 3, tail: 36, color: "#FF8FA4", shape: "needle", name: i18n.t("editor:defaults.secondHand") },
   };
   return {
     id: uid(),
@@ -110,7 +111,7 @@ export function newImage(assetId: string | null, w: number, h: number, patch: Pa
   return {
     id: uid(),
     type: "image",
-    name: "Image",
+    name: i18n.t("editor:defaults.image"),
     visible: true,
     locked: false,
     x: Math.round((SCREEN_W - w) / 2),
@@ -156,7 +157,7 @@ export function newRing(valueType: number, patch: Partial<RingElement> = {}): Ri
   return {
     id: uid(),
     type: "ring",
-    name: `${def.label} ring`,
+    name: i18n.t("editor:defaults.ring", { label: def.label }),
     visible: true,
     locked: false,
     x: 12,
@@ -178,7 +179,7 @@ export function newIconSet(valueType: number, patch: Partial<IconSetElement> = {
   return {
     id: uid(),
     type: "iconset",
-    name: `${def.label} icons`,
+    name: i18n.t("editor:defaults.icons", { label: def.label }),
     visible: true,
     locked: false,
     x: 180,
@@ -211,7 +212,7 @@ export function newElement(type: ElementType): Element {
   }
 }
 
-export function emptyProject(name = "My face"): Project {
+export function emptyProject(name: string = i18n.t("editor:defaults.project")): Project {
   return {
     version: PROJECT_VERSION,
     name,
@@ -220,15 +221,32 @@ export function emptyProject(name = "My face"): Project {
   };
 }
 
+/** Display names of the element types, resolved when read so a language switch applies. */
 export const ELEMENT_LABELS: Record<ElementType, string> = {
-  background: "Background",
-  time: "Digital time",
-  date: "Date",
-  hand: "Analog hand",
-  image: "Image or sticker",
-  widget: "Data widget",
-  ring: "Progress ring",
-  iconset: "Icon set",
+  get background() {
+    return i18n.t("editor:elementType.background");
+  },
+  get time() {
+    return i18n.t("editor:elementType.time");
+  },
+  get date() {
+    return i18n.t("editor:elementType.date");
+  },
+  get hand() {
+    return i18n.t("editor:elementType.hand");
+  },
+  get image() {
+    return i18n.t("editor:elementType.image");
+  },
+  get widget() {
+    return i18n.t("editor:elementType.widget");
+  },
+  get ring() {
+    return i18n.t("editor:elementType.ring");
+  },
+  get iconset() {
+    return i18n.t("editor:elementType.iconset");
+  },
 };
 
 /** A `.hwt` file name: letters and digits only, as Huawei requires. */

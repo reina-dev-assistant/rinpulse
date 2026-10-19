@@ -36,6 +36,8 @@ export interface StravaSettings {
   athleteId: number | null;
   /** Put `fit.joyorogo.com` in the description of uploaded activities. Off by default. */
   addLink: boolean;
+  /** Name the recording watch in the description of uploaded activities, the way Huawei Health does. On by default. */
+  addDevice: boolean;
   /** The grant has `profile:read_all` (the athlete agreed to let JoyoFit list their Strava shoes and bikes). */
   gearScope: boolean;
 }
@@ -49,12 +51,17 @@ export async function getStravaSettings(db: SQLiteDatabase): Promise<StravaSetti
     connectedAt: Number.isFinite(connectedAt) && connectedAt > 0 ? connectedAt : null,
     athleteId: Number.isFinite(athleteId) && athleteId > 0 ? athleteId : null,
     addLink: map.get('strava_add_link') === '1',
+    addDevice: map.get('strava_add_device') !== '0',
     gearScope: map.get('strava_gear_scope') === '1',
   };
 }
 
 export function setStravaAddLink(db: SQLiteDatabase, on: boolean): Promise<void> {
   return setCloudState(db, { strava_add_link: on ? '1' : '0' });
+}
+
+export function setStravaAddDevice(db: SQLiteDatabase, on: boolean): Promise<void> {
+  return setCloudState(db, { strava_add_device: on ? '1' : '0' });
 }
 
 /**

@@ -36,7 +36,11 @@
     "share": "Bagikan ke Threads",
     "saveOpen": "Simpan semua dan buka Threads",
     "copy": "Salin teks",
-    "saveOpenHint": "Teks juga tersalin: tempel di Threads kalau kolom teksnya kosong. Kalau Threads tidak menerima semua gambar sekaligus, pakai tombol simpan: gambar masuk ke foto kamu, teks tersalin, lalu tombol foto di Threads memilih semuanya."
+    "pasteHint": "Threads hanya mengambil gambar dari menu bagikan, teksnya tidak ikut. Teks disalin otomatis, jadi tempel di kolom teks Threads.",
+    "saveOpenHint": "Kalau Threads tidak menerima semua gambar sekaligus, pakai tombol simpan: gambar masuk ke foto kamu, teks terisi di Threads, lalu tombol foto di Threads memilih semuanya."
+  },
+  "toasts": {
+    "captionCopied": "Teks disalin, tempel di Threads"
   },
   "progress": {
     "title": "Menyiapkan gambar {{n}}/{{total}}"

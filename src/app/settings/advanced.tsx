@@ -12,6 +12,7 @@ import { showsWatchUi } from '@/features/device/presence';
 import { useWatchPresence } from '@/features/device/useWatchPresence';
 import { ensureBluetoothConnect, ensureBluetoothScan } from '@/features/device/useBluetoothPermission';
 import { useNativeRefresh } from '@/features/settings/useNativeRefresh';
+import { dbHealth, useDbHealth } from '@/db/recovery';
 import { errorMessage } from '@/format';
 import { useTheme } from '@/theme';
 import { HuaweiWear } from '@/wear';
@@ -63,6 +64,16 @@ export default function AdvancedScreen() {
     }
   };
 
+  const { repairing } = useDbHealth();
+  const [repairHealthy, setRepairHealthy] = useState(false);
+
+  const repairNow = async () => {
+    setRepairHealthy(false);
+    // The result is shown by the repair notice; only "nothing was wrong" has no notice and is said here.
+    const result = await dbHealth.repair();
+    setRepairHealthy(result.kind === 'healthy');
+  };
+
   return (
     <Screen>
       <View>
@@ -71,15 +82,24 @@ export default function AdvancedScreen() {
           title={t('index.rows.log.title')}
           subtitle={t('index.rows.log.subtitle')}
           onPress={() => router.push('/settings/log')}
-          style={groupedRowStyle(theme, 0, 2)}
+          style={groupedRowStyle(theme, 0, 3)}
+        />
+        <NavRow
+          icon="construct"
+          title={t('advanced.repair')}
+          subtitle={t('advanced.repairSubtitle')}
+          disabled={repairing}
+          onPress={() => void repairNow()}
+          style={groupedRowStyle(theme, 1, 3)}
         />
         <NavRow
           icon="information-circle"
           title={t('index.rows.about.title')}
           onPress={() => router.push('/settings/about')}
-          style={groupedRowStyle(theme, 1, 2)}
+          style={groupedRowStyle(theme, 2, 3)}
         />
       </View>
+      {repairHealthy ? <Notice>{t('advanced.repairHealthy')}</Notice> : null}
       {withWatch ? (
         <Section title={t('advanced.experimental')} icon="flask" tint="workouts">
           <SwitchRow

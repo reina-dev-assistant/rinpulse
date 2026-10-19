@@ -131,7 +131,7 @@ function statsRow(k: Kit, o: { size: number; labelSize: number; color: string; l
   return k.group({ w: 'fill', h: 'auto' }, cells, { dir: 'row', gap: o.gap ?? 28, align: 'start', when: o.when });
 }
 
-const barbell = (k: Kit, size: number, color: string) => k.icon({ w: size, h: size }, 'barbell', color);
+const lifter = (k: Kit, size: number, color: string) => k.icon({ w: size, h: size }, 'strength', color);
 
 /** Brand lockup left, link right, as one row: both are watermark layers, so the row just empties when the watermark is off. */
 function cardFooter(k: Kit, story: boolean): LayerJson {
@@ -152,7 +152,7 @@ function bold(canvas: Canvas) {
   const header = k.group(
     { w: 'fill', h: S },
     [
-      k.group({ w: S, h: S }, [k.shape({ x: 0, y: 0, w: S, h: S }, 'ellipse', { fill: '$surfaceStrong' }), k.icon({ x: S * 0.25, y: S * 0.25, w: S * 0.5, h: S * 0.5 }, 'barbell', '$fg')]),
+      k.group({ w: S, h: S }, [k.shape({ x: 0, y: 0, w: S, h: S }, 'ellipse', { fill: '$surfaceStrong' }), k.icon({ x: S * 0.25, y: S * 0.25, w: S * 0.5, h: S * 0.5 }, 'strength', '$fg')]),
       k.text({ w: 'fill' }, NAME, { size: story ? 44 : 38, weight: 800, upper: true, ls: 3, color: '$fg', minSize: 26 }),
       k.text({ w: 'auto' }, DATE, { size: 32, weight: 600, color: '$fgMuted', align: 'right' }),
     ],
@@ -303,7 +303,7 @@ function muscle(canvas: Canvas) {
   const header = k.group(
     { w: 'fill', h: 'auto' },
     [
-      barbell(k, story ? 48 : 40, '$accent'),
+      lifter(k, story ? 48 : 40, '$accent'),
       k.text({ w: 'fill' }, NAME, { size: story ? 40 : 34, weight: 800, upper: true, ls: 3, color: '$fg', minSize: 26 }),
       k.text({ w: 'auto' }, DATE, { size: 30, weight: 600, color: '$fgMuted', align: 'right' }),
     ],

@@ -214,12 +214,13 @@ export function stepSpeed(vMs: number, input: StepInput, dtS: number): StepResul
 /**
  * The gear a rider who has not shifted yet rides in on `gradePct`: the one whose steady power at `CLIMB_TARGET_CADENCE_RPM` is closest to
  * `CLIMB_TARGET_POWER_W`, never harder than `DEFAULT_GEAR_INDEX`. The flat and gentle slopes stay in the default gear; 6 % lands in
- * 34x24 (about 240 W at 80 rpm), Bukit's 10.8 % in the easiest gear (34x28).
+ * 34x24 (about 240 W at 80 rpm), Bukit's 10.8 % in the easiest gear (34x28). On a descent every gear needs 0 W, and the tie goes to
+ * the hardest (the default), not to spinning out in the easiest.
  */
 export function climbGear(gradePct: number, massKg: number): number {
-  let best = 0;
+  let best = DEFAULT_GEAR_INDEX;
   let bestErr = Infinity;
-  for (let i = 0; i <= DEFAULT_GEAR_INDEX; i++) {
+  for (let i = DEFAULT_GEAR_INDEX; i >= 0; i--) {
     const err = Math.abs(powerAtSpeed(driveSpeed(CLIMB_TARGET_CADENCE_RPM, i), gradePct, massKg) - CLIMB_TARGET_POWER_W);
     if (err < bestErr) {
       best = i;

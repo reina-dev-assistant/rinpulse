@@ -14,10 +14,14 @@ import { imports } from "./imports";
 import { livePage, livePublic, liveSession } from "./live";
 import { MAX_SYNC_BODY_BYTES, PULL_DEFAULT_LIMIT, PULL_MAX_LIMIT, RESTORE_DEFAULT_LIMIT, RESTORE_MAX_AGE_DAYS, RESTORE_MAX_LIMIT } from "./limits";
 import { syncBodySchema } from "./schemas";
+import { sleep } from "./sleep";
 import { ride } from "./ride/routes";
 import { strava, stravaPublic } from "./strava";
+import { studio } from "./studio";
 import { applySync, pullSync, restoreSleep, restoreSteps } from "./sync";
+import { watchfaces } from "./watchfaces";
 import { waitlist } from "./waitlist";
+import { appConfig } from "./appConfig";
 
 const app = new Hono<AppContext>();
 
@@ -25,6 +29,8 @@ app.get("/", (c) => c.json({ service: "joyofit-api", ok: true }));
 
 // Public (no session): registered before `v1` so its session check never runs for these routes.
 app.route("/v1/waitlist", waitlist);
+// Public: the launch-time update gate reads it before any sign-in (docs/force-update.md).
+app.route("/v1/app-config", appConfig);
 // Device-token auth, not a session: the monitored phone uploads from native background code.
 app.route("/v1/family", familyDevice);
 // Live tracking link: the phone posts with its write key (Bearer) and anyone with the link reads; neither uses a session.
@@ -105,6 +111,9 @@ v1.route("/data", syncedData);
 v1.route("/imports", imports);
 v1.route("/strava", strava);
 v1.route("/gear", gear);
+v1.route("/sleep", sleep);
+v1.route("/watchfaces", watchfaces);
+v1.route("/studio/projects", studio);
 v1.route("/live", liveSession);
 v1.route("/family", family);
 app.route("/v1", v1);

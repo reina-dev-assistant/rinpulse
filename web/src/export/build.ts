@@ -22,6 +22,7 @@ import {
 import { getAsset } from "@/model/assets";
 import { hwtFileName } from "@/model/defaults";
 import { SCREEN_H, SCREEN_W, type Element, type HandElement, type Project, type Sim } from "@/model/types";
+import { i18n } from "@/i18n";
 import { fieldDef } from "@/model/fields";
 import { fontsOf } from "@/editor/useFonts";
 import { renderIconSet } from "@/render/iconsets";
@@ -32,13 +33,15 @@ import { layoutOf, renderBackgroundSprite, drawProject } from "@/render/scene";
 import type { Part } from "@/render/layout";
 import { shownSim, type DataRole } from "@/render/values";
 import { renderHand, renderRing } from "@/render/shapes";
-import { HAND_VALUE, MINUS_DROPPED, elementSupport, isExportable, type SupportLevel } from "./support";
+import { HAND_VALUE, minusDropped, elementSupport, isExportable, type SupportLevel } from "./support";
 
 export type NoteLevel = "info" | "warning" | "error";
 
 export interface ExportNote {
   level: NoteLevel;
   text: string;
+  /** A Huawei size limit: shown after the other notes. */
+  limit?: boolean;
 }
 
 export interface ExportOptions {
@@ -123,7 +126,7 @@ function digitImages(set: DigitSet): RgbaImage[] {
 }
 
 function ensureOnScreen(name: string, x: number, y: number): void {
-  if (x < 0 || y < 0) throw new LeftOut(`${name} starts left of or above the screen, which the layout cannot express. Move it inside.`);
+  if (x < 0 || y < 0) throw new LeftOut(i18n.t("export:build.offScreen", { name }));
 }
 
 /** Copy of the part of `sprite` that lies on the screen, with its new origin, or null when none does. */
@@ -205,7 +208,7 @@ function emitParts(e: ElementBuilder, el: Element, parts: Part[], mode: Mode, no
     } else {
       // A data number: its id is the element's own. The sign glyph goes out as `res_sign`; a minus sign has no codec field.
       const valueType = part.role === "field" ? part.field! : clockDigitsId(part.role);
-      if (part.minus && !notes.includes(MINUS_DROPPED)) notes.push(MINUS_DROPPED);
+      if (part.minus && !notes.includes(minusDropped())) notes.push(minusDropped());
       const cx = part.align === "center" ? Math.round(x) : x;
       ensureOnScreen(el.name, part.align === "center" ? cx - Math.round((part.count * part.set.cellW) / 2) : cx, y);
       e.digits({ digits: digitImages(part.set), x: cx, y, align: part.align, valueType, sign: part.sign ? rgba(part.set[part.sign]) : undefined, ambient: mode });
@@ -228,7 +231,7 @@ function clockDigitsId(role: DataRole): number {
 
 function emitHand(e: ElementBuilder, el: HandElement, mode: Mode): void {
   const asset = getAsset(el.assetId);
-  if (el.shape === "custom" && !asset) throw new LeftOut(`${el.name}: its hand image did not load, so it is not in the face.`);
+  if (el.shape === "custom" && !asset) throw new LeftOut(i18n.t("export:build.handNotLoaded", { name: el.name }));
   const hs = renderHand(el, asset);
   // The rotation box is a square centred on the pivot, as far across as the tip is from it (as in the samples).
   const reach = Math.max(1, Math.round(Math.max(hs.pivotY, hs.sprite.height - hs.pivotY, hs.pivotX, hs.sprite.width - hs.pivotX)));
@@ -250,7 +253,7 @@ function emitElement(fb: FaceBuilder, el: Element): string[] {
       break;
     case "image": {
       const img = getAsset(el.assetId);
-      if (!img) throw new LeftOut(`${el.name}: its image did not load, so it is not in the face.`);
+      if (!img) throw new LeftOut(i18n.t("export:build.imageNotLoaded", { name: el.name }));
       const sprite = newSprite(Math.round(el.w), Math.round(el.h));
       sprite.ctx.imageSmoothingQuality = "high";
       sprite.ctx.drawImage(img.source, 0, 0, sprite.sprite.width, sprite.sprite.height);
@@ -354,11 +357,9 @@ function renderPreview(elements: Element[], sim: Sim, width: number, height: num
 }
 
 function binaryOf(pkg: HwtPackage): WatchfaceBinary {
-  if (!pkg.watchface) throw new Error("The package has no watchface binary");
+  if (!pkg.watchface) throw new Error(i18n.t("export:build.noWatchface"));
   return pkg.watchface;
 }
-
-const SKIP_REASON_HIDDEN = "Hidden layer";
 
 export async function buildHwt(project: Project, stageSim: Sim, options: ExportOptions): Promise<ExportResult> {
   // The cover and the always-on preview show the time the stage shows: a running clock is read now.
@@ -372,9 +373,9 @@ export async function buildHwt(project: Project, stageSim: Sim, options: ExportO
     const base = { id: el.id, name: el.name, type: el.type };
     const support = elementSupport(el);
     if (!el.visible) {
-      report.push({ ...base, exported: false, detail: SKIP_REASON_HIDDEN, level: support.level, dropped: [] });
+      report.push({ ...base, exported: false, detail: i18n.t("export:build.hiddenLayer"), level: support.level, dropped: [] });
     } else if (!isExportable(el, options.includeExperimental)) {
-      const why = support.level === "preview-only" ? `Preview only. ${support.note}` : "Unconfirmed element left out (setting is off).";
+      const why = support.level === "preview-only" ? i18n.t("export:build.previewOnly", { note: support.note }) : i18n.t("export:build.experimentalOff");
       report.push({ ...base, exported: false, detail: why, level: support.level, dropped: [] });
     } else {
       toExport.push(el);
@@ -408,7 +409,7 @@ export async function buildHwt(project: Project, stageSim: Sim, options: ExportO
     bgPreview ? { preview: bgPreview } : {},
   );
   if (background) {
-    report.push({ id: background.id, name: background.name, type: background.type, exported: true, detail: "Background image, plus a black one for the always-on display", level: "verified", dropped: [] });
+    report.push({ id: background.id, name: background.name, type: background.type, exported: true, detail: i18n.t("export:build.backgroundDetail"), level: "verified", dropped: [] });
   }
 
   for (const el of toExport) {
@@ -431,7 +432,7 @@ export async function buildHwt(project: Project, stageSim: Sim, options: ExportO
   const exportedIds = new Set(report.filter((r) => r.exported).map((r) => r.id));
   for (const font of fontsOf(toExport.filter((el) => exportedIds.has(el.id)))) {
     if (fontFailed(font)) {
-      notes.push({ level: "warning", text: `The font ${font.family} ${font.weight} did not load, so the digits that use it are drawn in a fallback font, not the one you picked.` });
+      notes.push({ level: "warning", text: i18n.t("export:build.fontFailed", { family: font.family, weight: font.weight }) });
     }
   }
   fb.commit();
@@ -441,15 +442,22 @@ export async function buildHwt(project: Project, stageSim: Sim, options: ExportO
   const wfBytes = binaryOf(readBack);
   const binary = writeWatchface(wfBytes);
   const verify = verifyWatchface(binary);
-  if (!verify.ok) throw new Error(`The exported face failed its own consistency check: ${verify.problems.join("; ")}`);
+  if (!verify.ok) throw new Error(i18n.t("export:build.selfCheck", { problems: verify.problems.join("; ") }));
 
   const limits = checkFit4Limits(wfBytes, binary.length, bytes.length);
   notes.push({
     level: aodLit > AOD_LIT_LIMIT ? "warning" : "info",
-    text: `Always-on display lights ${Math.round(aodLit * 100)} percent of the pixels${aodLit > AOD_LIT_LIMIT ? ", above the 20 percent Huawei's guide allows for this screen. Make the time smaller or its color darker." : " (Huawei's guide allows 20)."}`,
+    text: i18n.t(aodLit > AOD_LIT_LIMIT ? "export:build.aodHigh" : "export:build.aodOk", { percent: Math.round(aodLit * 100) }),
   });
-  for (const problem of limits.problems) notes.push({ level: "error", text: `Huawei limit: ${problem}` });
-  for (const warning of limits.warnings) notes.push({ level: "warning", text: warning });
+  // The codec's limit report is English only; the same checks are restated here from its numbers so the text follows the language.
+  const limitProblems: string[] = [];
+  if (limits.binaryBytes > FIT4_LIMITS.maxBinaryBytes) limitProblems.push(i18n.t("export:build.limitBinary", { bytes: limits.binaryBytes, limit: FIT4_LIMITS.maxBinaryBytes }));
+  if (limits.hwtBytes !== undefined && limits.hwtBytes > FIT4_LIMITS.maxHwtBytes) limitProblems.push(i18n.t("export:build.limitPackage", { bytes: limits.hwtBytes, limit: FIT4_LIMITS.maxHwtBytes }));
+  if (limits.imageMemoryBytes > FIT4_LIMITS.maxImageMemoryBytes) limitProblems.push(i18n.t("export:build.limitMemory", { bytes: limits.imageMemoryBytes, limit: FIT4_LIMITS.maxImageMemoryBytes }));
+  for (const problem of limitProblems) notes.push({ level: "error", text: i18n.t("export:build.limitPrefix", { problem }), limit: true });
+  if (limits.layerBytes > FIT4_LIMITS.maxLayerBytes) {
+    notes.push({ level: "warning", text: i18n.t("export:build.limitLayer", { bytes: limits.layerBytes, limit: FIT4_LIMITS.maxLayerBytes }) });
+  }
 
   const images = wfBytes.images;
   const imageTable = images.map((blob, index) => {

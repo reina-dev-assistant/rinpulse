@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n";
 import { getAsset } from "@/model/assets";
 import { hwtFileName } from "@/model/defaults";
 import { SCREEN_H, SCREEN_W, type Element, type Project, type Sim } from "@/model/types";
@@ -32,8 +33,6 @@ export interface PhotoFaceResult {
   liveLeftOut: string[];
 }
 
-const LIVE_REASON = "The watch draws its own clock and data over a photo face, so live layers are not part of the picture.";
-
 /** Whether a static layer has what it needs drawn: an image element needs its bitmap, a photo background may fall back to black. */
 function imageMissing(el: Element): boolean {
   if (el.type === "image") return !getAsset(el.assetId);
@@ -54,19 +53,19 @@ export async function buildPhotoFace(project: Project, stageSim: Sim): Promise<P
   for (const el of project.elements) {
     const base = { id: el.id, name: el.name, type: el.type };
     if (!el.visible) {
-      layers.push({ ...base, included: false, detail: "Hidden layer." });
+      layers.push({ ...base, included: false, detail: i18n.t("export:photo.hidden") });
     } else if (!isStaticElement(el)) {
       liveLeftOut.push(el.name);
-      layers.push({ ...base, included: false, detail: LIVE_REASON });
+      layers.push({ ...base, included: false, detail: i18n.t("export:photo.liveReason") });
     } else if (el.type === "image" && !getAsset(el.assetId)) {
       // No dashed placeholder in the picture: the layer is left out instead.
-      layers.push({ ...base, included: false, detail: el.assetId ? "Its image did not load (browser storage blocked or the file is damaged)." : "No image chosen." });
+      layers.push({ ...base, included: false, detail: el.assetId ? i18n.t("export:photo.imageNotLoaded") : i18n.t("export:photo.noImage") });
     } else {
       drawElement(ctx, el, sim);
       layers.push({
         ...base,
         included: true,
-        detail: imageMissing(el) ? "Its photo is missing or did not load: this layer is plain black." : "",
+        detail: imageMissing(el) ? i18n.t("export:photo.photoMissing") : "",
       });
     }
   }

@@ -12,6 +12,7 @@ import {
 } from './activityFile';
 import { FIT_EPOCH_OFFSET, toSemicircles } from './fitEncoder';
 import { decodeFit, estimateMovingTime } from './testDecode';
+import { HUAWEI_HEALTH_DESCRIPTION } from './huaweiHealth.fixture';
 
 const START = 1_792_058_016;
 const FIT_START = START - FIT_EPOCH_OFFSET;
@@ -147,12 +148,19 @@ describe('buildFit records', () => {
     expect(offsetsOf(dense)).toEqual([0, 0, 60, 600]);
   });
 
-  it('writes no pause when the watch reports none, or when no gap could hold it', () => {
+  it('writes no pause when the watch reports no timer or a timer as long as the elapsed time', () => {
     expect(roundTrip({ ...walk, duration: 600 }, [hrOnly(100, 90)]).events.length).toBe(2);
-    expect(roundTrip({ ...walk, duration: 590 }, [hrOnly(100, 90)]).events.length).toBe(2);
     expect(roundTrip({ ...walk, duration: 0 }, [hrOnly(100, 90)]).events.length).toBe(2);
+  });
+
+  it('writes a pause of any length so the timer events match the watch timer, even 2 s, at the longest gap, dropping nothing', () => {
+    const { events, records, session } = roundTrip({ ...walk, duration: 598 }, [hrOnly(100, 90), hrOnly(400, 95)]);
+    expect(events.map((e) => [e.eventType, (e.timestamp ?? 0) - FIT_START])).toEqual([[0, 0], [4, 249], [0, 251], [4, 600]]);
+    expect(estimateMovingTime(records, events)).toEqual({ seconds: 598, from: 'timer events' });
+    expect(session?.totalTimerTime).toBe(598);
+    expect(records.length).toBe(4);
     const dense = Array.from({ length: 119 }, (_, i) => hrOnly((i + 1) * 5, 90));
-    expect(roundTrip(walk, dense).events.length).toBe(2);
+    expect(roundTrip(walk, dense).events.length).toBe(4);
   });
 
   it('keeps HR-only samples and merges samples of the same second', () => {
@@ -241,7 +249,7 @@ describe('buildFit session and lap', () => {
     expect(roundTrip({ ...walk, maxSpeed: null }, points).session?.maxSpeed).toBeUndefined();
   });
 
-  it('uses the elapsed time when the watch has no active time, and never more than it', () => {
+  it('uses the elapsed time when the watch has no timer, and never more than it', () => {
     expect(roundTrip({ ...walk, duration: 0 }, points).session?.totalTimerTime).toBe(600);
     expect(roundTrip({ ...walk, duration: 999 }, points).session?.totalTimerTime).toBe(600);
   });
@@ -374,6 +382,17 @@ describe('sport mapping and upload form', () => {
     const on = latin1(buildUploadForm(walk, file, { addLink: true }).body);
     expect(on).toContain(`name="description"\r\n\r\n${DESCRIPTION_LINK}\r\n`);
     expect(on).toContain('name="name"\r\n\r\nWalking\r\n');
+  });
+
+  it('names the watch below the description and above the link, like Huawei Health ends its own description', () => {
+    const description = (options: Parameters<typeof buildUploadForm>[2]) =>
+      /name="description"\r\n\r\n([\s\S]*?)\r\n--/.exec(latin1(buildUploadForm(walk, file, options).body))?.[1];
+    const line = 'Recorded with HUAWEI WATCH FIT 4 Pro';
+    expect(description({ addLink: false, deviceLine: line })).toBe(line);
+    expect(description({ addLink: false, description: 'Easy loop', deviceLine: line })).toBe(`Easy loop\n\n${line}`);
+    expect(description({ addLink: true, description: 'Easy loop', deviceLine: line })).toBe(`Easy loop\n\n${line}\n\n${DESCRIPTION_LINK}`);
+    expect(description({ addLink: false })).toBeUndefined();
+    expect(HUAWEI_HEALTH_DESCRIPTION.endsWith('HUAWEI WATCH FIT 4 Pro')).toBe(true);
   });
 
   it('builds a binary multipart body with the fields Strava needs and the file untouched', () => {

@@ -102,7 +102,7 @@ const STATIC_PAGES = {
     title: "Blog JoyoFit: kabar fitur dan cara pakai",
     name: "Blog",
     description:
-      "Tulisan tentang fitur JoyoFit yang sudah bisa dipakai: tab Social, bagikan latihan ke JoyoRogo, panduan awal, Strava, kartu bagikan, dan pembaruan.",
+      "Tulisan tentang fitur JoyoFit yang sudah bisa dipakai: JoyoFit Web, Ride, Coach, tab Social, bagikan latihan ke JoyoRogo, panduan awal, Strava, kartu bagikan, dan pembaruan.",
   },
 } as const satisfies Record<string, Page>;
 

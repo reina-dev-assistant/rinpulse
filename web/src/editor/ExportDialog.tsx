@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { CircleAlert, CircleCheck, Download, FileJson, FileSearch, Loader2, TriangleAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { i18n } from "@/i18n";
 import { hwtFileName } from "@/model/defaults";
 import { downloadBlob, serializeProject } from "@/model/projectFile";
 import type { Project, Sim } from "@/model/types";
@@ -32,11 +34,12 @@ function Check({ ok, children, detail }: { ok: "ok" | "warn" | "error"; children
 }
 
 function Failed({ message }: { message: string }) {
+  const { t } = useTranslation("export");
   return (
     <div className="flex gap-2.5 rounded-2xl bg-destructive/10 p-3 text-sm" role="alert">
       <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
       <p>
-        <span className="font-bold">The face could not be built.</span> {message}
+        <span className="font-bold">{t("dialog.failedTitle")}</span> {message}
       </p>
     </div>
   );
@@ -71,41 +74,42 @@ function useBuild<T>(enabled: boolean, build: () => Promise<T>, deps: unknown[])
 }
 
 function PhotoChecklist({ result, renamed }: { result: PhotoFaceResult; renamed: boolean }) {
+  const { t } = useTranslation("export");
   const included = result.layers.filter((l) => l.included);
   const problems = result.layers.filter((l) => !l.included && l.detail && !result.liveLeftOut.includes(l.name));
   const flagged = result.layers.filter((l) => l.included && l.detail);
   return (
     <ul className="divide-y divide-border" data-testid="checklist">
-      <Check ok="ok" detail="Exactly the watch's screen, so JoyoFit uploads it as it is, without cropping or resampling.">
-        Size {result.width} × {result.height}
+      <Check ok="ok" detail={t("photo.sizeDetail")}>
+        {t("photo.size", { width: result.width, height: result.height })}
       </Check>
-      <Check ok={renamed ? "warn" : "ok"} detail={renamed ? "Spaces and symbols are dropped from the name." : undefined}>
-        File name {result.fileName}
+      <Check ok={renamed ? "warn" : "ok"} detail={renamed ? t("photo.fileNameRenamed") : undefined}>
+        {t("photo.fileName", { name: result.fileName })}
       </Check>
-      <Check ok="ok" detail="The watch's photo face has no transparency. Layers are laid onto black and any transparent pixels become black; no rounded-corner mask is applied, the watch masks its own screen.">
-        Opaque picture, transparency flattened onto black
+      <Check ok="ok" detail={t("photo.opaqueDetail")}>
+        {t("photo.opaque")}
       </Check>
       <Check
         ok="ok"
-        detail={included.length > 0 ? included.map((l) => l.name).join(", ") : "Nothing but the black screen."}
+        detail={included.length > 0 ? included.map((l) => l.name).join(", ") : t("photo.layersNone")}
       >
-        {included.length} picture {included.length === 1 ? "layer" : "layers"} in the file
+        {t(included.length === 1 ? "photo.layersOne" : "photo.layersOther", { count: included.length })}
       </Check>
       {result.liveLeftOut.length > 0 ? (
         <Check
           ok="warn"
-          detail={`${result.liveLeftOut.join(", ")}. The watch draws its own clock and data over a photo face (style, colour and position are set on the watch), so Studio's live layers cannot be part of the picture. Use the Photo face preview on the stage to see what is left.`}
+          detail={t("photo.liveDetail", { names: result.liveLeftOut.join(", ") })}
         >
-          {result.liveLeftOut.length} live {result.liveLeftOut.length === 1 ? "layer" : "layers"} left out
+          {t(result.liveLeftOut.length === 1 ? "photo.liveOne" : "photo.liveOther", { count: result.liveLeftOut.length })}
         </Check>
       ) : (
-        <Check ok="ok" detail="Time, date, hands, data and rings are not part of a photo face.">
-          No live layers to leave out
+        <Check ok="ok" detail={t("photo.noLiveDetail")}>
+          {t("photo.noLive")}
         </Check>
       )}
       {problems.map((l) => (
         <Check key={l.id} ok="warn" detail={l.detail}>
-          {l.name} left out
+          {t("photo.layerLeftOut", { name: l.name })}
         </Check>
       ))}
       {flagged.map((l) => (
@@ -113,80 +117,79 @@ function PhotoChecklist({ result, renamed }: { result: PhotoFaceResult; renamed:
           {l.name}
         </Check>
       ))}
-      <Check ok="ok" detail="Send the PNG to your phone, then open JoyoFit, Watch, Photo face and pick it.">
-        How to install
+      <Check ok="ok" detail={t("photo.installDetail")}>
+        {t("photo.install")}
       </Check>
     </ul>
   );
 }
 
 function HwtChecklist({ result, renamed }: { result: ExportResult; renamed: boolean }) {
+  const { t } = useTranslation("export");
   const experimental = result.elements.filter((e) => e.exported && e.level === "experimental");
   const left = result.elements.filter((e) => !e.exported);
   const partial = result.elements.filter((e) => e.exported && e.dropped.length > 0);
   return (
     <ul className="divide-y divide-border" data-testid="checklist">
-      <Check
-        ok="warn"
-        detail="The firmware needs Huawei's signature on a face. The Fit 4 Pro (6.1.0.117) answered activation of an unsigned face with status 100014 and deleted it about 3 seconds later. Keep this file for Huawei Theme Studio Pro with a Huawei developer account, or to inspect it. For a face that works with JoyoFit, use Photo face."
-      >
-        An unsigned .hwt is deleted by the watch
+      <Check ok="warn" detail={t("hwt.unsignedDetail")}>
+        {t("hwt.unsigned")}
       </Check>
-      <Check ok="ok" detail={`Watch Fit 4 and Fit 4 Pro, screen code HWHD13.`}>
-        Resolution {SCREEN_W} × {SCREEN_H}
+      <Check ok="ok" detail={t("hwt.resolutionDetail")}>
+        {t("hwt.resolution", { width: SCREEN_W, height: SCREEN_H })}
       </Check>
-      <Check ok={renamed ? "warn" : "ok"} detail={renamed ? "Spaces and symbols are dropped from the name, as Huawei requires." : undefined}>
-        File name {result.fileName}
+      <Check ok={renamed ? "warn" : "ok"} detail={renamed ? t("hwt.fileNameRenamed") : undefined}>
+        {t("hwt.fileName", { name: result.fileName })}
       </Check>
-      <Check ok={result.stats.images > 200 ? "warn" : "ok"} detail="The ten sample faces for this watch hold 44 to 164 images and weigh 154 to 448 KB.">
-        {result.stats.images} images, {kb(result.stats.totalBytes)} in total
+      <Check ok={result.stats.images > 200 ? "warn" : "ok"} detail={t("hwt.imagesDetail")}>
+        {t("hwt.images", { count: result.stats.images, size: kb(result.stats.totalBytes) })}
       </Check>
       <Check
-        ok={result.notes.some((n) => n.text.includes("limit") && n.level === "error") ? "error" : "ok"}
-        detail="Huawei Theme Studio limits: 750 KB per image, 4 MB image memory, 10 MB package."
+        ok={result.notes.some((n) => n.limit) ? "error" : "ok"}
+        detail={t("hwt.largestDetail")}
       >
-        Largest image {kb(result.stats.largestImageBytes)}, image memory {kb(result.stats.imageMemoryBytes)}
+        {t("hwt.largest", { largest: kb(result.stats.largestImageBytes), memory: kb(result.stats.imageMemoryBytes) })}
       </Check>
-      <Check ok="ok" detail="Black screen with the time, date and the hour and minute hands at 45 percent brightness. Seconds, data and rings are not shown.">
-        Always-on display
+      <Check ok="ok" detail={t("hwt.aodDetail")}>
+        {t("hwt.aod")}
       </Check>
       {left.map((e) => (
         <Check key={e.id} ok="warn" detail={e.detail}>
-          {e.name} left out
+          {t("hwt.leftOut", { name: e.name })}
         </Check>
       ))}
       {experimental.map((e) => (
         <Check key={e.id} ok="warn" detail={e.detail}>
-          {e.name} uses unconfirmed ids
+          {t("hwt.unconfirmedIds", { name: e.name })}
         </Check>
       ))}
       {partial.map((e) => (
-        <Check key={e.id} ok="warn" detail={`Preview only, not written: ${e.dropped.join(", ")}.`}>
-          {e.name}: part of it is preview only
+        <Check key={e.id} ok="warn" detail={t("hwt.partialDetail", { parts: e.dropped.join(", ") })}>
+          {t("hwt.partial", { name: e.name })}
         </Check>
       ))}
       {result.notes
-        .filter((n) => !n.text.startsWith("Huawei limit"))
+        .filter((n) => !n.limit)
         .map((n) => (
           <Check key={n.text} ok={n.level === "error" ? "error" : n.level === "warning" ? "warn" : "ok"}>
             {n.text}
           </Check>
         ))}
       {result.notes
-        .filter((n) => n.text.startsWith("Huawei limit"))
+        .filter((n) => n.limit)
         .map((n) => (
           <Check key={n.text} ok="error">
             {n.text}
           </Check>
         ))}
-      <Check ok="warn" detail="Not tried on a watch: how single-digit hours and days are padded, the stacking order between different element types, and how the watch places a sign glyph (the degree sign of a temperature).">
-        Layout details unconfirmed on a watch
+      <Check ok="warn" detail={t("hwt.layoutUnconfirmedDetail")}>
+        {t("hwt.layoutUnconfirmed")}
       </Check>
     </ul>
   );
 }
 
 export function ExportDialog({ open, onClose, project, sim }: { open: boolean; onClose: () => void; project: Project; sim: Sim }) {
+  const { t } = useTranslation("export");
   const [target, setTarget] = useState<Target>("photo");
   const [includeExperimental, setIncludeExperimental] = useState(true);
 
@@ -202,12 +205,12 @@ export function ExportDialog({ open, onClose, project, sim }: { open: boolean; o
   const downloadPhoto = () => {
     if (!photoResult) return;
     downloadBlob(photoResult.fileName, photoResult.png, "image/png");
-    toast.success(`${photoResult.fileName} downloaded`, { description: "Send it to your phone, then JoyoFit: Watch, Photo face." });
+    toast.success(i18n.t("export:dialog.photoDownloaded", { file: photoResult.fileName }), { description: i18n.t("export:dialog.photoDownloadedHint") });
   };
   const downloadHwt = () => {
     if (!hwtResult) return;
     downloadBlob(hwtResult.fileName, hwtResult.bytes, "application/octet-stream");
-    toast.success(`${hwtResult.fileName} downloaded`, { description: "Unsigned: the watch deletes it unless Huawei signed it. Use it for Theme Studio Pro or to inspect it." });
+    toast.success(i18n.t("export:dialog.hwtDownloaded", { file: hwtResult.fileName }), { description: i18n.t("export:dialog.hwtDownloadedHint") });
   };
   const downloadDebug = () => {
     if (!hwtResult) return;
@@ -224,60 +227,60 @@ export function ExportDialog({ open, onClose, project, sim }: { open: boolean; o
     <Dialog
       open={open}
       onClose={onClose}
-      title="Export checklist"
-      description="Read this before you download. The numbers are from the file that will be written."
+      title={t("dialog.title")}
+      description={t("dialog.description")}
       className="max-w-xl"
       testId="export-dialog"
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={() => void downloadProject()} data-testid="export-project-json">
-            <FileJson /> Project JSON
+            <FileJson /> {t("dialog.projectJson")}
           </Button>
           {target === "hwt" && (
             <Button variant="ghost" size="sm" onClick={downloadDebug} disabled={!hwtResult} data-testid="export-debug">
-              <FileSearch /> Debug layout
+              <FileSearch /> {t("dialog.debugLayout")}
             </Button>
           )}
           {target === "photo" ? (
             <Button onClick={downloadPhoto} disabled={!photoResult} data-testid="download-photo">
               {photo.status === "building" ? <Loader2 className="animate-spin" /> : <Download />}
-              Download photo face PNG
+              {t("dialog.downloadPhoto")}
             </Button>
           ) : (
             <Button onClick={downloadHwt} disabled={hwtBlocked} data-testid="download-hwt">
               {hwt.status === "building" ? <Loader2 className="animate-spin" /> : <Download />}
-              Download .hwt
+              {t("dialog.downloadHwt")}
             </Button>
           )}
         </>
       }
     >
       <Segmented
-        label="Export target"
+        label={t("dialog.target")}
         value={target}
         onChange={setTarget}
         className="mb-3"
         options={[
-          { value: "photo", label: "Photo face (JoyoFit)" },
-          { value: "hwt", label: ".hwt (needs Huawei's signature)" },
+          { value: "photo", label: t("dialog.targetPhoto") },
+          { value: "hwt", label: t("dialog.targetHwt") },
         ]}
       />
       {state.status === "failed" && <Failed message={state.message} />}
-      {state.status === "building" && <Building what={target === "photo" ? "Flattening the picture layers..." : "Rendering sprites and writing the package..."} />}
+      {state.status === "building" && <Building what={target === "photo" ? t("dialog.buildingPhoto") : t("dialog.buildingHwt")} />}
       {target === "photo" && photoResult && <PhotoChecklist result={photoResult} renamed={renamed} />}
       {target === "hwt" && hwtResult && (
         <>
           <HwtChecklist result={hwtResult} renamed={renamed} />
           <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl bg-muted p-4">
             <div className="min-w-0">
-              <p className="text-sm font-bold">Include unconfirmed elements</p>
+              <p className="text-sm font-bold">{t("dialog.includeExperimental")}</p>
               <p className="text-[0.8125rem] text-muted-foreground" data-testid="experimental-summary">
                 {experimental.length > 0
-                  ? `${experimental.map((e) => e.name).join(", ")} use ids inferred from sample faces.`
-                  : "The hour and minute hands, the seconds digits and the inferred data fields (altitude ring, battery level icons) use ids inferred from sample faces."}
+                  ? t("dialog.experimentalNamed", { names: experimental.map((e) => e.name).join(", ") })
+                  : t("dialog.experimentalGeneric")}
               </p>
             </div>
-            <Switch label="Include unconfirmed elements" checked={includeExperimental} onCheckedChange={setIncludeExperimental} />
+            <Switch label={t("dialog.includeExperimental")} checked={includeExperimental} onCheckedChange={setIncludeExperimental} />
           </div>
         </>
       )}

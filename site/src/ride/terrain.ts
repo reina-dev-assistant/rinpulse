@@ -1,4 +1,13 @@
-import { BufferAttribute, BufferGeometry, Color } from "three";
+import {
+  BufferAttribute,
+  BufferGeometry,
+  CanvasTexture,
+  Color,
+  MeshLambertMaterial,
+  NoColorSpace,
+  RepeatWrapping,
+  type Texture,
+} from "three";
 
 import { ROAD_HALF, STEP, Track, PRE_M } from "./track.ts";
 import type { Theme } from "./theme.ts";
@@ -77,6 +86,8 @@ export interface TerrainGrid {
   positions: Float32Array;
   normals: Float32Array;
   colors: Float32Array;
+  /** 0..1 per vertex: how much of the ground is farmland (flat open ground away from the road and the trees). */
+  farm: Float32Array;
 }
 
 export const TERRAIN_COLS = COLS;
@@ -174,7 +185,29 @@ export function buildTerrain(track: Track, theme: Theme): TerrainGrid {
       normals[o + 2] = nz / len;
     }
   }
-  return { rows, positions, normals, colors };
+  // Farmland on open ground that is flat enough: paddies need near-level ground, terraces climb the slopes.
+  const farm = new Float32Array(rows * COLS);
+  if (theme.farmland) {
+    const flat = theme.farmland === "paddy" ? [0.93, 0.985] : [0.55, 0.8];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const o = r * COLS + c;
+        const ny = normals[o * 3 + 1]!;
+        farm[o] = farmPatch(theme, stationLat(c), positions[o * 3]!, positions[o * 3 + 2]!) * smoothstep(flat[0]!, flat[1]!, ny);
+      }
+    }
+  }
+  return { rows, positions, normals, colors, farm };
+}
+
+/**
+ * 0..1: farmland at world (wx, wz), [lat] metres beside the road, before the slope test. Low-frequency noise makes patches rather
+ * than one endless field; scenery keeps trees out of them.
+ */
+export function farmPatch(theme: Theme, lat: number, wx: number, wz: number): number {
+  if (!theme.farmland || (theme.hasSea && lat > 0)) return 0;
+  const a = Math.abs(lat);
+  return smoothstep(11, 20, a) * (1 - smoothstep(260, 380, a)) * smoothstep(0.3, 0.4, fbm(wx * 0.004, wz * 0.004, 2, theme.seed + 11));
 }
 
 /** Geometry for terrain rows [r0, r1] (inclusive). Triangles wind counter-clockwise seen from above. */
@@ -183,9 +216,18 @@ export function chunkGeometry(grid: TerrainGrid, r0: number, r1: number): Buffer
   const from = r0 * COLS * 3;
   const to = (r1 + 1) * COLS * 3;
   const geometry = new BufferGeometry();
-  geometry.setAttribute("position", new BufferAttribute(grid.positions.slice(from, to), 3));
+  const positions = grid.positions.slice(from, to);
+  geometry.setAttribute("position", new BufferAttribute(positions, 3));
   geometry.setAttribute("normal", new BufferAttribute(grid.normals.slice(from, to), 3));
   geometry.setAttribute("color", new BufferAttribute(grid.colors.slice(from, to), 3));
+  geometry.setAttribute("farm", new BufferAttribute(grid.farm.slice(r0 * COLS, (r1 + 1) * COLS), 1));
+  // World-space texture coordinates: the detail texture repeats every DETAIL_TILE_M metres with no seams between chunks.
+  const uvs = new Float32Array((positions.length / 3) * 2);
+  for (let i = 0; i < positions.length / 3; i++) {
+    uvs[i * 2] = positions[i * 3]! / DETAIL_TILE_M;
+    uvs[i * 2 + 1] = positions[i * 3 + 2]! / DETAIL_TILE_M;
+  }
+  geometry.setAttribute("uv", new BufferAttribute(uvs, 2));
   const index = new Uint32Array((rowCount - 1) * (COLS - 1) * 6);
   let k = 0;
   for (let r = 0; r < rowCount - 1; r++) {
@@ -207,6 +249,110 @@ export function chunkGeometry(grid: TerrainGrid, r0: number, r1: number): Buffer
   geometry.computeBoundingSphere();
   geometry.computeBoundingBox();
   return geometry;
+}
+
+const DETAIL_TILE_M = 6;
+
+/** Grey ground detail (grass blades, soil grains) multiplied over the vertex colours; linear data, mean about 0.9. */
+export function groundDetailTexture(): CanvasTexture {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const g = canvas.getContext("2d")!;
+  const img = g.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      // Tileable: noise on a torus of period 8 cells (and 32 for the fine octave).
+      const n = tileNoise(x / 32, y / 32, 8, 5) * 0.6 + tileNoise(x / 8, y / 8, 32, 9) * 0.4;
+      const blade = hash2(x, y, 3) > 0.93 ? 0.1 : hash2(x, y, 4) < 0.06 ? -0.12 : 0;
+      const v = Math.min(1, Math.max(0, 0.72 + n * 0.3 + blade));
+      const o = (y * size + x) * 4;
+      img.data[o] = v * 255;
+      img.data[o + 1] = Math.min(1, v * 1.03) * 255;
+      img.data[o + 2] = v * 0.97 * 255;
+      img.data[o + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = NoColorSpace;
+  texture.wrapS = RepeatWrapping;
+  texture.wrapT = RepeatWrapping;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+/** Value noise that repeats every [period] cells in both directions. */
+function tileNoise(x: number, y: number, period: number, seed: number): number {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const fx = x - ix;
+  const fy = y - iy;
+  const ux = fx * fx * (3 - 2 * fx);
+  const uy = fy * fy * (3 - 2 * fy);
+  const p = (v: number) => ((v % period) + period) % period;
+  const a = hash2(p(ix), p(iy), seed);
+  const b = hash2(p(ix + 1), p(iy), seed);
+  const c = hash2(p(ix), p(iy + 1), seed);
+  const d = hash2(p(ix + 1), p(iy + 1), seed);
+  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+}
+
+const FARM_GLSL = /* glsl */ `
+float farmHash(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+vec3 farmColor(vec3 w) {
+#if FARM_MODE == 1
+  // Rice paddies: rotated plots about 26 x 17 m, each at its own stage, with planting rows and grassy dikes (pematang).
+  vec2 p = mat2(0.92, -0.39, 0.39, 0.92) * w.xz / vec2(26.0, 17.0);
+  vec2 cell = floor(p);
+  vec2 f = fract(p);
+  float h = farmHash(cell);
+  vec3 col = h < 0.28 ? vec3(0.52, 0.80, 0.22) : h < 0.5 ? vec3(0.28, 0.56, 0.14) : h < 0.68 ? vec3(0.84, 0.74, 0.32) : h < 0.86 ? vec3(0.46, 0.60, 0.64) : vec3(0.44, 0.62, 0.44);
+  float rowsFreq = 17.0 / 0.5;
+  float aa = clamp(fwidth(p.y * rowsFreq) * 1.5, 0.0, 1.0);
+  col *= 1.0 - 0.14 * (1.0 - aa) * step(0.5, fract(p.y * rowsFreq));
+  float edge = min(min(f.x, 1.0 - f.x) * 26.0, min(f.y, 1.0 - f.y) * 17.0);
+  col = mix(vec3(0.36, 0.44, 0.22), col, smoothstep(0.45, 0.9, edge));
+#else
+  // Tengger terraces: bands that follow the contour every 3.2 m of height, a crop per band and plot, soil risers between.
+  float band = w.y / 3.2;
+  float fb = fract(band);
+  vec2 seg = floor(w.xz / 38.0);
+  float h = farmHash(vec2(floor(band), seg.x + seg.y * 7.0));
+  vec3 col = h < 0.3 ? vec3(0.46, 0.62, 0.36) : h < 0.55 ? vec3(0.33, 0.50, 0.24) : h < 0.8 ? vec3(0.40, 0.55, 0.25) : vec3(0.42, 0.33, 0.24);
+  float aa = clamp(fwidth(dot(w.xz, vec2(0.7)) / 0.8) * 1.5, 0.0, 1.0);
+  col *= 1.0 - 0.12 * (1.0 - aa) * step(0.5, fract(dot(w.xz, vec2(0.7)) / 0.8));
+  col = mix(vec3(0.36, 0.29, 0.21), col, smoothstep(0.0, 0.2, fb));
+#endif
+  return pow(col, vec3(2.2));
+}
+`;
+
+/** Lambert ground with the detail texture (fine, plus a coarse pass that hides the tiling) and procedural farmland where `farm` is set. */
+export function terrainMaterial(theme: Theme, detail: Texture): MeshLambertMaterial {
+  const material = new MeshLambertMaterial({ vertexColors: true, map: detail });
+  const mode = theme.farmland === "paddy" ? 1 : theme.farmland === "terraces" ? 2 : 0;
+  material.defines = { FARM_MODE: mode };
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute float farm;\nvarying float vFarm;\nvarying vec3 vGround;")
+      .replace("#include <fog_vertex>", "#include <fog_vertex>\nvFarm = farm;\nvGround = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", `#include <common>\nvarying float vFarm;\nvarying vec3 vGround;\n${mode ? FARM_GLSL : ""}`)
+      .replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>
+        diffuseColor.rgb *= 0.6 + 0.5 * texture2D(map, vMapUv * 0.083).g;
+        ${mode ? "diffuseColor.rgb = mix(diffuseColor.rgb, farmColor(vGround) * sampledDiffuseColor.rgb, vFarm);" : ""}`,
+      );
+  };
+  material.customProgramCacheKey = () => `terrain-${mode}`;
+  return material;
 }
 
 /** Metres of road length covered by one terrain chunk. */

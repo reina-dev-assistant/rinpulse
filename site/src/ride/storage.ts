@@ -15,6 +15,8 @@ export interface Settings {
   jersey?: number;
   /** Leaderboard: hide the name. */
   anon?: boolean;
+  /** Ride sounds off. */
+  muted?: boolean;
 }
 
 function read<T>(key: string): T | null {

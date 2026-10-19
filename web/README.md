@@ -9,9 +9,11 @@ renders every digit, hand, ring and icon to a bitmap, and exports two things:
   deletes an `.hwt` Huawei did not sign, so JoyoFit's **Watch faces → Install from file** cannot make this one stay (see
   [Why the `.hwt` is not the main output](#why-the-hwt-is-not-the-main-output)).
 
-Nothing is uploaded: the Worker only serves static files.
+Nothing is uploaded unless a Pro account saves a project to its cloud library (see [Cloud projects](#cloud-projects)): the Worker only
+serves static files.
 
-Live: https://joyofit-studio.dzulfikar-at.workers.dev
+Live: https://app.fit.joyorogo.com/studio/ (also https://joyofit-studio.dzulfikar-at.workers.dev/studio/; every other path on
+that host redirects to `/studio/`).
 
 Stack: Vite 8, React 19, Tailwind v4, zustand, `@cloudflare/vite-plugin` (a Worker with static assets, no bindings),
 and [`packages/hwt`](../packages/hwt) for the `.hwt` format. Design: JoyoRogo's tokens and components (paper canvas,
@@ -23,12 +25,12 @@ borderless white cards, big radii, Plus Jakarta Sans) with JoyoFit's ink-teal pr
 ```sh
 cd web
 bun install
-bun run dev            # http://localhost:3100
+bun run dev            # http://localhost:3100/studio/
 bun run typecheck
 bun run test           # vitest, runs in node with @napi-rs/canvas
 bunx playwright install chromium   # once
-bun run test:e2e       # Playwright against a local dev server on :4173
-STUDIO_URL=https://joyofit-studio.dzulfikar-at.workers.dev bun run test:e2e   # the same tests against a deployment
+bun run test:e2e       # Playwright: builds, then `vite preview` (the real Worker) on http://localhost:4173/studio/
+STUDIO_URL=https://app.fit.joyorogo.com/studio/ bun run test:e2e   # the same tests against a deployment (keep the trailing slash)
 bun run build          # tsc --noEmit && vite build, output in dist/
 bunx wrangler deploy --dry-run
 bun run deploy         # build + wrangler deploy
@@ -36,6 +38,28 @@ bun run deploy         # build + wrangler deploy
 
 `wrangler.jsonc` pins the Cloudflare account and the Worker name `joyofit-studio`. The Vite plugin writes
 `dist/wrangler.json` and a `.wrangler/deploy/config.json` redirect, so `wrangler deploy` ships `dist/`.
+
+### Where it is served
+
+Studio is part of the JoyoFit web app's site: **https://app.fit.joyorogo.com/studio/**. That host is a Custom Domain of a different
+Worker (`joyofit-web`, `apps/fit` in the JoyoRogo repo, an assets-only SPA). Cloudflare runs a Worker *route* before a Custom Domain
+Worker on the same hostname ([docs](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/#interaction-with-routes)),
+so `wrangler.jsonc` claims only `app.fit.joyorogo.com/studio` and `app.fit.joyorogo.com/studio/*` (zone `joyorogo.com`) and the web
+app keeps every other path, with its own SPA fallback. Nothing changes in the JoyoRogo repo for this to work, and `joyofit-web`'s
+`dist/` does not contain Studio.
+
+- `vite.config.ts` sets `base: "/studio/"`, so the built HTML, CSS (fonts) and chunks all reference `/studio/...`. There is no
+  client router, service worker or absolute URL in `src/`; `index.html` has the canonical link.
+- The built files sit at the root of the asset store, so `worker/index.ts` (`main`, with `assets.run_worker_first`) strips the
+  `/studio` prefix before calling `env.ASSETS.fetch`, and the store's SPA fallback returns *Studio's* `index.html`. `/studio` gets a
+  308 to `/studio/`; any path outside `/studio/` (the `workers.dev` root) gets a 302 to `/studio/`. Tested in `worker/index.test.ts`.
+- The browser storage is per origin: projects saved on the old `joyofit-studio.dzulfikar-at.workers.dev` origin (localStorage,
+  IndexedDB) are not visible on `app.fit.joyorogo.com`; use *Save project JSON* there and *Open project JSON* here.
+- The theme switch stores its value in `vite-ui-theme`, the key JoyoFit Web uses on the same origin, so the two follow each other.
+  The header shows the JoyoFit ring mark and a *Kembali ke JoyoFit Web* link (`/` on `app.fit.joyorogo.com`, the live URL elsewhere).
+- Any link from the web app to Studio must be a plain `<a href="/studio/">` (full page load), not a TanStack Router `Link`, which
+  would treat `/studio/` as an unknown route of the SPA.
+
 `@joyofit/hwt` is an alias to `../packages/hwt/src/index.ts` (Vite, Vitest and `tsconfig.json`); there is no workspace
 dependency and no copy of the codec.
 
@@ -157,6 +181,41 @@ replaced (new face, template, import) the replaced project stays in the undo his
 template artwork lives in memory until a project that uses it is opened. The autosave
 (localStorage, 300 ms debounce) is flushed when the page is hidden, and the app tells the user when the browser refused it.
 
+### Language
+
+Studio is Indonesian (default) and English, the same two languages as JoyoFit Web, with `i18next` and `react-i18next`. The language is,
+first match wins: the choice stored in localStorage `jfit-locale` (JoyoFit Web writes the same key on the same origin, so one pick serves
+both, and a pick made here is written there; another open tab follows through the `storage` event), then the browser's languages,
+then `id`. The header switch (`src/i18n/LanguageSwitch.tsx`) flips between the two and sets `<html lang>`. The account's saved
+language (`profile.locale`) is not read: Studio makes no call before the cloud dialog opens.
+
+Text lives in `src/i18n/locales/<id|en>/<namespace>.ts`, one namespace per area (`app`, `help`, `templates`, `export`, `editor`, `props`,
+`fields`, `cloud`). `id` is the source and types the keys (`t("header.undo")` is checked). Components use `useTranslation(ns)`; code
+outside React (the store, the export builders, the field registry, toasts) calls `i18n.t("ns:key")` when the text is needed, never at
+module load, so a switch applies at once. Names written into a project (layer names, a template's name) are created in the language
+active at that moment and are the user's data afterwards. To add a string, add the key to both files; `i18n.test.ts` fails when
+they differ. Unit tests run in English (`src/test/setup.ts`), and `e2e/studio.spec.ts` stores `jfit-locale=en` before it loads the page.
+
+### Cloud projects
+
+The cloud button in the header opens a dialog for the Pro project library (`src/cloud/`). The page asks `POST /rpc/fitness/cloudAccess`
+who is signed in and whether Pro is unlocked, then talks to JoyoRogo's `/api/fit/studio/projects` proxy (origin `https://api.joyorogo.com`,
+`VITE_API_URL` overrides it; every call sends the session cookie and `x-locale`). Signed out, the dialog links to the web app's login
+(`/login?redirect=/studio/`); signed in without Pro it links to `/harga`, keeps open and delete working for what the account already has and
+disables saving and renaming. Saving uploads the project file (`serializeProject` as an object) plus a small JPEG thumbnail of the face.
+The open face is linked to its cloud project (`id`, `rev`, name, autosave switch in localStorage `joyofit-studio:cloud-link`, never the
+document); saving sends the `rev` it last saw, and a `409 rev_conflict` (autosave or manual) stops autosave and offers *Save as a new copy*
+(the local face becomes `<name> (copy)`, the cloud one stays) or *Load the cloud version* (the local edits stay one undo away). Opening a
+project replaces the face, so the dialog asks first when that loses unsaved work. Autosave is off by default; when on it writes 4 s after the last
+edit, one request at a time (`window.__STUDIO_CLOUD_AUTOSAVE_MS` shortens that for tests). The local file buttons and the local autosave are unchanged.
+
+Size: the request body is capped at 5 MiB. Measured project files: an empty face 0.5 KB, five of the six templates 1 to 31 KB, the Photo
+template 530 KB, a 408 x 480 photo background 80 to 200 KB, a 3000 x 2250 photo 600 KB (photos are stored at most 1600 px), but a
+photographic 1024 px PNG sticker is 3.2 MB and a noise-like one 4.8 MB, so a few such stickers pass the cap. Only the cloud copy is
+lightened, and only when over the cap: images above 48 KB are re-encoded at most 512 px (PNG) or 1000 px (JPEG, quality 0.85), then 384 / 816 and
+256 / 640, until it fits. The local project and the local `.json` export are never changed. A body still over the limit is refused before it is sent,
+with its size against the limit.
+
 ### What the tests cover
 
 - `render/*.test.ts`: digit and word sprites (cell size, ink height, baseline, color, outline, caching, bounded caches, minus and
@@ -183,6 +242,16 @@ template artwork lives in memory until a project that uses it is opened. The aut
   no live layer); the stage's photo preview; project JSON and debug downloads; drag, undo, redo and autosave; select-click adds
   no undo step; autosave flush on `pagehide`; the Fields tab (badges, reasons, add, filter) on desktop and in the mobile layout;
   resize handle; templates; preview-only marking; IndexedDB image lifecycle; photo upload.
+- `i18n/i18n.test.ts`: language resolution (stored choice, browser languages, `id`) and, per namespace, the same keys and the same
+  `{{placeholders}}` in Indonesian and English.
+- `e2e/i18n.spec.ts` (Playwright): Indonesian by default, English browser, the choice JoyoFit Web stored, the header switch (every
+  panel, persisted in `jfit-locale`, survives a reload), a switch in another tab followed live, no overflow at 360 px in Indonesian.
+- `cloud/*.test.ts`: the API client (URLs, `credentials`, headers, error mapping for 401/402/409/413/5xx/network, the size check before
+  sending), the link store and its persistence, the autosave scheduler (debounce, single flight, stop at a conflict, retry on the next
+  edit), thumbnail size fitting, the cloud document's image shrinking ladder, formats and web-app links.
+- `e2e/cloud.spec.ts` (Playwright, against an in-memory mock of the API): signed-out and non-Pro prompts, save, update with `rev`
+  bump, rename, open with the replace confirmation, delete, size and library limits, outages, both conflict choices, autosave, local
+  JSON still working, Indonesian and English, no horizontal overflow at 360 px.
 
 ## Not confirmed on a watch
 

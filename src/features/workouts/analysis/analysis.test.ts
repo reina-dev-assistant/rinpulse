@@ -193,12 +193,13 @@ describe('pause', () => {
     expect(a.movingSec).toBe(1500);
   });
 
-  it('moving time is the elapsed time when the watch timer is only seconds shorter', () => {
-    for (const duration of [1617, 1591, 1620, 1700, 0]) {
+  it('moving time is the watch timer, whatever its gap to the elapsed time; the elapsed time only when there is no timer', () => {
+    for (const duration of [1617, 1591, 1590]) {
       const b = analyze(synth, { duration });
-      expect(b.movingSec).toBe(1620);
+      expect(b.movingSec).toBe(duration);
+      expect(b.elapsedSec).toBe(1620);
     }
-    expect(analyze(synth, { duration: 1590 }).movingSec).toBe(1590);
+    expect(analyze(synth, { duration: 0 }).movingSec).toBe(1620);
   });
 
   it('splits keep elapsed time, so the split with the pause is longer', () => {

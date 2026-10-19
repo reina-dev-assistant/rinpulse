@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { COUNTDOWN_S, DRAFT_MAX_M, RideSession, hrZone, type GhostRun } from "./session.ts";
+import { COUNTDOWN_S, RideSession, hrZone, type GhostRun } from "./session.ts";
+import { DRAFT_MAX_M } from "./riders.ts";
 import { ROUTES } from "./routes.ts";
 import { Track } from "./track.ts";
 

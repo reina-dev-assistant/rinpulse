@@ -65,8 +65,10 @@
     "recreatedBody": "The data file on your phone is damaged and could not be read at all, so we made a new one. Your workouts come back from the cloud if you are signed in, and your watch data is fetched again at the next sync. The old file is kept, not deleted.",
     "failedTitle": "Your data could not be repaired yet",
     "failedBody": "The data file on your phone is damaged and the automatic repair did not work. Your data is not deleted. Try again, or close the app and open it again.",
+    "pendingTitle": "Close the app to finish the repair",
     "pendingBody": "The data file on your phone is damaged. A fresh copy is ready and goes in when the app opens again. Close the app completely, then open it again. Your data is not deleted.",
     "retry": "Try again",
+    "continue": "Open the app anyway",
     "dismiss": "Got it"
   },
   "language": {

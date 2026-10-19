@@ -13,12 +13,15 @@ import { InstalledFaceCard } from '@/features/watchfaces/InstalledFaceCard';
 import { LibraryFaceCard } from '@/features/watchfaces/LibraryFaceCard';
 import { ThemedDialog, type CustomDialogState } from '@/features/watchfaces/ThemedDialog';
 import { WatchfacePreviewModal } from '@/features/watchfaces/WatchfacePreviewModal';
+import { WebFacesSection } from '@/features/watchfaces/WebFacesSection';
 import { WatchStorageCard } from '@/features/watchfaces/WatchStorageCard';
 import { FaceSkeleton } from '@/features/watchfaces/WatchThumbnail';
 import { type WatchfaceItem } from '@/features/watchfaces/watchfaceModel';
 import { useWatchfaceImport } from '@/features/watchfaces/useWatchfaceImport';
 import { useWatchfaceLibrary, type DownloadedFace } from '@/features/watchfaces/useWatchfaceLibrary';
 import { useWatchfaces } from '@/features/watchfaces/useWatchfaces';
+import { useWebWatchfaces } from '@/features/watchfaces/useWebWatchfaces';
+import type { WebFace } from '@/features/watchfaces/webLibraryModel';
 import { radius, spacing, useColors } from '@/theme';
 import { hasNative, type WatchfaceInfo } from '@/wear';
 
@@ -89,12 +92,20 @@ export function WatchfacesScreen() {
   const percent =
     progress && progress.total > 0 ? Math.min(100, Math.round((progress.bytes / progress.total) * 100)) : 0;
 
-  const { handleImportToMyWatch } = useWatchfaceImport({
+  const web = useWebWatchfaces(tab === 'library');
+
+  const { handleImportToMyWatch, importPackage } = useWatchfaceImport({
     list,
     saveToLibrary,
     onInstall: (face) => void handleInstall(face),
     setDialog,
   });
+
+  /** Web library item: download, then the same validate, save and install-prompt step as a picked file. */
+  const handleInstallFromWeb = async (face: WebFace) => {
+    const file = await web.fetchFace(face);
+    if (file) await importPackage({ ...file, size: face.size });
+  };
 
   const handleInstall = async (face: WatchfaceItem) => {
     if (!face.downloadUrl) return;
@@ -195,6 +206,20 @@ export function WatchfacesScreen() {
           ) : null}
         </Section>
       )}
+
+      {tab === 'library' && canImport ? (
+        <WebFacesSection
+          state={web.state}
+          faces={web.faces}
+          installedFaces={list?.faces}
+          connected={connected}
+          idle={idle}
+          downloadingId={web.downloadingId}
+          downloadError={web.downloadError}
+          onRetry={() => void web.reload()}
+          onInstall={(face) => void handleInstallFromWeb(face)}
+        />
+      ) : null}
 
       {installing && progress ? (
         <View style={styles.progress}>

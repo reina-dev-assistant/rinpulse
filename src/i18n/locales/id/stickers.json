@@ -329,17 +329,17 @@
         "sessions_other": "4 minggu terakhir: {{count}} sesi.",
         "volume_other": "4 minggu terakhir: volume {{volume}} kg dalam {{count}} sesi."
       },
-      "swipe_other": "Data lengkapnya ada di {{count}} gambar, geser ya.",
+      "swipe_other": "Data lengkap ada di {{count}} gambar.",
       "question": {
-        "runPace": "Minta saran: pace-ku segini, gimana?",
-        "runPlan": "Minta saran: rekomendasi latihan berikutnya buat naikin pace?",
-        "runHr": "Minta saran: detak jantung segini wajar nggak buat pace ini?",
-        "ridePower": "Minta saran: NP dan IF segini sudah pas belum?",
-        "rideSpeed": "Minta saran: kecepatan segini gimana, ada tips?",
-        "ridePlan": "Minta saran: rekomendasi latihan sepeda berikutnya?",
-        "liftProgress": "Minta saran: progres angkatanku segini, gimana?",
-        "liftPlan": "Minta saran: rekomendasi program latihan lanjutan?",
-        "generalPlan": "Minta saran: rekomendasi latihan berikutnya?"
+        "runPace": "Ada saran soal pace ini?",
+        "runPlan": "Ada saran latihan berikutnya untuk menaikkan pace?",
+        "runHr": "Detak jantung segini wajar untuk pace ini?",
+        "ridePower": "NP dan IF segini sudah pas?",
+        "rideSpeed": "Ada saran soal kecepatan ini?",
+        "ridePlan": "Ada saran latihan sepeda berikutnya?",
+        "liftProgress": "Ada saran soal progres angkatan ini?",
+        "liftPlan": "Ada saran program latihan lanjutan?",
+        "generalPlan": "Ada saran latihan berikutnya?"
       }
     }
   }

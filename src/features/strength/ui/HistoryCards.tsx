@@ -97,7 +97,7 @@ export function WatchCard({ row, onPress }: WatchCardProps) {
       onPress={() => onPress(row)}
       style={[styles.card, { backgroundColor: colors.card, borderRadius: radius.card }]}>
       <View style={styles.head}>
-        <IconChip icon={sportIcon(row.sportName)} tint="workouts" />
+        <IconChip sport={sportIcon(row.sportName)} tint="workouts" />
         <View style={styles.title}>
           <AppText variant="bodyStrong" numberOfLines={1}>
             {sport}

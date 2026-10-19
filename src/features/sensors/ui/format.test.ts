@@ -16,7 +16,7 @@ import {
   readingLine,
   readingParts,
   scanName,
-  sensorIcon,
+  sensorGlyph,
   signalBars,
   signalLevel,
   sortKinds,
@@ -32,8 +32,9 @@ describe('kinds', () => {
 
   it('labels them and picks the first kind for the icon', () => {
     expect(kindsLabel(['csc', 'hr'])).toBe('Detak jantung, Kecepatan dan kadence');
-    expect(sensorIcon(['csc', 'power'])).toBe('flash');
-    expect(sensorIcon([])).toBe('bluetooth');
+    expect(sensorGlyph(['csc', 'power'])).toEqual({ icon: 'flash' });
+    expect(sensorGlyph([])).toEqual({ icon: 'bluetooth' });
+    expect(sensorGlyph(['rsc'])).toEqual({ sport: 'run' });
   });
 
   it('speaks English when asked', async () => {

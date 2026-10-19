@@ -7,19 +7,14 @@ import {
   speedFromPower,
   stepSpeed,
 } from "../../../src/features/ride/physics.ts";
+import { DRAFT_SHOWN_BELOW, Peloton, RIDER_LAT, draftScale, type BotSpec } from "./riders.ts";
 import type { RouteDef, SegmentDef } from "./routes.ts";
 import type { Track } from "./track.ts";
 
 export const COUNTDOWN_S = 3;
 export const MAX_LAPS = 30;
-/** Behind the ghost by this many metres (and no closer than the minimum) is its slipstream. */
-export const DRAFT_MAX_M = 12;
-export const DRAFT_MIN_M = 1.5;
-/** Fraction of the air drag left in the slipstream. */
-export const DRAFT_CDA_SCALE = 0.7;
 /** How quickly a measured power reading moves the bike's speed, seconds. */
 const POWER_SPEED_TAU_S = 2.5;
-
 /** The best ride on a route: distance at the end of each whole second, kept in localStorage. */
 export interface GhostRun {
   routeId: string;
@@ -104,7 +99,10 @@ export class RideSession {
   grade = 0;
   hr: number | undefined;
   cad: number | undefined;
+  /** In someone's slipstream enough to notice (see `cdaScale`). */
   drafting = false;
+  /** Share of the air drag left this step: 1 in clean air, down to DRAFT_CDA_SCALE on a wheel. */
+  cdaScale = 1;
   maxSpeedMs = 0;
   /** Times the rider crossed the finish and started the route again (loop rides only). */
   loops = 0;
@@ -114,6 +112,9 @@ export class RideSession {
   readonly segments: SegmentProgress[];
   readonly trace: number[] = [0];
   result: RideResult | null = null;
+  /** Pacer bots on the road with the rider; empty when the session was made without any. */
+  readonly peloton: Peloton;
+  readonly massKg: number;
 
   private events: RideEvent[] = [];
   private lapStartS = 0;
@@ -126,7 +127,7 @@ export class RideSession {
   private maxHr = 0;
   private powerSum = 0;
   private powerN = 0;
-  private readonly massKg: number;
+  private readonly playerRef = { distM: 0, lat: RIDER_LAT, speedMs: 0 };
 
   constructor(
     readonly route: RouteDef,
@@ -136,11 +137,13 @@ export class RideSession {
       ghost: GhostRun | null;
       segmentBests: Record<string, number>;
       loop?: boolean;
+      bots?: readonly BotSpec[];
     },
   ) {
     this.loop = options.loop ?? false;
     this.massKg = options.massKg ?? DEFAULT_RIDER_KG;
     this.ghost = this.loop ? null : options.ghost;
+    this.peloton = new Peloton(route, track, options.bots ?? [], this.loop);
     this.prevElev = track.elevationAt(0);
     this.grade = track.gradeAt(0);
     this.segments = route.segments.map((def) => ({
@@ -239,9 +242,10 @@ export class RideSession {
     this.grade = this.track.gradeAt(this.distM);
     const ghostGap = this.ghostGapM;
     const ghostLive = this.ghost !== null && this.timeS < this.ghost.timeS;
-    this.drafting =
-      ghostLive && ghostGap !== null && -ghostGap >= DRAFT_MIN_M && -ghostGap <= DRAFT_MAX_M && this.speedMs > 2;
-    const cdaScale = this.drafting ? DRAFT_CDA_SCALE : 1;
+    let cdaScale = ghostLive && ghostGap !== null ? draftScale(-ghostGap) : 1;
+    for (const bot of this.peloton.bots) cdaScale = Math.min(cdaScale, draftScale(this.peloton.gap(this.distM, bot.distM)));
+    this.cdaScale = cdaScale;
+    this.drafting = cdaScale < DRAFT_SHOWN_BELOW && this.speedMs > 2;
     if (!this.shifted) this.gear = climbGear(this.grade, this.massKg);
 
     if (input.pwr !== undefined) {
@@ -262,6 +266,9 @@ export class RideSession {
 
     this.distM += this.speedMs * dt;
     this.timeS += dt;
+    this.playerRef.distM = this.distM;
+    this.playerRef.speedMs = this.speedMs;
+    this.peloton.step(dt, this.playerRef);
     this.maxSpeedMs = Math.max(this.maxSpeedMs, this.speedMs);
 
     const elev = this.track.elevationAt(Math.min(this.distM, this.route.lengthM));

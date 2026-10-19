@@ -1,5 +1,5 @@
 /**
- * The caption that goes with the carousel: a short structured summary of the workout, an optional question ("Minta saran: ..."),
+ * The caption that goes with the carousel: a short structured summary of the workout, an optional question ("Ada saran ...?"),
  * and the optional `#JoyoFit` tag. Pure; the text is the person's to edit afterwards, so nothing here is final.
  *
  * Threads allows 500 characters of text per post (Meta, "Threads Posts"): when the summary is longer, the least important lines go

@@ -14,7 +14,8 @@ import { Card } from '@/components/Screen';
 import { Notice } from '@/components/States';
 import { RouteMapPreview } from '@/features/social/RouteMapPreview';
 import { PillRow, StatPill } from '@/features/social/StatPill';
-import { postFigures } from '@/features/social/postStats';
+import { sportKindFromName } from '@/features/social/feedRoute';
+import { postFigures, watchStats } from '@/features/social/postStats';
 import { useAgo } from '@/features/social/useAgo';
 import { sportIcon } from '@/features/workouts/sportIcon';
 import { errorMessage } from '@/format';
@@ -88,7 +89,11 @@ export function PostCard({ post, onChange, onOpen, linkAuthor = true, inlineMap 
   const body = (
     <View style={styles.body}>
       <View style={styles.row}>
-        <IconChip icon={post.kind === 'latihan' ? sportIcon(post.title) : KIND_ICON[post.kind]} tint="workouts" size="sm" />
+        {post.kind === 'latihan' ? (
+          <IconChip sport={sportIcon(post.title, watchStats(post)?.sportKind ?? sportKindFromName(post.title))} tint="workouts" size="sm" />
+        ) : (
+          <IconChip icon={KIND_ICON[post.kind]} tint="workouts" size="sm" />
+        )}
         <AppText variant="heading" style={styles.grow}>
           {post.title}
         </AppText>

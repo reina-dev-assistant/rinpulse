@@ -1,7 +1,8 @@
 import { CATEGORY_DRAW_TYPES, VALUE_TYPES, type DataCategory, type ValueTypeInfo } from "@joyofit/hwt";
 import { levelOfId, type SupportLevel } from "@/export/support";
+import { i18n } from "@/i18n";
 import { newIconSet, newRing, newWidget } from "@/model/defaults";
-import { HOSTED_BY, NO_ELEMENT, fieldDef, slotName } from "@/model/fields";
+import { noElementReason, fieldDef, slotName } from "@/model/fields";
 import type { Element } from "@/model/types";
 import { canDrawIconSet } from "@/render/iconsets";
 
@@ -35,28 +36,26 @@ export interface FieldRow {
 }
 
 const KIND_OF: Record<DataCategory, FieldActionKind> = { raw: "number", text: "number", ratio: "ring", enum: "iconset" };
-const LABEL: Record<FieldActionKind, string> = { number: "Add as number", ring: "Add as ring (ratio)", iconset: "Add as icon set (enum)" };
 /** The layer type each action writes through `FaceBuilder`. */
 const NEEDS: Record<FieldActionKind, string> = { number: "DRAW_TYPE_COMBINED_RES", ring: "DRAW_TYPE_ARC_RES", iconset: "DRAW_TYPE_SELECTED_RES" };
 
-const BADGE: Record<SupportLevel, string> = { verified: "Verified", experimental: "Unconfirmed", "preview-only": "Unknown, preview only" };
+const BADGE_KEY: Record<SupportLevel, "verified" | "experimental" | "previewOnly"> = { verified: "verified", experimental: "experimental", "preview-only": "previewOnly" };
 
 export function fieldAction(info: ValueTypeInfo): FieldAction {
   const kind = KIND_OF[info.category];
-  const no = (reason: string): FieldAction => ({ kind, label: LABEL[kind], state: { enabled: false, reason } });
+  const label = i18n.t(`fields:action.${kind}`);
+  const no = (reason: string): FieldAction => ({ kind, label, state: { enabled: false, reason } });
 
-  if (levelOfId(info.id) === "preview-only") return no("Unknown id: the codec does not know what it shows, so it cannot be written.");
-  const elsewhere = HOSTED_BY[info.id] ?? NO_ELEMENT[info.id];
+  if (levelOfId(info.id) === "preview-only") return no(i18n.t("fields:reason.unknownId"));
+  const elsewhere = noElementReason(info.id);
   if (elsewhere) return no(elsewhere);
-  if (!CATEGORY_DRAW_TYPES[info.category].includes(NEEDS[kind])) {
-    return no("FaceBuilder has no method for this layer type (it writes digits, images, hands and arcs).");
-  }
+  if (!CATEGORY_DRAW_TYPES[info.category].includes(NEEDS[kind])) return no(i18n.t("fields:reason.noMethod"));
   const def = fieldDef(info.id);
   const spec = kind === "number" ? def?.number : kind === "ring" ? def?.ratio : def?.iconSet;
-  if (!def || !spec) return no(kind === "iconset" ? "Needs an image set: Studio has no images for this value." : "Studio has no element for this value yet.");
-  if (kind === "iconset" && !canDrawIconSet(info.id)) return no("Needs an image set: Studio cannot draw its images.");
-  if (def.slot === undefined) return no("No container data_type is known for this value.");
-  return { kind, label: LABEL[kind], state: { enabled: true } };
+  if (!def || !spec) return no(i18n.t(kind === "iconset" ? "fields:reason.noImages" : "fields:reason.noElement"));
+  if (kind === "iconset" && !canDrawIconSet(info.id)) return no(i18n.t("fields:reason.cannotDrawImages"));
+  if (def.slot === undefined) return no(i18n.t("fields:reason.noSlot"));
+  return { kind, label, state: { enabled: true } };
 }
 
 const shortDrawType = (t: string) => t.replace("DRAW_TYPE_", "").toLowerCase().replaceAll("_", " ");
@@ -70,7 +69,7 @@ export function fieldRows(): FieldRow[] {
       info,
       label: def && def.label !== info.name ? def.label : null,
       level,
-      badge: BADGE[level],
+      badge: i18n.t(`fields:badge.${BADGE_KEY[level]}`),
       drawTypes: CATEGORY_DRAW_TYPES[info.category].map(shortDrawType),
       slot: slot === undefined ? null : slotName(slot),
       action: fieldAction(info),

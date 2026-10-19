@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Image as ImageIcon, Maximize, Magnet, Pause, Play, ZoomIn, ZoomOut } from "lucide-react";
 import { FIELDS } from "@/model/fields";
 import { simValue } from "@/render/values";
@@ -8,6 +9,7 @@ import { SliderField } from "./fields";
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function SimPanel() {
+  const { t } = useTranslation("editor");
   const sim = useEditor((s) => s.sim);
   const setSim = useEditor((s) => s.setSim);
   const elements = useEditor((s) => s.project.elements);
@@ -27,8 +29,8 @@ export function SimPanel() {
     <div className="grid grid-cols-1 gap-x-6 gap-y-1 p-4 sm:grid-cols-2 xl:grid-cols-3" data-testid="sim-panel">
       <div className="sm:col-span-2 xl:col-span-3 flex items-center justify-between gap-3 pb-1">
         <div>
-          <h2 className="text-base font-bold tracking-tight">Simulated watch</h2>
-          <p className="text-xs text-muted-foreground">Preview values only. The exported face reads the real ones from the watch.</p>
+          <h2 className="text-base font-bold tracking-tight">{t("sim.title")}</h2>
+          <p className="text-xs text-muted-foreground">{t("sim.note")}</p>
         </div>
         <button
           type="button"
@@ -40,19 +42,19 @@ export function SimPanel() {
           )}
         >
           {sim.live ? <Pause className="size-4" /> : <Play className="size-4" />}
-          {sim.live ? "Running clock" : "Run clock"}
+          {sim.live ? t("sim.running") : t("sim.run")}
         </button>
       </div>
       <SliderField
-        label="Time of day"
+        label={t("sim.timeOfDay")}
         value={minutesOfDay}
         min={0}
         max={1439}
         format={(v) => `${pad(Math.floor(v / 60))}:${pad(v % 60)}`}
         onChange={(v) => setClock(v, d.getSeconds())}
       />
-      <SliderField label="Seconds" value={d.getSeconds()} min={0} max={59} format={(v) => pad(v)} onChange={(v) => setClock(minutesOfDay, v)} />
-      <SliderField label="Step goal" value={sim.stepGoal} min={2000} max={30000} step={500} color="var(--steps)" onChange={(stepGoal) => setSim({ stepGoal })} />
+      <SliderField label={t("sim.seconds")} value={d.getSeconds()} min={0} max={59} format={(v) => pad(v)} onChange={(v) => setClock(minutesOfDay, v)} />
+      <SliderField label={t("sim.stepGoal")} value={sim.stepGoal} min={2000} max={30000} step={500} color="var(--steps)" onChange={(stepGoal) => setSim({ stepGoal })} />
       {fields.map((f) => (
         <SliderField
           key={f.id}
@@ -73,6 +75,7 @@ export function SimPanel() {
 const ZOOMS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
 
 export function StageControls({ currentZoom }: { currentZoom: number }) {
+  const { t } = useTranslation("editor");
   const zoom = useEditor((s) => s.zoom);
   const setZoom = useEditor((s) => s.setZoom);
   const snapping = useEditor((s) => s.snapping);
@@ -89,21 +92,21 @@ export function StageControls({ currentZoom }: { currentZoom: number }) {
 
   return (
     <div className="absolute top-3 right-3 z-10 flex items-center gap-0.5 rounded-full bg-black/45 p-1 backdrop-blur-md">
-      <button type="button" className={btn} aria-label="Zoom out" title="Zoom out (-)" onClick={() => step(-1)}>
+      <button type="button" className={btn} aria-label={t("controls.zoomOut")} title={t("controls.zoomOutTitle")} onClick={() => step(-1)}>
         <ZoomOut className="size-4" />
       </button>
       <span className="w-12 text-center text-xs font-semibold text-stage-foreground tabular-nums" data-testid="zoom-label">
         {Math.round(currentZoom * 100)}%
       </span>
-      <button type="button" className={btn} aria-label="Zoom in" title="Zoom in (+)" onClick={() => step(1)}>
+      <button type="button" className={btn} aria-label={t("controls.zoomIn")} title={t("controls.zoomInTitle")} onClick={() => step(1)}>
         <ZoomIn className="size-4" />
       </button>
       <button
         type="button"
         className={cn(btn, zoom === "fit" && "bg-white/15 text-stage-foreground")}
-        aria-label="Fit to window"
+        aria-label={t("controls.fit")}
         aria-pressed={zoom === "fit"}
-        title="Fit (0)"
+        title={t("controls.fitTitle")}
         onClick={() => setZoom("fit")}
       >
         <Maximize className="size-4" />
@@ -112,9 +115,9 @@ export function StageControls({ currentZoom }: { currentZoom: number }) {
       <button
         type="button"
         className={cn(btn, snapping && "bg-white/15 text-stage-foreground")}
-        aria-label="Snap to guides"
+        aria-label={t("controls.snap")}
         aria-pressed={snapping}
-        title="Snapping (hold Alt to bypass while dragging)"
+        title={t("controls.snapTitle")}
         onClick={() => setSnapping(!snapping)}
       >
         <Magnet className="size-4" />
@@ -122,9 +125,9 @@ export function StageControls({ currentZoom }: { currentZoom: number }) {
       <button
         type="button"
         className={cn(btn, photoPreview && "bg-white/15 text-stage-foreground")}
-        aria-label="Photo face preview"
+        aria-label={t("controls.photo")}
         aria-pressed={photoPreview}
-        title="Photo face preview: only the pictures, without the clock and data the watch draws itself"
+        title={t("controls.photoTitle")}
         data-testid="photo-preview-toggle"
         onClick={() => setPhotoPreview(!photoPreview)}
       >

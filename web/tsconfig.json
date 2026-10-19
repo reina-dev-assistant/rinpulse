@@ -19,5 +19,5 @@
       "@joyofit/hwt": ["../packages/hwt/src/index.ts"]
     }
   },
-  "include": ["src", "e2e", "*.ts"]
+  "include": ["src", "worker", "e2e", "*.ts"]
 }

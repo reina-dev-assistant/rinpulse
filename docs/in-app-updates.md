@@ -52,3 +52,5 @@ Google's troubleshooting list: the Play account on the device must have installe
 ## Over-the-air JS updates
 
 Binary updates (above) are one channel; JS-only fixes also arrive through EAS Update (`expo-updates`, `docs/ota.md`). They download in the background and apply on the next cold start; once one is downloaded, the banner shows "Update ready to install" with **Restart to update**, and Settings, About has a "Quick updates" block. The OTA banner wins over the Play and APK prompts, and the same 6 h foreground throttle applies.
+
+A server-controlled **minimum build** (full-screen "Update dulu" wall, "Ada versi baru" banner, cold-start OTA refresh) sits on top of all of this: see `docs/force-update.md`.

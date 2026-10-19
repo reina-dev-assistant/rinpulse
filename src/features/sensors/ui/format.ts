@@ -2,7 +2,7 @@
  * Pure helpers of the sensor screens: icons and labels per kind, signal strength from RSSI, the one-line live reading, the battery
  * line, the hint under a sensor that is quiet, and the wheel size field. Text goes through i18n at call time (never at module load).
  */
-import type { IconName } from '@/components/IconChip';
+import type { ChipGlyph } from '@/components/IconChip';
 import { fmtDecimal, fmtInt, fmtPercent, t } from '@/i18n';
 
 import { WHEEL_CIRCUMFERENCE_MM, type CscMode, type SensorKind, type SensorReadings } from '../gatt';
@@ -13,25 +13,26 @@ import type { Granted } from '../permissions';
 /** The order sensor kinds are listed in everywhere: the same as `kindsOfServices`. */
 const KIND_ORDER: readonly SensorKind[] = ['hr', 'power', 'csc', 'rsc'];
 
-const KIND_ICON: Readonly<Record<SensorKind, IconName>> = {
-  hr: 'heart',
-  csc: 'speedometer',
-  power: 'flash',
-  rsc: 'walk',
+const KIND_GLYPH: Readonly<Record<SensorKind, ChipGlyph>> = {
+  hr: { icon: 'heart' },
+  csc: { icon: 'speedometer' },
+  power: { icon: 'flash' },
+  // A running speed and cadence sensor sits on a shoe: the runner, not a speed dial.
+  rsc: { sport: 'run' },
 };
 
 export function sortKinds(kinds: readonly SensorKind[]): SensorKind[] {
   return KIND_ORDER.filter((kind) => kinds.includes(kind));
 }
 
-export function kindIcon(kind: SensorKind): IconName {
-  return KIND_ICON[kind];
+export function kindGlyph(kind: SensorKind): ChipGlyph {
+  return KIND_GLYPH[kind];
 }
 
 /** The glyph that stands for a sensor: its first kind's, or plain Bluetooth when the kinds are not known yet. */
-export function sensorIcon(kinds: readonly SensorKind[]): IconName {
+export function sensorGlyph(kinds: readonly SensorKind[]): ChipGlyph {
   const first = sortKinds(kinds)[0];
-  return first ? KIND_ICON[first] : 'bluetooth';
+  return first ? KIND_GLYPH[first] : { icon: 'bluetooth' };
 }
 
 export function kindLabel(kind: SensorKind): string {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  Activity,
   Bike,
   History,
   Radio,
@@ -21,17 +22,21 @@ import {
   Footprints,
   Heart,
   HeartPulse,
+  LayoutDashboard,
   ListChecks,
   Lock,
   Mail,
+  Medal,
   MessageCircle,
   Moon,
   Package,
   Palette,
+  Plug,
   Route,
   Server,
   Share2,
   ShieldCheck,
+  Trophy,
   Upload,
   Users,
   Watch,
@@ -52,14 +57,18 @@ import {
   IOS_TESTFLIGHT_URL,
   PANDUAN_PATH,
   PRIVASI_PATH,
+  RIDE_PATH,
+  RIDE_WEB_URL,
   SELF_HOST_PATH,
   STRAVA_PATH,
+  STUDIO_URL,
   TESTER_GROUP_URL,
   TESTER_OPTIN_URL,
   TRAKTEER_URL,
   WATCH_REPORTS_URL,
   WATCH_REPORT_FORM_URL,
   WATCH_REQUEST_URL,
+  WEB_URL,
   goal,
   cn,
 } from "./lib";
@@ -198,6 +207,12 @@ function Header() {
           <a href="/#cara" className={link}>
             Tiga cara pakai
           </a>
+          <a href="/#web" className={link}>
+            JoyoFit Web
+          </a>
+          <a href="/#ride" className={link}>
+            Ride
+          </a>
           <a href={BLOG_PATH} className={link}>
             Blog
           </a>
@@ -282,6 +297,15 @@ function Footer() {
             </a>
           </FooterColumn>
           <FooterColumn title="Ekosistem">
+            <a href={WEB_URL} className={link} {...goal("joyofit_web_click", "footer")}>
+              JoyoFit Web
+            </a>
+            <a href={STUDIO_URL} className={link}>
+              Studio
+            </a>
+            <a href={RIDE_PATH} className={link}>
+              Ride
+            </a>
             <a href={HARGA_URL} className={link} {...goal("founder_cta_click", "footer")}>
               Harga
             </a>
@@ -404,6 +428,21 @@ function Hero() {
             GitHub
           </ButtonLink>
         </div>
+        <p className="hero-rise mt-4 max-w-lg text-sm leading-relaxed text-muted-foreground [--i:5]">
+          Di browser:{" "}
+          <a href="#web" className="font-semibold text-foreground underline underline-offset-4">
+            JoyoFit Web
+          </a>
+          ,{" "}
+          <a href="#web" className="font-semibold text-foreground underline underline-offset-4">
+            Studio
+          </a>{" "}
+          dan{" "}
+          <a href="#ride" className="font-semibold text-foreground underline underline-offset-4">
+            Ride
+          </a>
+          .
+        </p>
       </div>
 
       <figure className="relative mx-auto w-full max-w-[22rem] md:max-w-[26rem]">
@@ -885,6 +924,252 @@ function SocialSection() {
           </a>
           .
         </p>
+      </div>
+    </section>
+  );
+}
+
+function Screenshot({ name, alt, caption }: { name: string; alt: string; caption: string }) {
+  return (
+    <figure>
+      <div className="overflow-hidden rounded-[1.5rem] border border-border/70 bg-card shadow-float">
+        <img
+          src={`/shots/${name}.webp`}
+          srcSet={`/shots/${name}-640.webp 640w, /shots/${name}.webp 1280w`}
+          sizes="(min-width: 1024px) 560px, calc(100vw - 2rem)"
+          alt={alt}
+          width={1280}
+          height={800}
+          loading="lazy"
+          decoding="async"
+          className="block h-auto w-full"
+        />
+      </div>
+      <figcaption className="mt-3 text-sm leading-relaxed text-muted-foreground">{caption}</figcaption>
+    </figure>
+  );
+}
+
+const WEB_POINTS: { Icon: LucideIcon; title: string; body: string }[] = [
+  {
+    Icon: LayoutDashboard,
+    title: "Ringkasan",
+    body: "Beban latihan, pemulihan, HRV, detak jantung istirahat, VO2max, dan tidur di satu halaman, dari data jam yang sudah masuk ke akun JoyoRogo-mu.",
+  },
+  {
+    Icon: Activity,
+    title: "Latihan",
+    body: "Daftar latihan, lalu detailnya dengan peta rute dan grafik yang disinkronkan satu sama lain.",
+  },
+  {
+    Icon: Moon,
+    title: "Tidur dan pemulihan",
+    body: "Tahap tidur semalam dan tren pemulihanmu dari hari ke hari, di layar yang lebih lebar dari ponsel.",
+  },
+  {
+    Icon: Upload,
+    title: "Unggah",
+    body: "Impor file .fit, .gpx, dan .tcx dari perangkat lain. Di sini juga ada perpustakaan tampilan jam yang bisa kamu pasang dari aplikasi.",
+  },
+  {
+    Icon: Plug,
+    title: "Koneksi",
+    body: "Sambungkan aplikasi AI lewat MCP, buka chat coach, dan ekspor latihan sebagai GPX, FIT, atau JSON.",
+  },
+];
+
+function WebSection() {
+  return (
+    <section id="web" data-section="web" className="scroll-mt-16 border-t border-border/70 py-20 md:py-28">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <div className="max-w-2xl">
+          <p className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            Untuk JoyoRogo Pro
+          </p>
+          <SectionTitle>JoyoFit Web: analisis latihan di browser</SectionTitle>
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            Angka dari jam-mu, dibaca di layar laptop. JoyoFit Web membuka data yang sudah tersimpan di akun JoyoRogo
+            untuk dianalisis lebih lega: ringkasan, latihan dengan peta dan grafik, tidur, sampai ekspor. Datanya tetap
+            di akunmu, tidak ada akun terpisah.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <ButtonLink href={WEB_URL} target="_blank" rel="noopener" {...goal("joyofit_web_click", "web_section")}>
+              Buka JoyoFit Web
+              <ArrowRight className="size-[1.125rem]" aria-hidden />
+            </ButtonLink>
+            <ButtonLink variant="secondary" href="/blog/joyofit-web">
+              Baca selengkapnya
+            </ButtonLink>
+          </div>
+        </div>
+        <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {WEB_POINTS.map(({ Icon, title, body }) => (
+            <li key={title} className="rounded-[1.75rem] bg-card p-6">
+              <span className="flex size-10 items-center justify-center rounded-full bg-tidur-soft text-tidur-ink">
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <h3 className="mt-4 text-lg font-extrabold tracking-tight">{title}</h3>
+              <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+            </li>
+          ))}
+          <li className="rounded-[1.75rem] border border-primary/30 bg-primary/5 p-6">
+            <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Lock className="size-5" aria-hidden />
+            </span>
+            <h3 className="mt-4 text-lg font-extrabold tracking-tight">Perlu JoyoRogo Pro</h3>
+            <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted-foreground">
+              Masuk dengan akun JoyoRogo yang sama dengan di aplikasi. Pro mulai {PRICE.monthly} per bulan atau{" "}
+              {PRICE.yearly} per tahun.
+            </p>
+            <a
+              href={HARGA_URL}
+              className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-primary underline-offset-4 hover:underline"
+              {...goal("founder_cta_click", "web_section")}
+            >
+              Lihat harga di joyorogo.com
+              <ArrowRight className="size-4" aria-hidden />
+            </a>
+          </li>
+        </ul>
+        <div className="mt-14 grid items-center gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
+          <div className="max-w-md">
+            <p className="inline-flex rounded-full bg-makan-soft px-3 py-1 text-xs font-bold text-makan-ink">
+              Gratis, tanpa Pro
+            </p>
+            <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-balance md:text-3xl">
+              JoyoFit Studio: rancang tampilan jam
+            </h3>
+            <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              Editor tampilan jam untuk Huawei Watch Fit 4 dan Fit 4 Pro. Kamu menggambar di browser, mengekspornya
+              sebagai gambar 408 × 480, lalu memilihnya di JoyoFit lewat Watch, Photo face. Tidak ada yang diunggah
+              kecuali kamu sendiri yang menyimpan proyek ke akun Pro.
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Photo face hanya gambar: jam menggambar sendiri waktu dan datanya di atasnya.
+            </p>
+            <ButtonLink
+              variant="secondary"
+              className="mt-5"
+              href={STUDIO_URL}
+              target="_blank"
+              rel="noopener"
+              {...goal("joyofit_studio_click", "web_section")}
+            >
+              <Palette className="size-[1.125rem]" aria-hidden />
+              Buka Studio
+            </ButtonLink>
+          </div>
+          <Screenshot
+            name="studio-face"
+            alt="JoyoFit Studio di browser: daftar lapisan di kiri, pratinjau tampilan jam Olahraga dengan jam 10.09, detak jantung, baterai, dan cincin langkah di tengah, serta slider jam simulasi."
+            caption="Studio dengan template Olahraga. Nilai di pratinjau hanya contoh dari slider jam simulasi."
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const RIDE_MODES: { Icon: LucideIcon; title: string; body: string }[] = [
+  {
+    Icon: Bike,
+    title: "Bebas",
+    body: "Gowes rute pilihanmu. Rekor terbaikmu di rute itu jadi bayangan yang bisa kamu kejar, dan waktu tiap segmen sprint dan tanjakan dicatat.",
+  },
+  {
+    Icon: Timer,
+    title: "Latihan interval",
+    body: "Blok kadens terstruktur: Tempo 3 × 4 menit, Hard 4 × 4 menit, atau Sprint 8 × 20 detik. Layar menunjukkan target kadens dan berapa persen waktumu tepat sasaran.",
+  },
+  {
+    Icon: Medal,
+    title: "Tantangan harian",
+    body: "Satu rute dan target waktu yang sama untuk semua pemain tiap hari. Selesai di bawah target dapat emas, dalam 5 persen perak, dalam 15 persen perunggu.",
+  },
+  {
+    Icon: Trophy,
+    title: "Papan peringkat",
+    body: "Waktu terbaik per rute, hari ini dan sepanjang masa, top 20. Hanya rute selesai yang dikayuh dengan sensor lewat HP yang masuk, dan kamu bisa menyembunyikan namamu.",
+  },
+];
+
+const RIDE_STEPS = [
+  "Buka fit.joyorogo.com/ride di browser laptop, tablet, atau TV.",
+  "Buka JoyoFit di HP, masuk ke JoyoRogo, lalu pilih Main di web. Pindai QR atau ketik kode 6 angka di layar.",
+  "Nyalakan sensor kadens Bluetooth-mu, pilih rute, lalu mulai mengayuh.",
+];
+
+function RideSection() {
+  return (
+    <section id="ride" data-section="ride" className="scroll-mt-16 bg-card py-20 md:py-28">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
+          <div>
+            <p className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Gratis</p>
+            <SectionTitle>JoyoFit Ride: main sepeda virtual di web</SectionTitle>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+              Sepedaan indoor di layar besar, sensornya dari HP-mu. Kadens dari pedalmu menggerakkan pesepeda 3D di
+              rute berpemandangan Indonesia: pantai, bukit, kebun, dan tanjakan Bromo. Kamu bisa langsung mencoba
+              tanpa sensor lewat mode demo.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <ButtonLink href={RIDE_PATH} {...goal("ride_click", "ride_section")}>
+                <Bike className="size-[1.125rem]" aria-hidden />
+                Main sekarang
+              </ButtonLink>
+              <ButtonLink variant="secondary" href="/blog/joyofit-ride">
+                Baca selengkapnya
+              </ButtonLink>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Alamat yang sama juga ada di{" "}
+              <a href={RIDE_WEB_URL} className="font-semibold text-foreground underline underline-offset-4">
+                app.fit.joyorogo.com/ride
+              </a>
+              . Memainkannya tidak butuh JoyoRogo Pro.
+            </p>
+          </div>
+          <Screenshot
+            name="ride-hud"
+            alt="Layar Ride di rute Bromo: pesepeda di jalan menanjak, daftar pesepeda bot dengan selisih waktu, dan HUD berisi kecepatan, kadens, detak jantung, daya estimasi, kemiringan, gigi, dan profil tanjakan."
+            caption="Rute Bromo dalam mode demo. Pesepeda lain adalah bot, dan daya di HUD berlabel estimasi."
+          />
+        </div>
+        <ul className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {RIDE_MODES.map(({ Icon, title, body }) => (
+            <li key={title} className="rounded-[1.75rem] border border-border/70 bg-background p-6">
+              <span className="flex size-10 items-center justify-center rounded-full bg-bakar-soft text-bakar-ink">
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <h3 className="mt-4 text-lg font-extrabold tracking-tight">{title}</h3>
+              <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-12 grid items-center gap-8 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
+          <div>
+            <h3 className="text-xl font-extrabold tracking-tight md:text-2xl">Cara mulai</h3>
+            <ol className="mt-5 space-y-4">
+              {RIDE_STEPS.map((step, i) => (
+                <li key={step} className="flex gap-3.5">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-extrabold tabular-nums">
+                    {i + 1}
+                  </span>
+                  <p className="pt-0.5 text-[0.9375rem] leading-relaxed">{step}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Di Chrome laptop atau Android, sensor detak jantung dan kadens juga bisa disambung langsung lewat Web
+              Bluetooth tanpa HP, tetapi hasilnya tidak masuk papan peringkat.
+            </p>
+          </div>
+          <Screenshot
+            name="ride-routes"
+            alt="Layar pilih rute Ride: mode Bebas, Latihan interval, dan Tantangan harian, lalu rute Pantai, Bukit, Kebun, dan Bromo dengan jarak dan tanjakan masing-masing."
+            caption="Pilih mode dan rute: Pantai 12 km, Bukit 9 km, Kebun 3 km, Bromo 8 km."
+          />
+        </div>
       </div>
     </section>
   );
@@ -2102,6 +2387,8 @@ function HomePage() {
       <StrengthSection />
       <CoachSection />
       <SocialSection />
+      <WebSection />
+      <RideSection />
       <SendSection />
       <WatchSection />
       <ComingSoonSection />

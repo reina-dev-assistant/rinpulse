@@ -9,6 +9,7 @@
     "strava": "Strava",
     "koneksi": "AI connections",
     "joyorogo": "JoyoRogo",
+    "scale": "Smart scale",
     "importHuawei": "Import from Huawei Health",
     "importAppleHealth": "Import from Apple Health",
     "importFit": "Import a FIT file",
@@ -66,6 +67,9 @@
     "privacy": "Watch data stays on this phone in joyofit.db until you sign in to the cloud. With Pro, cycle data (switchable), settings, sticker templates and saved routes also follow your account in the cloud. Signing out never deletes data on the phone unless you choose it. Weather, if switched on, sends rounded coordinates to Open-Meteo. Privacy policy: fit.joyorogo.com/privasi"
   },
   "advanced": {
+    "repair": "Repair data now",
+    "repairSubtitle": "Checks the data file on this phone and repairs it if it is damaged",
+    "repairHealthy": "No damage found in the data file. If an error keeps coming back, close the app completely and open it again.",
     "bleDenied": "Nearby devices permission denied: the watch is tried at its paired address without a scan.",
     "experimental": "Experimental",
     "courses": "Running courses",
@@ -130,7 +134,28 @@
       "readyTitle": "Update ready to install",
       "readyBody": "Restart JoyoFit to use the new version.",
       "later": "Later",
-      "update": "Update"
+      "update": "Update",
+      "newerTitle": "New version available",
+      "newerBody": "A newer JoyoFit is available in the store."
+    },
+    "gate": {
+      "title": "Update first",
+      "body": "The JoyoFit on your phone is out of date. Many problems you may be seeing are already fixed in the latest version, but the fixes only work once the app is updated.",
+      "steps": "Open the store, tap Update, then open JoyoFit again. Your data stays safe on your phone.",
+      "build": "Installed version: {{build}}",
+      "openPlay": "Update in Play Store",
+      "openTestFlight": "Open TestFlight",
+      "openAppStore": "Open App Store",
+      "openWeb": "Open update page",
+      "openTesting": "Open the testing page",
+      "failed": "Could not open the store page. Open the Play Store or TestFlight yourself and look for JoyoFit.",
+      "recheck": "Check again",
+      "rechecking": "Checking…",
+      "stillOld": "No newer version is installed yet. Update first, then check again."
+    },
+    "launch": {
+      "title": "Updating…",
+      "body": "Getting the latest fixes. One moment."
     }
   },
   "cloud": {
@@ -588,6 +613,8 @@
     "connectedSince": "Connected, sending since",
     "addLink": "Add fit.joyorogo.com to the description",
     "addLinkHint": "Plain text, never in the title.",
+    "addDevice": "Name the watch in the description",
+    "addDeviceHint": "For example: Recorded with HUAWEI WATCH FIT 4 Pro. Added below your description, never in the title.",
     "disconnect": "Disconnect Strava",
     "signInToDisconnect": "Sign in with JoyoRogo to disconnect or send.",
     "compatible": "Compatible with Strava",

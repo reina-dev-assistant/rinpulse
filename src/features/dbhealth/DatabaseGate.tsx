@@ -4,8 +4,10 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
-import { prepareDatabase } from '@/db/recovery';
+import { prepareDatabase, startNativeErrorWatch, useDbHealth } from '@/db/recovery';
 import { spacing, useTheme } from '@/theme';
+
+import { RepairDetails } from './RepairDetails';
 
 type Phase = 'preparing' | 'repairing' | 'ready' | 'failed';
 
@@ -32,15 +34,19 @@ export function DatabaseGate({ children }: { children: ReactNode }) {
     void prepare();
   }, [prepare]);
 
+  // From the first render on: a native writer already running in the background may hit the damage before the gate is open.
+  useEffect(() => startNativeErrorWatch(), []);
+
   if (failure !== null) throw failure;
   if (phase === 'ready') return <>{children}</>;
   if (phase === 'preparing') return null;
-  return <RepairScreen failed={phase === 'failed'} onRetry={() => void prepare()} />;
+  return <RepairScreen failed={phase === 'failed'} onRetry={() => void prepare()} onContinue={() => setPhase('ready')} />;
 }
 
-function RepairScreen({ failed, onRetry }: { failed: boolean; onRetry: () => void }) {
+function RepairScreen({ failed, onRetry, onContinue }: { failed: boolean; onRetry: () => void; onContinue: () => void }) {
   const { t } = useTranslation('common');
   const { colors } = useTheme();
+  const { notice } = useDbHealth();
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       {failed ? null : <ActivityIndicator color={colors.primary} />}
@@ -50,7 +56,9 @@ function RepairScreen({ failed, onRetry }: { failed: boolean; onRetry: () => voi
       <AppText variant="caption" muted style={styles.centered} accessibilityLiveRegion="polite">
         {failed ? t('dbRecovery.failedBody') : t('dbRecovery.repairingBody')}
       </AppText>
+      {failed ? <RepairDetails reason={notice?.kind === 'failed' ? notice.reason : null} /> : null}
       {failed ? <Button label={t('dbRecovery.retry')} variant="primary" onPress={onRetry} /> : null}
+      {failed ? <Button label={t('dbRecovery.continue')} variant="ghost" onPress={onContinue} /> : null}
     </View>
   );
 }

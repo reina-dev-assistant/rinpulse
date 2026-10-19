@@ -2,7 +2,10 @@ import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { ANDROID_PACKAGE, openFirst } from '@/features/updates/forceUpdate';
+import { storeTargets } from '@/features/updates/forceUpdatePolicy';
 import { playUpdates } from '@/features/updates/play';
+import { useUpdateGate } from '@/features/updates/UpdateGateProvider';
 import { isDismissed, isPlayInstaller, parseTimestamp, shouldCheck } from '@/features/updates/updatePolicy';
 import { OTA_ENABLED, restartOta, useOtaUpdate } from '@/features/updates/useOtaUpdate';
 
@@ -10,7 +13,9 @@ import { OTA_ENABLED, restartOta, useOtaUpdate } from '@/features/updates/useOta
 export type UpdateBannerModel =
   | { kind: 'available'; failed: boolean }
   | { kind: 'downloading'; percent: number | null }
-  | { kind: 'ready' };
+  | { kind: 'ready' }
+  /** The server says a newer build than this one exists (gate `latestBuild`); "Update" opens the store. */
+  | { kind: 'newer' };
 
 type Phase =
   | { step: 'idle' }
@@ -19,6 +24,7 @@ type Phase =
   | { step: 'ready' };
 
 const DISMISSED_KEY = 'joyofit_update_dismissed_at';
+const NEWER_DISMISSED_KEY = 'joyofit_newer_dismissed_at';
 
 /**
  * Drives the in-app update banner. A downloaded OTA update (see useOtaUpdate) shows "Restart to update" on
@@ -38,6 +44,9 @@ export function useAppUpdate() {
   const [otaHidden, setOtaHidden] = useState(false);
   const lastOtaCheckAt = useRef<number | null>(Date.now());
   const otaBannerShown = otaState === 'ready' && !otaHidden;
+  const { decision } = useUpdateGate();
+  const [newerHidden, setNewerHidden] = useState(true);
+  const newerWanted = decision.kind === 'banner';
 
   const remember = useCallback((now: number) => {
     dismissedAt.current = now;
@@ -123,11 +132,39 @@ export function useAppUpdate() {
     return () => sub.remove();
   }, [checkOta]);
 
+  // The server-side "newer build" banner: its own 24 h "Later", read once (hidden until the stored value is known).
+  useEffect(() => {
+    let live = true;
+    void SecureStore.getItemAsync(NEWER_DISMISSED_KEY)
+      .catch(() => null)
+      .then((stored) => {
+        if (!live) return;
+        const at = parseTimestamp(stored);
+        setNewerHidden(isDismissed(at, Date.now()));
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const playBannerShown = enabled && (phase.step === 'downloading' || (phase.step === 'ready' && !readyHidden) || (phase.step === 'available' && !hidden));
+  const newerShown = newerWanted && !newerHidden && !otaBannerShown && !playBannerShown;
+
   const dismiss = useCallback(() => {
     if (otaBannerShown) setOtaHidden(true);
-    else if (phase.step === 'ready') setReadyHidden(true);
-    else remember(Date.now());
-  }, [otaBannerShown, phase.step, remember]);
+    else if (playBannerShown && phase.step === 'ready') setReadyHidden(true);
+    else if (playBannerShown) remember(Date.now());
+    else {
+      const now = Date.now();
+      setNewerHidden(true);
+      void SecureStore.setItemAsync(NEWER_DISMISSED_KEY, String(now)).catch(() => {});
+    }
+  }, [otaBannerShown, playBannerShown, phase.step, remember]);
+
+  const openStore = useCallback(() => {
+    if (decision.kind !== 'banner') return;
+    void openFirst(storeTargets(Platform.OS, decision.storeUrl, ANDROID_PACKAGE).primary);
+  }, [decision]);
 
   const update = useCallback(async () => {
     if (!playUpdates) return;
@@ -156,5 +193,7 @@ export function useAppUpdate() {
     }
   }
 
-  return { banner, update, restart, dismiss };
+  if (banner === null && newerShown) banner = { kind: 'newer' };
+
+  return { banner, update: banner?.kind === 'newer' ? openStore : update, restart, dismiss };
 }

@@ -34,6 +34,7 @@
   },
   "strava": {
     "title": "Strava",
+    "recordedWith": "Recorded with {{device}}",
     "viewOn": "View on Strava",
     "connectHint": "Connect Strava to send this workout with its distance, calories, heart rate and route.",
     "setUp": "Set up Strava",

@@ -15,6 +15,8 @@ interface PostMapSectionProps {
   mine: boolean;
   /** Called with the post as the server now has it, after the switch changed. */
   onChange: (post: RogoPost) => void;
+  /** False while the analysis below draws the same route: the switch stays, the preview steps aside. */
+  preview?: boolean;
 }
 
 /**
@@ -22,13 +24,14 @@ interface PostMapSectionProps {
  * per-post switch: JoyoRogo sends the line only while the switch is on, so after a change the post is read again. Renders
  * nothing for a post without a map the viewer may see or switch.
  */
-export function PostMapSection({ post, mine, onChange }: PostMapSectionProps) {
+export function PostMapSection({ post, mine, onChange, preview = true }: PostMapSectionProps) {
   const { t } = useTranslation('social');
   const [pending, setPending] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const stats = watchStats(post);
   const canSwitch = mine && stats?.hasMap === 1;
-  if (!post.mapLine && !canSwitch) return null;
+  const drawn = preview && post.mapLine ? post.mapLine : null;
+  if (!drawn && !canSwitch) return null;
 
   const change = async (show: boolean) => {
     setPending(show);
@@ -45,7 +48,7 @@ export function PostMapSection({ post, mine, onChange }: PostMapSectionProps) {
 
   return (
     <Card>
-      {post.mapLine ? <RouteMapPreview line={post.mapLine} title={post.title} size="detail" /> : null}
+      {drawn ? <RouteMapPreview line={drawn} title={post.title} size="detail" /> : null}
       {canSwitch ? (
         <SwitchRow
           label={t('post.map.show')}

@@ -107,7 +107,8 @@ function SlidePage({ scene, pageWidth, cardWidth }: PageProps) {
 /**
  * The Threads composer: a carousel of 1080 x 1350 slides drawn by the sticker engine (one per kind of data the workout has),
  * the person's choice and order of slides, dark or light, the route and name switches, and an editable caption with a
- * question and the #JoyoFit tag. "Share to Threads" hands every PNG and the text to the system share sheet; "Save all and open
+ * question and the #JoyoFit tag. "Share to Threads" hands every PNG to the system share sheet (Threads drops text that comes with
+ * images, so the text goes to the clipboard to be pasted); "Save all and open
  * Threads" saves them to the photo library, copies the text and opens the Threads composer, where the photo button picks them.
  * The JoyoFit branding is part of every slide and never goes away, Pro or not.
  */
@@ -257,6 +258,7 @@ export function ThreadsSheet({ subject, visible, onClose }: { subject: StickerSu
     try {
       const uris = await exportSlides();
       if (target === 'share') {
+        show(t('threadsshare:toasts.captionCopied'));
         await shareThreadsCarousel(uris, text);
       } else if (await saveAllAndOpenThreads(uris, text, askPhotos)) {
         show(t('sharing:share.toasts.saved'));
@@ -405,6 +407,9 @@ export function ThreadsSheet({ subject, visible, onClose }: { subject: StickerSu
           </View>
 
           <Notice>{t('threadsshare:branding')}</Notice>
+          <AppText variant="caption" muted>
+            {t('threadsshare:actions.pasteHint')}
+          </AppText>
           {SAVE_AVAILABLE ? (
             <AppText variant="caption" muted>
               {t('threadsshare:actions.saveOpenHint')}

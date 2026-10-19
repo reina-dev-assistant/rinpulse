@@ -13,7 +13,7 @@ import {
   syncStravaStatus,
 } from '@/cloud/strava';
 import { isIos } from '@/components/IosUnavailable';
-import { getStravaSettings, setStravaAddLink, type StravaSettings } from '@/db/strava';
+import { getStravaSettings, setStravaAddLink, setStravaAddDevice, type StravaSettings } from '@/db/strava';
 import { errorMessage } from '@/format';
 import { t } from '@/i18n';
 import { useWatch } from '@/state/WatchProvider';
@@ -37,11 +37,12 @@ export interface StravaContextValue {
   connect: (options?: { gear?: boolean }) => Promise<void>;
   disconnect: () => Promise<void>;
   setAddLink: (on: boolean) => Promise<void>;
+  setAddDevice: (on: boolean) => Promise<void>;
   /** Re-reads the connection from the Worker (after returning from Strava or the app coming to the foreground). */
   refresh: () => Promise<void>;
 }
 
-const EMPTY: StravaSettings = { connectedAt: null, athleteId: null, addLink: false, gearScope: false };
+const EMPTY: StravaSettings = { connectedAt: null, athleteId: null, addLink: false, addDevice: true, gearScope: false };
 
 const StravaContext = createContext<StravaContextValue | null>(null);
 
@@ -164,9 +165,17 @@ export function StravaProvider({ children }: { children: ReactNode }) {
     [db, reload],
   );
 
+  const setAddDevice = useCallback(
+    async (on: boolean) => {
+      await setStravaAddDevice(db, on);
+      await reload();
+    },
+    [db, reload],
+  );
+
   const value = useMemo<StravaContextValue>(
-    () => ({ configured: CLOUD_CONFIGURED, signedIn, settings, serverReady, busy, error, connect, disconnect, setAddLink, refresh }),
-    [signedIn, settings, serverReady, busy, error, connect, disconnect, setAddLink, refresh],
+    () => ({ configured: CLOUD_CONFIGURED, signedIn, settings, serverReady, busy, error, connect, disconnect, setAddLink, setAddDevice, refresh }),
+    [signedIn, settings, serverReady, busy, error, connect, disconnect, setAddLink, setAddDevice, refresh],
   );
 
   return <StravaContext.Provider value={value}>{children}</StravaContext.Provider>;

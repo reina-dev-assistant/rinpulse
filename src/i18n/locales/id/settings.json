@@ -9,6 +9,7 @@
     "strava": "Strava",
     "koneksi": "Koneksi AI",
     "joyorogo": "JoyoRogo",
+    "scale": "Timbangan",
     "importHuawei": "Impor dari Huawei Health",
     "importAppleHealth": "Impor dari Apple Health",
     "importFit": "Impor file FIT",
@@ -66,6 +67,9 @@
     "privacy": "Data jam tetap di ponsel ini, di joyofit.db, sampai kamu masuk ke cloud. Dengan Pro, data siklus (bisa dimatikan), pengaturan, template stiker, dan rute tersimpan juga ikut akunmu di cloud. Keluar tidak menghapus data di ponsel tanpa kamu pilih. Cuaca, kalau dinyalakan, mengirim koordinat yang sudah dibulatkan ke Open-Meteo. Kebijakan privasi: fit.joyorogo.com/privasi"
   },
   "advanced": {
+    "repair": "Perbaiki data sekarang",
+    "repairSubtitle": "Memeriksa berkas data di ponsel ini dan memperbaikinya kalau rusak",
+    "repairHealthy": "Tidak ada kerusakan di berkas data. Kalau galat terus muncul, tutup aplikasi sepenuhnya lalu buka lagi.",
     "bleDenied": "Izin perangkat sekitar ditolak: jam dicoba di alamat yang sudah dipasangkan tanpa pemindaian.",
     "experimental": "Eksperimental",
     "courses": "Rute lari",
@@ -130,7 +134,28 @@
       "readyTitle": "Update siap dipasang",
       "readyBody": "Mulai ulang JoyoFit untuk memakai versi baru.",
       "later": "Nanti",
-      "update": "Update"
+      "update": "Update",
+      "newerTitle": "Ada versi baru",
+      "newerBody": "Versi JoyoFit yang lebih baru sudah tersedia di toko."
+    },
+    "gate": {
+      "title": "Update dulu ya",
+      "body": "Versi JoyoFit di HP kamu sudah lama. Banyak masalah yang kamu alami sudah kami perbaiki di versi terbaru, tapi perbaikannya cuma jalan kalau aplikasinya diperbarui.",
+      "steps": "Buka toko, ketuk Update, lalu buka JoyoFit lagi. Data kamu tetap aman di HP.",
+      "build": "Versi terpasang: {{build}}",
+      "openPlay": "Perbarui di Play Store",
+      "openTestFlight": "Buka TestFlight",
+      "openAppStore": "Buka App Store",
+      "openWeb": "Buka halaman update",
+      "openTesting": "Buka halaman uji coba",
+      "failed": "Halaman toko tidak bisa dibuka. Buka Play Store atau TestFlight sendiri dan cari JoyoFit.",
+      "recheck": "Cek lagi",
+      "rechecking": "Memeriksa…",
+      "stillOld": "Belum ada versi baru yang terpasang. Update dulu, lalu cek lagi."
+    },
+    "launch": {
+      "title": "Memperbarui…",
+      "body": "Mengambil perbaikan terbaru. Sebentar ya."
     }
   },
   "cloud": {
@@ -579,6 +604,8 @@
     "connectedSince": "Terhubung, mengirim sejak",
     "addLink": "Tambahkan fit.joyorogo.com ke deskripsi",
     "addLinkHint": "Teks biasa, tidak pernah di judul.",
+    "addDevice": "Tulis nama jam di deskripsi",
+    "addDeviceHint": "Contoh: Direkam dengan HUAWEI WATCH FIT 4 Pro. Dibuat di bawah deskripsimu, tidak pernah di judul.",
     "disconnect": "Putuskan Strava",
     "signInToDisconnect": "Masuk dengan JoyoRogo untuk memutuskan atau mengirim.",
     "compatible": "Kompatibel dengan Strava",

@@ -3,13 +3,12 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { AppText } from '@/components/AppText';
-import { IconChip, type IconName } from '@/components/IconChip';
+import { IconChip, type ChipGlyph } from '@/components/IconChip';
 import { PressableScale } from '@/components/PressableScale';
 import { spacing, useColors, type Colors, type Theme, type Tint } from '@/theme';
 
-interface NavRowProps {
-  /** Glyph of the round chip; leave out when `leading` is given. */
-  icon?: IconName;
+/** The round chip shows `icon`, or `sport` for a workout type; leave both out when `leading` is given. */
+type NavRowProps = Partial<ChipGlyph> & {
   tint?: Tint | 'neutral';
   /** Replaces the chip, e.g. a `BrandMark` or an avatar. */
   leading?: ReactNode;
@@ -23,10 +22,10 @@ interface NavRowProps {
   disabled?: boolean;
   /** Frame inside a grouped list (see `groupedRowStyle`). */
   style?: ViewStyle;
-}
+};
 
 /** Tappable row: leading chip or mark, title with an optional line under it, chevron. At least 56 dp so it is easy to hit. */
-export function NavRow({ icon, tint, leading, destructive, title, subtitle, value, onPress, disabled, style }: NavRowProps) {
+export function NavRow({ icon, sport, tint, leading, destructive, title, subtitle, value, onPress, disabled, style }: NavRowProps) {
   const colors = useColors();
   return (
     <PressableScale
@@ -39,6 +38,8 @@ export function NavRow({ icon, tint, leading, destructive, title, subtitle, valu
       style={[styles.row, style]}>
       {leading ? (
         <View style={styles.leading}>{leading}</View>
+      ) : sport ? (
+        <IconChip sport={sport} tint={destructive ? 'destructive' : tint} size="md" />
       ) : icon ? (
         <IconChip icon={icon} tint={destructive ? 'destructive' : tint} size="md" />
       ) : null}

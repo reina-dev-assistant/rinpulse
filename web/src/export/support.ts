@@ -1,4 +1,5 @@
 import { VALUE_TYPE, valueTypeInfo } from "@joyofit/hwt";
+import { i18n } from "@/i18n";
 import { getAsset } from "@/model/assets";
 import { fieldDef } from "@/model/fields";
 import type { Element, HandKind } from "@/model/types";
@@ -31,6 +32,12 @@ export const HAND_VALUE: Record<HandKind, number> = {
   second: VALUE_TYPE.secondRatio,
 };
 
+const HAND_WHAT = {
+  hour: "export:support.what.hourHand",
+  minute: "export:support.what.minuteHand",
+  second: "export:support.what.secondHand",
+} as const;
+
 const ORDER: SupportLevel[] = ["verified", "experimental", "preview-only"];
 
 export function levelOfId(id: number): SupportLevel {
@@ -55,8 +62,8 @@ function fromIds(ids: number[], what: string): Support {
     level,
     note:
       level === "experimental"
-        ? `${capitalise(what)} uses ids inferred from the sample faces, not confirmed by a preview or a watch: ${names}.`
-        : `No value id is known for ${what}.`,
+        ? i18n.t("export:support.experimentalNote", { what: capitalise(what), ids: names })
+        : i18n.t("export:support.unknownId", { what }),
     experimental: level === "experimental" ? [what] : [],
   };
 }
@@ -64,24 +71,24 @@ function fromIds(ids: number[], what: string): Support {
 const previewOnly = (note: string): Support => ({ ...verified, level: "preview-only", note });
 
 /** What stays preview only about a number that can be negative: `FaceBuilder.digits` has one `res_sign` image and no minus. */
-export const MINUS_DROPPED = "minus sign for values below zero (the codec has no field for it)";
+export const minusDropped = (): string => i18n.t("export:support.minusDropped");
 
 /** An uploaded image that is set but not decoded (browser storage unavailable, or the file would not decode). */
-const NOT_LOADED = "The image is set but did not load (browser storage blocked or the file is damaged). Upload it again.";
+const notLoaded = (): string => i18n.t("export:support.notLoaded");
 
 export function elementSupport(el: Element): Support {
   switch (el.type) {
     case "background":
       if (el.fill.kind !== "image") return verified;
-      if (!el.fill.assetId) return previewOnly("No photo chosen.");
-      return getAsset(el.fill.assetId) ? verified : previewOnly(NOT_LOADED);
+      if (!el.fill.assetId) return previewOnly(i18n.t("export:support.noPhoto"));
+      return getAsset(el.fill.assetId) ? verified : previewOnly(notLoaded());
     case "image":
-      if (!el.assetId) return previewOnly("No image chosen.");
-      return getAsset(el.assetId) ? verified : previewOnly(NOT_LOADED);
+      if (!el.assetId) return previewOnly(i18n.t("export:support.noImage"));
+      return getAsset(el.assetId) ? verified : previewOnly(notLoaded());
     case "time": {
-      const base = fromIds([VALUE_TYPE.hour, VALUE_TYPE.minute], "the hour and minute digits");
-      const seconds = el.showSeconds ? fromIds([VALUE_TYPE.secondHigh, VALUE_TYPE.secondLow], "the seconds digits") : verified;
-      const dropped = el.ampm ? ["AM/PM marker (no known id)"] : [];
+      const base = fromIds([VALUE_TYPE.hour, VALUE_TYPE.minute], i18n.t("export:support.what.hourMinute"));
+      const seconds = el.showSeconds ? fromIds([VALUE_TYPE.secondHigh, VALUE_TYPE.secondLow], i18n.t("export:support.what.seconds")) : verified;
+      const dropped = el.ampm ? [i18n.t("export:support.ampmDropped")] : [];
       const level = worst([base.level, seconds.level]);
       return { level, note: [base.note, seconds.note].filter(Boolean).join(" "), dropped, experimental: [...base.experimental, ...seconds.experimental] };
     }
@@ -90,36 +97,36 @@ export function elementSupport(el: Element): Support {
       if (el.parts.includes("weekday")) ids.push(VALUE_TYPE.week);
       if (el.parts.includes("day")) ids.push(VALUE_TYPE.date);
       if (el.parts.includes("month")) ids.push(VALUE_TYPE.month);
-      return fromIds(ids, "the date");
+      return fromIds(ids, i18n.t("export:support.what.date"));
     }
     case "hand":
       if (el.shape === "custom") {
-        if (!el.assetId) return previewOnly("No hand PNG chosen.");
-        if (!getAsset(el.assetId)) return previewOnly(NOT_LOADED);
+        if (!el.assetId) return previewOnly(i18n.t("export:support.noHandPng"));
+        if (!getAsset(el.assetId)) return previewOnly(notLoaded());
       }
-      return fromIds([HAND_VALUE[el.hand]], `the ${el.hand} hand`);
+      return fromIds([HAND_VALUE[el.hand]], i18n.t(HAND_WHAT[el.hand]));
     case "widget": {
       const def = fieldDef(el.valueType);
-      if (!def?.number) return previewOnly(`Value id ${el.valueType} is not a number field Studio can draw.`);
-      const ids = fromIds([def.id], `the ${def.label.toLowerCase()} number`);
+      if (!def?.number) return previewOnly(i18n.t("export:support.notNumber", { id: el.valueType }));
+      const ids = fromIds([def.id], i18n.t("export:support.what.number", { label: def.label.toLowerCase() }));
       if (ids.level === "preview-only") return ids;
-      if (def.slot === undefined) return previewOnly(`No container slot is known for ${def.label.toLowerCase()}.`);
-      const dropped = def.number.min < 0 ? [MINUS_DROPPED] : [];
+      if (def.slot === undefined) return previewOnly(i18n.t("export:support.noSlot", { label: def.label.toLowerCase() }));
+      const dropped = def.number.min < 0 ? [minusDropped()] : [];
       return { ...ids, dropped };
     }
     case "ring": {
       const def = fieldDef(el.valueType);
-      if (!def?.ratio) return previewOnly(`Value id ${el.valueType} is not a ratio Studio can draw as a ring.`);
-      const ids = fromIds([def.id], "the progress arc");
+      if (!def?.ratio) return previewOnly(i18n.t("export:support.notRatio", { id: el.valueType }));
+      const ids = fromIds([def.id], i18n.t("export:support.what.arc"));
       if (ids.level === "preview-only") return ids;
-      return def.slot === undefined ? previewOnly(`No container slot is known for ${def.label.toLowerCase()}.`) : ids;
+      return def.slot === undefined ? previewOnly(i18n.t("export:support.noSlot", { label: def.label.toLowerCase() })) : ids;
     }
     case "iconset": {
       const def = fieldDef(el.valueType);
-      if (!def?.iconSet) return previewOnly(`Value id ${el.valueType} has no image set Studio can draw.`);
-      const ids = fromIds([def.id], "the icon set");
+      if (!def?.iconSet) return previewOnly(i18n.t("export:support.noImageSet", { id: el.valueType }));
+      const ids = fromIds([def.id], i18n.t("export:support.what.iconSet"));
       if (ids.level === "preview-only") return ids;
-      return def.slot === undefined ? previewOnly(`No container slot is known for ${def.label.toLowerCase()}.`) : ids;
+      return def.slot === undefined ? previewOnly(i18n.t("export:support.noSlot", { label: def.label.toLowerCase() })) : ids;
     }
   }
 }

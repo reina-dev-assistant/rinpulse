@@ -14,7 +14,7 @@ import { spacing } from '@/theme';
 
 import { sensorStatus } from '../linkStatus';
 import { sensorLabel, type SavedSensor } from '../store';
-import { linkHint, modeLabel, readingLine, sensorIcon } from './format';
+import { linkHint, modeLabel, readingLine, sensorGlyph } from './format';
 import { SensorStatusLine } from './SensorStatusLine';
 import { KindTags } from './parts';
 
@@ -49,7 +49,7 @@ export function SensorCard({ sensor, busy, onConnect, onDisconnect, onRename, on
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <IconChip icon={sensorIcon(sensor.kinds)} tint={connected ? 'link' : 'neutral'} />
+        <IconChip {...sensorGlyph(sensor.kinds)} tint={connected ? 'link' : 'neutral'} />
         <View style={styles.text}>
           <AppText variant="bodyStrong" numberOfLines={1}>
             {sensorLabel(sensor)}

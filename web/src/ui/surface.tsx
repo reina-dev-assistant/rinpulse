@@ -58,7 +58,7 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "min-h-8 flex-1 rounded-full px-2 text-[0.8125rem] font-semibold whitespace-nowrap transition-[background-color,color,box-shadow] duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none",
+              "min-h-8 flex-1 rounded-full px-2 py-1 text-[0.8125rem] leading-tight font-semibold sm:whitespace-nowrap transition-[background-color,color,box-shadow] duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none",
               active
                 ? "bg-card text-foreground shadow-[0_1px_3px_oklch(0.3_0.02_85/12%)]"
                 : "text-muted-foreground hover:text-foreground",

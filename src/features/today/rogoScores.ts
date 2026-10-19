@@ -9,12 +9,14 @@ import { dayStarts } from '@/features/trends/series';
 
 /** Today and the days before it that are sent, so a day whose strain grew after the last push is corrected. */
 export const ROGO_SCORE_DAYS = 3;
+/** Today and the days before it whose hours of sleep are sent: a week, what JoyoRogo's Tidur screen charts. */
+export const ROGO_SLEEP_DAYS = 7;
 /** JoyoRogo's limit of days per `fitness.upsertScores` call. */
 export const ROGO_MAX_DAYS_PER_CALL = 14;
 
 /**
- * The scores JoyoRogo gets, oldest first. Earlier days carry strain and the day's active energy only: recovery, sleep, the readiness word and the
- * body metrics are computed for today and are not recomputed for past days, and JoyoRogo keeps what it already stored for
+ * The scores JoyoRogo gets, oldest first. Earlier days carry strain, the day's active energy and the hours slept only: recovery, the sleep share, the readiness word and the
+ * other body metrics are computed for today and are not recomputed for past days, and JoyoRogo keeps what it already stored for
  * them. Days are the phone's calendar days, the same key the meals sync uses; for Indonesian time zones that is JoyoRogo's
  * WIB day. Values are rounded as the Today card shows them. Empty when there is nothing to send.
  *
@@ -24,12 +26,17 @@ export const ROGO_MAX_DAYS_PER_CALL = 14;
  * `activeKcal` is the watch's all-day active energy per date (`activeKcalByDate`). Today and every earlier day of the window
  * carry it, so a day whose total grew after the last push is corrected; a past day with energy but no strain still gets an
  * entry. Dates outside the window and totals that are 0 or invalid are left out.
+ *
+ * `sleepHours` is the hours slept per earlier date (`rogoSleepHoursByDate`). Every earlier day of the sleep window carries
+ * its own, so a night the phone only read after that day's last push (or before this feature existed) still reaches JoyoRogo
+ * and a day total that grew with a nap is corrected. Today's hours come with `metrics`.
  */
 export function rogoScoreDays(
   scores: Scores,
   dayStart: number,
   metrics: RogoScoreMetrics = {},
   activeKcal: ReadonlyMap<string, number> = new Map(),
+  sleepHours: ReadonlyMap<string, number> = new Map(),
 ): RogoScoreDay[] {
   const days: RogoScoreDay[] = [];
   for (const entry of scores.strain) {
@@ -47,6 +54,15 @@ export function rogoScoreDays(
     else days.push({ date, activeKcal: kcal });
   }
 
+  for (const start of dayStarts(dayStart, ROGO_SLEEP_DAYS)) {
+    const date = localDate(start * 1000);
+    const hours = date === todayDate ? undefined : cleanMetrics({ sleepHours: sleepHours.get(date) }).sleepHours;
+    if (hours === undefined) continue;
+    const day = days.find((d) => d.date === date);
+    if (day) day.sleepHours = hours;
+    else days.push({ date, sleepHours: hours });
+  }
+
   const sleep = scores.readiness.signals.find((s) => s.key === 'sleep');
   const today: RogoScoreDay = { date: todayDate };
   const todayKcal = cleanActiveKcal(activeKcal.get(todayDate));
@@ -59,6 +75,24 @@ export function rogoScoreDays(
   if (Object.keys(today).length > 1) days.push(today);
 
   return days.sort((a, b) => (a.date < b.date ? -1 : 1)).slice(-ROGO_MAX_DAYS_PER_CALL);
+}
+
+/**
+ * The hours slept on each day before today (the sleep window, today left out: its hours are in {@link rogoDailyMetrics}),
+ * keyed by local `YYYY-MM-DD` like the score days. A day is the night that ended on it plus that day's naps, the same total
+ * as today's `sleepHours` (`sleepByDay`); a day with only naps or no sleep at all is absent. Empty for data read for another
+ * day, like {@link rogoDailyMetrics}.
+ */
+export function rogoSleepHoursByDate(data: FitnessData, dayStart: number): Map<string, number> {
+  const out = new Map<string, number>();
+  if (data.dayStart !== dayStart) return out;
+  const byDay = sleepByDay(buildNights(data.sleep, []));
+  for (const start of dayStarts(dayStart, ROGO_SLEEP_DAYS)) {
+    if (start === dayStart) continue;
+    const day = byDay.get(start);
+    if (day?.hasNight) out.set(localDate(start * 1000), day.asleepSeconds / 3600);
+  }
+  return out;
 }
 
 /**

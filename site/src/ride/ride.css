@@ -608,6 +608,14 @@ button.rd-option:active {
   background: oklch(0.8 0.08 230);
 }
 
+.rd-prof-dot-bot {
+  width: calc(var(--u) * 0.6);
+  height: calc(var(--u) * 0.6);
+  margin: calc(var(--u) * -0.3) 0 0 calc(var(--u) * -0.3);
+  border-width: 1px;
+  background: oklch(0.86 0.01 85);
+}
+
 /* HUD ---------------------------------------------------------------------------------------------------- */
 
 .rd-hud {
@@ -813,7 +821,25 @@ button.rd-option:active {
   font-size: calc(var(--u) * 0.95);
   font-weight: 700;
   text-shadow: none;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: transform 140ms var(--rd-ease);
+}
+
+/* Laps taken, a small round count after the label. */
+.rd-tool-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.6em;
+  height: 1.6em;
+  padding: 0 0.35em;
+  border-radius: 0.8em;
+  background: var(--rd-accent);
+  color: oklch(0.15 0.01 230);
+  font-size: 0.85em;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .rd-tool svg {
@@ -850,6 +876,76 @@ button.rd-option:active {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
+}
+
+/* Riders nearby, Zwift style: furthest ahead on top, the player's own row highlighted. */
+.rd-nearby {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  column-gap: calc(var(--u) * 0.7);
+  min-width: calc(var(--u) * 17);
+  margin: 0;
+  padding: calc(var(--u) * 0.45) calc(var(--u) * 0.5);
+  list-style: none;
+  border-radius: var(--rd-r-btn);
+  background: var(--rd-panel);
+  font-size: calc(var(--u) * 0.9);
+  font-variant-numeric: tabular-nums;
+  text-shadow: none;
+}
+
+.rd-nearby-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: calc(var(--u) * 0.28) calc(var(--u) * 0.4);
+  border-radius: calc(var(--rd-r-btn) * 0.6);
+}
+
+.rd-nearby-row.is-you {
+  background: color-mix(in oklch, var(--rd-accent) 28%, transparent);
+  font-weight: 800;
+}
+
+.rd-nearby-row.is-ghost {
+  color: oklch(0.85 0.07 230);
+}
+
+.rd-nearby-kit {
+  width: calc(var(--u) * 0.75);
+  height: calc(var(--u) * 0.75);
+  border-radius: 50%;
+  border: 1px solid oklch(1 0 0 / 0.5);
+}
+
+.rd-nearby-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rd-nearby-bot {
+  margin-left: 0.5em;
+  padding: 0 0.35em;
+  border-radius: 0.3em;
+  background: oklch(0.78 0.09 220 / 0.3);
+  font-size: 0.72em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: oklch(0.88 0.06 220);
+}
+
+.rd-nearby-wkg,
+.rd-nearby-gap {
+  justify-self: end;
+  color: var(--rd-muted);
+}
+
+.rd-nearby-gap {
+  min-width: 4ch;
+  font-weight: 700;
+  color: inherit;
 }
 
 .rd-bottom {
@@ -1558,4 +1654,20 @@ button.rd-option:active {
   position: sticky;
   bottom: 0;
   padding-top: calc(var(--u) * 0.6);
+}
+
+/* JoyoFit mark above the route name during a ride. */
+.rd-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: calc(var(--u) * 0.85);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  opacity: 0.9;
+}
+
+.rd-brand img {
+  width: 1.3em;
+  height: 1.3em;
 }

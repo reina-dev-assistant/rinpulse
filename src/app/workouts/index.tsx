@@ -18,6 +18,7 @@ import { PressableScale } from '@/components/PressableScale';
 import { PageHeader, useContentPadding, useRefreshControl } from '@/components/Screen';
 import { EmptyState, Notice, Skeleton } from '@/components/States';
 import { listWorkouts, type WorkoutRow } from '@/db/queries';
+import { LoopShortcut } from '@/features/loops/ui/LoopShortcut';
 import { pickFitFile } from '@/features/fitimport/useFitImport';
 import { hasLive, LIVE_ROUTE, OPEN_LIVE } from '@/features/record/liveRoute';
 import { RecordingBanner } from '@/features/record/ui/RecordingBanner';
@@ -81,7 +82,7 @@ function WorkoutCard({ workout, strength, onDelete }: { workout: WorkoutRow; str
       }
       style={[styles.card, { backgroundColor: colors.card, borderRadius: radius.card }]}>
       <View style={styles.cardHead}>
-        <IconChip icon={sportIcon(workout.sportName)} tint="workouts" />
+        <IconChip sport={sportIcon(workout.sportName)} tint="workouts" />
         <View style={styles.cardTitle}>
           <AppText variant="bodyStrong" numberOfLines={1}>
             {sport}
@@ -246,6 +247,7 @@ export default function WorkoutsScreen() {
             />
             <ActiveWorkoutBanner />
             <Button label={t('list.start.button')} variant="primary" icon="add" onPress={() => setStartOpen(true)} />
+            <LoopShortcut />
             {pickError ? <Notice tone="danger">{t('list.pickError', { error: pickError })}</Notice> : null}
             {error ? <Notice tone="danger">{t('list.readError', { error })}</Notice> : null}
             {strengthOnlyCount > 0 ? (

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { useState, useSyncExternalStore } from "react";
 import {
   BatteryFull,
@@ -91,44 +93,48 @@ interface AddAction {
   make: () => Element[];
 }
 
-const ADD_GROUPS: Array<{ title: string; actions: AddAction[] }> = [
-  {
-    title: "Time and date",
-    actions: [
-      { label: "Digital time", short: "Time", icon: Clock, chip: NEUTRAL, make: () => [newTime()] },
-      { label: "Date", short: "Date", icon: CalendarDays, chip: NEUTRAL, make: () => [newDate()] },
-    ],
-  },
-  {
-    title: "Analog hands",
-    actions: [
-      { label: "Hour hand", short: "Hour", icon: Timer, chip: NEUTRAL, make: () => [newHand("hour")] },
-      { label: "Minute hand", short: "Minute", icon: Timer, chip: NEUTRAL, make: () => [newHand("minute")] },
-      { label: "Second hand", short: "Second", icon: Timer, chip: NEUTRAL, make: () => [newHand("second")] },
-    ],
-  },
-  {
-    title: "Data",
-    actions: [VALUE_TYPE.steps, VALUE_TYPE.heartRate, VALUE_TYPE.power].map((id) => {
-      const def = fieldDef(id)!;
-      return { label: def.label, short: def.label, icon: ICONS[def.icon], chip: chipOf(id), make: () => [newWidget(id)] };
-    }),
-  },
-  {
-    title: "Rings and images",
-    actions: [
-      { label: "Steps ring", short: "Steps ring", icon: CircleDashed, chip: chipOf(VALUE_TYPE.stepsRatio), make: () => [newRing(VALUE_TYPE.stepsRatio)] },
-      { label: "Battery ring", short: "Battery ring", icon: CircleDashed, chip: chipOf(VALUE_TYPE.powerRatio), make: () => [newRing(VALUE_TYPE.powerRatio, { size: 120, thickness: 10, x: 24, y: 24 })] },
-      { label: "Image or sticker", short: "Image", icon: ImageIcon, chip: NEUTRAL, make: () => [newImage(null, 120, 120)] },
-    ],
-  },
-];
+function addGroups(t: TFunction<"editor">): Array<{ title: string; actions: AddAction[] }> {
+  return [
+    {
+      title: t("layers.groups.timeDate"),
+      actions: [
+        { label: t("layers.add.time"), short: t("layers.add.timeShort"), icon: Clock, chip: NEUTRAL, make: () => [newTime()] },
+        { label: t("layers.add.date"), short: t("layers.add.dateShort"), icon: CalendarDays, chip: NEUTRAL, make: () => [newDate()] },
+      ],
+    },
+    {
+      title: t("layers.groups.hands"),
+      actions: [
+        { label: t("layers.add.hour"), short: t("layers.add.hourShort"), icon: Timer, chip: NEUTRAL, make: () => [newHand("hour")] },
+        { label: t("layers.add.minute"), short: t("layers.add.minuteShort"), icon: Timer, chip: NEUTRAL, make: () => [newHand("minute")] },
+        { label: t("layers.add.second"), short: t("layers.add.secondShort"), icon: Timer, chip: NEUTRAL, make: () => [newHand("second")] },
+      ],
+    },
+    {
+      title: t("layers.groups.data"),
+      actions: [VALUE_TYPE.steps, VALUE_TYPE.heartRate, VALUE_TYPE.power].map((id) => {
+        const def = fieldDef(id)!;
+        return { label: def.label, short: def.label, icon: ICONS[def.icon], chip: chipOf(id), make: () => [newWidget(id)] };
+      }),
+    },
+    {
+      title: t("layers.groups.rings"),
+      actions: [
+        { label: t("layers.add.stepsRing"), short: t("layers.add.stepsRing"), icon: CircleDashed, chip: chipOf(VALUE_TYPE.stepsRatio), make: () => [newRing(VALUE_TYPE.stepsRatio)] },
+        { label: t("layers.add.batteryRing"), short: t("layers.add.batteryRing"), icon: CircleDashed, chip: chipOf(VALUE_TYPE.powerRatio), make: () => [newRing(VALUE_TYPE.powerRatio, { size: 120, thickness: 10, x: 24, y: 24 })] },
+        { label: t("layers.add.image"), short: t("layers.add.imageShort"), icon: ImageIcon, chip: NEUTRAL, make: () => [newImage(null, 120, 120)] },
+      ],
+    },
+  ];
+}
 
 export function AddElements() {
+  const { t } = useTranslation("editor");
+  const groups = addGroups(t);
   const addCustom = useEditor((s) => s.addCustom);
   return (
     <div className="space-y-3" data-testid="add-elements">
-      {ADD_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.title}>
           <p className="mb-1.5 px-1 text-xs font-semibold text-muted-foreground">{group.title}</p>
           <div className="grid grid-cols-2 gap-1.5">
@@ -185,6 +191,7 @@ function IconToggle({ on, onLabel, offLabel, onIcon: On, offIcon: Off, onClick, 
 }
 
 export function LayerPanel() {
+  const { t } = useTranslation("editor");
   const elements = useEditor((s) => s.project.elements);
   const selectedId = useEditor((s) => s.selectedId);
   const select = useEditor((s) => s.select);
@@ -203,7 +210,7 @@ export function LayerPanel() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h2 className="text-base font-bold tracking-tight">Layers</h2>
+        <h2 className="text-base font-bold tracking-tight">{t("layers.title")}</h2>
         <button
           type="button"
           aria-expanded={adding}
@@ -211,27 +218,27 @@ export function LayerPanel() {
           className="pressable flex h-8 items-center gap-1 rounded-full bg-primary px-3 text-[0.8125rem] font-semibold text-primary-foreground transition-colors duration-150 hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none"
         >
           <Plus className={cn("size-4 transition-transform duration-200", adding && "rotate-45")} />
-          Add
+          {t("layers.addButton")}
         </button>
       </div>
 
       {adding && (
         <div className={cn("panel-scroll mx-3 mb-2 shrink-0 overflow-y-auto rounded-2xl bg-card p-3 ring-1 ring-border", tab === "fields" ? "max-h-[75%]" : "max-h-[60%]")}>
-          <div role="tablist" aria-label="Add" className="mb-3 grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
-            {(["elements", "fields"] as const).map((t) => (
+          <div role="tablist" aria-label={t("layers.addTabs")} className="mb-3 grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
+            {(["elements", "fields"] as const).map((tabName) => (
               <button
-                key={t}
+                key={tabName}
                 type="button"
                 role="tab"
-                aria-selected={tab === t}
-                data-testid={`add-tab-${t}`}
-                onClick={() => setTab(t)}
+                aria-selected={tab === tabName}
+                data-testid={`add-tab-${tabName}`}
+                onClick={() => setTab(tabName)}
                 className={cn(
                   "h-7 rounded-full text-xs font-semibold transition-colors duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none",
-                  tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+                  tab === tabName ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
                 )}
               >
-                {t === "elements" ? "Elements" : "Fields"}
+                {tabName === "elements" ? t("layers.tabElements") : t("layers.tabFields")}
               </button>
             ))}
           </div>
@@ -292,14 +299,14 @@ export function LayerPanel() {
                   <span className="block truncate text-sm font-semibold">{el.name}</span>
                   {level !== "verified" && (
                     <span className="block text-[0.6875rem] font-semibold text-warning">
-                      {level === "preview-only" ? "Preview only" : "Unconfirmed"}
+                      {level === "preview-only" ? t("layers.previewOnly") : t("layers.unconfirmed")}
                     </span>
                   )}
                 </span>
                 <IconToggle
                   on={el.visible}
-                  onLabel="Hide layer"
-                  offLabel="Show layer"
+                  onLabel={t("layers.hide")}
+                  offLabel={t("layers.show")}
                   onIcon={Eye}
                   offIcon={EyeOff}
                   active={!el.visible}
@@ -307,8 +314,8 @@ export function LayerPanel() {
                 />
                 <IconToggle
                   on={el.locked}
-                  onLabel="Unlock layer"
-                  offLabel="Lock layer"
+                  onLabel={t("layers.unlock")}
+                  offLabel={t("layers.lock")}
                   onIcon={Lock}
                   offIcon={LockOpen}
                   active={el.locked}

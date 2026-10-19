@@ -24,15 +24,14 @@ export async function threadsInstalled(): Promise<boolean | null> {
 }
 
 /**
- * Opens the system share sheet with every PNG and the caption. Android sends ACTION_SEND_MULTIPLE with the text as EXTRA_TEXT
- * (Threads is in the chooser), iOS a share sheet with all the images. Whether Threads fills its composer from EXTRA_TEXT when
- * images come along is not documented, so the caption is also put on the clipboard first: the person can paste it. Resolves
- * quietly when the person closes the sheet.
+ * Opens the system share sheet with every PNG. The caption is NOT sent along: Threads takes the images from a share with
+ * images and drops the text (EXTRA_TEXT on Android, the text item on iOS), so passing it would only look like it works. It goes
+ * to the clipboard first and the person pastes it in the Threads composer. Resolves quietly when the person closes the sheet.
  */
 export async function shareThreadsCarousel(fileUris: readonly string[], caption: string): Promise<void> {
   await Clipboard.setStringAsync(caption);
   try {
-    await Share.open({ urls: [...fileUris], type: 'image/png', message: caption, failOnCancel: false });
+    await Share.open({ urls: [...fileUris], type: 'image/png', failOnCancel: false });
   } catch (error) {
     if (!isShareCancel(error)) throw error;
   }

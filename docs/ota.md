@@ -52,6 +52,7 @@ Consequences:
 - `updates.checkAutomatically: ON_LOAD`, `fallbackToCacheTimeout: 0`: on cold start the app launches immediately with the newest bundle it already has (embedded or a downloaded update), checks the server in the background and downloads a newer update. It is applied on the **next cold start**.
 - `src/features/updates/useOtaUpdate.ts` (`expo-updates` `useUpdates`) drives the UI. When an update is downloaded, the in-app update banner (`UpdateBanner`) shows "Update ready to install / Restart to update"; **Restart to update** reloads into it, **Later** keeps going until the next cold start. An OTA banner beats the Play prompt.
 - Settings, About, **Quick updates** (`OtaSection.tsx`): status (up to date, checking, downloading with percent, ready, error), channel, which bundle runs (built into the app, or update `<id>` from `<date>`), runtime, **Check for updates** and **Restart to update**.
+- On every cold start the app also waits up to 8 s for a newer bundle and reloads into it before showing anything (`refreshOtaAtLaunch`, `docs/force-update.md`).
 - On returning to the foreground the app re-checks, at most every 6 hours (`CHECK_THROTTLE_MS`), so a phone that is never cold-started still gets fixes.
 - Off in dev clients and Expo Go (`Updates.isEnabled` false): the section and checks do not exist there.
 - **Failure falls back to the embedded bundle.** A failed check or download changes nothing. A downloaded update that crashes on start is dropped by expo-updates' launch error recovery and the app runs the previous or embedded bundle. (Not exercised on a device in this session: do the test below after the first OTA-enabled build.)
@@ -138,7 +139,19 @@ Read from the binaries of the Release Android run 39135259956 (AAB versionCode 1
 | Android | AAB versionCode 1471097 (`assets/fingerprint`); the sideload APK of the same commit carries the same value | `81a992248b4f15cc3f439a19323d19ae4e6c9252` |
 | iOS | TestFlight 1.0 (202610181417) (`EXUpdates.bundle/fingerprint`) | `60ae9d289f32d564fee79956251795a11e147d56` |
 
-**Master OTAs target these new hashes.** Older lines stay for stragglers: `ota/1.0` for Android `e542e6f1...` and iOS `43df410f...`, `ota/tf-938` for iOS `62b33b49...`, `ota/test-c6a262a2` for the sideload build 1470978.
+Older lines stay for stragglers: `ota/1.0` for Android `e542e6f1...` and iOS `43df410f...`, `ota/tf-938` for iOS `62b33b49...`, `ota/test-c6a262a2` for the sideload build 1470978, `ota/r-81a99224` for Android 1471097.
+
+### Runtimes of the 2026-10-19 Android build (master `060869c`)
+
+Release Android run 39190705172 (AAB versionCode 1471837, Play alpha; sideload APK 1471849):
+
+| Platform | Build | Runtime embedded in the binary |
+| --- | --- | --- |
+| Android | AAB 1471837 and APK 1471849 (`assets/fingerprint`) | `b8054fd8e97aebc2218a38e6b0b117bbf3452628` |
+
+**Master Android OTAs target `b8054fd8...`.** Branch `ota/r-b8054fd8` marks the commit of this build.
+
+The iOS TestFlight build 1.0 (202610190340, master `96a9076`, Release iOS run 39195739996) embeds the same `60ae9d289f32d564fee79956251795a11e147d56` as 202610181417: no native iOS change since. **Master iOS OTAs target `60ae9d28...`** and reach both builds.
 
 ## When OTA is not enough
 

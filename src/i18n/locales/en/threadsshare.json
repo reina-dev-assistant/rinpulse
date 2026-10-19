@@ -36,7 +36,11 @@
     "share": "Share to Threads",
     "saveOpen": "Save all and open Threads",
     "copy": "Copy text",
-    "saveOpenHint": "The text is copied too: paste it in Threads if its text field is empty. If Threads does not take all the images at once, use the save button: the images go to your photos, the text is copied, and the photo button in Threads picks them all."
+    "pasteHint": "Threads only takes the images from the share menu, not the text. The text is copied automatically, so paste it in the Threads text field.",
+    "saveOpenHint": "If Threads does not take all the images at once, use the save button: the images go to your photos, the text is filled in Threads, and the photo button in Threads picks them all."
+  },
+  "toasts": {
+    "captionCopied": "Text copied, paste it in Threads"
   },
   "progress": {
     "title": "Preparing image {{n}}/{{total}}"

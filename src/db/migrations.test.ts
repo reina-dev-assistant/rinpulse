@@ -12,16 +12,6 @@ function wrap(raw: Database): SQLiteDatabase {
       raw.exec(sql);
     },
     getFirstAsync: async (sql: string) => raw.query(sql).get(),
-    withExclusiveTransactionAsync: async (task: (txn: unknown) => Promise<void>) => {
-      raw.exec('BEGIN');
-      try {
-        await task({ execAsync: async (sql: string) => raw.exec(sql) });
-        raw.exec('COMMIT');
-      } catch (e) {
-        raw.exec('ROLLBACK');
-        throw e;
-      }
-    },
   } as unknown as SQLiteDatabase;
 }
 

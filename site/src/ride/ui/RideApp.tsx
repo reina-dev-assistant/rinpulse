@@ -92,6 +92,10 @@ export function RideApp() {
         case "C":
           game.cycleCamera();
           break;
+        case "m":
+        case "M":
+          game.toggleMute();
+          break;
         case "f":
         case "F":
           if (document.fullscreenElement) void document.exitFullscreen();

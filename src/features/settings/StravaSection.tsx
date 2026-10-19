@@ -89,6 +89,12 @@ export function StravaSection() {
             value={strava.settings.addLink}
             onValueChange={(on) => void strava.setAddLink(on)}
           />
+          <SwitchRow
+            label={t('strava.addDevice')}
+            hint={t('strava.addDeviceHint')}
+            value={strava.settings.addDevice}
+            onValueChange={(on) => void strava.setAddDevice(on)}
+          />
           <AppText variant="label">{tg('strava.gearAccess.title')}</AppText>
           <AppText variant="caption" muted>
             {strava.settings.gearScope ? tg('strava.gearAccess.on') : tg('strava.gearAccess.off')}

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { i18n } from "@/i18n";
 import { retainAssets } from "@/model/assets";
 import { emptyProject, newElement, uid } from "@/model/defaults";
 import { assetIdsOf, restoreProject } from "@/model/projectFile";
@@ -171,7 +172,7 @@ export const useEditor = create<EditorState>((set, get) => ({
     const index = project.elements.findIndex((e) => e.id === id);
     const src = project.elements[index];
     if (!src || src.type === "background") return;
-    const copy = { ...src, id: uid(), name: `${src.name} copy`, x: src.x + 12, y: src.y + 12 } as Element;
+    const copy = { ...src, id: uid(), name: i18n.t("editor:copyName", { name: src.name }), x: src.x + 12, y: src.y + 12 } as Element;
     const elements = [...project.elements];
     elements.splice(index + 1, 0, copy);
     get().commit({ ...project, elements });

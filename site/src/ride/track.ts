@@ -7,6 +7,11 @@ export const PRE_M = 80;
 export const POST_M = 320;
 export const ROAD_HALF = 4;
 
+/** Height of the cambered road surface above the track line at [lat] metres from the centre (8 cm crown, 2 cm at the edges). */
+export function roadCrown(lat: number): number {
+  return 0.08 - 0.015 * Math.min(ROAD_HALF, Math.abs(lat));
+}
+
 type Points = readonly (readonly [number, number])[];
 
 /** Monotone cubic (Fritsch-Carlson) through [x, y] control points: smooth, no overshoot, clamped outside. */

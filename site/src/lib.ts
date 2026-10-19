@@ -9,6 +9,11 @@ export const GITHUB_URL = "https://github.com/dzulfikar08/joyofit";
 /** Pricing link from this site; from=joyofit and the UTM tags let JoyoRogo's sign-in and purchase goals say where the visit began. */
 export const HARGA_URL =
   "https://joyorogo.com/harga?from=joyofit&utm_source=joyofit&utm_medium=referral&utm_campaign=evergreen-site-cloud";
+/** JoyoFit Web (Pro), its free watch face designer and the Ride game, all on one host. */
+export const WEB_URL = "https://app.fit.joyorogo.com";
+export const STUDIO_URL = `${WEB_URL}/studio/`;
+export const RIDE_PATH = "/ride";
+export const RIDE_WEB_URL = `${WEB_URL}/ride`;
 export const CLOUDAGNI_URL = "https://cloudagni.my.id";
 export const JOYOROGO_URL = "https://joyorogo.com";
 export const TRAKTEER_URL = "https://trakteer.id/dzulfikar_ats_tsauri";

@@ -110,7 +110,7 @@ export function WorkoutPickerSheet({ visible, onClose, onSaved }: WorkoutPickerS
                     onPress={() => void pick(item)}
                     scaleTo={0.985}
                     style={styles.row}>
-                    <IconChip icon={sportIcon(workout.sportName)} tint="workouts" size="md" />
+                    <IconChip sport={sportIcon(workout.sportName)} tint="workouts" size="md" />
                     <View style={styles.rowText}>
                       <AppText variant="bodyStrong" numberOfLines={1}>
                         {sportLabel(workout.sportName)}

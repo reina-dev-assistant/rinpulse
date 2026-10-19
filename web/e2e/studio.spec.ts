@@ -4,8 +4,12 @@ import { expect, test, type Page } from "@playwright/test";
 import { VALUE_TYPES, decodeImage, readHwt, verifyWatchface, writeWatchface } from "@joyofit/hwt";
 
 async function open(page: Page): Promise<void> {
-  await page.addInitScript(() => localStorage.setItem("joyofit-studio:help-seen", "1"));
-  await page.goto("/");
+  await page.addInitScript(() => {
+    localStorage.setItem("joyofit-studio:help-seen", "1");
+    // The assertions below use the English wording; Indonesian is the default and has its own tests (i18n.spec.ts).
+    localStorage.setItem("jfit-locale", "en");
+  });
+  await page.goto("./");
   await expect(page.getByTestId("face-canvas")).toBeVisible();
 }
 
@@ -62,6 +66,46 @@ async function uploadBackgroundPhoto(page: Page): Promise<void> {
   await page.getByTestId("upload-input").setInputFiles({ name: "gradient.png", mimeType: "image/png", buffer });
   await expect(page.getByLabel("Zoom", { exact: true })).toBeVisible();
 }
+
+test("mounted under /studio/: every asset loads from the prefix, the link back to the web app is there", async ({ page, baseURL }) => {
+  const prefix = new URL(baseURL!).pathname;
+  const failed: string[] = [];
+  page.on("response", (res) => {
+    if (res.status() >= 400) failed.push(`${res.status()} ${res.url()}`);
+  });
+  await open(page);
+  await page.getByTestId("open-templates").click();
+  await page.keyboard.press("Escape");
+  const sources = await page.evaluate(() => [...document.querySelectorAll("script[src], link[href]")].map((e) => e.getAttribute("src") ?? e.getAttribute("href")!));
+  for (const src of sources.filter((s) => s.startsWith("/") && !s.startsWith("//"))) expect(src.startsWith(prefix), src).toBe(true);
+  expect(failed).toEqual([]);
+
+  const back = page.getByTestId("back-to-web");
+  await expect(back).toBeVisible();
+  await expect(back).toHaveAccessibleName("Back to JoyoFit Web");
+  await expect(back).toHaveAttribute("href", /^(\/|https:\/\/app\.fit\.joyorogo\.com\/)$/);
+});
+
+test("the page never scrolls sideways, from phone to desktop widths", async ({ page }) => {
+  for (const width of [360, 390, 768, 1024, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await open(page);
+    const { scroll, client } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+    expect(scroll, `scrollWidth at ${width}px`).toBe(client);
+    // The file and theme buttons stay reachable at every width (they sit on a second header row below lg).
+    await expect(page.getByRole("button", { name: "Save project JSON" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Light theme|Dark theme/ })).toBeVisible();
+  }
+});
+
+test("/studio redirects to /studio/ and an unknown path under it still opens the editor", async ({ page, baseURL }) => {
+  const root = new URL(baseURL!);
+  await page.addInitScript(() => localStorage.setItem("joyofit-studio:help-seen", "1"));
+  await page.goto(root.pathname.replace(/\/$/, ""));
+  await expect(page).toHaveURL(root.href);
+  await page.goto(`${root.pathname}no/such/page`);
+  await expect(page.getByTestId("face-canvas")).toBeVisible();
+});
 
 test("add a time element, export, and parse the downloaded .hwt", async ({ page }) => {
   await open(page);

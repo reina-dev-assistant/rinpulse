@@ -14,7 +14,7 @@ import { useSensors } from '@/state/SensorsProvider';
 import { spacing, useColors } from '@/theme';
 
 import type { ScanItem } from '../hub';
-import { errorCode, scanName, sensorIcon, type RadioFailure } from './format';
+import { errorCode, scanName, sensorGlyph, type RadioFailure } from './format';
 import { markSensorIntroSeen, sensorIntroSeen } from './intro';
 import { KindTags, Signal } from './parts';
 
@@ -135,7 +135,7 @@ function ScanRow({ item, paired, pairing, onPair }: ScanRowProps) {
   return (
     <View style={styles.row}>
       <View style={styles.header}>
-        <IconChip icon={sensorIcon(item.kinds)} />
+        <IconChip {...sensorGlyph(item.kinds)} />
         <View style={styles.text}>
           <AppText variant="bodyStrong" numberOfLines={1}>
             {scanName(item)}

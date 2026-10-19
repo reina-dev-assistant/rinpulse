@@ -8,7 +8,8 @@ export default defineConfig(async () => {
       cloudflareTest({
         wrangler: { configPath: "./wrangler.jsonc" },
         miniflare: {
-          bindings: { TEST_MIGRATIONS: migrations, STRAVA_CLIENT_SECRET: "test-client-secret", STRAVA_WEBHOOK_VERIFY_TOKEN: "test-verify-token" },
+          // JOYOROGO_AUTH_URL is pinned: a local `.dev.vars` (for `wrangler dev` against a local JoyoRogo) must not change what the tests assert.
+          bindings: { TEST_MIGRATIONS: migrations, JOYOROGO_AUTH_URL: "https://api.joyorogo.com", STRAVA_CLIENT_SECRET: "test-client-secret", STRAVA_WEBHOOK_VERIFY_TOKEN: "test-verify-token" },
         },
       }),
     ],

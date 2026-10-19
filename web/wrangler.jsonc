@@ -1,12 +1,25 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "joyofit-studio",
+  "main": "worker/index.ts",
   "account_id": "b7e6f8457bd39fa37a7eea5249799754",
   "compatibility_date": "2026-10-14",
+  // Still reachable at joyofit-studio.dzulfikar-at.workers.dev/studio/ (its root redirects there).
   "workers_dev": true,
-  // Static site only, built by Vite (@cloudflare/vite-plugin writes dist/wrangler.json and points wrangler at it).
+  // Studio lives at https://app.fit.joyorogo.com/studio/. That hostname is a Custom Domain of the separate assets-only Worker
+  // `joyofit-web` (apps/fit of the JoyoRogo repo). A route on the same hostname runs before a Custom Domain Worker, so these
+  // two patterns hand only /studio and /studio/* to this Worker and the JoyoFit web app is untouched. Two patterns, not
+  // `/studio*`, so that /studiox stays the web app's.
+  "routes": [
+    { "pattern": "app.fit.joyorogo.com/studio", "zone_name": "joyorogo.com" },
+    { "pattern": "app.fit.joyorogo.com/studio/*", "zone_name": "joyorogo.com" }
+  ],
+  // Built by Vite with base /studio/ (@cloudflare/vite-plugin writes dist/wrangler.json and points wrangler at it). The built
+  // files sit at the store root; worker/index.ts strips the /studio prefix, so it runs first for every request.
   "assets": {
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true
   },
   "observability": { "enabled": true }
 }

@@ -341,17 +341,17 @@
         "volume_other": "Last 4 weeks: {{volume}} kg of volume in {{count}} sessions."
       },
       "swipe_one": "The full data is in the image.",
-      "swipe_other": "The full data is in the {{count}} images, swipe through.",
+      "swipe_other": "The full data is in the {{count}} images.",
       "question": {
-        "runPace": "Looking for advice: how does my pace look?",
-        "runPlan": "Looking for advice: what should I train next to get faster?",
-        "runHr": "Looking for advice: is this heart rate normal for this pace?",
-        "ridePower": "Looking for advice: are this NP and IF about right?",
-        "rideSpeed": "Looking for advice: how is this speed, any tips?",
-        "ridePlan": "Looking for advice: what ride should I do next?",
-        "liftProgress": "Looking for advice: how does my progress look?",
-        "liftPlan": "Looking for advice: what program should I follow next?",
-        "generalPlan": "Looking for advice: what should I train next?"
+        "runPace": "Any advice on this pace?",
+        "runPlan": "Any advice on what to train next to get faster?",
+        "runHr": "Is this heart rate normal for this pace?",
+        "ridePower": "Are this NP and IF about right?",
+        "rideSpeed": "Any advice on this speed?",
+        "ridePlan": "Any advice on the next ride?",
+        "liftProgress": "Any advice on this lifting progress?",
+        "liftPlan": "Any advice on the next training program?",
+        "generalPlan": "Any advice on what to train next?"
       }
     }
   }

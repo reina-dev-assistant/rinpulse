@@ -1,6 +1,6 @@
 import type { ThemeId } from "./routes.ts";
 
-export type TreeKind = "pine" | "round" | "palm";
+export type TreeKind = "pine" | "cemara" | "round" | "palm" | "banana" | "bamboo";
 
 export interface Theme {
   skyTop: number;
@@ -28,6 +28,14 @@ export interface Theme {
   /** Where the forest stops, metres from the road centre. */
   treeReach: number;
   seed: number;
+  /** Distant mountain ridges on the horizon. */
+  ridge: number;
+  /** How tall the distant ridges stand, metres. */
+  ridgeHeight: number;
+  /** Farmland drawn on the open ground: flooded rice paddies, or the Tengger highlands' terraced vegetable fields. */
+  farmland: "paddy" | "terraces" | null;
+  /** Bromo, Batok and Semeru on the skyline, with Bromo's ash plume. */
+  volcanoes: boolean;
 }
 
 export const THEMES: Record<ThemeId, Theme> = {
@@ -49,10 +57,14 @@ export const THEMES: Record<ThemeId, Theme> = {
     hasSea: true,
     hillAmp: 14,
     bumpAmp: 0.8,
-    trees: ["palm", "round"],
+    trees: ["palm", "palm", "palm", "round", "banana"],
     treeDensity: 7,
     treeReach: 60,
     seed: 11,
+    ridge: 0x5f7f8c,
+    ridgeHeight: 110,
+    farmland: "paddy",
+    volcanoes: false,
   },
   bukit: {
     skyTop: 0x4d7fb4,
@@ -72,10 +84,14 @@ export const THEMES: Record<ThemeId, Theme> = {
     hasSea: false,
     hillAmp: 90,
     bumpAmp: 2.2,
-    trees: ["pine", "pine", "round"],
+    trees: ["pine", "pine", "round", "round", "bamboo"],
     treeDensity: 20,
     treeReach: 110,
     seed: 23,
+    ridge: 0x4d6670,
+    ridgeHeight: 170,
+    farmland: null,
+    volcanoes: false,
   },
   kebun: {
     skyTop: 0x5f9ccc,
@@ -95,10 +111,14 @@ export const THEMES: Record<ThemeId, Theme> = {
     hasSea: false,
     hillAmp: 34,
     bumpAmp: 1.4,
-    trees: ["round", "round", "pine"],
+    trees: ["round", "round", "banana", "bamboo", "palm"],
     treeDensity: 14,
     treeReach: 90,
     seed: 37,
+    ridge: 0x5e7a7a,
+    ridgeHeight: 130,
+    farmland: "paddy",
+    volcanoes: false,
   },
   bromo: {
     skyTop: 0x3a74b4,
@@ -118,10 +138,14 @@ export const THEMES: Record<ThemeId, Theme> = {
     hasSea: false,
     hillAmp: 140,
     bumpAmp: 3,
-    trees: ["pine", "pine", "pine", "round"],
+    trees: ["cemara", "cemara", "cemara", "pine"],
     treeDensity: 16,
     treeReach: 120,
     seed: 53,
+    ridge: 0x56636e,
+    ridgeHeight: 190,
+    farmland: "terraces",
+    volcanoes: true,
   },
 };
 
@@ -135,12 +159,22 @@ export interface Quality {
   fogFar: number;
   treeScale: number;
   clouds: boolean;
+  /** Sun shadow map size in texels; 0 turns shadows off. */
+  shadowMap: number;
+  /** Trees and buildings cast shadows too, not only the riders. */
+  sceneryShadows: boolean;
+  /** Grass tufts per 100 m per side of the road. */
+  grass: number;
+  /** Bots drawn at once (the nearest ones); the rest still ride. */
+  botAvatars: number;
+  /** Physically based materials (asphalt bump, reflective sea, bike sheen) instead of plain diffuse ones. */
+  pbr: boolean;
 }
 
 export const QUALITY: Record<QualityId, Quality> = {
-  low: { dprMax: 0.75, dprMin: 0.5, antialias: false, fogFar: 520, treeScale: 0.35, clouds: false },
-  medium: { dprMax: 1, dprMin: 0.6, antialias: true, fogFar: 800, treeScale: 0.7, clouds: true },
-  high: { dprMax: 1.75, dprMin: 0.75, antialias: true, fogFar: 1100, treeScale: 1, clouds: true },
+  low: { dprMax: 0.75, dprMin: 0.5, antialias: false, fogFar: 520, treeScale: 0.35, clouds: false, shadowMap: 0, sceneryShadows: false, grass: 0, botAvatars: 3, pbr: false },
+  medium: { dprMax: 1, dprMin: 0.6, antialias: true, fogFar: 800, treeScale: 0.7, clouds: true, shadowMap: 1024, sceneryShadows: false, grass: 60, botAvatars: 6, pbr: true },
+  high: { dprMax: 1.75, dprMin: 0.75, antialias: true, fogFar: 1100, treeScale: 1, clouds: true, shadowMap: 2048, sceneryShadows: true, grass: 140, botAvatars: 10, pbr: true },
 };
 
 export const QUALITY_IDS: readonly QualityId[] = ["low", "medium", "high"];

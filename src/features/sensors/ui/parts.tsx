@@ -1,12 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { GlyphIcon } from '@/components/IconChip';
 import { spacing, useColors, useTheme } from '@/theme';
 
 import type { SensorKind } from '../gatt';
-import { kindIcon, kindLabel, signalBars, signalLevel, sortKinds } from './format';
+import { kindGlyph, kindLabel, signalBars, signalLevel, sortKinds } from './format';
 
 /** Non-interactive labels of what a sensor measures: a glyph and a word each, so no kind is told by colour alone. */
 export function KindTags({ kinds }: { kinds: readonly SensorKind[] }) {
@@ -15,7 +15,7 @@ export function KindTags({ kinds }: { kinds: readonly SensorKind[] }) {
     <View style={styles.tags}>
       {sortKinds(kinds).map((kind) => (
         <View key={kind} style={[styles.tag, { backgroundColor: colors.muted, borderRadius: radius.control }]}>
-          <Ionicons name={kindIcon(kind)} size={14} color={colors.foreground} />
+          <GlyphIcon glyph={kindGlyph(kind)} size={14} color={colors.foreground} />
           <AppText variant="label">{kindLabel(kind)}</AppText>
         </View>
       ))}

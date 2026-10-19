@@ -205,7 +205,7 @@ function elapsedOf(input: RideSeriesInput): number {
 export function buildRideSeries(input: RideSeriesInput): RideSeries {
   const elapsedSec = Math.max(1, Math.round(elapsedOf(input)));
   const n = elapsedSec + 1;
-  const timerSec = movingOf(elapsedSec, Math.round(input.duration));
+  const timerSec = Math.min(elapsedSec, movingOf(elapsedSec, Math.round(input.duration)));
   const sorted = [...input.points].sort((a, b) => a.ts - b.ts);
 
   const hrB = buckets(n);

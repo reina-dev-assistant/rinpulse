@@ -10,6 +10,7 @@ import {
   applyPendingSwap,
   COPY_WINDOW,
   integrityProblems,
+  quickCheck,
   recoverDatabase,
   type RecoveryDb,
   type RecoveryEnv,
@@ -127,6 +128,15 @@ async function buildFixture(path: string): Promise<void> {
   for (let i = 0; i < POINT_ROWS; i++) insert.run((i % WORKOUTS) + 1, 1_700_000_000 + i, -6.2 + i / 1e6, 106.8 + i / 1e6, 10, 120 + (i % 40), 3.1, 85, 1.1, 200);
   insert.finalize();
   db.raw.exec(`INSERT INTO gear_item (id, name) VALUES ('g1', 'Road shoes')`);
+  for (let i = 0; i < 3000; i++) {
+    db.raw.exec(`INSERT INTO health_metrics (type, ts, last_ts, value, values_json) VALUES ('hrv', ${1_700_000_000 + i * 300}, ${1_700_000_000 + i * 300}, ${40 + (i % 30)}, '{"v":${i}}')`);
+  }
+  for (let d = 0; d < 120; d++) {
+    db.raw.exec(`INSERT INTO diet_day (date, meals_json, goals_json, updated_at) VALUES ('2026-01-${String(d).padStart(3, '0')}', '[{"name":"Meal ${d}","kcal":${400 + d}}]', '{}', ${1_700_000_000 + d})`);
+  }
+  for (const key of ['weight_kg', 'weight_ts', 'height_cm', 'age', 'sex']) {
+    db.raw.exec(`INSERT INTO body_metrics (key, value, updated_at) VALUES ('${key}', '1', 1700000000)`);
+  }
   db.raw.exec(`INSERT INTO cloud_state (key, value) VALUES ('workout_pull_cursor', '{"after":9}')`);
   db.raw.exec('COMMIT');
   db.raw.exec('PRAGMA wal_checkpoint(TRUNCATE)');
@@ -239,12 +249,250 @@ describe('isCorruptionError', () => {
     const inner = new Error('database disk image is malformed');
     expect(isCorruptionError(new Error('import failed', { cause: inner }))).toBe(true);
   });
+  it('does not take an unreadable or locked file for a damaged one', () => {
+    for (const text of [
+      'disk I/O error',
+      'unable to open database file',
+      'Error code 14: unable to open database file',
+      'SQLITE_IOERR_READ',
+      'SQLITE_CANTOPEN: file is not a database',
+      'file is not a database (SQLITE_PERM: operation not permitted)',
+      'database is locked',
+      'database or disk is full',
+    ]) {
+      expect(isCorruptionError(new Error(text))).toBe(false);
+    }
+  });
+
   it('leaves other database errors alone', () => {
     expect(isCorruptionError(new Error('database is locked'))).toBe(false);
     expect(isCorruptionError(new Error('UNIQUE constraint failed: workouts.start'))).toBe(false);
     expect(isCorruptionError(new Error('no such table: gear_item'))).toBe(false);
     expect(isCorruptionError(undefined)).toBe(false);
     expect(isCorruptionError(null)).toBe(false);
+  });
+});
+
+describe('a realistic database with damage in random pages of the small tables', () => {
+  // The phone's file was damaged in tables the JS side rarely reads (health_metrics, diet_day, device, body_metrics, workouts):
+  // opening it works, and whichever pages are hit the repair must end with a sound database, never with `failed`.
+  const TABLES = ['health_metrics', 'diet_day', 'body_metrics', 'device', 'workouts', 'step_samples'];
+
+  function random(seed: number): () => number {
+    let state = seed;
+    return () => {
+      state = (state * 1_103_515_245 + 12_345) & 0x7fffffff;
+      return state / 0x7fffffff;
+    };
+  }
+
+  for (const canSwap of [false, true]) {
+    for (let seed = 1; seed <= 10; seed++) {
+      it(`seed ${seed}, canSwap ${canSwap}`, async () => {
+        await populate();
+        const next = random(seed * 7919);
+        const hits = 1 + Math.floor(next() * 3);
+        for (let i = 0; i < hits; i++) {
+          const table = TABLES[Math.floor(next() * TABLES.length)];
+          const pages = leafPages(at('joyofit.db'), table);
+          breakPage(at('joyofit.db'), pages[Math.floor(next() * pages.length)]);
+        }
+        const lines: string[] = [];
+        const result = await recoverDatabase(makeEnv({ log: (line) => lines.push(line) }), 'joyofit.db', { canSwap });
+        expect(['repaired', 'recreated']).toContain(result.kind);
+        expect(lines.length).toBeGreaterThan(3);
+        const probe = new Database(at('joyofit.db'), { readonly: true });
+        try {
+          expect(probe.prepare<{ integrity_check: string }, []>('PRAGMA integrity_check').all()).toEqual([{ integrity_check: 'ok' }]);
+          // Whatever lay in untouched tables is still there.
+          expect(probe.prepare<{ n: number }, []>('SELECT COUNT(*) AS n FROM gear_item').get()?.n).toBe(1);
+        } finally {
+          probe.close();
+        }
+      });
+    }
+  }
+});
+
+describe('something writes into the file while it is being replaced', () => {
+  it('installs again when the first install does not verify, and reports it in the log', async () => {
+    await populate();
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    const base = makeEnv();
+    let backups = 0;
+    const lines: string[] = [];
+    const env = makeEnv({
+      log: (line) => lines.push(line),
+      backup: async (from, to) => {
+        await base.backup(from, to);
+        // A stale writer (another SQLite library) puts a damaged page back after the first install.
+        if (++backups === 1) breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[1]);
+      },
+    });
+    const result = await recoverDatabase(env, 'joyofit.db', { canSwap: false });
+    expect(result.kind).toBe('repaired');
+    expect(backups).toBe(2);
+    expect(lines).toContain('second install attempt');
+    expect(await integrityProblems(await base.open('joyofit.db'))).toEqual([]);
+  });
+
+  it('prepares the file for the next start when no install verifies and files may not be swapped now', async () => {
+    await populate();
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    const base = makeEnv();
+    const env = makeEnv({
+      backup: async (from, to) => {
+        await base.backup(from, to);
+        breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[1]);
+      },
+    });
+    const result = await recoverDatabase(env, 'joyofit.db', { canSwap: false });
+    expect(result.kind).toBe('failed');
+    if (result.kind !== 'failed') return;
+    expect(result.swapPending).not.toBeNull();
+    expect(result.reason).toContain('integrity check');
+    expect(existsSync(at(result.swapPending ?? ''))).toBe(true);
+    // The next start swaps it in before anything opens the file.
+    expect(await applyPendingSwap(base, 'joyofit.db', result.swapPending ?? '')).toBe(true);
+    expect(await integrityProblems(await base.open('joyofit.db'))).toEqual([]);
+  });
+
+  it('swaps the files when allowed and no install verifies', async () => {
+    await populate();
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    const base = makeEnv();
+    const env = makeEnv({
+      backup: async (from, to) => {
+        await base.backup(from, to);
+        breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[1]);
+      },
+    });
+    expect((await recoverDatabase(env, 'joyofit.db', { canSwap: true })).kind).toBe('repaired');
+    expect(await integrityProblems(await base.open('joyofit.db'))).toEqual([]);
+  });
+
+  it('does not turn a failed afterLoss into a failed repair', async () => {
+    await populate();
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    const lines: string[] = [];
+    const env = makeEnv({
+      log: (line) => lines.push(line),
+      afterLoss: async () => {
+        throw new Error('no such table: strength_meta');
+      },
+    });
+    expect((await recoverDatabase(env, 'joyofit.db')).kind).toBe('repaired');
+    expect(lines.some((line) => line.startsWith('afterLoss failed'))).toBe(true);
+  });
+});
+
+describe('rows a damaged page decodes into', () => {
+  /** The damaged file's own table is looser than the app's: NULL in workout_id, a repeated key, points of a workout that is gone. */
+  function loosenAndPoison(file: string): void {
+    const raw = new Database(file);
+    raw.exec('PRAGMA legacy_alter_table = ON');
+    raw.exec(`DROP INDEX workout_points_by_workout;
+      ALTER TABLE workout_points RENAME TO wp_old;
+      CREATE TABLE workout_points (workout_id INTEGER, ts INTEGER NOT NULL, lat REAL, lon REAL, alt REAL, hr INTEGER, speed REAL, cadence INTEGER, stride REAL, power INTEGER);
+      INSERT INTO workout_points SELECT workout_id, ts, lat, lon, alt, hr, speed, cadence, stride, power FROM wp_old;
+      DROP TABLE wp_old;
+      CREATE INDEX workout_points_by_workout ON workout_points (workout_id, ts)`);
+    raw.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    raw.close();
+    const again = new Database(file);
+    again.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    for (let i = 0; i < 30; i++) again.exec(`INSERT INTO workout_points (workout_id, ts) VALUES (NULL, ${2_000_000_000 + i})`);
+    for (let i = 0; i < 30; i++) again.exec(`INSERT INTO workout_points (workout_id, ts) VALUES (99999, ${2_100_000_000 + i})`);
+    again.exec('PRAGMA wal_checkpoint(TRUNCATE)');
+    again.close();
+  }
+
+  it('never stops the salvage: NOT NULL violations are skipped, orphan points removed, the rest copied', async () => {
+    await populate();
+    loosenAndPoison(at('joyofit.db'));
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    const lines: string[] = [];
+    const result = await recoverDatabase(makeEnv({ log: (line) => lines.push(line) }), 'joyofit.db', { canSwap: true });
+    expect(result.kind).toBe('repaired');
+    if (result.kind !== 'repaired') return;
+    expect(result.method).toBe('salvage');
+    expect(result.lost).toBe(true);
+    expect(lines.some((line) => line.startsWith('salvage stopped'))).toBe(false);
+    expect(scalar('joyofit.db', 'SELECT COUNT(*) FROM workout_points WHERE workout_id IS NULL')).toBe(0);
+    expect(scalar('joyofit.db', 'SELECT COUNT(*) FROM workout_points WHERE workout_id NOT IN (SELECT rowid FROM workouts)')).toBe(0);
+    // Everything of the other leaves of the table is there (one leaf of about a hundred rows is gone).
+    expect(count('joyofit.db', 'workout_points')).toBeGreaterThan(POINT_ROWS - 400);
+    expect(count('joyofit.db', 'workouts')).toBe(WORKOUTS);
+    expect(await integrityProblems(await makeEnv().open('joyofit.db'))).toEqual([]);
+  });
+});
+
+describe('the native writer may hold the file open (inPlace: false)', () => {
+  it('writes nothing into the file in use: the repaired copy is prepared for the next start', async () => {
+    await populate();
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    const before = readFileSync(at('joyofit.db'));
+    let backups = 0;
+    const base = makeEnv();
+    const env = makeEnv({
+      backup: async (from, to) => {
+        backups++;
+        await base.backup(from, to);
+      },
+    });
+    const result = await recoverDatabase(env, 'joyofit.db', { canSwap: false, inPlace: false });
+    expect(result.kind).toBe('failed');
+    if (result.kind !== 'failed') return;
+    expect(backups).toBe(0);
+    expect(result.swapPending).not.toBeNull();
+    expect(readFileSync(at('joyofit.db')).equals(before)).toBe(true);
+    // At the next start, before anything opens the file:
+    expect(await applyPendingSwap(base, 'joyofit.db', result.swapPending ?? '')).toBe(true);
+    expect(await integrityProblems(await base.open('joyofit.db'))).toEqual([]);
+  });
+
+  it('does not even reindex in place', async () => {
+    await populate();
+    desyncIndex(at('joyofit.db'));
+    const result = await recoverDatabase(makeEnv(), 'joyofit.db', { canSwap: false, inPlace: false });
+    expect(result.kind === 'failed' && result.swapPending !== null).toBe(true);
+  });
+
+  it('swaps the files where that is allowed', async () => {
+    await populate();
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    let backups = 0;
+    const base = makeEnv();
+    const env = makeEnv({
+      backup: async (from, to) => {
+        backups++;
+        await base.backup(from, to);
+      },
+    });
+    expect((await recoverDatabase(env, 'joyofit.db', { canSwap: true, inPlace: false })).kind).toBe('repaired');
+    expect(backups).toBe(0);
+    expect(await integrityProblems(await base.open('joyofit.db'))).toEqual([]);
+  });
+});
+
+describe('quickCheck', () => {
+  it('says ok for a sound file and damaged for one whose damage the schema build never reads', async () => {
+    await populate();
+    const db = new Conn(at('joyofit.db'));
+    expect(await quickCheck(db)).toBe('ok');
+    db.raw.close();
+    // The damage is in a leaf of a data table: opening the database and reading its schema works, the check finds it.
+    breakPage(at('joyofit.db'), leafPages(at('joyofit.db'), 'workout_points')[3]);
+    const damaged = new Conn(at('joyofit.db'));
+    await damaged.getFirstAsync('PRAGMA user_version');
+    expect(await quickCheck(damaged)).toBe('damaged');
+    damaged.raw.close();
+  });
+
+  it('says unknown when the check fails for a reason that is not the file', async () => {
+    const closed = new Conn(at('closed.db'));
+    closed.raw.close();
+    expect(await quickCheck(closed)).toBe('unknown');
   });
 });
 

@@ -63,7 +63,7 @@ function slide(o: SlideSpec) {
   const off = (glyphSize - inner) / 2;
   const glyph = k.group({ w: glyphSize, h: glyphSize }, [
     k.shape({ x: 0, y: 0, w: glyphSize, h: glyphSize }, 'ellipse', { fill: '$surfaceStrong' }),
-    ...(o.subject === 'run' ? sportGlyph(k, off, off, inner, '$fg') : [k.icon({ x: off, y: off, w: inner, h: inner }, 'barbell', '$fg')]),
+    ...(o.subject === 'run' ? sportGlyph(k, off, off, inner, '$fg') : [k.icon({ x: off, y: off, w: inner, h: inner }, 'strength', '$fg')]),
   ]);
   const sub = o.subject === 'run' ? '{run.sport} \u00b7 {run.startedAt|date:medium}' : '{strength.name} \u00b7 {strength.startedAt|date:medium}';
   const titles = k.group(

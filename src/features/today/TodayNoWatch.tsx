@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Screen } from '@/components/Screen';
 import { CoachTodayCard } from '@/features/coach/ui/CoachTodayCard';
+import { LoopShortcut } from '@/features/loops/ui/LoopShortcut';
 import { getLocale, INTL_TAG } from '@/i18n';
 import { useWatch } from '@/state/WatchProvider';
 import { spacing } from '@/theme';
@@ -25,6 +26,7 @@ export function TodayNoWatch() {
         <StrengthTodayCard />
         <CoachTodayCard dataVersion={dataVersion} availability={null} />
         <PhoneOnlyLinks />
+        <LoopShortcut />
         <ConnectWatchPrompt />
         <RogoStrengthCard />
       </View>

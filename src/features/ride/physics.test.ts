@@ -216,5 +216,8 @@ describe('effortFromHr', () => {
     expect(w6).toBeLessThanOrEqual(250);
     expect(climbGear(10.8, 79)).toBe(0);
     expect(climbGear(8, 79)).toBeLessThanOrEqual(climbGear(4, 79));
+    // Descents need 0 W in every gear: stay in the default, do not spin out in the easiest.
+    expect(climbGear(-1.7, 79)).toBe(DEFAULT_GEAR_INDEX);
+    expect(climbGear(-8, 79)).toBe(DEFAULT_GEAR_INDEX);
   });
 });

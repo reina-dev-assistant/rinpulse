@@ -103,7 +103,7 @@ function LiveBody({ live }: { live: LiveWorkout }) {
     <>
       <Card>
         <View style={styles.head}>
-          <IconChip icon={sportIcon(live.sportName ?? '')} tint="workouts" size="lg" />
+          <IconChip sport={sportIcon(live.sportName ?? '')} tint="workouts" size="lg" />
           <View style={styles.headText}>
             <AppText variant="heading" numberOfLines={1}>
               {live.sportName ? sportLabel(live.sportName) : t('live.workout')}

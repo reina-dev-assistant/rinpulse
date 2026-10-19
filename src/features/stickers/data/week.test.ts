@@ -85,9 +85,10 @@ describe('buildWeekSubject', () => {
     expect(w.workouts).toBe(4);
     expect(w.distanceM).toBe(17400);
     expect(w.kcal).toBe(300 + 700 + 200);
-    expect(w.movingSec).toBe(1800 + 1800 + 1800 + 3000);
+    // The watch timer (3600 s) counts, not the 1800 s between its start and end stamps.
+    expect(w.movingSec).toBe(1800 + 3600 + 1800 + 3000);
     expect(w.activeDays).toBe(3);
-    expect(w.dayMin).toEqual([90, 0, 30, 50, 0, 0, 0].map((m, i) => (i === 0 ? 30 + 30 : m)));
+    expect(w.dayMin).toEqual([90, 0, 30, 50, 0, 0, 0]);
     expect(w.longestM).toBe(12400);
     expect(w.bestLabel).toBe('Terpanjang: 12,40 km');
     expect(w.strengthSessions).toBe(1);

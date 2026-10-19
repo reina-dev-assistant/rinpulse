@@ -30,9 +30,26 @@ import {
   saveSegmentBests,
   saveSettings,
 } from "./storage.ts";
+import { RideAudio } from "./audio.ts";
+import { makeBots } from "./riders.ts";
 import { Track } from "./track.ts";
 
 export type Screen = "pair" | "routes" | "ride" | "summary";
+
+/** One row of the riders-nearby list: the player, the ghost, or a pacer bot. */
+export interface NearbyRider {
+  key: string;
+  kind: "you" | "ghost" | "bot";
+  name: string;
+  /** Metres ahead of the player (negative = behind). */
+  gapM: number;
+  /** Seconds ahead of the player at the current pace (negative = behind). */
+  gapS: number;
+  wkg: number | null;
+  jersey: number;
+}
+
+const NEARBY_BOTS = 5;
 export type SummaryDelivery = "sent" | "pending" | "none";
 
 export interface Hud {
@@ -41,6 +58,8 @@ export interface Hud {
   hr: number | null;
   hrZone: number;
   powerW: number;
+  /** Watts per kilogram of the rider's weight. */
+  wkg: number;
   powerMeasured: boolean;
   distM: number;
   remainingM: number;
@@ -61,6 +80,9 @@ export interface Hud {
   interval: IntervalSnapshot | null;
   /** Daily challenge: the target and the gap to an even pace towards it (negative = ahead). */
   daily: { targetS: number; gapS: number } | null;
+  nearby: NearbyRider[];
+  /** Pacer bots' route positions, for the profile. */
+  botPositionsM: number[];
 }
 
 export const JERSEYS: readonly number[] = [0xe8e4d8, 0x0a6580, 0xd94a3d, 0xf2c230, 0x2f8f4e, 0x1d1d22, 0xe86aa6];
@@ -81,6 +103,7 @@ const EMPTY_HUD: Hud = {
   hr: null,
   hrZone: 1,
   powerW: 0,
+  wkg: 0,
   powerMeasured: false,
   distM: 0,
   remainingM: 0,
@@ -100,6 +123,8 @@ const EMPTY_HUD: Hud = {
   ghostPositionM: null,
   interval: null,
   daily: null,
+  nearby: [],
+  botPositionsM: [],
 };
 
 /**
@@ -130,6 +155,8 @@ export class Game {
   jersey: number = loadSettings().jersey ?? JERSEYS[0]!;
   /** Hide the rider's name on the leaderboard. */
   anon: boolean = loadSettings().anon ?? false;
+  /** Wind, tyres, freewheel, crowd and shift clicks. */
+  readonly audio = new RideAudio(loadSettings().muted ?? false);
   /** What happened to this ride's leaderboard entry. */
   board: BoardSubmit = { state: "none" };
   version = 0;
@@ -188,6 +215,7 @@ export class Game {
   dispose(): void {
     this.dropSource();
     window.clearTimeout(this.toastTimer);
+    this.audio.dispose();
   }
 
   // Sources ---------------------------------------------------------------------------------------------------
@@ -271,6 +299,7 @@ export class Game {
 
   toRoutes(): void {
     this.session = null;
+    this.audio.silence();
     this.interval = null;
     this.engine?.setSession(null);
     this.hud = EMPTY_HUD;
@@ -329,6 +358,7 @@ export class Game {
       ghost: loadGhost(route.id),
       segmentBests: this.bests,
       loop,
+      bots: makeBots(route),
     });
     this.interval = loop ? new IntervalTracker(workoutById(this.workoutId)) : null;
     this.medal = null;
@@ -340,6 +370,7 @@ export class Game {
     this.stateAcc = STATE_MS;
     this.engine?.setSession(this.session);
     this.session.startCountdown();
+    this.audio.start();
     this.toScreen("ride");
     this.updateHud();
   }
@@ -347,7 +378,9 @@ export class Game {
   // Ride controls ---------------------------------------------------------------------------------------------
 
   shift(d: 1 | -1): void {
+    const before = this.session?.gear;
     this.session?.shift(d);
+    if (this.session && this.session.gear !== before) this.audio.shift();
     this.updateHud();
     this.emit();
   }
@@ -437,6 +470,11 @@ export class Game {
       }
     }
     for (const ev of s.drainEvents()) this.onEvent(ev);
+    if (s.phase === "riding") {
+      this.audio.update(dt, { speedMs: s.speedMs, coasting: s.powerW < 1, crowd: this.crowdAt(s.distM) });
+    } else {
+      this.audio.silence();
+    }
 
     this.hudAcc += dt;
     if (this.hudAcc >= HUD_MS / 1000) {
@@ -462,6 +500,7 @@ export class Game {
       hr,
       hrZone: hr === null ? 1 : hrZone(hr),
       powerW: s.powerW,
+      wkg: s.powerW / s.massKg,
       powerMeasured: s.powerMeasured,
       distM: s.distM,
       remainingM: s.remainingM,
@@ -486,7 +525,28 @@ export class Game {
         this.mode === "daily"
           ? { targetS: this.daily.targetS, gapS: targetGapS(s.timeS, s.distM, this.route.lengthM, this.daily.targetS) }
           : null,
+      nearby: this.nearby(s),
+      botPositionsM: s.peloton.bots.map((b) => s.distM + s.peloton.gap(s.distM, b.distM)),
     };
+  }
+
+  /** The player, the ghost and the nearest bots, furthest ahead first. A gap in seconds is metres over the slower of the two speeds (at least 3 m/s). */
+  private nearby(s: RideSession): NearbyRider[] {
+    const rows: NearbyRider[] = [];
+    const bots = s.peloton.bots
+      .map((b) => ({ b, gapM: s.peloton.gap(s.distM, b.distM) }))
+      .sort((x, y) => Math.abs(x.gapM) - Math.abs(y.gapM))
+      .slice(0, NEARBY_BOTS);
+    for (const { b, gapM } of bots) {
+      const gapS = gapM / Math.max(3, Math.min(s.speedMs, b.speedMs));
+      rows.push({ key: b.spec.name, kind: "bot", name: b.spec.name, gapM, gapS, wkg: b.powerW / b.spec.kg, jersey: b.spec.jersey });
+    }
+    const ghostGap = s.ghostGapM;
+    if (ghostGap !== null) {
+      rows.push({ key: "ghost", kind: "ghost", name: "", gapM: -ghostGap, gapS: -ghostGap / Math.max(3, s.speedMs), wkg: null, jersey: 0x6fd3a2 });
+    }
+    rows.push({ key: "you", kind: "you", name: "", gapM: 0, gapS: 0, wkg: s.powerW / s.massKg, jersey: this.jersey });
+    return rows.sort((a, b) => b.gapM - a.gapM);
   }
 
   private onEvent(ev: RideEvent): void {
@@ -525,6 +585,21 @@ export class Game {
       this.emit();
     }, TOAST_MS);
     this.emit();
+  }
+
+  toggleMute(): void {
+    this.audio.setMuted(!this.audio.muted);
+    saveSettings({ muted: this.audio.muted });
+    this.emit();
+  }
+
+  /** 0..1: the crowd's loudness, highest in the last metres before the finish and each segment's end banner. */
+  private crowdAt(distM: number): number {
+    let crowd = 0;
+    for (const end of [this.route.lengthM, ...this.route.segments.map((g) => g.endM)]) {
+      crowd = Math.max(crowd, 1 - Math.abs(distM - (end - 20)) / 70);
+    }
+    return crowd;
   }
 
   private onFinish(): void {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "./utils";
 
 /**
@@ -25,6 +26,7 @@ export function Dialog({
   className?: string;
   testId?: string;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export function Dialog({
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t("common.close")}
             onClick={onClose}
             className="-mr-2 grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:outline-none"
           >

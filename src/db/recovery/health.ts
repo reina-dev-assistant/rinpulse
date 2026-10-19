@@ -16,6 +16,8 @@ export interface RepairNotice {
   pendingSwap: boolean;
   /** Name of the kept copy of the damaged file, when one was made. */
   keptAs: string | null;
+  /** Why a failed repair failed, in the words of the error: shown to the person so it can be read back when nothing else can. */
+  reason: string | null;
   at: number;
 }
 
@@ -28,6 +30,11 @@ export interface HealthDeps {
   recover(options: RecoveryOptions): Promise<RecoveryResult>;
   /** Pauses the app's queries; returns the function that lets them go on. */
   hold(): () => void;
+  /**
+   * Stops the native writer (Kotlin/Swift, a SQLite of its own) before a repair and returns what starts it again. Optional: with
+   * nothing to stop it is left out.
+   */
+  quiesce?(): Promise<() => Promise<void>>;
   storage: { get(key: string): string | null; set(key: string, value: string | null): void };
   now(): number;
 }
@@ -43,11 +50,11 @@ function noticeOf(result: RecoveryResult, now: number): RepairNotice | null {
     case 'healthy':
       return null;
     case 'repaired':
-      return { kind: 'repaired', lost: result.lost, pendingSwap: false, keptAs: result.keptAs, at: now };
+      return { kind: 'repaired', lost: result.lost, pendingSwap: false, keptAs: result.keptAs, reason: null, at: now };
     case 'recreated':
-      return { kind: 'recreated', lost: true, pendingSwap: false, keptAs: result.keptAs, at: now };
+      return { kind: 'recreated', lost: true, pendingSwap: false, keptAs: result.keptAs, reason: null, at: now };
     case 'failed':
-      return { kind: 'failed', lost: false, pendingSwap: result.swapPending !== null, keptAs: result.keptAs, at: now };
+      return { kind: 'failed', lost: false, pendingSwap: result.swapPending !== null, keptAs: result.keptAs, reason: result.reason, at: now };
   }
 }
 
@@ -62,11 +69,13 @@ function readNotice(raw: string | null): RepairNotice | null {
     if (kind !== 'repaired' && kind !== 'recreated' && kind !== 'failed') return null;
     const keptAs = field(value, 'keptAs');
     const at = field(value, 'at');
+    const reason = field(value, 'reason');
     return {
       kind,
       lost: field(value, 'lost') === true,
       pendingSwap: field(value, 'pendingSwap') === true,
       keptAs: typeof keptAs === 'string' ? keptAs : null,
+      reason: typeof reason === 'string' ? reason : null,
       at: typeof at === 'number' ? at : 0,
     };
   } catch {
@@ -104,6 +113,8 @@ export function createDbHealth(deps: HealthDeps): DbHealth {
     set({ ...state, repairing: true });
     const release = deps.hold();
     let result: RecoveryResult;
+    // The native writer stops first; a failure to stop it must not stop the repair.
+    const resume = await deps.quiesce?.().catch(() => null);
     try {
       result = await deps.recover(options);
     } catch (e) {
@@ -117,6 +128,8 @@ export function createDbHealth(deps: HealthDeps): DbHealth {
     if (result.kind === 'failed') deps.storage.set(SWAP_KEY, result.swapPending);
     else if (result.kind !== 'healthy') deps.storage.set(SWAP_KEY, null);
     if (notice) deps.storage.set(NOTICE_KEY, JSON.stringify(notice));
+    // After the outcome is stored: what restarts the native writers looks at the pending swap (a prepared file means they stay off).
+    await resume?.().catch(() => undefined);
     // A healthy result keeps the notice of an earlier repair; it only ends the spinner.
     set({ repairing: false, notice: notice ?? state.notice });
     return result;
@@ -142,6 +155,8 @@ export function createDbHealth(deps: HealthDeps): DbHealth {
     report(error) {
       if (!isCorruptionError(error)) return;
       if (running !== null || deps.now() - lastRunAt < COOLDOWN_MS) return;
+      // A repaired copy is waiting for the next start: the file in use is replaced then, and errors until that start change nothing.
+      if (deps.storage.get(SWAP_KEY) !== null) return;
       void repair();
     },
     repair,
@@ -150,6 +165,15 @@ export function createDbHealth(deps: HealthDeps): DbHealth {
       set({ ...state, notice: null });
     },
     pendingSwap: () => deps.storage.get(SWAP_KEY),
-    clearPendingSwap: () => deps.storage.set(SWAP_KEY, null),
+    clearPendingSwap() {
+      deps.storage.set(SWAP_KEY, null);
+      // The prepared copy is in: what the notice announced as waiting has happened (what could not be read was left out).
+      const waiting = state.notice;
+      if (waiting?.pendingSwap) {
+        const done: RepairNotice = { kind: 'repaired', lost: true, pendingSwap: false, keptAs: waiting.keptAs, reason: null, at: deps.now() };
+        deps.storage.set(NOTICE_KEY, JSON.stringify(done));
+        set({ ...state, notice: done });
+      }
+    },
   };
 }

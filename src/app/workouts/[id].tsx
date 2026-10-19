@@ -289,7 +289,7 @@ export default function WorkoutDetailScreen() {
       />
       <Card>
         <View style={styles.summaryHead}>
-          <IconChip icon={sportIcon(workout.sportName)} tint="workouts" size="lg" />
+          <IconChip sport={sportIcon(workout.sportName)} tint="workouts" size="lg" />
           <View style={styles.summaryTitle}>
             <AppText variant="heading" numberOfLines={2}>
               {sport}

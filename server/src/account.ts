@@ -6,11 +6,11 @@ import { deleteLiveStatements } from "./live";
 import { dropStravaConnection } from "./strava";
 
 /** Every table with a `user_id` column. `user_state` goes last so a half-finished deletion can still be repeated. */
-const USER_TABLES = ["workout_points", "workouts", "step_samples", "sleep_segments", "device", "imports", "gear_doc", "user_state"] as const;
+const USER_TABLES = ["workout_points", "workouts", "step_samples", "sleep_segments", "device", "imports", "web_watchfaces", "studio_projects", "gear_doc", "user_state"] as const;
 
-/** Deletes the objects under `imports/<user id>/` in pages; R2 lists at most 1000 keys per call. */
-async function deleteImportFiles(env: AppEnv, userId: string): Promise<void> {
-  const prefix = `imports/${userId}/`;
+/** Deletes every R2 object under `<root>/<user id>/` in pages; R2 lists at most 1000 keys per call. */
+async function deleteUserFiles(env: AppEnv, root: "imports" | "watchfaces" | "studio", userId: string): Promise<void> {
+  const prefix = `${root}/${userId}/`;
   for (let cursor: string | undefined; ; ) {
     const page = await env.IMPORTS.list({ prefix, cursor });
     if (page.objects.length > 0) await env.IMPORTS.delete(page.objects.map((o) => o.key));
@@ -19,9 +19,11 @@ async function deleteImportFiles(env: AppEnv, userId: string): Promise<void> {
   }
 }
 
-/** The rows and files the app uploaded (steps, sleep, workouts, devices, imports, live tracking sessions); not Strava or family. Repeatable. */
+/** The rows and files the app uploaded (steps, sleep, workouts, devices, imports, the watch face library, Studio cloud projects, live tracking sessions); not Strava or family. Repeatable. */
 export async function deleteSyncedData(env: AppEnv, userId: string): Promise<void> {
-  await deleteImportFiles(env, userId);
+  await deleteUserFiles(env, "imports", userId);
+  await deleteUserFiles(env, "watchfaces", userId);
+  await deleteUserFiles(env, "studio", userId);
   // Live tracking rows go first: the points are found through the sessions. `user_state` stays last (see USER_TABLES).
   await env.DB.batch([...deleteLiveStatements(env.DB, userId), ...USER_TABLES.map((table) => env.DB.prepare(`DELETE FROM ${table} WHERE user_id = ?1`).bind(userId))]);
 }

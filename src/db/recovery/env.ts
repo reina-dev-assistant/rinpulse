@@ -7,6 +7,7 @@ import { buildAppSchema } from '@/db/appSchema';
 import { WORKOUT_PULL_CURSOR_KEY } from '@/db/cloud';
 
 import type { RecoveryDb, RecoveryEnv } from './recover';
+import { recordRepairLine } from './repairLog';
 
 /** Longer than the native writer's 10 s would be pointless; the same wait, so a sync that is mid-write finishes first. */
 const BUSY_TIMEOUT_MS = 10_000;
@@ -54,4 +55,5 @@ export const recoveryEnv: RecoveryEnv = {
   now: () => Date.now(),
   buildSchema: (db) => buildAppSchema(expoDb(db)),
   afterLoss: resetPullCursors,
+  log: recordRepairLine,
 };

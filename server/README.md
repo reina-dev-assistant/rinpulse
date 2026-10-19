@@ -29,12 +29,13 @@ a guess. Deploy JoyoRogo with `fitness.cloudAccess` before this Worker.
 | `GET /v1/restore?table=steps\|sleep&from=<unix s>&after=<cursor>&limit=<n>` | Windowed history for a new phone, open to every signed-in account (no Pro gate). Rows with key time ≥ `from` (steps: `timestamp`; sleep: `end`), ordered by primary key (steps by `timestamp`, sleep by `start, type`) and paged by a keyset cursor: `after` is the previous page's `cursor` (steps: last timestamp; sleep: `start:type` of the last row). `limit` default 2 000, max 5 000. Answers `{ rows, cursor, hasMore }` with the pull's camelCase row shapes (steps: `timestamp, steps, calories, distance, heartRate, spo2, restingHeartRate, device`; sleep: `start, end, type, stage, device`). `400` for a bad `table`/`from`/`after`/`limit`, and for `from` older than 400 days. One primary-key range query per page; sleep scans `start >= from - 1 day` and filters `end >= from`, so a segment longer than a day that began before that is not returned. |
 | `POST /v1/imports?filename=<name>` | The request body is the file, streamed straight into R2 at `imports/<userId>/<uuid>` (needs `Content-Length`, at most `MAX_IMPORT_BYTES`, default 100 MiB). Records an `imports` row (`uploading` → `uploaded`, or `failed`). Answers `201 {id, status, size, ...}`. |
 | `GET /v1/imports` | The caller's 50 newest imports. |
-| `DELETE /v1/data` | Wipes what the app uploaded for the caller (steps, sleep, devices, workout rows of older builds, import files and rows, live tracking sessions and points). Keeps the Strava connection and family links. No Pro gate (data is never locked in). Answers `{deleted: true}`. |
+| `DELETE /v1/data` | Wipes what the app uploaded for the caller (steps, sleep, devices, workout rows of older builds, import files and rows, the watch face library, live tracking sessions and points). Keeps the Strava connection and family links. No Pro gate (data is never locked in). Answers `{deleted: true}`. |
 | `DELETE /v1/account` | Everything above plus the Strava connection and family links; the app calls it before it deletes the JoyoRogo account. |
 | `GET /v1/strava`, `GET /v1/strava/authorize`, `POST /v1/strava/token`, `POST /v1/strava/disconnect` | Strava connection of the signed-in user, **free (no Pro gate)**: status, authorize URL (scope `activity:write` plus whatever the athlete already granted JoyoRogo), a fresh short-lived access token, unlink. The Strava application is shared with JoyoRogo and Strava keeps one token per athlete, so the tokens live in **JoyoRogo's D1** (`strava_account`) and this Worker calls JoyoRogo's `/internal/joyofit/strava/*` with the Strava client credentials as HTTP Basic; the refresh token and client secret never reach the phone. The old table `strava_connection` is dropped by [`migrations/0004_drop_strava_connection.sql`](migrations/0004_drop_strava_connection.sql). |
 | `GET /strava/callback`, `GET\|POST /strava/webhook` | Public, called by Strava: the OAuth redirect (JoyoRogo exchanges the code and stores the tokens; redirects to `joyofit://settings/strava`) and the webhook (subscription validation; a deauthorization event is forwarded to JoyoRogo, which deletes that athlete's tokens for both products, `503` when the forward fails so Strava retries). |
 
 | `POST /v1/waitlist` | Public (no session, CORS for `https://fit.joyorogo.com`): the /strava and /iphone invite forms. Body `{ kind: "strava" \| "iphone", email, stravaProfile?, watchModel?, note?, website? }`; `website` is a honeypot (filled = `200`, nothing stored). Upserts by `(kind, email)` (status and `created_at` kept), at most 5 submissions per IP per hour (`429` + `Retry-After`; only a one-hour salted hash of the IP is stored, table `waitlist_rate`). Table `waitlist` ([`migrations/0003_waitlist.sql`](migrations/0003_waitlist.sql)). |
+| `GET /v1/app-config` | Public (no session), `Cache-Control: public, max-age=60`. The launch-time update gate: `{ android: { minBuild, latestBuild, storeUrl }, ios: { ... }, message }`, read from table `app_config` ([`migrations/0011_app_config.sql`](migrations/0011_app_config.sql)); an empty table means every `minBuild` is 0 (gate off). Set it with `scripts/app-min-build.sh`; see [`../docs/force-update.md`](../docs/force-update.md). |
 | `GET /v1/waitlist?kind=&status=` | Owner only: `Authorization: Bearer $WAITLIST_ADMIN_TOKEN` (Worker secret, `503` when unset). Easiest: `scripts/waitlist.sh [strava\|iphone]` from the repo root, which reads the token from `~/.config/joyofit/waitlist-admin-token`. |
 
 Strava needs the `STRAVA_CLIENT_ID` var (in `wrangler.jsonc`) and two secrets, `STRAVA_CLIENT_SECRET` (the same value as on
@@ -93,6 +94,116 @@ Three kinds of caller, three secrets, all 128-bit random; only SHA-256 hashes ar
 The nightly purge (`0 20 * * *`, the family cron's `purge`) deletes sessions and their points 24 h after `COALESCE(ended_at, last_at)`;
 `DELETE /v1/data` and `DELETE /v1/account` delete a user's sessions and points. The Worker never logs coordinates. The migration needs to be
 applied before the routes are deployed (`bun run db:migrate:remote`); no new secrets or wrangler changes.
+
+## JoyoFit web app (`apps/fit`)
+
+The JoyoFit web app (`apps/fit`) does not call this API from the browser. It goes through the JoyoRogo API proxy `/api/fit/*`, which forwards
+server to server with the session cookies, because the JoyoRogo session cookie is host-only on `api.joyorogo.com` (a browser would not send it to
+`api.fit.joyorogo.com`). So there is no browser CORS policy here (`/v1/waitlist` keeps its own for `https://fit.joyorogo.com`, `/ride/*` keeps `*`).
+The routes below are unchanged by that: session-verified like every `/v1` route, Pro-gated for `POST`. Two pieces serve the web app: `GET /v1/sleep` and the watch face library.
+
+### `GET /v1/sleep?from=YYYY-MM-DD&to=YYYY-MM-DD`
+
+Sleep per **WIB** calendar day (a session belongs to the day it **ends** on), `from` and `to` inclusive, 1 to 92 days (`400 {"error":"invalid_range","maxDays":92}`
+for a missing, malformed, reversed or wider window). Session cookie only: no Pro check (a read, like `GET /v1/restore`), only the caller's rows.
+
+```jsonc
+{ "from": "2026-10-15", "to": "2026-10-20",
+  "days": [ {                       // oldest day first, only days that have sleep
+    "day": "2026-10-17",
+    "asleepSec": 31800,             // night + naps, overlaps counted once
+    "napSec": 3600,
+    "night": null | {               // null on a day with only naps
+      "start": 1792166400, "end": 1792195200,   // unix seconds
+      "asleepSec": 28200, "awakeSec": 600,
+      "stages": { "awake": 600, "rem": 10200, "light": 10800, "deep": 7200, "asleep": 0 },   // seconds; `asleep` = recorded without a stage
+      "hasStages": true, "awakenings": 1,
+      "periods": [ { "start": 1792166400, "end": 1792177200, "stage": "light" } ]   // non-overlapping, oldest first, same-stage neighbours merged
+    },
+    "naps": [ { "start": 1792206000, "end": 1792209600, "asleepSec": 3600 } ]
+  } ] }
+```
+
+The grouping is a port of the phone's rules into pure TypeScript (`src/sleepDays.ts`, no Worker imports), constant for constant:
+`src/features/today/stats.ts` (`SESSION_GAP_SEC` 3 h, `withoutStrayUnstaged`, `withoutBlips` 1 h / 5 min), `src/features/sleep/cleanSleep.ts`
+(`cleanUnstagedSleep`: 15 steps a minute, 20 min runs, `breakBefore`) and `src/features/sleep/nights.ts` (`buildNights`, `MIN_NIGHT_SEC` 3 h: less sleep than that is a
+nap). Segments from several watches (column `device`) overlap freely: the earlier-starting segment keeps the overlap, so a night two watches recorded counts once.
+Rows are read from `sleep_segments` with a 36 h margin around the window so a session that straddles its edge is whole.
+
+Intentional differences from the phone, also written at the top of `sleepDays.ts`:
+
+- **WIB, not the device's time zone** (the server has none). A phone in another zone can file a night ending between 00:00 and 07:00 WIB under another day.
+- **Stage-less cleaning has less evidence.** The phone subtracts workouts, spot HRV readings and minutes with 15+ steps. Here there are no HRV readings; workouts
+  come only from the legacy `workouts` table (builds before the cloud-workouts release) and steps from `step_samples`. Staged nights are identical.
+- **`stage` text** other than `awake|rem|light|deep` is read as stage-less.
+- **One night per day.** The longest session of the day (the later one on a tie) is `night` when it has 3 h of sleep or more, every other session is a `nap`, however long
+  (the Today summary's rule, `lastSleepSession`). The phone's per-day total `sleepByDay` would call a second session of 3 h or more a night; `asleepSec` is the same either way.
+
+### Watch face library: `/v1/watchfaces`
+
+A per-user library shared by the web app and the phone. The files live in the R2 bucket `IMPORTS` under `watchfaces/<userId>/<id>` (the bucket the
+Worker already has for imports: a face is a user-owned upload like an import, needs no public URL, and `DELETE /v1/data` and `DELETE /v1/account` already
+sweep a per-user prefix there); one row per face in D1 `web_watchfaces(id, user_id, name, filename, size, sha256, created_at)`
+([`migrations/0010_web_watchfaces.sql`](migrations/0010_web_watchfaces.sql), unique on `(user_id, sha256)`). Apply the migration before deploying
+(`bun run db:migrate:remote`). Code: `src/watchfaces.ts`, validation `src/hwtValidate.ts`. Behind `requireUser`; **uploading is Pro** (`requireFounder`:
+`402 {"error":"founder_required","paywall":true}`), listing, downloading and deleting are open to every signed-in account.
+
+| Endpoint | What it does |
+|---|---|
+| `POST /v1/watchfaces?filename=face.hwt` | The body is the `.hwt`. `Content-Length` required (`411`), at most 8 MiB (`413 {"error":"too_large","maxBytes":8388608}`), empty is `400 empty_body`, a body of another length than declared is `400 length_mismatch`. The file is buffered (validation needs every byte) and checked (below): not a face is `400 {"error":"invalid_hwt","reason":"..."}`. A user holds at most 40 faces: `409 {"error":"library_full","max":40}` (the check is part of the `INSERT`, so concurrent uploads cannot overshoot). The same file (SHA-256) uploaded again by the same user stores nothing and answers `200` with the existing record, also when the library is full. Otherwise `201 { id, name, filename, size, sha256, createdAt }`: `name` is the `<title>` of the face's `description.xml` (control characters dropped, whitespace collapsed, 80 characters), else the filename without its last extension; `filename` is `filename` cleaned like imports (no `/`, `\`, control characters, 255 characters), `watchface.hwt` when missing; `sha256` lower-case hex; `createdAt` is unix **milliseconds**. |
+| `GET /v1/watchfaces` | `{ "watchfaces": [ { id, name, filename, size, sha256, createdAt } ] }`, newest first. |
+| `GET /v1/watchfaces/:id/file` | The stored bytes: `Content-Type: application/octet-stream`, `Content-Length`, `Content-Disposition: attachment; filename="<ascii>"; filename*=UTF-8''<exact>`, `Cache-Control: private, no-store`. `404 {"error":"not_found"}` for an id that is not yours (or whose file is gone). |
+| `DELETE /v1/watchfaces/:id` | `{ "deleted": true }`: removes the R2 object and the row; `404` when not yours. |
+
+What the upload check (`checkHwt`, reusing the codec in `packages/hwt`, pure `Uint8Array` code plus `fflate`, so it runs in the Worker) verifies, in order:
+zip magic; the central directory declares at most 32 MiB unzipped in total (read before inflating, for the nested zip too: a small upload cannot become a memory bomb);
+every entry inflates to its declared size; `description.xml` exists with a `HwTheme`/`HnTheme` root and a `<screen>`; the watchface entry (`com.huawei.watchface`,
+`com.honor.watchface` for Honor) exists and, when it is itself a zip (the nested form), holds `watchface.bin`; the binary parses and `verifyWatchface` passes: header lengths add up to the file size,
+the image table tiles the bin area exactly, every image blob carries the ARGB8888 magic, the protobuf layout decodes. All 10 committed fixtures in `packages/hwt/fixtures` pass.
+Not checked: the screen code against a watch model (a face for another Huawei watch is a valid face), Huawei's Fit 4 size limits, whether a watch accepts it. The server imports the codec
+from `../packages/hwt/src`, so building the Worker needs the repo's root `bun install` (it provides `fflate`).
+
+`DELETE /v1/data` and `DELETE /v1/account` remove the user's `web_watchfaces` rows and every object under `watchfaces/<userId>/`, like imports.
+
+### Studio cloud projects: `/v1/studio/projects`
+
+JoyoFit Studio's "save to db" (Pro). A project is a Studio `.project.json` document (`{ "format": "joyofit-studio-project", "project": { "version": n, ... }, "assets": { id: { name, dataUrl } } }`) plus metadata.
+One row per project in D1 `studio_projects(id, user_id, name, rev, size, thumb, doc_key, created_at, updated_at)`
+([`migrations/0012_studio_projects.sql`](migrations/0012_studio_projects.sql), index `(user_id, updated_at DESC)`); the document lives in R2 `IMPORTS` under `studio/<userId>/<id>/<uuid>`,
+where `<uuid>` is fresh for every document version and `doc_key` names the current one, so a stale writer never overwrites the stored file. Apply the migration before deploying
+(`bun run db:migrate:remote`). Code: `src/studio.ts`. Behind `requireUser`; **writing is Pro** (`requireFounder`: `402 {"error":"founder_required","paywall":true}`), listing, reading and
+deleting are open to every signed-in account, so a lapsed Pro keeps what it saved. The browser reaches it only through JoyoRogo's `/api/fit/studio/projects` proxy. Every query is scoped to the caller: another user's id is `404`.
+
+Meta, everywhere: `{ id, name, rev, size, createdAt, updatedAt, thumb }` (`size` is the bytes of the stored document, `thumb` a `data:image/(png|jpeg|webp);base64,...` string or `null`, times in ms).
+
+| Endpoint | What it does |
+|---|---|
+| `GET /v1/studio/projects` | `{ "projects": [Meta], "max": 100, "maxBytes": 5242880 }`, `updatedAt` descending (id as tiebreak). Never carries documents. |
+| `POST /v1/studio/projects` | Body `{ name, thumb?, document }` -> `201 Meta` at `rev` 1. `Content-Length` required (`411`), the whole body at most 5 MiB (`413 {"error":"too_large","maxBytes":5242880}`, also when the stream is longer than declared). A user holds at most 100 projects: `409 {"error":"library_full","max":100}` (the cap is part of the `INSERT`, so concurrent creations cannot overshoot; the refused document's object is deleted). |
+| `GET /v1/studio/projects/:id` | `200 { ...Meta, document }`, `Cache-Control: private, no-store`; `404 {"error":"not_found"}` for an id that is not yours (or whose document is gone). |
+| `PUT /v1/studio/projects/:id` | Body `{ rev, name?, thumb?, document? }` (`rev` is the revision the client last saw, at least one of the other three; `thumb: null` clears it) -> `200 Meta` with `rev + 1` and `updatedAt` now. A stale `rev` is `409 {"error":"rev_conflict","rev":<current>,"updatedAt":<ms>}` and nothing changes. A new document is written to a fresh R2 key first, the conditional `UPDATE ... WHERE id AND user_id AND rev` then switches `doc_key`, and the losing object is deleted (the new one on a conflict, the old one on success). A rename or thumbnail change keeps the object. Same body limits as `POST`; `404` when not yours. |
+| `DELETE /v1/studio/projects/:id` | `{ "deleted": true }`: removes the row, then every object under `studio/<userId>/<id>/`; `404` when not yours. |
+
+Validation (`400 {"error":"invalid_body"}`; a body that is not JSON is `400 invalid_json`): `name` is trimmed, 1 to 80 characters; `document` is an object with `format === "joyofit-studio-project"`, a `project` object with a numeric
+`version`, and `assets` absent or an object (shallow on purpose: the client validates the rest); `thumb`, when a string, matches `^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$` and is at most 16 KiB long.
+Limits live in `src/limits.ts` (`MAX_STUDIO_BODY_BYTES`, `MAX_STUDIO_PROJECTS_PER_USER`).
+
+`DELETE /v1/data` and `DELETE /v1/account` remove the user's `studio_projects` rows and every object under `studio/<userId>/`, like watch faces.
+
+### Run it locally with a local JoyoRogo
+
+For the web app (`apps/fit`, port 3003; its server reaches this API through the JoyoRogo proxy `/api/fit/*`) against JoyoRogo on port 3000; the API listens on **3004**. From the repo root once, `bun install` (the Worker imports `packages/hwt`, which needs `fflate`),
+then:
+
+```bash
+cd server
+bunx wrangler d1 migrations apply joyofit --local        # same as `bun run db:migrate:local`; rerun after pulling new migrations
+bunx wrangler dev --port 3004 --var JOYOROGO_AUTH_URL:http://localhost:3000
+```
+
+`--var` replaces the `vars` of `wrangler.jsonc` for this run; instead you can put `JOYOROGO_AUTH_URL=http://localhost:3000` into `server/.dev.vars` (ignored by git) and run
+`bunx wrangler dev --port 3004`. D1 and R2 are local (`server/.wrangler/state`), so uploads never touch production. The JoyoRogo proxy then points at `http://localhost:3004`. The Pro check calls JoyoRogo's `/rpc/fitness/cloudAccess`
+on the local JoyoRogo, so uploads are accepted when that server says the account is Pro (or has no paywall).
 
 ## Setup (you run these)
 

@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n";
 import { VALUE_TYPE } from "@joyofit/hwt";
 import { addGeneratedAsset } from "@/model/assets";
 import { newBackground, newDate, newHand, newRing, newTime, newWidget, CENTER_X, CENTER_Y } from "@/model/defaults";
@@ -47,28 +48,36 @@ function bounds(el: Element): { w: number; h: number } {
 
 const quiet: Template = {
   id: "quiet",
-  name: "Quiet",
-  blurb: "Time and date on black. Nothing else.",
+  get name() {
+    return i18n.t("templates:items.quiet.name");
+  },
+  get blurb() {
+    return i18n.t("templates:items.quiet.blurb");
+  },
   build: async () => {
     const bg = { ...newBackground(), fill: { kind: "solid" as const, color: "#000000" } };
-    let time = newTime({ name: "Time", font: { family: "Outfit", weight: 300 }, size: 88, color: INK, tracking: 0, y: 0 });
-    let date = newDate({ name: "Date", font: { family: "Outfit", weight: 500 }, size: 24, color: MUTED, parts: ["weekday", "day"], tracking: -3 });
+    let time = newTime({ name: i18n.t("templates:layers.time"), font: { family: "Outfit", weight: 300 }, size: 88, color: INK, tracking: 0, y: 0 });
+    let date = newDate({ name: i18n.t("templates:layers.date"), font: { family: "Outfit", weight: 500 }, size: 24, color: MUTED, parts: ["weekday", "day"], tracking: -3 });
     await ready([time, date]);
     time = centreX({ ...time, y: Math.round(CENTER_Y - bounds(time).h / 2 + 8) });
     date = centreX({ ...date, y: time.y - 46 });
-    return project("Quiet", [bg, time, date]);
+    return project(i18n.t("templates:items.quiet.name"), [bg, time, date]);
   },
 };
 
 const stackRing: Template = {
   id: "stack-ring",
-  name: "Stack",
-  blurb: "Big stacked digits inside a steps ring.",
+  get name() {
+    return i18n.t("templates:items.stack-ring.name");
+  },
+  get blurb() {
+    return i18n.t("templates:items.stack-ring.blurb");
+  },
   build: async () => {
     const bg = { ...newBackground(), fill: { kind: "gradient" as const, from: "#0F2F3A", to: "#02080A", angle: 180 } };
     const ring = newRing(VALUE_TYPE.stepsRatio, { x: 20, y: 48, size: 368, thickness: 16, color: TEAL, trackColor: TRACK });
     let time = newTime({
-      name: "Time",
+      name: i18n.t("templates:layers.time"),
       layout: "stack",
       font: { family: "Big Shoulders Display", weight: 900 },
       size: 100,
@@ -79,7 +88,7 @@ const stackRing: Template = {
     await ready([time, steps]);
     time = centreX({ ...time, y: Math.round(CENTER_Y - bounds(time).h / 2 - 30) });
     steps = centreX({ ...steps, y: time.y + bounds(time).h + 12 });
-    return project("Stack", [bg, ring, time, steps]);
+    return project(i18n.t("templates:items.stack-ring.name"), [bg, ring, time, steps]);
   },
 };
 
@@ -116,8 +125,12 @@ async function dialAsset(): Promise<string> {
 
 const classic: Template = {
   id: "classic",
-  name: "Classic",
-  blurb: "Analog dial with three hands and a date.",
+  get name() {
+    return i18n.t("templates:items.classic.name");
+  },
+  get blurb() {
+    return i18n.t("templates:items.classic.blurb");
+  },
   build: async () => {
     const assetId = await dialAsset();
     const bg = { ...newBackground(), fill: { kind: "image" as const, assetId, zoom: 1, offsetX: 0, offsetY: 0, dim: 0 } };
@@ -127,7 +140,7 @@ const classic: Template = {
     const hour = newHand("hour", { length: 96, width: 14, tail: 16, color: INK, shape: "classic" });
     const minute = newHand("minute", { length: 156, width: 10, tail: 20, color: INK, shape: "classic" });
     const second = newHand("second", { length: 178, width: 3, tail: 38, color: AMBER, shape: "needle" });
-    return project("Classic", [bg, date, hour, minute, second]);
+    return project(i18n.t("templates:items.classic.name"), [bg, date, hour, minute, second]);
   },
 };
 
@@ -168,8 +181,12 @@ async function backdropAsset(): Promise<string> {
 
 const photo: Template = {
   id: "photo",
-  name: "Photo",
-  blurb: "Your photo behind bold time. Swap the sample backdrop.",
+  get name() {
+    return i18n.t("templates:items.photo.name");
+  },
+  get blurb() {
+    return i18n.t("templates:items.photo.blurb");
+  },
   build: async () => {
     const assetId = await backdropAsset();
     const bg = { ...newBackground(), fill: { kind: "image" as const, assetId, zoom: 1, offsetX: 0, offsetY: 0, dim: 0.12 } };
@@ -178,14 +195,18 @@ const photo: Template = {
     await ready([time, date]);
     time = { ...time, x: 36, y: 62 };
     date = { ...date, x: 44, y: time.y + bounds(time).h + 16 };
-    return project("Photo", [bg, date, time]);
+    return project(i18n.t("templates:items.photo.name"), [bg, date, time]);
   },
 };
 
 const sport: Template = {
   id: "sport",
-  name: "Sport",
-  blurb: "Time on top, steps, heart rate and battery in view.",
+  get name() {
+    return i18n.t("templates:items.sport.name");
+  },
+  get blurb() {
+    return i18n.t("templates:items.sport.blurb");
+  },
   build: async () => {
     const bg = { ...newBackground(), fill: { kind: "solid" as const, color: "#070D0F" } };
     let time = newTime({ font: { family: "Oswald", weight: 600 }, size: 92, color: INK, tracking: 2 });
@@ -203,14 +224,18 @@ const sport: Template = {
     const ringX = 214;
     const ringY = 246;
     steps = centreX({ ...steps, y: ringY + Math.round((ring.size - bounds(steps).h) / 2) }, ringX + ring.size / 2);
-    return project("Sport", [bg, { ...ring, x: ringX, y: ringY }, time, date, steps, heart, battery]);
+    return project(i18n.t("templates:items.sport.name"), [bg, { ...ring, x: ringX, y: ringY }, time, date, steps, heart, battery]);
   },
 };
 
 const orbit: Template = {
   id: "orbit",
-  name: "Orbit",
-  blurb: "Analog hands inside steps and battery rings.",
+  get name() {
+    return i18n.t("templates:items.orbit.name");
+  },
+  get blurb() {
+    return i18n.t("templates:items.orbit.blurb");
+  },
   build: async () => {
     const bg = { ...newBackground(), fill: { kind: "gradient" as const, from: "#10242C", to: "#03090B", angle: 160 } };
     const outer = newRing(VALUE_TYPE.stepsRatio, { x: 16, y: 52, size: 376, thickness: 14, startAngle: 225, sweep: 270, color: TEAL, trackColor: TRACK });
@@ -223,7 +248,7 @@ const orbit: Template = {
     const hour = newHand("hour", { length: 84, width: 12, tail: 14, color: INK, shape: "baton" });
     const minute = newHand("minute", { length: 130, width: 9, tail: 18, color: INK, shape: "baton" });
     const second = newHand("second", { length: 146, width: 3, tail: 30, color: AMBER, shape: "needle" });
-    return project("Orbit", [bg, outer, inner, date, time, hour, minute, second]);
+    return project(i18n.t("templates:items.orbit.name"), [bg, outer, inner, date, time, hour, minute, second]);
   },
 };
 

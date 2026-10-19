@@ -98,7 +98,7 @@ flowchart LR
 | `src/db/`, `src/cloud/` | SQLite queries and migrations; JoyoRogo sign-in, cloud API client and uploaders |
 | `src/i18n/` | i18next setup and `locales/{id,en}/*.json` |
 | `modules/huawei-wear/` | Local Expo module: the watch protocol (port of [Gadgetbridge](https://codeberg.org/Freeyourgadget/Gadgetbridge)'s Huawei support) in Kotlin and Swift, plus the shared SQLite schema |
-| `modules/ble-sensors/` | Local Expo module: Bluetooth chest straps, cycling and running sensors, and the phone-recorded workout session (GPS, foreground service) |
+| `modules/ble-sensors/` | Local Expo module: Bluetooth chest straps, cycling and running sensors, bathroom-scale scan and GATT transport, and the phone-recorded workout session (GPS, foreground service) |
 | `protocol/` | Protocol notes and observations |
 | `server/` | Cloudflare Worker (Hono, D1, R2) for steps, sleep, gear and Strava glue |
 | `web/` | JoyoFit Studio, the watch-face editor (Vite, React) |
@@ -147,6 +147,7 @@ Site (`site/`): `bun install`, `bun run dev`, `bun run build` (typecheck, Vite b
 | [docs/strength.md](docs/strength.md), [docs/strength-cloud.md](docs/strength-cloud.md) | Strength logger and its cloud sync |
 | [docs/multi-watch.md](docs/multi-watch.md) | Several watches: device column, primary rules, switching, background visits |
 | [docs/sensors.md](docs/sensors.md) | External sensors, phone-recorded workouts, device test script |
+| [docs/scale.md](docs/scale.md) | Bluetooth bathroom scales: supported protocols and sources, JoyoRogo weight sync, test script |
 | [docs/replay.md](docs/replay.md) | Workout replay: player, camera, map, MP4 export with the native encoder, privacy, known limits |
 | [docs/ride.md](docs/ride.md) | Ride on the web: the phone as sensor bridge, the relay, the wire protocol, virtual power (the game: [docs/ride-web.md](docs/ride-web.md)) |
 | [docs/coach.md](docs/coach.md) | Coach rules, plans, library, chat |
@@ -166,7 +167,7 @@ Pull requests are welcome, especially watch reports and translations.
 
 1. **Watch reports.** Own a watch that is not tested? Connect once, then in the app open Watch, Help support your watch, Report on GitHub. The report has no Bluetooth addresses or serial numbers. Or use the [watch report template](https://github.com/dzulfikar08/joyofit/issues/new?template=watch-report.yml).
 2. **Before you open a PR**, run what CI runs: `bunx tsc --noEmit`, `bun test ./src/`, `bun scripts/i18n-check.ts`, and the Kotlin or Swift tests if you touched `modules/huawei-wear`.
-3. **UI copy** goes through i18next with keys in both `id` and `en`; no emojis in UI text; icons are Ionicons; use the app's own components, not native alerts.
+3. **UI copy** goes through i18next with keys in both `id` and `en`; no emojis in UI text; icons are Ionicons, except workout types, which use the Material Design Icons pictograms of `SportIcon` (`sportIcon()` maps a sport name to one); use the app's own components, not native alerts.
 4. **Watch code is safety-critical.** Bounded transfer sizes, malformed-input handling, timeouts, no leaked Bluetooth connections, nothing that can hang the watch or break its pairing.
 5. **No secrets or personal data** in code, logs, fixtures or screenshots.
 6. **Review.** [CodeRabbit](https://coderabbit.ai) reviews every PR with the rules in [`.coderabbit.yaml`](.coderabbit.yaml); the owner merges. Ported Gadgetbridge files keep their package names and a `Modified for watch-fit` header so upstream fixes can be diffed in.

@@ -13,7 +13,7 @@ import { spacing } from '@/theme';
 import type { Granted } from '../permissions';
 import { sensorStatus } from '../linkStatus';
 import { sensorLabel, type SavedSensor } from '../store';
-import { batteryLabel, errorCode, kindsLabel, linkHint, modeLabel, radioProblem, readingLine, sensorIcon, type RadioFailure } from './format';
+import { batteryLabel, errorCode, kindsLabel, linkHint, modeLabel, radioProblem, readingLine, sensorGlyph, type RadioFailure } from './format';
 import { SensorStatusLine } from './SensorStatusLine';
 
 interface SensorLinkRowProps {
@@ -68,7 +68,7 @@ export function SensorLinkRow({ sensor, managed = false, willConnect = false }: 
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
-        <IconChip icon={sensorIcon(sensor.kinds)} tint={up ? 'link' : 'neutral'} />
+        <IconChip {...sensorGlyph(sensor.kinds)} tint={up ? 'link' : 'neutral'} />
         <View style={styles.text}>
           <AppText variant="bodyStrong" numberOfLines={1}>
             {name}

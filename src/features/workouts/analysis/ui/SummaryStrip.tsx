@@ -54,7 +54,7 @@ function SummaryStripImpl({ analysis }: { analysis: WorkoutAnalysis }) {
   hero.push({
     key: 'time',
     label: paused ? t('summary.movingTime') : t('summary.time'),
-    value: formatDuration(paused ? movingSec : elapsedSec),
+    value: formatDuration(movingSec),
     sub: paused ? t('summary.elapsed', { time: formatDuration(elapsedSec) }) : undefined,
   });
   if ((sport.kind === 'run' || sport.kind === 'walk') && stats.avgPaceSecKm !== null) {

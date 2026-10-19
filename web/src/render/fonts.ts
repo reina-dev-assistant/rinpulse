@@ -1,4 +1,7 @@
+import type propsId from "@/i18n/locales/id/props";
 import type { FontRef } from "@/model/types";
+
+type FontNote = keyof (typeof propsId)["fontNote"];
 
 /**
  * Curated fonts for digit, date and widget sprites. They come from @fontsource (Google Fonts, SIL OFL),
@@ -9,26 +12,26 @@ export interface FontChoice {
   family: string;
   label: string;
   weights: number[];
-  /** Style character, for the picker. */
-  note: string;
+  /** Style character for the picker: a key of `props:fontNote`. */
+  note: FontNote;
 }
 
 export const FONTS: FontChoice[] = [
-  { family: "Plus Jakarta Sans Variable", label: "Plus Jakarta Sans", weights: [500, 700, 800], note: "Friendly sans" },
-  { family: "Outfit", label: "Outfit", weights: [300, 500, 700], note: "Geometric" },
-  { family: "Sora", label: "Sora", weights: [300, 600], note: "Wide, techy" },
-  { family: "Oswald", label: "Oswald", weights: [400, 600], note: "Condensed" },
-  { family: "Bebas Neue", label: "Bebas Neue", weights: [400], note: "Tall caps" },
-  { family: "Anton", label: "Anton", weights: [400], note: "Heavy condensed" },
-  { family: "Big Shoulders Display", label: "Big Shoulders", weights: [700, 900], note: "Sporty" },
-  { family: "Orbitron", label: "Orbitron", weights: [500, 800], note: "Futuristic" },
-  { family: "Rajdhani", label: "Rajdhani", weights: [500, 700], note: "Squared" },
-  { family: "Chakra Petch", label: "Chakra Petch", weights: [500, 700], note: "Cut corners" },
-  { family: "Russo One", label: "Russo One", weights: [400], note: "Bold industrial" },
-  { family: "Unbounded", label: "Unbounded", weights: [400, 700], note: "Round, wide" },
-  { family: "Audiowide", label: "Audiowide", weights: [400], note: "Retro digital" },
-  { family: "DM Mono", label: "DM Mono", weights: [400, 500], note: "Monospace" },
-  { family: "Playfair Display", label: "Playfair Display", weights: [400, 700], note: "Classic serif" },
+  { family: "Plus Jakarta Sans Variable", label: "Plus Jakarta Sans", weights: [500, 700, 800], note: "friendlySans" },
+  { family: "Outfit", label: "Outfit", weights: [300, 500, 700], note: "geometric" },
+  { family: "Sora", label: "Sora", weights: [300, 600], note: "wideTechy" },
+  { family: "Oswald", label: "Oswald", weights: [400, 600], note: "condensed" },
+  { family: "Bebas Neue", label: "Bebas Neue", weights: [400], note: "tallCaps" },
+  { family: "Anton", label: "Anton", weights: [400], note: "heavyCondensed" },
+  { family: "Big Shoulders Display", label: "Big Shoulders", weights: [700, 900], note: "sporty" },
+  { family: "Orbitron", label: "Orbitron", weights: [500, 800], note: "futuristic" },
+  { family: "Rajdhani", label: "Rajdhani", weights: [500, 700], note: "squared" },
+  { family: "Chakra Petch", label: "Chakra Petch", weights: [500, 700], note: "cutCorners" },
+  { family: "Russo One", label: "Russo One", weights: [400], note: "boldIndustrial" },
+  { family: "Unbounded", label: "Unbounded", weights: [400, 700], note: "roundWide" },
+  { family: "Audiowide", label: "Audiowide", weights: [400], note: "retroDigital" },
+  { family: "DM Mono", label: "DM Mono", weights: [400, 500], note: "monospace" },
+  { family: "Playfair Display", label: "Playfair Display", weights: [400, 700], note: "classicSerif" },
 ];
 
 export const DEFAULT_FONT: FontRef = { family: "Plus Jakarta Sans Variable", weight: 700 };
