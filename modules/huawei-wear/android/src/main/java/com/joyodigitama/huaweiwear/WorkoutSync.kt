@@ -156,6 +156,13 @@ internal class WorkoutSync(
     )
     val start = totals.startTime.toLong() and 0xFFFFFFFFL
     val end = totals.endTime.toLong() and 0xFFFFFFFFL
+    // A totals row the watch never filled in (a workout it has already dropped, no times at all): there is nothing to
+    // store, and a bogus span (0..0, or 0..end) is awake evidence that would subtract the whole night. Skipped before
+    // any download. A real workout cannot start at epoch 0: the watch clock begins in 2000.
+    if (start == 0L || end == 0L) {
+      log("$label: totals have no times (start=$start end=$end), the watch has no such workout; skipped")
+      return
+    }
     if (sink.isComplete(start, end)) {
       log("$label: already stored (start=$start), skipped")
       return

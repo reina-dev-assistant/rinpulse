@@ -15,7 +15,7 @@ public enum SleepStore {
         var evidence = SleepEvidence()
         if try db.tableExists("workouts") {
             evidence.workouts = try db.query(
-                "SELECT start, end, duration FROM workouts WHERE end >= ? AND start <= ?", [.int(fromSec), .int(toSec)]
+                "SELECT start, end, duration FROM workouts WHERE complete = 1 AND end >= ? AND start <= ?", [.int(fromSec), .int(toSec)]
             ) { SleepCleaning.workoutSpan(start: $0.int64(0), end: $0.int64(1), duration: $0.int64(2)) }
         }
         if try db.tableExists("hrv_readings") {

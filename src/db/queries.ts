@@ -60,7 +60,9 @@ export function getLatestHeartRate(db: SQLiteDatabase): Promise<{ bpm: number; t
 async function sleepEvidence(db: SQLiteDatabase, from: number, to: number): Promise<SleepEvidence> {
   const [workouts, spots, active] = await Promise.all([
     db.getAllAsync<{ start: number; end: number; duration: number }>(
-      'SELECT start, end, duration FROM workouts WHERE end >= ? AND start <= ?',
+      // `complete != 0` matches the native rule (SleepStore.evidence): an incomplete workout is a download the watch
+      // never finished, so it is not evidence that the wearer was awake and must not subtract sleep.
+      'SELECT start, end, duration FROM workouts WHERE complete != 0 AND end >= ? AND start <= ?',
       from,
       to,
     ),

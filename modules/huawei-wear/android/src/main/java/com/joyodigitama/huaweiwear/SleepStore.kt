@@ -55,7 +55,10 @@ internal object SleepStore {
   fun evidence(db: SQLiteDatabase, from: Long, to: Long): SleepEvidence {
     val workouts = db.rawQuery(
       // The CAST: a bound string compares as text against an expression, which has no column affinity to turn it into a number.
-      "SELECT start, end, duration FROM workouts WHERE start <= ? AND (end >= ? OR start + duration >= CAST(? AS INTEGER))",
+      // `complete != 0` only: an incomplete row is a download the watch never finished (its parts were refused after the
+      // retries), so its span says nothing about the wearer being awake. Counting it as awake evidence deleted sleep on
+      // the strength of a failed transfer, which is how a Watch Fit 1 lost every stage-less night it had.
+      "SELECT start, end, duration FROM workouts WHERE complete != 0 AND start <= ? AND (end >= ? OR start + duration >= CAST(? AS INTEGER))",
       arrayOf(to.toString(), from.toString(), from.toString()),
     ).use { c ->
       val out = ArrayList<TimeSpan>(c.count)
