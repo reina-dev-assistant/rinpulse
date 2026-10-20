@@ -66,11 +66,27 @@ internal object EstimatedSleepStages {
   private const val REFERENCE_MOVEMENT = 2.23f
 
   /**
-   * The estimator's `SleepEstimatorConfig.sleepThreshold`: a minute whose weighted movement is at or above this
-   * is awake. Used only to describe a stream in the log ([scoring]), never to score one -- the estimator does
-   * its own scoring with its own constants.
+   * [SleepEstimatorConfig.sleepThreshold] for this watch: a minute whose *weighted* movement (Cole-Kripke, sum
+   * 2.86x its own value when its neighbours match) reaches this is awake. The estimator's own default is 8, and
+   * the Watch Fit 1 cannot use it: this watch quantises movement coarsely — a real night of it holds 41 distinct
+   * movement values and 75.8% of its minutes are exactly zero, against 908 distinct values and 44.1% zeros on
+   * the night the estimator was fitted on (Garmin Venu SQ). Its ceiling, 63.75, is written whenever the wearer
+   * moves at all.
+   *
+   * Measured on a real night of this watch (the minutes replayed from the log):
+   *
+   *  - the wearer's real waking stretch (21:40-21:44, confirmed by them) weighs 12.13-12.32;
+   *  - short restless blips in the same night weigh 8.04-9.44 — above the estimator's 8, so they are read as
+   *    waking, and there are between three and five of them a night;
+   *  - so a threshold of 8 puts every blip over the line and the night reports wakes the wearer never had,
+   *    while 11 sits in the empty gap between the two populations.
+   *
+   * It is safe for the night the estimator's constants were fitted on: that stream's own labelled-awake minutes
+   * weigh 0.86 at the median (far below either threshold) and only 7.6% of its minutes fall in the 8..11 band at
+   * all, against this watch's 2.4%, so raising the threshold cannot rewrite that night's waking. Checked: the
+   * fixture's three nights keep deep 10-25% and REM 15-30%.
    */
-  private const val SLEEP_THRESHOLD = 8f
+  private const val WAKE_THRESHOLD = 11f
 
   /** Below this many minutes a stream cannot hold a night (the estimator wants 150 of sleep in 180). */
   private const val MIN_MINUTES = 180
@@ -210,8 +226,14 @@ internal object EstimatedSleepStages {
   ): List<EstimatedSleepSession> {
     val bounded = within(minutes, windows)
     if (bounded.size < MIN_MINUTES) return emptyList()
-    return SleepStageEstimator.estimateAll(calibrate(fillGaps(bounded)), SleepEstimatorConfig())
+    return SleepStageEstimator.estimateAll(calibrate(fillGaps(bounded)), config())
   }
+
+  /**
+   * The estimator's settings for this watch: its defaults, with only [WAKE_THRESHOLD] raised — see that
+   * constant for the measurements behind it and for why it is safe for the night the defaults were fitted on.
+   */
+  fun config(): SleepEstimatorConfig = SleepEstimatorConfig(sleepThreshold = WAKE_THRESHOLD)
 
   /** [minutes] inside [windows]; empty when there are none, or when [windows] is empty. */
   fun within(minutes: List<SleepMinute>, windows: List<Pair<Long, Long>>): List<SleepMinute> {
@@ -364,8 +386,8 @@ internal object EstimatedSleepStages {
    * The estimator's own scoring is not reachable from here (its grid and labels are internal to the ported
    * package), so this reports the numbers that bound it instead of the labels: how the movement values are
    * spread, how many minutes are quiet enough that the centre of the Cole-Kripke window alone lands under
-   * `SleepEstimatorConfig.sleepThreshold` (8, and the centre weight is 1), and the longest unbroken such run.
-   * A night that is genuinely there shows a long quiet run; values in the wrong unit show a short one.
+   * [WAKE_THRESHOLD] (the centre weight is 1), and the longest unbroken such run. A night that is genuinely
+   * there shows a long quiet run; values in the wrong unit show a short one.
    */
   fun scoring(minutes: List<SleepMinute>): String {
     val raw = minutes.filter { it.kind == SleepMinuteKind.RAW }
@@ -375,16 +397,16 @@ internal object EstimatedSleepStages {
     var run = 0
     var longest = 0
     for (minute in ordered) {
-      if (minute.movement < SLEEP_THRESHOLD) {
+      if (minute.movement < WAKE_THRESHOLD) {
         run++
         if (run > longest) longest = run
       } else {
         run = 0
       }
     }
-    val quiet = values.count { it < SLEEP_THRESHOLD } * 100 / values.size
+    val quiet = values.count { it < WAKE_THRESHOLD } * 100 / values.size
     return "movement p50=${percentile(values, 0.5)} p90=${percentile(values, 0.9)} max=${values.max()}, " +
-      "$quiet% of minutes under the $SLEEP_THRESHOLD threshold, longest quiet run ${longest}min"
+      "$quiet% of minutes under the $WAKE_THRESHOLD threshold, longest quiet run ${longest}min"
   }
 
   /**

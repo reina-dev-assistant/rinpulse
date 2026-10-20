@@ -1,12 +1,15 @@
 package com.joyodigitama.huaweiwear
 
 import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.time.LocalTime
 import java.time.ZoneOffset
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiTruSleepParser
 import nodomain.freeyourgadget.gadgetbridge.util.sleep.EstimatedStage
+import nodomain.freeyourgadget.gadgetbridge.util.sleep.SleepEstimatorConfig
 import nodomain.freeyourgadget.gadgetbridge.util.sleep.SleepMinute
 import nodomain.freeyourgadget.gadgetbridge.util.sleep.SleepMinuteKind
+import nodomain.freeyourgadget.gadgetbridge.util.sleep.SleepStageEstimator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -531,5 +534,87 @@ class EstimatedSleepStagesTest {
     for ((before, after) in minutes.zip(calibrated)) {
       assertEquals(before.movement * (2.23f / median), after.movement, 0.001f)
     }
+  }
+
+
+  /**
+   * The night this watch really produced, replayed through the shipped entry point.
+   *
+   * The numbers are the watch's own dumped minutes for the night of 19 Oct 2026 (451 minutes, 20:09->03:40 WIB),
+   * with the movement values as the dump writes them (movement x 8). The wearer confirmed by hand that they woke
+   * twice that night: 21:40-21:44 and 02:49-02:50. The first of those is in the data as a solid plateau of the
+   * watch's ceiling value; the second is one minute and the estimator's smoothing drops a wake that short, which
+   * is a known limit rather than a defect (see the estimator's own docs).
+   *
+   * What the test pins is the difference between this watch's stream and the one the estimator was fitted on:
+   * with the estimator's default threshold of 8 the same minutes report FIVE waking stretches (three of them
+   * blips the wearer never noticed), and with the shipped threshold the night reports the one real wake. Both
+   * are asserted, so the reason for the threshold is in the test itself.
+   */
+  @Test
+  fun `a real night of this watch reports the wake the wearer had and not the restlessness around it`() {
+    val start = Instant.ofEpochSecond(1792415340L)
+    val movements = REPLAY_MOVEMENTS.split(',').map { it.toInt() / 8f }
+    val rates = REPLAY_RATES.split(',').map { if (it == "null") null else it.toFloat() }
+    val minutes = movements.indices.map { i ->
+      SleepMinute(start.plusSeconds(60L * i), SleepMinuteKind.RAW, movements[i], rates[i])
+    }
+    val window = listOf(start.epochSecond to start.plusSeconds(60L * minutes.size).epochSecond)
+
+    // The estimator's own default reports the blips as waking; this is why the constant exists.
+    val withDefault = SleepStageEstimator.estimateAll(
+      EstimatedSleepStages.calibrate(EstimatedSleepStages.fillGaps(EstimatedSleepStages.within(minutes, window))),
+      SleepEstimatorConfig(),
+    )
+    val defaultWakes = withDefault.flatMap { it.stages }.count { it.stage == EstimatedStage.AWAKE }
+    assertTrue("the default threshold was expected to over-report waking, saw $defaultWakes", defaultWakes >= 3)
+
+    // Shipped: exactly the wearer's own wake, and nothing else.
+    val sessions = EstimatedSleepStages.estimate(minutes, window)
+    assertEquals(1, sessions.size)
+    val session = sessions.first()
+    val wakes = session.stages.filter { it.stage == EstimatedStage.AWAKE }
+    assertEquals("waking stretches: ${wakes.map { TIME.format(it.start) + "-" + TIME.format(it.end) }}", 1, wakes.size)
+    assertEquals(TIME.format(Instant.ofEpochSecond(1792420860L)), TIME.format(wakes.first().start))
+    assertEquals(TIME.format(Instant.ofEpochSecond(1792421040L)), TIME.format(wakes.first().end))
+    // The night still keeps its own shape and onset.
+    assertEquals(TIME.format(Instant.ofEpochSecond(1792415340L)), TIME.format(session.onset))
+    assertEquals(TIME.format(Instant.ofEpochSecond(1792442400L)), TIME.format(session.end))
+  }
+
+  private companion object {
+    private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("dd HH:mm").withZone(ZoneOffset.ofHours(7))
+
+    /** The dumped minutes of the night of 19 Oct 2026, movement x 8, comma separated (see the replay test). */
+    private val REPLAY_MOVEMENTS: String =
+      "0,0,0,0,0,0,0,0,0,0,285,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0," +
+      "0,0,0,0,0,0,0,318,510,510,510,447,0,0,256,510,248,0,127,510,10,510,267,495,0,0,270,510,192,3,479,479,255,0,286" +
+      ",510,510,510,510,510,510,311,510,7,510,510,225,383,383,0,0,0,0,1,479,0,31,447,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,26" +
+      "2,128,256,224,315,0,0,0,255,0,0,0,0,495,63,252,0,0,0,0,0,375,15,240,0,0,0,254,254,0,255,0,0,49,447,0,0,0,0,0,0" +
+      ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,510,510,128,0,0,0,0,0,0,0,0,0,2,0,6" +
+      "3,252,0,0,0,0,0,0,0,0,0,0,0,271,0,0,0,0,0,0,256,254,254,0,0,0,0,0,286,248,0,0,0,0,0,0,0,0,1,1,510,252,4,0,0,0," +
+      "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,127,128,0,0,7,447,447,0,0,255,0,0,0,270,510,510,255,0,63,383,0,0,0" +
+      ",0,270,510,383,262,507,0,63,503,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,383,0,0,0,0,0,0,0,0,0,0,0,0,32,0,0,0,0" +
+      ",0,0,0,0,0,0,0,0,0,0,258,510,507,0,0,0,0,0,0,0,3,495,1,1,0,0,0,0,0,0,0,0,0,382,252,0,15,447,0,0,0,0,286,286,0," +
+      "1,479,0,0,0,0,1,503,0,0,0,0,1,1,254,258,248,0,0,0,0,0,0,0,63,503,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,258,252,256" +
+      ",254,254,1" +
+      ""
+
+    /** The same night's heart rate, one per minute, `null` where the dump had none. */
+    private val REPLAY_RATES: String =
+      "null,null,null,null,68,69,68,70,68,69,69,72,66,66,67,66,65,65,66,64,64,63,63,64,65,65,65,64,64,64,63,63,63,62," +
+      "63,64,62,62,63,63,63,62,62,62,63,63,63,62,62,62,62,62,63,62,61,63,63,62,62,62,63,64,71,69,64,64,62,62,62,60,61" +
+      ",63,59,68,61,63,66,61,60,59,60,61,67,63,62,62,64,64,65,72,66,66,66,66,66,null,null,null,null,null,null,null,nu" +
+      "ll,null,null,null,64,63,62,61,62,62,66,64,64,62,64,65,62,64,64,66,63,64,62,66,68,63,68,66,67,64,66,64,64,66,67" +
+      ",67,62,63,67,63,69,63,63,60,61,62,62,62,62,62,64,62,63,63,64,64,63,63,62,62,60,60,61,62,61,62,62,61,61,62,62,6" +
+      "0,61,60,61,60,61,61,61,61,61,61,62,60,62,62,61,61,61,61,62,62,63,63,61,61,62,62,62,62,62,62,62,62,62,61,60,61," +
+      "60,59,61,60,60,60,59,60,60,60,61,62,60,60,59,60,59,59,59,62,62,63,64,64,64,64,64,65,63,63,69,69,60,62,59,60,61" +
+      ",62,66,58,58,58,57,59,58,57,57,57,57,62,56,57,55,56,55,55,54,56,55,56,56,56,56,57,56,57,57,56,56,56,56,56,56,5" +
+      "7,56,57,56,56,60,57,56,55,54,54,55,55,55,56,54,56,57,63,60,69,56,57,64,56,59,61,61,64,77,73,null,null,null,nul" +
+      "l,null,null,null,null,null,55,55,56,56,55,55,56,56,56,55,53,55,55,55,55,54,55,57,55,53,53,55,55,56,53,52,54,53" +
+      ",54,60,54,52,53,54,55,54,54,55,53,53,54,55,54,54,56,63,68,59,57,55,58,54,56,58,57,61,66,66,56,53,55,55,57,57,5" +
+      "8,60,60,66,66,60,55,60,58,57,57,57,60,60,null,null,null,null,null,null,57,54,58,63,56,58,57,56,56,56,55,62,57," +
+      "null,59,60,60,56,58,57,61,63,57,57,57,57,57,58,59,59,59,59,57,59,61,59,59,59,59,61,57,58,58,61" +
+      ""
   }
 }
