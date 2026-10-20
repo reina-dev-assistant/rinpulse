@@ -137,10 +137,34 @@ internal object EstimatedSleepStages {
     return out
   }
 
-  /** Every night the minutes hold, in time order; empty when there are too few minutes to be one. */
-  fun estimate(minutes: List<SleepMinute>): List<EstimatedSleepSession> {
-    if (minutes.size < MIN_MINUTES) return emptyList()
-    return SleepStageEstimator.estimateAll(calibrate(fillGaps(minutes)), SleepEstimatorConfig())
+  /**
+   * Every night the minutes hold, in time order; empty when there are too few minutes to be one.
+   *
+   * [windows] are the stretches the watch itself judged to be sleep (its `sleep_state.bin` ranges, unix
+   * seconds `[start, end)`); the minutes outside them are dropped. The watch's accelerometer file covers
+   * **24 h a day**, so on its own it holds the daytime as well, and a quiet minute at a desk is not
+   * distinguishable from a quiet minute in bed: [calibrate] anchors on the stream's median, which in a
+   * 24-hour file is a *daytime* value, and the day is then pulled into the sleep range and read as sleep.
+   * Measured: a 24-hour stream comes back as one 24-hour "night", and Hilmi's 55-hour file was reported
+   * as 177 h of sleep. The watch's own ranges are what tell night from day, and Huawei stages sleep inside
+   * them too. With no window there is nothing to claim: minutes outside any window are not a night.
+   */
+  fun estimate(
+    minutes: List<SleepMinute>,
+    windows: List<Pair<Long, Long>> = emptyList(),
+  ): List<EstimatedSleepSession> {
+    val bounded = within(minutes, windows)
+    if (bounded.size < MIN_MINUTES) return emptyList()
+    return SleepStageEstimator.estimateAll(calibrate(fillGaps(bounded)), SleepEstimatorConfig())
+  }
+
+  /** [minutes] inside [windows]; empty when there are none, or when [windows] is empty. */
+  fun within(minutes: List<SleepMinute>, windows: List<Pair<Long, Long>>): List<SleepMinute> {
+    val ordered = windows.sortedBy { it.first }
+    return minutes.filter { minute ->
+      val at = minute.time.epochSecond
+      ordered.any { (from, to) -> at >= from && at < to }
+    }
   }
 
   /**

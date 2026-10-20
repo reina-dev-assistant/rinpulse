@@ -108,7 +108,10 @@ internal class SleepSync(
     // all silent about them), so the raw accelerometer of sleep_data.bin is put to work instead of only logged:
     // EstimatedSleepStages turns it plus this sync's heart rate into staged rows. GB parses the same file and
     // stops there ("not analysed yet"), which is why it can only offer "no sleep data" or "start and end time".
-    val estimated = estimateStages(sleepData, nightHeartRate)
+    //
+    // The state file goes first because its ranges are what tell the estimate which stretch of a 24-hour
+    // accelerometer stream is night: the file holds the day as well, and the estimate cannot tell a quiet desk
+    // from a quiet bed on its own (see EstimatedSleepStages.estimate).
     val stateSegments = if (state == null || state.isEmpty()) {
       log("TruSleep: sleep state file empty")
       emptyList()
@@ -120,16 +123,26 @@ internal class SleepSync(
       for (s in ranges) log("TruSleep: sleep range ${s.start}..${s.end} type=${s.type} stage=${s.stage}")
       ranges
     }
+    val estimated = estimateStages(sleepData, nightHeartRate, stateSegments)
     return SleepDownload(EstimatedSleepStages.withEstimatedStages(stateSegments, estimated), emptyList())
   }
 
   /**
    * The stages [EstimatedSleepStages] worked out of `sleep_data.bin` and [nightHeartRate], or an empty list when
-   * the file is missing or holds no accelerometer minutes.
+   * the file is missing, holds no accelerometer minutes, or [stateSegments] names no stretch of sleep (the file
+   * covers 24 h, so without the watch's own ranges there is no way to tell its night from its day).
    */
-  private fun estimateStages(sleepData: ByteArray?, nightHeartRate: Map<Long, Int>): List<SleepSegment> {
+  private fun estimateStages(
+    sleepData: ByteArray?,
+    nightHeartRate: Map<Long, Int>,
+    stateSegments: List<SleepSegment>,
+  ): List<SleepSegment> {
     if (sleepData == null || sleepData.isEmpty()) {
       log("TruSleep: no sleep_data.bin, no stages estimated")
+      return emptyList()
+    }
+    if (stateSegments.isEmpty()) {
+      log("TruSleep: the watch named no sleep range, no stages estimated (the ACC file covers the whole day)")
       return emptyList()
     }
     val accs = try {
@@ -138,14 +151,18 @@ internal class SleepSync(
       log("TruSleep: sleep_data.bin could not be parsed (${e.message ?: e.javaClass.simpleName}), no stages estimated")
       return emptyList()
     }
-    val minutes = EstimatedSleepStages.withHeartRate(EstimatedSleepStages.minutesFromAcc(accs), nightHeartRate)
+    val windows = stateSegments.map { it.start to it.end }
+    val minutes = EstimatedSleepStages.within(
+      EstimatedSleepStages.withHeartRate(EstimatedSleepStages.minutesFromAcc(accs), nightHeartRate),
+      windows,
+    )
     log(
       "TruSleep: sleep_data.bin has " +
         EstimatedSleepStages.coverage(minutes, EstimatedSleepStages.fillGaps(minutes)) +
-        " for the stage estimate",
+        " inside ${windows.size} watched sleep range(s) for the stage estimate",
     )
     log("TruSleep: stage scoring: ${EstimatedSleepStages.scoring(EstimatedSleepStages.calibrate(EstimatedSleepStages.fillGaps(minutes)))}")
-    val sessions = EstimatedSleepStages.estimate(minutes)
+    val sessions = EstimatedSleepStages.estimate(minutes, windows)
     val segments = EstimatedSleepStages.segments(sessions)
     if (segments.isEmpty()) {
       log("TruSleep: the stage estimate found no night in those minutes")

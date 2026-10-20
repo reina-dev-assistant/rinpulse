@@ -65,6 +65,10 @@ class EstimatedSleepStagesTest {
       accMinutes(start.plusSeconds(30 * 60L), sleepMinutes) { 4 } +
       accMinutes(start.plusSeconds((30 + sleepMinutes) * 60L), 60) { 80 }
 
+  /** The window the watch itself judged asleep for {@link aNight}: its `sleep_state.bin` range. */
+  private fun aNightWindow(start: Instant = bedtime, sleepMinutes: Int = 450): List<Pair<Long, Long>> =
+    listOf(start.epochSecond to start.plusSeconds((30 + sleepMinutes + 60) * 60L).epochSecond)
+
   @Test
   fun `the axes are summed into movement, and the busiest sample of a minute wins`() {
     val minutes = EstimatedSleepStages.minutesFromAcc(
@@ -128,7 +132,7 @@ class EstimatedSleepStagesTest {
       heartRate(bedtime, 30 + 450 + 60, ::nightHeartRate),
     )
 
-    val sessions = EstimatedSleepStages.estimate(minutes)
+    val sessions = EstimatedSleepStages.estimate(minutes, aNightWindow())
     val segments = EstimatedSleepStages.segments(sessions)
 
     assertEquals("one night out of ${minutes.size} minutes", 1, sessions.size)
@@ -156,7 +160,43 @@ class EstimatedSleepStagesTest {
   @Test
   fun `too few minutes are no night at all`() {
     val minutes = EstimatedSleepStages.minutesFromAcc(accMinutes(bedtime, 60) { 4 })
-    assertEquals(emptyList<Any>(), EstimatedSleepStages.estimate(minutes))
+    assertEquals(emptyList<Any>(), EstimatedSleepStages.estimate(minutes, aNightWindow()))
+  }
+
+  /**
+   * The accelerometer file covers 24 h, so the estimate must be bounded by the watch's own sleep ranges: a
+   * whole day of quiet reading is not a night. On the device this came out as 177 h of sleep over a 55-hour
+   * file, because the day's own minutes were read as sleep and joined the night's.
+   */
+  @Test
+  fun `only the watch's own sleep ranges are estimated, not the whole day`() {
+    // A full day: the night as usual, and the rest of the day quiet enough to be misread as sleep.
+    val quietDay = accMinutes(bedtime.minusSeconds(8 * 3600L), 8 * 60) { 0 } +
+      aNight() +
+      accMinutes(bedtime.plusSeconds(9 * 3600L), 14 * 60) { 0 }
+    val minutes = EstimatedSleepStages.minutesFromAcc(quietDay)
+
+    val windows = aNightWindow()
+    val bounded = EstimatedSleepStages.within(minutes, windows)
+    assertTrue("the day was dropped, got ${bounded.size} of ${minutes.size}", bounded.size < minutes.size * 40 / 100)
+    assertTrue("no minute before the window", bounded.all { it.time.epochSecond >= bedtime.epochSecond })
+
+    // What the estimate claims stays inside the window; unbounded it would swallow the day.
+    val claimed = EstimatedSleepStages.segments(EstimatedSleepStages.estimate(minutes, windows))
+    assertTrue(claimed.isNotEmpty())
+    val (from, to) = windows[0]
+    assertTrue(
+      "the night stays within the watch's range, got ${claimed.first().start}..${claimed.last().end}",
+      claimed.first().start >= from && claimed.last().end <= to,
+    )
+    assertEquals("one night, not the day", 1, EstimatedSleepStages.estimate(minutes, windows).size)
+  }
+
+  @Test
+  fun `without the watch naming any sleep range nothing is claimed`() {
+    // The file alone covers the day too, so there is nothing to tell night from day with.
+    val minutes = EstimatedSleepStages.minutesFromAcc(aNight())
+    assertEquals(emptyList<Any>(), EstimatedSleepStages.estimate(minutes, emptyList()))
   }
 
   @Test
@@ -171,7 +211,7 @@ class EstimatedSleepStagesTest {
     val filled = EstimatedSleepStages.fillGaps(sparseMinutes)
     assertTrue("the gaps were filled, got ${filled.size}", filled.size > sparseMinutes.size * 3 / 2)
 
-    val sessions = EstimatedSleepStages.estimate(sparseMinutes)
+    val sessions = EstimatedSleepStages.estimate(sparseMinutes, aNightWindow())
     assertEquals("a night out of a sparse stream", 1, sessions.size)
 
     // A stretch the watch was off the wrist is not bridged for more than the hold's own limit; the rest

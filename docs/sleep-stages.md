@@ -36,12 +36,17 @@ like Gadgetbridge does ("not analysed yet").
    The raw axis byte has no published unit, so `ACC_PER_MOVEMENT` turns it into a movement count and
    `calibrate` then places the stream's own median on the one the estimator's constants were fitted on
    (2.23 counts, the median of its Venu SQ night) — the unit cancels out instead of being guessed.
-   Two things about this watch's file had to be handled before any night came out at all (both measured,
-   see below): it carries a reading only every second or third minute, and the raw unit is unknown. The
-   first made the estimate come back empty on the device, because a minute with no reading counts as *not
-   worn*, which is never sleep, so no 180-minute window could hold the 150 sleep minutes a night needs;
-   `fillGaps` carries a reading across gaps of up to three minutes and leaves longer ones (watch off the
-   wrist) as the holes they are.
+   Three things about this watch's file had to be handled before the estimate was right (all measured,
+   see below): it covers **24 h a day**, its raw unit is unknown, and it carries a reading only every
+   second or third minute.
+   - **The day.** A quiet minute at a desk scores exactly like a quiet minute in bed, so a whole day of
+     the file is one long "night". On the device this came out as **177 h of sleep** from a 55-hour file.
+     The watch's own judged-asleep ranges (`sleep_state.bin`) are therefore what bounds the estimate
+     (`within`), the same way Huawei stages sleep inside them and nothing else.
+   - **The density.** A minute with no reading counts as *not worn*, which is never sleep, so too sparse a
+     stream cannot hold the 150 sleep minutes a night needs, and the estimate came back empty on the
+     device. `fillGaps` carries a reading across gaps of up to five minutes and leaves longer ones (watch
+     off the wrist) as the holes they are.
 3. **Storage** — the estimate is written to `sleep_segments` under raw kind `0x5657`
    (`RAW_ESTIMATED`), which no watch ever sends, with the usual `light` / `deep` / `rem` / `awake` names.
    No schema change: `stage` already exists.
@@ -79,21 +84,26 @@ The `Venu SQ fixture` in the estimator's own test is a real night with a known a
 through the adapter's preprocessing to pick the two numbers rather than guess them:
 
 - **Density.** Thinning that fixture to one reading every second minute makes the estimator report no night
-  at all; a zero-order hold of up to 3 minutes recovers it. Replayed at 25% the hold needs 3. The Fit 1's
-  own file measured 41% (1370 readings over 3333 minutes), where a hold of 3 recovers 250 of the 252
-  minutes the dense copy of the same night holds.
+  at all; a zero-order hold recovers it. Replayed at 25% a hold of 3 recovers the night, and the Fit 1's own
+  file measured 41% (1370 readings over 3333 minutes). The shipped hold is **5**: it covers the 41% case with
+  margin and stays far below the estimator's own 45-minute break, so a stretch the watch really was off the
+  wrist is never bridged into sleep.
+- **Bounding.** Replaying a 24-hour stream through the adapter comes back as **24 h of claimed sleep** at
+  every movement level tried, including a still one — the day is indistinguishable from a quiet night, which
+  is why the watch's own ranges are required rather than optional.
 - **Scale.** Multiplying the same fixture's movement by 8 also produces no night. Anchoring the stream's
   median on the fixture's median recovers the original three nights at every scale tried, from ×0.25 to
   ×16, which is why calibration is by percentile and not by a fixed divisor.
 
-Both probes are throwaway JVM programs (`ScaleProbe`, `FillProbe`, `GapProbe` under `/tmp/rincheck`), not
-part of the repo: they exist to justify the constants, and the live behaviour is covered by the tests below.
+Both probes are throwaway JVM programs (`ScaleProbe`, `FillProbe`, `GapProbe`, `DayProbe`, `E2E` under
+`/tmp/rincheck`), not part of the repo: they exist to justify the constants, and the live behaviour is
+covered by the tests below.
 
 ## Tests
 
 - `modules/huawei-wear/android/src/test/java/com/joyodigitama/huaweiwear/EstimatedSleepStagesTest.kt` —
   the adapter: axis summing, minute flooring, the heart-rate join, a plausible night coming out as one
-  staged night, real stages winning.
+  staged night, a full day bounded down to the watch's own sleep range, real stages winning.
 - Gadgetbridge's own `SleepStageEstimatorTest.kt` (18 tests, including a real four-day fixture) passes
   unchanged against the ported estimator; that is the check that the port is faithful.
 - `src/features/sleep/nights.test.ts` — the `estimated` flag reaching the UI, and a night with a mix of
