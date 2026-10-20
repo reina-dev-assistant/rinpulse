@@ -1,5 +1,6 @@
 export { WorkoutAnalysisView } from './WorkoutAnalysisView';
 export type { WorkoutAnalysisViewProps } from './WorkoutAnalysisView';
+export type { ExtraStat } from './SummaryStrip';
 export { BasicDetail } from './BasicDetail';
 export type { BasicDetailProps } from './BasicDetail';
 export { defaultPalette } from './theme';

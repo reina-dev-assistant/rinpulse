@@ -171,6 +171,11 @@ export async function insertWeighIn(db: ScaleDb, w: NewWeighIn): Promise<number>
   return result.lastInsertRowId;
 }
 
+/** The weigh-in settled at another weight: the row takes it, and goes to JoyoRogo again (or stays out of it) like a new one. */
+export async function reviseWeighIn(db: ScaleDb, id: number, weightKg: number, rogoState: RogoState): Promise<void> {
+  await db.runAsync('UPDATE scale_reading SET weight_kg = ?, rogo_state = ?, rogo_error = NULL WHERE id = ?', weightKg, rogoState, id);
+}
+
 /** The same weigh-in arrived again with impedance (and what follows from it): completes the row instead of adding one. */
 export async function completeWeighIn(
   db: ScaleDb,

@@ -9,11 +9,15 @@ import { haversineM } from '@/features/routes/routeModel';
 import {
   candidateScore,
   DEFAULT_COUNT,
-  EXTRA_TRIES,
   FALLBACK_TOLERANCE,
   generateLoops,
   LoopError,
   MAX_ATTEMPTS,
+  MAX_REQUESTS,
+  MIN_WANTED,
+  nextCircumference,
+  OFFER_TOLERANCE,
+  RATIO_RANGE,
   rankCandidates,
   ringWaypoints,
   shapeFor,
@@ -21,7 +25,7 @@ import {
   type LoopCandidate,
   type LoopRouter,
 } from './generate';
-import { destination, pathLengthM, resampleLine } from './geo';
+import { destination, pathLengthM, removeSpurs, resampleLine } from './geo';
 import { createPaintedIndex } from './painted';
 
 const HOME: LatLon = { lat: -6.2088, lon: 106.8456 };
@@ -112,6 +116,25 @@ describe('generateLoops', () => {
     }
   });
 
+  test('a dead-end stub the router goes into is not part of the loop, nor of its length', async () => {
+    const plain = bendyRouter();
+    // The service goes 90 m up a side street at the middle of the line and comes back the same way.
+    const stubbed: LoopRouter = async (waypoints, signal) => {
+      const routed = await plain(waypoints, signal);
+      const mid = Math.floor(routed.line.length / 2);
+      const at = routed.line[mid];
+      const tip = destination(at, 0, 90);
+      const line = [...routed.line.slice(0, mid + 1), destination(at, 0, 45), tip, destination(at, 0, 45), at, ...routed.line.slice(mid + 1)];
+      return { ...routed, line };
+    };
+    const { candidates } = await generateLoops({ ...base, router: stubbed });
+    expect(candidates.length).toBeGreaterThan(0);
+    for (const c of candidates) {
+      expect(removeSpurs(c.line)).toEqual(c.line);
+      expect(Math.abs(c.lengthError)).toBeLessThanOrEqual(FALLBACK_TOLERANCE);
+    }
+  });
+
   test('different seeds give different loops, the same seed the same loops', async () => {
     const a = await generateLoops({ ...base, router: bendyRouter() });
     const b = await generateLoops({ ...base, router: bendyRouter() });
@@ -148,8 +171,7 @@ describe('generateLoops', () => {
     const seen: [number, number][] = [];
     await generateLoops({ ...base, router: bendyRouter(), onProgress: (i, n) => seen.push([i, n]) });
     expect(seen[0]).toEqual([1, DEFAULT_COUNT]);
-    expect(seen.length).toBeGreaterThanOrEqual(DEFAULT_COUNT);
-    expect(seen.length).toBeLessThanOrEqual(DEFAULT_COUNT + EXTRA_TRIES);
+    expect(seen.every(([i, n]) => i >= 1 && i <= n && n === DEFAULT_COUNT)).toBe(true);
   });
 
   test('keeps trying a little longer when too few loops came out', async () => {
@@ -178,6 +200,103 @@ describe('generateLoops', () => {
       expect(Math.abs(c.lengthError)).toBeLessThanOrEqual(FALLBACK_TOLERANCE);
       expect(Math.abs(c.lengthError)).toBeGreaterThan(TOLERANCE);
     }
+  });
+
+  /** A service for a part of town behind a barrier: rings are `factor` times too long unless `works` says the shape is fine. */
+  function barrierRouter(factor: number, works: (calls: number) => boolean, calls: { n: number } = { n: 0 }): LoopRouter {
+    return async (waypoints, signal) => {
+      calls.n++;
+      const routed = await bendyRouter()(waypoints, signal);
+      if (works(calls.n)) return routed;
+      const length = pathLengthM(routed.line);
+      const stretch = (7000 * factor) / length;
+      const start = waypoints[0];
+      return { ...routed, line: routed.line.map((p) => ({ lat: start.lat + (p.lat - start.lat) * stretch, lon: start.lon + (p.lon - start.lon) * stretch })) };
+    };
+  }
+
+  test('keeps trying shapes past the first round while barriers ruin most of them, within the request budget', async () => {
+    const calls = { n: 0 };
+    // The first twelve requests are rings that cross a river and come out three times too long.
+    const router = barrierRouter(3, (n) => n > 12, calls);
+    const { candidates } = await generateLoops({ ...base, router });
+    expect(candidates.length).toBeGreaterThanOrEqual(MIN_WANTED);
+    expect(calls.n).toBeGreaterThan(12);
+    expect(calls.n).toBeLessThanOrEqual(MAX_REQUESTS);
+  });
+
+  test('gives up a shape whose rescaled ring is still far off, instead of spending every attempt on it', async () => {
+    const calls = { n: 0 };
+    await rejectionOf(generateLoops({ ...base, router: barrierRouter(3, () => false, calls) }));
+    // Two requests per shape (the second shows the rescale did not help), not MAX_ATTEMPTS.
+    expect(calls.n).toBe(MAX_REQUESTS);
+    expect(calls.n % 2).toBe(0);
+  });
+
+  test('a ratio that only barriers explain is not handed to the next batch', async () => {
+    // Rings of the first shapes come out 6x their circumference; the rest are normal.
+    const first = await generateLoops({ ...base, router: barrierRouter(6, (n) => n > 4), ratio: 1.25 });
+    expect(first.ratio).toBeGreaterThanOrEqual(RATIO_RANGE[0]);
+    expect(first.ratio).toBeLessThanOrEqual(RATIO_RANGE[1]);
+    const clamped = await generateLoops({ ...base, router: bendyRouter(), ratio: 9 });
+    expect(clamped.candidates.length).toBeGreaterThanOrEqual(MIN_WANTED);
+  });
+
+  test('when no loop fits the length it says so and carries the closest one', async () => {
+    // Every loop the service gives is 30% long: nothing within the 10% near-miss band.
+    const error = (await rejectionOf(generateLoops({ ...base, router: barrierRouter(1.3, () => false) }))) as LoopError;
+    expect(error).toBeInstanceOf(LoopError);
+    expect(error.kind).toBe('no_loop');
+    expect(error.closest).not.toBeNull();
+    expect(error.closest?.lengthError).toBeGreaterThan(FALLBACK_TOLERANCE);
+    expect(error.closest?.lengthError).toBeLessThanOrEqual(OFFER_TOLERANCE);
+    expect(error.closest?.line[0]).toEqual(HOME);
+  });
+
+  test('a loop far beyond the target is not offered as the closest', async () => {
+    const error = (await rejectionOf(generateLoops({ ...base, router: barrierRouter(3, () => false) }))) as LoopError;
+    expect(error.kind).toBe('no_loop');
+    expect(error.closest).toBeNull();
+  });
+
+  test('says the service is busy when it answers with errors or times out', async () => {
+    for (const failure of [new RequestError('http', 'HTTP 429', 429), new RequestError('http', 'HTTP 503', 503), new RequestError('timeout', 'No answer in 10 s.')]) {
+      const error = (await rejectionOf(
+        generateLoops({
+          ...base,
+          router: async () => {
+            throw failure;
+          },
+        }),
+      )) as LoopError;
+      expect(error.kind).toBe('busy');
+      expect(error.cause).toBe(failure);
+      expect(error.closest).toBeNull();
+    }
+  });
+
+  test('a few failed requests among answered ones are no loop, not a busy service', async () => {
+    let calls = 0;
+    const router: LoopRouter = async (w, s) => {
+      calls++;
+      if (calls === 2) throw new RequestError('http', 'HTTP 429', 429);
+      return barrierRouter(1.3, () => false)(w, s);
+    };
+    const error = (await rejectionOf(generateLoops({ ...base, router }))) as LoopError;
+    expect(error.kind).toBe('no_loop');
+  });
+
+  test('a request that fails after a good answer keeps that answer', async () => {
+    let calls = 0;
+    const router: LoopRouter = async (w, s) => {
+      calls++;
+      // 6% long: not on target, so the loop asks for a second request, which fails.
+      if (calls === 1) return barrierRouter(1.06, () => false)(w, s);
+      throw new RequestError('http', 'HTTP 429', 429);
+    };
+    const { candidates } = await generateLoops({ ...base, router, count: 1 });
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].lengthError).toBeCloseTo(0.06, 1);
   });
 
   test('says there is no street when the start is far from every road', async () => {
@@ -213,6 +332,60 @@ describe('generateLoops', () => {
     };
     const error = await rejectionOf(generateLoops({ ...base, router: stopping, signal: controller.signal }));
     expect(isAborted(error)).toBe(true);
+  });
+});
+
+describe('nextCircumference', () => {
+  test('one measurement: scales the ring by target over length', () => {
+    expect(nextCircumference([{ circumferenceM: 4000, lengthM: 8000 }], 5000)).toBeCloseTo(2500, 5);
+  });
+
+  test('never changes the ring by more than half or double in one step', () => {
+    expect(nextCircumference([{ circumferenceM: 4000, lengthM: 24_000 }], 5000)).toBe(2000);
+    expect(nextCircumference([{ circumferenceM: 4000, lengthM: 1000 }], 5000)).toBe(8000);
+  });
+
+  test('two measurements on one side: a secant step, not a proportional one', () => {
+    // Length grows 1 m per m of ring from 3000 m of length at 1000 m; the target is 5000 m.
+    const next = nextCircumference(
+      [
+        { circumferenceM: 3000, lengthM: 6000 },
+        { circumferenceM: 2500, lengthM: 5500 },
+      ],
+      5000,
+    );
+    expect(next).toBeCloseTo(2000, 5);
+  });
+
+  test('a length below and one above the target: the next ring lies between them', () => {
+    const next = nextCircumference(
+      [
+        { circumferenceM: 4000, lengthM: 8000 },
+        { circumferenceM: 1000, lengthM: 3000 },
+      ],
+      5000,
+    );
+    expect(next).toBeGreaterThan(1000);
+    expect(next).toBeLessThan(4000);
+    // The target is 40% of the way up the length range: so is the ring.
+    expect(next).toBeCloseTo(1000 + 0.4 * 3000, 5);
+  });
+
+  test('stops when the length jumps over the target between rings 3% apart', () => {
+    expect(
+      nextCircumference(
+        [
+          { circumferenceM: 2000, lengthM: 4000 },
+          { circumferenceM: 2030, lengthM: 9500 },
+        ],
+        5000,
+      ),
+    ).toBeNull();
+  });
+
+  test('never asks for a ring below the minimum, and stops when it cannot get smaller', () => {
+    expect(nextCircumference([{ circumferenceM: 1000, lengthM: 9000 }], 1000)).toBe(500);
+    expect(nextCircumference([{ circumferenceM: 400, lengthM: 9000 }], 1000)).toBeNull();
   });
 });
 

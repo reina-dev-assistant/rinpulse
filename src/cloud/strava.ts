@@ -17,6 +17,7 @@ import { gearOfWorkout, getStravaGearSent, reconcileDefaults, setStravaGearSent 
 import { rideUploadFields } from '@/features/cycling/forStrava';
 import { isEbike, rideProfile } from '@/features/cycling/settings';
 import { buildFit, buildUploadForm, duplicateOf } from '@/features/strava/activityFile';
+import { stravaCadenceFields } from '@/features/strava/cadenceFields';
 import { stravaDevice } from '@/features/strava/device';
 import { strengthUploadExtras } from '@/features/strength/share/uploadExtras';
 import { workoutElevation } from '@/features/workouts/analysis/elevation';
@@ -214,8 +215,7 @@ async function doSend(db: SQLiteDatabase, workoutId: number): Promise<StravaUplo
           avgPower: summary.avgPower,
           maxPower: summary.maxPower,
           normalizedPower: summary.normalizedPower,
-          avgCadence: summary.avgCadence,
-          maxCadence: summary.maxCadence,
+          ...stravaCadenceFields(workout, summary, points),
           ...ride,
           ebike: isEbike(workout.start),
         },

@@ -129,6 +129,11 @@ export interface SyncSummary {
   workouts: number;
   /** Today's totals as reported by the watch. */
   totals: FitnessTotals;
+  /**
+   * The watch the sync ran on (`device.address`). Android names it (a background visit syncs a watch that is not the one the app shows);
+   * absent on iOS and on older binaries, where the watch the link is up to is the one.
+   */
+  address?: string | null;
 }
 
 export type LogDirection = 'tx' | 'rx' | 'info' | 'error';
@@ -170,6 +175,29 @@ export interface BackgroundStatus {
    */
   paused: boolean;
   syncIntervalMinutes: number;
+}
+
+/** The phone makers whose Android keeps its own list of apps allowed to start by themselves (`BackgroundRestrictions.autoStartVendor`). */
+export type AutoStartVendor = 'transsion' | 'xiaomi' | 'oppo' | 'vivo';
+
+/**
+ * Whether Android may stop the background service while the screen is off, which drops the watch link (`getBackgroundRestrictions`,
+ * Android only). Exempt and unrestricted means the phone leaves the connection alone.
+ */
+export interface BackgroundRestrictions {
+  /** JoyoFit is on Android's battery optimization exemption list (Doze and App Standby leave its connection alone). */
+  ignoringBatteryOptimizations: boolean;
+  /** The app is under "Restricted" background use (Android 9+): it may not run in the background at all. */
+  backgroundRestricted: boolean;
+  /** `Build.MANUFACTURER`, for display and the support report. */
+  manufacturer: string;
+  /** The group of makers (Infinix/Tecno/itel, Xiaomi, OPPO/realme, vivo) whose auto-start list `openAutoStartSettings` tries to open; null for any other maker. */
+  autoStartVendor: AutoStartVendor | null;
+  /**
+   * The build may show Android's own "allow" dialog for the exemption (sideload APK). The Google Play build cannot (Play does not allow the
+   * prompt for an app like this one): `openBatteryExemption` opens Android's battery optimization list instead.
+   */
+  canRequestDirectly: boolean;
 }
 
 export interface NotificationAccessStatus {

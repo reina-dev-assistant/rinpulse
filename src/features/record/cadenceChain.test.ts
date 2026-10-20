@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import type { LocationEvent, ValueEvent, WorkoutSessionOptions } from '../../../modules/ble-sensors/src/BleSensors.types';
+import type { LocationEvent, StepsEvent, ValueEvent, WorkoutSessionOptions } from '../../../modules/ble-sensors/src/BleSensors.types';
 import { analyzeRide } from '../cycling/analyzeRide';
 import { PROFILE } from '../cycling/rideFixtures';
 import { cscFrames, type CscFrame } from '../sensors/cscSim';
@@ -32,10 +32,15 @@ const vor: SavedSensor = {
 class FakeHub implements HubApi {
   values: ((e: ValueEvent) => void)[] = [];
   fixes: ((e: LocationEvent) => void)[] = [];
+  steps: ((e: StepsEvent) => void)[] = [];
   connects: string[] = [];
   onValue(l: (e: ValueEvent) => void) {
     this.values.push(l);
     return () => (this.values = this.values.filter((x) => x !== l));
+  }
+  onSteps(l: (e: StepsEvent) => void) {
+    this.steps.push(l);
+    return () => (this.steps = this.steps.filter((x) => x !== l));
   }
   onLocation(l: (e: LocationEvent) => void) {
     this.fixes.push(l);
@@ -93,6 +98,7 @@ async function ride({ frames, sport = 'ride', warm = false, seconds }: RideOptio
     db,
     now: () => clock,
     profile: () => ({ weightKg: 70, age: 35, sex: 'male' }),
+    stepCounter: async () => 'unavailable',
     wheelCircumferenceM: () => 2.105,
     sensors: () => [vor],
   });

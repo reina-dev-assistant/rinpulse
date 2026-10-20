@@ -19,7 +19,7 @@ import kotlinx.coroutines.withTimeout
 
 /**
  * The phone side of a recorded workout: the [RecordingService] that keeps the process alive, a partial wake lock, and the GPS
- * fixes. Process-wide like [SensorHub], because the service and the recording outlive the JS runtime. Android may refuse the
+ * fixes (plus the phone's step counter when asked). Process-wide like [SensorHub], because the service and the recording outlive the JS runtime. Android may refuse the
  * service (see [SessionPolicy]); the fixes and the wake lock then run without it and `start` reports ERR_SERVICE_NOT_ALLOWED once they do.
  */
 internal object WorkoutSession {
@@ -44,6 +44,7 @@ internal object WorkoutSession {
   private var appContext: Context? = null
   private var wakeLock: PowerManager.WakeLock? = null
   private var location: WorkoutLocation? = null
+  private var steps: WorkoutSteps? = null
 
   /** Completed by the service once `startForeground` succeeded or was refused. */
   @Volatile private var pending: CompletableDeferred<Unit>? = null
@@ -70,7 +71,7 @@ internal object WorkoutSession {
    * Starts the session, or updates the options of a running one. Returns when the service is in the foreground and GPS runs. When Android
    * refuses the service, GPS and the wake lock start anyway and the call then throws ERR_SERVICE_NOT_ALLOWED.
    */
-  suspend fun start(context: Context, title: String, text: String, gps: Boolean, openUrl: String?, controls: RecordingNotificationSpec.Controls?) {
+  suspend fun start(context: Context, title: String, text: String, gps: Boolean, openUrl: String?, controls: RecordingNotificationSpec.Controls?, steps: Boolean = false) {
     if (gps && !hasFineLocation(context)) {
       throw SensorException(ErrorCodes.LOCATION_PERMISSION, "Precise location permission is not granted")
     }
@@ -123,6 +124,11 @@ internal object WorkoutSession {
           location?.stop()
         }
         if (!plan.wakeLock) releaseWakeLock()
+        if (steps) {
+          (this.steps ?: WorkoutSteps(context, hub).also { this.steps = it }).start()
+        } else {
+          this.steps?.stop()
+        }
       }
     } catch (e: SensorException) {
       abort(context, wasActive)
@@ -169,6 +175,8 @@ internal object WorkoutSession {
       serviceUp = false
       location?.stop()
       location = null
+      steps?.stop()
+      steps = null
       releaseWakeLock()
     }
     handler.removeCallbacks(refresh)

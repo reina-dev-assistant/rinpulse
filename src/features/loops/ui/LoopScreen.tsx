@@ -1,6 +1,6 @@
 import type { CameraRef } from '@maplibre/maplibre-react-native';
-import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Linking, PanResponder, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,7 +21,7 @@ import { loadMapLibre, type MapLibre } from '@/features/routes/map/maplibre';
 import { resolveStartView, type StartView } from '@/features/routes/map/startPosition';
 import { formatRouteDistance } from '@/features/routes/routeModel';
 import { fmtDecimal } from '@/i18n';
-import { spacing, useTheme } from '@/theme';
+import { HIT, spacing, useTheme } from '@/theme';
 
 import { bigNumber, formatPace, secondaryLine, targetText } from '../display';
 import { TOLERANCE, type LoopCandidate } from '../generate';
@@ -40,13 +40,24 @@ const TAP_PX = 8;
 
 type Sheet = 'plan' | 'home' | 'search';
 
-/** `/routes/loop`: pick a target (steps, distance, time or kcal), get a dotted loop from the door on streets not walked yet. */
+/** `/routes/loop`: pick a target (steps, distance, time or kcal), get a loop from the door on streets not walked yet. */
 export function LoopScreen() {
   const { t } = useTranslation('loops');
+  const { t: tCommon } = useTranslation('common');
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const maplibre = loadMapLibre();
   if (!maplibre) {
     return (
-      <View style={styles.unavailable}>
+      <View style={[styles.unavailable, { paddingTop: insets.top + spacing.sm, gap: spacing.md }]}>
+        <View style={styles.backRow}>
+          <MapButton
+            icon="arrow-back"
+            label={tCommon('actions.back')}
+            surface="floating"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/routes'))}
+          />
+        </View>
         <Notice icon="map-outline">{t('unavailable')}</Notice>
       </View>
     );
@@ -56,12 +67,23 @@ export function LoopScreen() {
 
 function LoopMap({ maplibre }: { maplibre: MapLibre }) {
   const { t } = useTranslation('loops');
+  const { t: tCommon } = useTranslation('common');
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { Map: MapView, Camera } = maplibre;
   const planner = useLoopPlanner(maplibre);
   const { prefs, start, loop, area, home } = planner;
+
+  // Full screen: the map runs under where the tab bar sits. The tab navigator is this stack's parent.
+  useFocusEffect(
+    useCallback(() => {
+      const tabs = navigation.getParent();
+      tabs?.setOptions({ tabBarStyle: { display: 'none' } });
+      return () => tabs?.setOptions({ tabBarStyle: undefined });
+    }, [navigation]),
+  );
 
   const cameraRef = useRef<CameraRef>(null);
   const rootRef = useRef<View>(null);
@@ -202,7 +224,7 @@ function LoopMap({ maplibre }: { maplibre: MapLibre }) {
           touchRotate={false}
           touchPitch={false}
           attribution
-          attributionPosition={{ top: 8, right: 8 }}
+          attributionPosition={{ top: insets.top + spacing.sm + HIT + spacing.xs, right: 8 }}
           onDidFailLoadingMap={() => setMapFailed(true)}
           onDidFinishLoadingMap={() => setMapFailed(false)}
           onPress={(event) => {
@@ -237,7 +259,29 @@ function LoopMap({ maplibre }: { maplibre: MapLibre }) {
       )}
 
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-        <View pointerEvents="box-none" style={styles.top}>
+        <View pointerEvents="box-none" style={[styles.controls, { top: insets.top + spacing.sm }]}>
+          <MapButton
+            icon="arrow-back"
+            label={tCommon('actions.back')}
+            surface="floating"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/routes'))}
+          />
+          {start && sheet !== 'search' ? (
+            <MapButton
+              icon="locate"
+              label={t('start.center')}
+              surface="floating"
+              onPress={() =>
+                cameraRef.current?.flyTo({
+                  center: [start.lon, start.lat],
+                  zoom: PLACE_ZOOM,
+                  duration: 600,
+                })
+              }
+            />
+          ) : null}
+        </View>
+        <View pointerEvents="box-none" style={[styles.top, { top: insets.top + spacing.sm + HIT + spacing.sm }]}>
           {showChip ? (
             <View
               accessible
@@ -266,20 +310,6 @@ function LoopMap({ maplibre }: { maplibre: MapLibre }) {
             ]}>
             <View pointerEvents="box-none" style={styles.edge}>
               <MapAttribution extra={credits} style={styles.credit} />
-              {start && sheet !== 'search' ? (
-                <MapButton
-                  icon="locate"
-                  label={t('start.center')}
-                  surface="floating"
-                  onPress={() =>
-                    cameraRef.current?.flyTo({
-                      center: [start.lon, start.lat],
-                      zoom: PLACE_ZOOM,
-                      duration: 600,
-                    })
-                  }
-                />
-              ) : null}
             </View>
             {sheet === 'search' ? (
               <SearchSheet onPick={goTo} onClose={() => setSheet('home')} />
@@ -422,7 +452,17 @@ function PlanSheet({ planner, expanded, onExpandedChange, onOpenHome, onBegin, o
         <StartNotices planner={planner} onOpenHome={onOpenHome} />
 
         {stale ? <Notice icon="refresh">{t('stale', { target: valueText })}</Notice> : null}
-        {error ? <Notice tone="danger">{error}</Notice> : null}
+        {error ? (
+          <Notice
+            tone="danger"
+            action={
+              planner.closest
+                ? { label: t('errors.showClosest', { closest: formatRouteDistance(planner.closest.lengthM) }), onPress: planner.showClosest }
+                : undefined
+            }>
+            {error}
+          </Notice>
+        ) : null}
         {finding && progress ? (
           <AppText variant="caption" muted accessibilityLiveRegion="polite">
             {t('finding', { index: progress.index, count: progress.count })}. {t('findingHint')}
@@ -431,9 +471,9 @@ function PlanSheet({ planner, expanded, onExpandedChange, onOpenHome, onBegin, o
 
         {hasLoop ? (
           <View style={styles.result}>
-            <AppText variant="bodyStrong" accessibilityLiveRegion="polite">
+            <AppText variant="bodyStrong" numberOfLines={expanded ? undefined : 1} accessibilityLiveRegion="polite">
               {loop.newShare !== null
-                ? t('result.summary', {
+                ? t(expanded ? 'result.summary' : 'result.short', {
                     distance: formatRouteDistance(loop.lengthM),
                     pct: Math.round(loop.newShare * 100),
                   })
@@ -466,6 +506,7 @@ function PlanSheet({ planner, expanded, onExpandedChange, onOpenHome, onBegin, o
               <CandidateCard
                 key={candidate.id}
                 candidate={candidate}
+                compact={!expanded}
                 index={index}
                 selected={index === planner.candidateIndex}
                 onPress={() => planner.choose(index)}
@@ -474,40 +515,50 @@ function PlanSheet({ planner, expanded, onExpandedChange, onOpenHome, onBegin, o
           </ScrollView>
         ) : null}
 
-        <Button
-          label={hasLoop ? t('another') : t('find')}
-          icon={hasLoop ? 'shuffle' : 'search'}
-          variant="primary"
-          loading={finding}
-          disabled={!start || !area || targetM === null}
-          onPress={planner.find}
-        />
+        {expanded || !hasLoop ? (
+          <Button
+            label={hasLoop ? t('another') : t('find')}
+            icon={hasLoop ? 'shuffle' : 'search'}
+            variant="primary"
+            loading={finding}
+            disabled={!start || !area || targetM === null}
+            onPress={planner.find}
+          />
+        ) : null}
 
         {hasLoop ? (
           <>
             <View style={styles.actions}>
+              {expanded ? null : (
+                <Button
+                  label={t('another')}
+                  icon="shuffle"
+                  iconOnly
+                  loading={finding}
+                  disabled={!start || !area || targetM === null}
+                  onPress={planner.find}
+                />
+              )}
               {saved ? (
-                <Button label={t('actions.openSaved')} icon="open-outline" lines={2} style={styles.action} onPress={() => onOpenSaved(saved.id)} />
+                <Button label={t('actions.openSaved')} icon="open-outline" iconOnly onPress={() => onOpenSaved(saved.id)} />
               ) : (
                 <Button
                   label={saving ? t('actions.saving') : t('actions.save')}
                   icon="bookmark-outline"
-                  lines={2}
+                  iconOnly
                   loading={saving}
-                  style={styles.action}
                   onPress={() => void planner.save()}
                 />
               )}
               <Button
                 label={t('actions.send')}
                 icon="send"
-                lines={2}
+                iconOnly
                 loading={push.sending}
                 disabled={!canSend || saving}
-                style={styles.action}
                 onPress={planner.sendToWatch}
               />
-              <Button label={t('actions.begin')} icon="play" lines={2} style={styles.action} onPress={onBegin} />
+              <Button label={t('actions.begin')} icon="play" variant="primary" style={styles.begin} onPress={onBegin} />
             </View>
             {saveError ? <Notice tone="danger">{saveError}</Notice> : null}
             {expanded && !push.connected ? (
@@ -592,13 +643,15 @@ function SheetHandle({ expanded, onChange }: { expanded: boolean; onChange: (exp
 
 interface CandidateCardProps {
   candidate: LoopCandidate;
+  /** One line instead of three: the folded sheet. */
+  compact: boolean;
   index: number;
   selected: boolean;
   onPress: () => void;
 }
 
 /** One loop of the batch as a small card: its number, length and share of new streets. */
-function CandidateCard({ candidate, index, selected, onPress }: CandidateCardProps) {
+function CandidateCard({ candidate, compact, index, selected, onPress }: CandidateCardProps) {
   const { t } = useTranslation('loops');
   const { colors, radius } = useTheme();
   const distance = formatRouteDistance(candidate.lengthM);
@@ -611,24 +664,32 @@ function CandidateCard({ candidate, index, selected, onPress }: CandidateCardPro
       onPress={onPress}
       scaleTo={0.97}
       style={[
-        styles.candidate,
+        compact ? styles.candidateCompact : styles.candidate,
         {
           backgroundColor: colors.muted,
           borderRadius: radius.control,
           borderColor: selected ? colors.primary : 'transparent',
         },
       ]}>
-      <AppText variant="caption" muted numberOfLines={1}>
-        {t('candidate.label', { n: index + 1 })}
-      </AppText>
-      <AppText variant="bodyStrong" numberOfLines={1}>
-        {distance}
-      </AppText>
-      {pct ? (
-        <AppText variant="caption" muted numberOfLines={1}>
-          {pct}
+      {compact ? (
+        <AppText variant="bodyStrong" numberOfLines={1}>
+          {`${index + 1} \u00B7 ${distance}`}
         </AppText>
-      ) : null}
+      ) : (
+        <>
+          <AppText variant="caption" muted numberOfLines={1}>
+            {t('candidate.label', { n: index + 1 })}
+          </AppText>
+          <AppText variant="bodyStrong" numberOfLines={1}>
+            {distance}
+          </AppText>
+          {pct ? (
+            <AppText variant="caption" muted numberOfLines={1}>
+              {pct}
+            </AppText>
+          ) : null}
+        </>
+      )}
     </PressableScale>
   );
 }
@@ -769,9 +830,16 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   fill: { flex: 1 },
   unavailable: { padding: spacing.lg },
+  backRow: { flexDirection: 'row' },
+  controls: {
+    position: 'absolute',
+    left: spacing.sm,
+    right: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   top: {
     position: 'absolute',
-    top: spacing.sm,
     left: spacing.sm,
     right: 64,
     gap: spacing.sm,
@@ -820,6 +888,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderWidth: 2,
   },
+  candidateCompact: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderWidth: 2,
+  },
   numberRow: {
     flexShrink: 1,
     flexDirection: 'row',
@@ -830,8 +904,8 @@ const styles = StyleSheet.create({
   unit: { flexShrink: 0 },
   startRow: { gap: spacing.xs },
   result: { gap: spacing.xs },
-  actions: { flexDirection: 'row', gap: spacing.sm },
-  action: { flex: 1, paddingHorizontal: spacing.sm },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  begin: { flex: 1 },
   outcome: { gap: spacing.sm },
   permission: { gap: spacing.sm },
 });

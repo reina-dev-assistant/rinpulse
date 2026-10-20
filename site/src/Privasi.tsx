@@ -3,8 +3,8 @@ import { ArrowLeft, Check } from "lucide-react";
 import { GITHUB_URL } from "./lib";
 
 const CONTACT = "dzulfikar@joyorogo.com";
-const UPDATED = "18 Oktober 2026";
-const UPDATED_EN = "18 October 2026";
+const UPDATED = "20 Oktober 2026";
+const UPDATED_EN = "20 October 2026";
 
 function Code({ children }: { children: React.ReactNode }) {
   return <code className="rounded bg-muted px-1.5 py-0.5 text-[0.85em] font-semibold">{children}</code>;
@@ -49,7 +49,7 @@ function Indonesian() {
       <Block title="Ringkasnya">
         <List
           items={[
-            "Data jam (langkah, detak jantung, SpO2, tidur, olahraga) disimpan di HP-mu. Data kesehatanmu tidak keluar dari HP, kecuali kamu memilih membagikannya lewat Keluarga atau menyalakan sinkron cloud.",
+            "Data jam (langkah, detak jantung, SpO2, tidur, olahraga) disimpan di HP-mu. Data kesehatanmu tidak keluar dari HP, kecuali kamu memilih membagikannya lewat Keluarga, menyalakan sinkron cloud, atau menyalakan Wawasan tidur (ringkasan tidur tiap malam ke akun JoyoRogo-mu).",
             "Cloud JoyoFit itu opsional dan baru aktif setelah kamu masuk dengan akun JoyoRogo.",
             "Di iPhone, data jam hanya ditulis ke Apple Health bila kamu menyalakannya. JoyoFit membaca Apple Health satu kali saja, saat kamu menekan Impor riwayat dari Apple Health.",
             "Tidak ada iklan, tidak ada SDK iklan, analitik, atau pelaporan crash, dan datamu tidak dijual. Firebase Cloud Messaging dipakai hanya untuk mengantar notifikasi push Keluarga.",
@@ -155,6 +155,25 @@ function Indonesian() {
           </a>
           . Komponen login aplikasi bisa menghubungi server JoyoRogo untuk mengecek sesi setiap aplikasi dibuka,
           termasuk bila kamu belum masuk; permintaan itu tidak membawa data kesehatan.
+        </p>
+        <p>
+          Wawasan tidur (opsional, mati bawaannya): hanya bila kamu menyalakannya di Pengaturan, JoyoRogo, JoyoFit
+          mengirim ringkasan tidur tiap malam ke akun JoyoRogo-mu, yaitu jam tidur dan bangun, lama tidur dan
+          terjaga, jumlah terbangun, fase tidur (bila jammu memberikannya), skor tidur dari jam, HRV semalam dan detak
+          jantung istirahat bila ada, tidur siang, dan, bila kamu memasangkan termometer kamar, suhu dan kelembapan
+          kamar selama tidurmu sebagai rata-rata, terendah, dan tertinggi saja. Data per menit, lokasi, dan olahraga
+          tidak ikut. JoyoRogo
+          menyimpan 90 malam terakhir, menghapus semuanya saat kamu mematikan saklarnya atau menghapus datamu, tidak
+          membagikannya, dan tidak memakainya untuk iklan atau pelacakan. Wawasannya dihitung dan ditampilkan di
+          JoyoRogo.
+        </p>
+        <p>
+          Termometer kamar (opsional): bila kamu memasangkan termometer Bluetooth (Xiaomi LYWSD03MMC dengan firmware
+          komunitas) di Pengaturan, JoyoFit memindai siaran Bluetooth-nya dan menyimpan suhu dan kelembapan kamar tiap
+          5 menit di HP-mu saja. Pembacaan itu dihapus setelah 120 hari atau saat kamu melupakan termometernya. Di
+          Android, pemindaian semalaman berjalan sebagai layanan latar dengan notifikasi yang bisa kamu hentikan. Yang
+          bisa keluar dari HP hanya rata-rata, terendah, dan tertinggi suhu dan kelembapan per malam beserta jumlah
+          pembacaannya, dan hanya bila Wawasan tidur menyala. Tanpa itu, tidak ada data kamar yang dikirim.
         </p>
       </Block>
 
@@ -397,6 +416,14 @@ function Indonesian() {
           sambungan. Alamat Bluetooth dan nomor seri dihapus, tetapi log bisa memuat hal lain, jadi baca dulu
           sebelum mengirim. Tidak ada yang terkirim otomatis.
         </p>
+        <p>
+          Kirim laporan mengirim ringkasan dan seluruh log itu, lengkap dengan riwayat putus sambungan, ke papan
+          laporan JoyoFit di Atur (app.diatur.com, produk milik pengembang yang sama), hanya setelah kamu mengetuk
+          Kirim. Ikut terkirim: teks yang kamu tulis, email untuk balasan (terisi dari akun JoyoRogo bila kamu
+          masuk, bisa kamu ubah atau kosongkan), dan id akun JoyoRogo-mu bila kamu masuk. Isinya hanya bisa dibaca
+          anggota tim pengembang dan dipakai untuk memperbaiki dukungan jam serta membalas laporanmu. Tanpa
+          internet, laporan disimpan di HP sampai bisa terkirim.
+        </p>
       </Block>
 
       <Block id="coach" title="Coach (Pro)">
@@ -520,7 +547,7 @@ function English() {
       <Block title="Summary">
         <List
           items={[
-            "Watch data (steps, heart rate, SpO2, sleep, workouts) is stored on your phone. Your health data does not leave the phone unless you choose to share it through Keluarga (family monitoring) or turn on cloud sync.",
+            "Watch data (steps, heart rate, SpO2, sleep, workouts) is stored on your phone. Your health data does not leave the phone unless you choose to share it through Keluarga (family monitoring), turn on cloud sync, or turn on Sleep insights (a nightly sleep summary to your JoyoRogo account).",
             "The JoyoFit cloud is optional and only starts after you sign in with a JoyoRogo account.",
             "On iPhone, watch data is written to Apple Health only if you turn that on. JoyoFit reads Apple Health once, only when you tap Import history from Apple Health.",
             "No ads, no advertising, analytics or crash-reporting SDKs, and your data is not sold. Firebase Cloud Messaging is used only to deliver Keluarga push notifications.",
@@ -618,6 +645,23 @@ function English() {
           </a>
           . The sign-in component may contact JoyoRogo to check the session whenever the app opens, even if you
           have not signed in; that request carries no health data.
+        </p>
+        <p>
+          Sleep insights (optional, off by default): only if you turn it on in Settings, JoyoRogo, JoyoFit sends a
+          nightly sleep summary to your JoyoRogo account: when you slept and woke, time asleep and awake, awakenings,
+          sleep stages (if your watch gives them), the watch&apos;s sleep score, overnight HRV and resting heart rate
+          when available, naps, and, if you paired a bedroom thermometer, the room temperature and humidity during
+          your sleep as a mean, lowest and highest only. Per-minute data, location and workouts are not sent. JoyoRogo keeps the last 90
+          nights, deletes everything when you turn the switch off or delete your data, does not share it, and does
+          not use it for ads or tracking. The insights are computed and shown in JoyoRogo.
+        </p>
+        <p>
+          Room thermometer (optional): if you pair a Bluetooth thermometer (a Xiaomi LYWSD03MMC running the community
+          firmware) in Settings, JoyoFit scans its Bluetooth broadcasts and keeps the room temperature and humidity
+          every 5 minutes on your phone only. Those readings are deleted after 120 days or when you forget the
+          thermometer. On Android the overnight scan runs as a foreground service with a notification you can stop.
+          All that can leave the phone is the mean, lowest and highest temperature and humidity per night with the
+          number of readings, and only when Sleep insights is on. Without it, no room data is sent.
         </p>
       </Block>
 
@@ -832,6 +876,14 @@ function English() {
           builds a summary (app version, phone make and model, Android version, watch model and version) and a
           connection log. Bluetooth addresses and the serial number are removed, but the log can contain other
           text, so read it before sending. Nothing is sent automatically.
+        </p>
+        <p>
+          <span className="font-semibold">Send report</span> sends that summary and the whole log, with the
+          disconnect history, to the JoyoFit report board in Atur (app.diatur.com, a product of the same developer),
+          only after you tap Send. Also sent: the text you wrote, an email for a reply (filled from your JoyoRogo
+          account when you are signed in, which you can change or clear) and your JoyoRogo account id when you are
+          signed in. Only the developer team can read it, and it is used to improve watch support and to reply to
+          your report. Without internet the report waits on the phone until it can be sent.
         </p>
       </Block>
 

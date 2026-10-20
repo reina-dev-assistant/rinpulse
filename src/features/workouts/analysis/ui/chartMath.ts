@@ -15,7 +15,10 @@ import {
 } from '../types';
 import { fmtDate, fmtDecimal, fmtNumber, t } from '@/i18n';
 
-export type ChartMetric = 'pace' | 'speed' | 'hr' | 'alt' | 'cad' | 'power';
+import { isFootKind } from '../sport';
+import { stepLengthAt, stepLengthSeries } from '../stride';
+
+export type ChartMetric = 'pace' | 'speed' | 'hr' | 'alt' | 'cad' | 'stride' | 'power';
 
 export const clamp = (v: number, lo: number, hi: number): number => (v < lo ? lo : v > hi ? hi : v);
 
@@ -51,6 +54,8 @@ export function metricValues(series: AnalysisSeries, metric: ChartMetric): (numb
       return series.alt;
     case 'cad':
       return series.cad;
+    case 'stride':
+      return stepLengthSeries(series, series.n);
     case 'power':
       return series.power;
   }
@@ -76,6 +81,7 @@ export function availableMetrics(series: AnalysisSeries, kind: SportKind): Chart
   if (hasValues(series.hr)) out.push('hr');
   if (hasValues(series.alt)) out.push('alt');
   if (hasValues(series.cad)) out.push('cad');
+  if (isFootKind(kind) && hasValues(stepLengthSeries(series, series.n))) out.push('stride');
   if (hasValues(series.power)) out.push('power');
   return out;
 }
@@ -101,6 +107,7 @@ const DOMAIN_RULES: Record<ChartMetric, DomainRule> = {
   hr: { lo: 0.01, hi: 0.99, pad: 0.08, minSpan: 20, floorZero: true },
   alt: { lo: 0, hi: 1, pad: 0.12, minSpan: 10, floorZero: false },
   cad: { lo: 0.02, hi: 0.98, pad: 0.08, minSpan: 20, floorZero: true },
+  stride: { lo: 0.02, hi: 0.98, pad: 0.08, minSpan: 0.2, floorZero: true },
   power: { lo: 0.02, hi: 0.98, pad: 0.08, minSpan: 40, floorZero: true },
 };
 
@@ -318,6 +325,8 @@ export interface Readout {
   hr: number | null;
   alt: number | null;
   cad: number | null;
+  /** Metres per step: measured, else derived from pace and cadence. */
+  stride: number | null;
   power: number | null;
 }
 
@@ -338,6 +347,7 @@ export function readoutAt(series: AnalysisSeries, index: number): Readout {
     hr: at(series.hr, i),
     alt: at(series.alt, i),
     cad: at(series.cad, i),
+    stride: stepLengthAt(series, i),
     power: at(series.power, i),
   };
 }
@@ -502,5 +512,6 @@ export function difference(current: number | null | undefined, reference: number
 
 /** Axis label of a y tick: `5:30` for pace, whole numbers otherwise. */
 export function formatYTick(metric: ChartMetric, value: number): string {
+  if (metric === 'stride') return fmtDecimal(value, 1);
   return metric === 'pace' ? formatPace(value) : String(Math.round(value));
 }

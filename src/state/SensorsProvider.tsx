@@ -7,6 +7,7 @@ import { sensorHub } from '@/features/sensors/instance';
 import { ensureSensorPermissions, type Granted } from '@/features/sensors/permissions';
 import { getWheelMm } from '@/features/sensors/settings';
 import {
+  isSportSensor,
   listSensors,
   removeSensor,
   renameSensor,
@@ -17,7 +18,7 @@ import {
 } from '@/features/sensors/store';
 
 export interface SensorsContextValue {
-  /** The sensors the person paired, in pairing order. Empty until `loaded`. */
+  /** The sports sensors the person paired (heart rate, cycling, running), in pairing order; bedroom thermometers are not here. Empty until `loaded`. */
   saved: SavedSensor[];
   loaded: boolean;
   /** Bluetooth state, scan results and live link state of every sensor the radio knows (see `HubSnapshot`). */
@@ -66,7 +67,7 @@ export function SensorsProvider({ children }: { children: ReactNode }) {
   const live = useRef(true);
 
   const reload = useCallback(async () => {
-    const rows = await listSensors(db);
+    const rows = (await listSensors(db)).filter(isSportSensor);
     if (live.current) {
       setSaved(rows);
       setLoaded(true);

@@ -12,7 +12,7 @@ import { MapSection } from './MapSection';
 import { Card, Txt } from './primitives';
 import { createScrubStore } from './scrub';
 import { SplitsCard } from './SplitsCard';
-import { SummaryStrip } from './SummaryStrip';
+import { SummaryStrip, type ExtraStat } from './SummaryStrip';
 import type { AnalysisT } from './text';
 import type { AnalysisMapTheme, AnalysisPalette } from './theme';
 import { HrZonesCard, PaceZonesCard } from './ZonesCards';
@@ -25,13 +25,19 @@ export interface WorkoutAnalysisViewProps {
   mapTheme: AnalysisMapTheme;
   /** True while a chart or map gesture owns the touch; lock the parent ScrollView's scrolling. */
   onScrubActive?: (active: boolean) => void;
+  /** Cells for the summary grid that the analysis does not carry (the step count). */
+  extraStats?: readonly ExtraStat[];
+  /** The host shows the fat and carbohydrate burn itself: leave the fuel line out of the summary. */
+  omitFuel?: boolean;
+  /** The host shows the watch's training effect, recovery time and load itself: leave them out of the load card. */
+  omitLoadExtras?: boolean;
 }
 
 /**
  * The full workout analysis as a stack of cards (12 px apart). The parent screen provides the scroll view. One shared
  * scrub index, kept in a small store, ties the charts, the map marker and the splits together without re-rendering the cards.
  */
-function WorkoutAnalysisViewImpl({ analysis, palette, t, mapTheme, onScrubActive }: WorkoutAnalysisViewProps) {
+function WorkoutAnalysisViewImpl({ analysis, palette, t, mapTheme, onScrubActive, extraStats, omitFuel = false, omitLoadExtras = false }: WorkoutAnalysisViewProps) {
   const store = useRef(createScrubStore()).current;
   const onActiveRef = useRef(onScrubActive);
   onActiveRef.current = onScrubActive;
@@ -45,7 +51,7 @@ function WorkoutAnalysisViewImpl({ analysis, palette, t, mapTheme, onScrubActive
   return (
     <AnalysisContext.Provider value={value}>
       <View style={styles.stack}>
-        <SummaryStrip analysis={analysis} />
+        <SummaryStrip analysis={analysis} extra={extraStats} showFuel={!omitFuel} />
         {hasTrack ? <MapSection analysis={analysis} mapTheme={mapTheme} /> : null}
         {hasSeries ? <ChartsCard analysis={analysis} /> : null}
         {!hasSeries ? (
@@ -60,7 +66,7 @@ function WorkoutAnalysisViewImpl({ analysis, palette, t, mapTheme, onScrubActive
         <PaceZonesCard analysis={analysis} />
         <BestEffortsCard analysis={analysis} />
         <EffortCard analysis={analysis} />
-        <LoadCard analysis={analysis} />
+        <LoadCard analysis={analysis} showExtras={!omitLoadExtras} />
         <LapsCard analysis={analysis} />
         <ComparisonCard analysis={analysis} />
       </View>

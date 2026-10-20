@@ -112,4 +112,29 @@ class WorkoutRecordTest {
     // 0xFF in the step-rate byte (-1) is the "no reading" marker.
     assertTrue(WorkoutBuilder.points(parts(2, true, data(1_700_000_000) { stepRate = -1; cadence = 99 })).isEmpty())
   }
+
+  @Test
+  fun aRunWithoutACadenceShortReadsTheStepRateByteAndABikeNeverDoes() {
+    // Running (1): the step-rate byte stands in when the cadence short has no reading, and the cadence short wins when both are there.
+    assertEquals(158, WorkoutBuilder.points(parts(1, false, data(1_700_000_000) { stepRate = 158.toByte(); cadence = -1 }))[0].cadence)
+    assertEquals(172, WorkoutBuilder.points(parts(1, false, data(1_700_000_000) { stepRate = 158.toByte(); cadence = 172 }))[0].cadence)
+    assertTrue(WorkoutBuilder.points(parts(1, false, data(1_700_000_000) { stepRate = -1; cadence = 0 })).isEmpty())
+    // Cycling (3): its step rate is not pedalling.
+    assertTrue(WorkoutBuilder.points(parts(3, false, data(1_700_000_000) { stepRate = 158.toByte(); cadence = -1 })).isEmpty())
+  }
+
+  @Test
+  fun sampleAveragesLeaveOutZeroReadings() {
+    val samples = arrayOf(
+      data(1_700_000_000) { cadence = 170; stepLength = 80 },
+      data(1_700_000_001) { cadence = 0; stepLength = 0 },
+      data(1_700_000_002) { cadence = -1; stepLength = -1 },
+      data(1_700_000_003) { cadence = 160; stepLength = 70 },
+    )
+    val json = org.json.JSONObject()
+    SampleStats.of(parts(1, false, *samples), "RUNNING").putAverages(json)
+    val averages = json.getJSONObject("samples")
+    assertEquals(165.0, averages.getDouble("avgCadence"), 1e-9)
+    assertEquals(75.0, averages.getDouble("avgStepLength"), 1e-9)
+  }
 }

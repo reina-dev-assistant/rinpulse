@@ -1,5 +1,5 @@
 // Expo module `BleSensors` for iOS: the JS API of src/BleSensorsModule.ts. Sensor links live in the process-wide SensorCentral, the phone GPS in
-// WorkoutLocation. The module only forwards their events to JS while it is alive; destroying it (a JS reload) never drops a sensor link or a
+// WorkoutLocation, the pedometer in WorkoutSteps. The module only forwards their events to JS while it is alive; destroying it (a JS reload) never drops a sensor link or a
 // running workout session.
 #if canImport(ExpoModulesCore) && canImport(CoreBluetooth)
 import CoreBluetooth
@@ -38,11 +38,12 @@ public final class BleSensorsModule: Module {
         let central = SensorCentral.shared
         let location = WorkoutLocation.shared
         let scales = ScaleCentral.shared
+        let steps = WorkoutSteps.shared
 
         Name("BleSensors")
 
         Events(
-            "onScanResult", "onScanState", "onConnection", "onValue", "onLocation", "onBluetoothState", "onWorkoutAction",
+            "onScanResult", "onScanState", "onConnection", "onValue", "onLocation", "onBluetoothState", "onWorkoutAction", "onSteps",
             "onScaleAdvertisement", "onScaleScanState", "onScaleLink", "onScaleValue"
         )
 
@@ -128,6 +129,16 @@ public final class BleSensorsModule: Module {
             await location.requestPermission()
         }
 
+        // granted, denied, undetermined or unavailable (this device has no step counter).
+        AsyncFunction("stepCounterPermission") { () async -> String in
+            steps.permission()
+        }
+
+        // Raises the system motion prompt (iOS asks on the first pedometer use) and answers with the new state.
+        AsyncFunction("requestStepCounterPermission") { () async -> String in
+            await steps.requestPermission()
+        }
+
         // `options` is WorkoutSessionOptions: title, text, gps and `openUrl` and `controls` (the Android notification's link and buttons). Only `gps` matters here: iOS has no notification.
         AsyncFunction("startWorkoutSession") { (options: [String: Any]) async throws -> Void in
             let gps = options["gps"] as? Bool ?? false
@@ -139,6 +150,12 @@ public final class BleSensorsModule: Module {
             } else {
                 location.stop()
             }
+            // The phone's step counter is optional: without it (not requested, refused, no sensor) the workout just has no steps.
+            if options["steps"] as? Bool ?? false {
+                _ = steps.start { ts, count in central.emit("onSteps", ["ts": ts, "steps": count]) }
+            } else {
+                steps.stop()
+            }
             WorkoutSession.active = true
         }
 
@@ -147,6 +164,7 @@ public final class BleSensorsModule: Module {
 
         AsyncFunction("endWorkoutSession") { () async -> Void in
             location.stop()
+            steps.stop()
             WorkoutSession.active = false
         }
 

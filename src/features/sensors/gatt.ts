@@ -3,7 +3,11 @@
 // Running Speed and Cadence Service 1.0 (RSCS), Battery Service 1.1 (BAS). All multi-byte fields are little-endian.
 // No React Native imports: this file runs under bun test.
 
-export type SensorKind = 'hr' | 'csc' | 'power' | 'rsc';
+/**
+ * `thermometer` is a bedroom thermometer (Xiaomi LYWSD03MMC with the community firmware) that is read from its advertisements, not connected:
+ * no GATT service announces it, so `kindsOfServices` never returns it. The recorder and the sports sensor screens skip it (`isSportSensor`).
+ */
+export type SensorKind = 'hr' | 'csc' | 'power' | 'rsc' | 'thermometer';
 
 /** Service UUID (4 hex) to the kind of sensor it announces. Battery and Device Information announce nothing by themselves. */
 const KIND_OF_SERVICE: Readonly<Record<string, SensorKind>> = {

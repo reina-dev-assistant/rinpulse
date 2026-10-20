@@ -16,6 +16,7 @@ class WorkoutSessionOptionsRecord : Record {
   @Field var title: String = ""
   @Field var text: String = ""
   @Field var gps: Boolean = false
+  @Field var steps: Boolean = false
   @Field var openUrl: String? = null
   @Field var controls: WorkoutControlsRecord? = null
 }
@@ -35,6 +36,15 @@ class WorkoutSessionStateRecord : Record {
   @Field var distanceM: Double = 0.0
   @Field var hr: Int? = null
   @Field var paused: Boolean = false
+}
+
+/** `RoomCaptureOptions` in `BleSensors.types.ts`. `untilMs` is a Double because an epoch in milliseconds does not fit an Int. */
+class RoomCaptureOptionsRecord : Record {
+  @Field var ids: List<String> = emptyList()
+  @Field var untilMs: Double = 0.0
+  @Field var title: String = ""
+  @Field var text: String = ""
+  @Field var stopLabel: String = ""
 }
 
 /**
@@ -69,7 +79,7 @@ class BleSensorsModule : Module() {
     Name("BleSensors")
 
     Events(
-      "onScanResult", "onScanState", "onConnection", "onValue", "onLocation", "onBluetoothState", "onWorkoutAction",
+      "onScanResult", "onScanState", "onConnection", "onValue", "onLocation", "onBluetoothState", "onWorkoutAction", "onSteps",
       "onScaleAdvertisement", "onScaleScanState", "onScaleLink", "onScaleValue",
     )
 
@@ -114,6 +124,19 @@ class BleSensorsModule : Module() {
       }
     }
 
+    // Overnight bedroom thermometer (Android only): the contract is in BleSensorsModule.ts, the work in RoomCapture.kt and RoomScanService.kt.
+    AsyncFunction("startRoomCapture") { options: RoomCaptureOptionsRecord ->
+      RoomCapture.start(context(), hub(), options.ids, options.untilMs.toLong(), options.title, options.text, options.stopLabel)
+    }
+
+    AsyncFunction("stopRoomCapture") { RoomCapture.stop(context()) }
+
+    AsyncFunction("roomCaptureState") { RoomCapture.state(context()) }
+
+    AsyncFunction("roomAdverts") { RoomCapture.adverts(context()) }
+
+    AsyncFunction("clearRoomAdverts") { upToTs: Double -> RoomCapture.clearAdverts(context(), upToTs.toLong()) }
+
     AsyncFunction("stopScan") { hub().stopScan() }
 
     AsyncFunction("connect") { id: String -> hub().connect(id) }
@@ -129,9 +152,18 @@ class BleSensorsModule : Module() {
       if (context().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) "granted" else "denied"
     }
 
+    // "unavailable" without the sensor; Android cannot tell "never asked" from "denied". Before Android 10 there is no runtime permission.
+    AsyncFunction("stepCounterPermission") {
+      when {
+        !WorkoutSteps.hasSensor(context()) -> "unavailable"
+        WorkoutSteps.hasPermission(context()) -> "granted"
+        else -> "denied"
+      }
+    }
+
     AsyncFunction("startWorkoutSession") Coroutine { options: WorkoutSessionOptionsRecord ->
       val controls = options.controls?.let { RecordingNotificationSpec.Controls(it.locale, it.paused, it.pause, it.resume, it.lap) }
-      WorkoutSession.start(context(), options.title, options.text, options.gps, options.openUrl, controls)
+      WorkoutSession.start(context(), options.title, options.text, options.gps, options.openUrl, controls, options.steps)
     }
 
     AsyncFunction("updateWorkoutSession") { state: WorkoutSessionStateRecord ->

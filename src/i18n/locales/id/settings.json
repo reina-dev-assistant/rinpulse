@@ -10,6 +10,7 @@
     "koneksi": "Koneksi AI",
     "joyorogo": "JoyoRogo",
     "scale": "Timbangan",
+    "thermometer": "Termometer kamar",
     "importHuawei": "Impor dari Huawei Health",
     "importAppleHealth": "Impor dari Apple Health",
     "importFit": "Impor file FIT",
@@ -25,7 +26,8 @@
     "healthIos": "Apple Health",
     "gear": "Sepatu & perlengkapan",
     "importAll": "Impor data",
-    "akun": "Akun"
+    "akun": "Akun",
+    "homeCards": "Atur kartu Beranda"
   },
   "index": {
     "title": "Pengaturan",
@@ -266,7 +268,17 @@
     "active": "Aktif",
     "pausedNotice": "Sambung ulang otomatis dijeda. Hubungkan lagi untuk melanjutkan.",
     "interval": "Interval sinkron",
-    "details": "Menjaga koneksi ke jam tetap hidup saat aplikasi ditutup."
+    "details": "Menjaga koneksi ke jam tetap hidup saat aplikasi ditutup.",
+    "limits": {
+      "title": "Baterai dan latar belakang",
+      "battery": "Optimasi baterai",
+      "exempt": "JoyoFit dikecualikan",
+      "limited": "Android bisa membatasi JoyoFit",
+      "restriction": "Pembatasan latar belakang",
+      "restricted": "Dibatasi (Restricted)",
+      "notRestricted": "Tidak dibatasi",
+      "ok": "Android tidak akan menghentikan JoyoFit saat layar mati."
+    }
   },
   "appleImport": {
     "title": "Impor riwayat dari Apple Health",
@@ -628,7 +640,33 @@
     "errorValue": "{{message}} ({{when}})",
     "waitingHint": "Dikirim saat sinkron berikutnya. Latihan 30 hari terakhir ikut terkirim; yang sudah ada di JoyoRogo tidak digandakan.",
     "autoSyncOff": "Sinkron otomatis mati. Tekan Kirim sekarang untuk mengirim.",
-    "sendNow": "Kirim sekarang"
+    "sendNow": "Kirim sekarang",
+    "sleep": {
+      "title": "Wawasan tidur",
+      "label": "Kirim data tidur ke JoyoRogo (Wawasan tidur)",
+      "hint": "JoyoRogo mencari pola dari tidurmu, misalnya kafein atau makan malam yang terlalu larut. Hasilnya kamu lihat di JoyoRogo, tab Tidur.",
+      "viewIn": "Temuan dan pola tidurmu ada di JoyoRogo, tab Tidur.",
+      "state": {
+        "loading": "Mengecek pengaturan di JoyoRogo...",
+        "unsupported": "JoyoRogo yang kamu pakai belum punya Wawasan tidur. Coba lagi setelah JoyoRogo diperbarui.",
+        "offline": "Belum bisa menghubungi JoyoRogo, jadi pengaturan ini belum bisa dilihat atau diubah. Coba lagi nanti.",
+        "nights_other": "JoyoRogo menyimpan {{n}} malam tidurmu.",
+        "retry": "Coba lagi"
+      },
+      "consent": {
+        "title": "Kirim data tidur ke JoyoRogo?",
+        "body": "Dikirim tiap malam: jam tidur dan bangun, lama tidur dan terjaga, berapa kali terbangun, fase tidur (hanya kalau jammu menghasilkannya), skor tidur dari jam, HRV semalam dan detak jantung istirahat bila ada, serta tidur siang.\n\nTidak dikirim: data per menit, detak jantung seharian, lokasi, dan olahraga.\n\nJoyoRogo menyimpan 90 malam terakhir dan memakainya untuk membuat wawasan tidurmu. Data ini tidak dibagikan dan tidak dipakai untuk iklan. Kamu bisa mematikannya kapan saja, di sini atau di JoyoRogo; saat dimatikan, semua data tidur di server JoyoRogo ikut terhapus.",
+        "confirm": "Nyalakan",
+        "cancel": "Batal"
+      },
+      "disable": {
+        "title": "Matikan Wawasan tidur?",
+        "body": "Semua data tidur kamu di JoyoRogo dihapus, termasuk wawasan yang sudah dibuat. Data di HP-mu tidak berubah.",
+        "confirm": "Matikan dan hapus",
+        "cancel": "Batal"
+      },
+      "errorTitle": "Belum berhasil"
+    }
   },
   "weather": {
     "conditions": {

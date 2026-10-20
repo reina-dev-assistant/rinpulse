@@ -20,6 +20,8 @@ interface ButtonProps {
   icon?: IconName;
   /** Lines the label may take before it is cut off; 1 by default. */
   lines?: number;
+  /** Only the icon shows, in a square target; the label stays as the accessibility label. Needs an `icon`. */
+  iconOnly?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -32,6 +34,7 @@ export function Button({
   done,
   icon,
   lines = 1,
+  iconOnly,
   style,
 }: ButtonProps) {
   const { colors, fonts, radius } = useTheme();
@@ -50,7 +53,7 @@ export function Button({
       accessibilityState={{ disabled: !!inactive, busy: !!loading }}
       disabled={inactive}
       onPress={onPress}
-      style={[styles.base, { backgroundColor: scheme.bg, borderRadius: radius.control }, style]}>
+      style={[styles.base, iconOnly && styles.iconOnly, { backgroundColor: scheme.bg, borderRadius: radius.control }, style]}>
       {loading ? <ActivityIndicator size="small" color={scheme.fg} /> : null}
       {!loading && done ? (
         <PopIn>
@@ -58,9 +61,11 @@ export function Button({
         </PopIn>
       ) : null}
       {!loading && !done && icon ? <Ionicons name={icon} size={18} color={scheme.fg} /> : null}
-      <Text style={[styles.label, { color: scheme.fg, fontFamily: fonts.medium }, lines > 1 && styles.wrapped]} numberOfLines={lines}>
-        {label}
-      </Text>
+      {iconOnly ? null : (
+        <Text style={[styles.label, { color: scheme.fg, fontFamily: fonts.medium }, lines > 1 && styles.wrapped]} numberOfLines={lines}>
+          {label}
+        </Text>
+      )}
     </PressableScale>
   );
 }
@@ -74,6 +79,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
   },
+  iconOnly: { width: HIT, paddingHorizontal: 0 },
   label: { fontSize: fontSize.base },
   wrapped: { flexShrink: 1, textAlign: 'center', paddingVertical: spacing.xs },
 });

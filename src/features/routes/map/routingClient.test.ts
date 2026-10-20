@@ -43,6 +43,11 @@ describe('routeViaUrl', () => {
     expect(routeViaUrl('foot', [A, B])).toBe(routeUrl('foot', A, B));
   });
 
+  test('noUTurns asks the service to go on at a waypoint instead of turning back, and is its own cache entry', () => {
+    expect(routeViaUrl('foot', [A, B], { noUTurns: true })).toBe(`${routeUrl('foot', A, B)}&continue_straight=true`);
+    expect(routeViaCacheKey('foot', [A, B], { noUTurns: true })).not.toBe(routeViaCacheKey('foot', [A, B]));
+  });
+
   test('the cache key keeps the order of the waypoints and agrees with the two-point key', () => {
     expect(routeViaCacheKey('foot', [A, B])).toBe(routeCacheKey('foot', A, B));
     expect(routeViaCacheKey('foot', [A, B, A])).not.toBe(routeViaCacheKey('foot', [A, A, B]));

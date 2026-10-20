@@ -8,6 +8,8 @@ export const MAP_INK = {
   casing: '#FFFFFF',
   chipBackground: 'rgba(255,255,255,0.85)',
   chipText: '#2B2B2B',
+  /** The dark outline of a line that must stand out on the light map (the loop planner's route). */
+  outline: '#12263F',
 } as const;
 
 /** Where the drawing map opens when nothing says where the user is: all of Indonesia. */

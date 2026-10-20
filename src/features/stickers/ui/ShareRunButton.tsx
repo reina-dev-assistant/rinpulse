@@ -1,5 +1,5 @@
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/Button';
@@ -22,10 +22,13 @@ interface Props {
   analysis: WorkoutAnalysis | null;
   /** The cycling metrics when the workout is a ride (`useRideData`); they feed the power, climbs and splits slides of Threads. */
   ride?: RideAnalysis | null;
+  /** The look of the button; the host lays it out (a primary button that fills an action row, say). */
+  variant?: ComponentProps<typeof Button>['variant'];
+  style?: ComponentProps<typeof Button>['style'];
 }
 
 /** The "Share" button of a workout, the sticker sheet it opens and, from there, the Threads carousel sheet. */
-export function ShareRunButton({ workout, summary, route, analysis, ride = null }: Props) {
+export function ShareRunButton({ workout, summary, route, analysis, ride = null, variant, style }: Props) {
   const { t } = useTranslation('common');
   const locale = useLocale();
   const db = useSQLiteContext();
@@ -55,7 +58,7 @@ export function ShareRunButton({ workout, summary, route, analysis, ride = null 
 
   return (
     <>
-      <Button label={t('actions.share')} icon="share-outline" onPress={() => setOpen(true)} />
+      <Button label={t('actions.share')} icon="share-outline" variant={variant} style={style} onPress={() => setOpen(true)} />
       <StickerSheet subject={subject} visible={open} onClose={() => setOpen(false)} onThreads={() => setThreadsOpen(true)} />
       {threadsSubject ? <ThreadsSheet subject={threadsSubject} visible={threadsOpen} onClose={() => setThreadsOpen(false)} /> : null}
     </>

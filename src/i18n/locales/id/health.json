@@ -137,6 +137,7 @@
     "caption": "Skor"
   },
   "noStages": {
+    "title": "Kenapa tidur ini tanpa fase?",
     "unsupported": "Jam memberi tahu kapan kamu tidur tapi tanpa fase, dan jam ini tidak punya sakelar TruSleep yang bisa diatur JoyoFit.",
     "turnOn": "Nyalakan TruSleep agar jam mencatat fase tidur, lalu tidur semalam dan sinkronkan.",
     "unknown": "Jam memberi tahu kapan kamu tidur tapi tanpa fase. Jam yang lebih baru mengirimnya saat TruSleep nyala. Sebagian jam lama tidak bisa, dan mungkin memberi tidur ringan dan dalam saat TruSleep mati.",

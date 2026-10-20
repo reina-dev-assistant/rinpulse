@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { Fragment, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -15,6 +15,7 @@ import { elapsedSec, formatGrams, isActive } from '@/features/live/liveWorkout';
 import { HourlyBars } from '@/features/today/HourlyBars';
 import { scoreFor } from '@/features/sleep/nights';
 import { SleepSummaryView } from '@/features/today/SleepSummaryView';
+import { ownTotalsOf } from '@/features/device/watchDayTotals';
 import { isLinkUp } from '@/features/device/linkState';
 import { SyncButton } from '@/features/device/SyncButton';
 import {
@@ -31,12 +32,15 @@ import { useTodayData } from '@/features/today/useTodayData';
 import { WatchHero } from '@/features/today/WatchHero';
 import { computeScores } from '@/features/today/scores';
 import { MorningCheckin } from '@/features/today/MorningCheckin';
-import { FitnessTodayCards } from '@/features/fitness/FitnessTodayCards';
+import { FitnessLinkCard, FitnessTodayCards } from '@/features/fitness/FitnessTodayCards';
 import { CoachTodayCard } from '@/features/coach/ui/CoachTodayCard';
 import { LoopShortcut } from '@/features/loops/ui/LoopShortcut';
 import { FamilyCard } from '@/features/today/FamilyCard';
 import { ScoresCard } from '@/features/today/ScoresCard';
+import { visibleHomeCards, type HomeCardId } from '@/features/today/homeCards';
+import { useHomeCards } from '@/features/today/homeCardsStore';
 import { useRogoScoresPush } from '@/features/today/useRogoScoresPush';
+import { useSleepNightsPush } from '@/features/sleep/useSleepNightsPush';
 import { useRogoActiveKcal } from '@/features/today/useRogoActiveKcal';
 import { rogoDailyMetrics, rogoSleepHoursByDate } from '@/features/today/rogoScores';
 import { useFitnessData } from '@/features/fitness/useFitnessData';
@@ -69,7 +73,7 @@ function WatchToday() {
   const colors = useColors();
   const { t } = useTranslation(['today', 'common']);
   const locale = useLocale();
-  const { linkState, device, battery, lastSync, totals, error, dataVersion, sync } = useWatch();
+  const { linkState, device, battery, lastSync, totals, watches, error, dataVersion, sync } = useWatch();
   const { data, error: loadError } = useTodayData(dataVersion);
   const nightHrv = useNightHrvAvailability(dataVersion);
   const goal = useStepGoal();
@@ -78,7 +82,7 @@ function WatchToday() {
 
   const view = useMemo(() => {
     if (!data) return null;
-    const watchTotals = totals && totals.at >= data.dayStart ? totals : null;
+    const watchTotals = ownTotalsOf(totals, watches, data.dayStart);
     const sleep = lastSleepSession(data.sleep);
     const dayTotals = watchTotals ?? sumTotals(data.samples);
     const scores = computeScores(data, nightHrv);
@@ -93,7 +97,7 @@ function WatchToday() {
       hasSamples: data.samples.length > 0,
       scores,
     };
-  }, [data, totals, nightHrv, locale]);
+  }, [data, totals, watches, nightHrv, locale]);
 
   // One read of the fitness inputs for the cards below and for the body metrics JoyoRogo gets.
   const { data: fitness } = useFitnessData(dataVersion, 'full');
@@ -101,6 +105,7 @@ function WatchToday() {
   const rogoSleepHours = useMemo(() => (fitness && data ? rogoSleepHoursByDate(fitness, data.dayStart) : undefined), [fitness, data]);
   const rogoActiveKcal = useRogoActiveKcal(dataVersion);
   useRogoScoresPush(view?.scores ?? null, data?.dayStart ?? null, rogoMetrics, rogoActiveKcal, rogoSleepHours);
+  useSleepNightsPush(dataVersion);
 
   const canSync = linkState === 'connected' && device !== null;
   const syncing = linkState === 'syncing';
@@ -108,6 +113,77 @@ function WatchToday() {
   const distance = splitDistance(view?.totals.distance ?? 0);
   const nowMs = useNow(HERO_TICK_MS);
   const heartReading = pickHeartReading(live, data?.latestHeart ?? null, nowMs);
+
+  const homeCards = useHomeCards().prefs;
+  const cards: Record<HomeCardId, ReactNode> = {
+    scores: view ? <ScoresCard readiness={view.scores.readiness} today={view.scores.today} onPress={() => router.push('/readiness')} /> : null,
+    activity: loading ? (
+      <View style={styles.tiles}>
+        <Skeleton width="48%" height={84} radius={18} />
+        <Skeleton width="48%" height={84} radius={18} />
+      </View>
+    ) : (
+      <View style={styles.tiles}>
+        <StatTile icon="flame" tint="workouts" label={t('home.calories')} value={formatCount(view?.totals.calories ?? 0)} unit={t('home.kcal')} />
+        <StatTile icon="trail-sign" tint="steps" label={t('home.distance')} value={distance.value} unit={distance.unit} />
+      </View>
+    ),
+    heart: (
+      <Section title={t('home.heartTitle')} icon="heart" tint="heart" onPress={() => router.push('/heart')}>
+        {view?.heart ? (
+          <View style={styles.heartRow}>
+            <View style={styles.heartCol}>
+              <Metric value={String(view.heart.latest.bpm)} unit="bpm" size="md" color={colors.heartText} unitColor={colors.mutedForeground} />
+              <AppText variant="caption" muted>
+                {t('home.latest', { time: formatClock(view.heart.latest.timestamp) })}
+              </AppText>
+            </View>
+            <View style={styles.heartCol}>
+              <Metric value={String(view.heart.min)} unit="bpm" size="md" />
+              <AppText variant="caption" muted>
+                {t('home.low')}
+              </AppText>
+            </View>
+            <View style={styles.heartCol}>
+              <Metric value={String(view.heart.max)} unit="bpm" size="md" />
+              <AppText variant="caption" muted>
+                {t('home.high')}
+              </AppText>
+            </View>
+          </View>
+        ) : loading ? (
+          <Skeleton width="60%" height={38} />
+        ) : (
+          <AppText variant="caption" muted>
+            {t('home.noHeart')}
+          </AppText>
+        )}
+      </Section>
+    ),
+    steps: (
+      <Section title={t('home.stepsTitle')} icon="footsteps" tint="steps">
+        <HourlyBars steps={view?.hourly ?? new Array<number>(24).fill(0)} />
+      </Section>
+    ),
+    sleep: (
+      <Section title={t('home.sleepTitle')} icon="moon" tint="sleep" onPress={() => router.push('/sleep')}>
+        {loading ? <Skeleton width="50%" height={38} /> : <SleepSummaryView summary={view?.sleep ?? null} score={view?.sleepScore ?? null} />}
+      </Section>
+    ),
+    energy: <FitnessTodayCards data={fitness} availability={nightHrv} />,
+    fitness: <FitnessLinkCard />,
+    coach: <CoachTodayCard dataVersion={dataVersion} availability={nightHrv} />,
+    checkin: data ? (
+      <MorningCheckin hrv={data.hrv} dayStart={data.dayStart} nowMs={nowMs} connected={isLinkUp(linkState)} onMeasure={() => router.push('/hrv')} />
+    ) : null,
+    family: <FamilyCard />,
+    loop: <LoopShortcut />,
+    health: (
+      <Card>
+        <NavRow icon="pulse" tint="heart" title={t('home.healthTitle')} subtitle={t('home.healthSubtitle')} onPress={() => router.push('/health')} />
+      </Card>
+    ),
+  };
 
   return (
     <Screen
@@ -160,83 +236,15 @@ function WatchToday() {
         {loadError ? <Notice tone="danger">{t('home.loadError', { error: loadError })}</Notice> : null}
       </View>
 
-      {view ? <ScoresCard readiness={view.scores.readiness} today={view.scores.today} onPress={() => router.push('/readiness')} /> : null}
-
-      <CoachTodayCard dataVersion={dataVersion} availability={nightHrv} />
-
-      <FitnessTodayCards data={fitness} availability={nightHrv} />
-
-      <FamilyCard />
-
-      <LoopShortcut />
-
-      {data ? (
-        <MorningCheckin hrv={data.hrv} dayStart={data.dayStart} nowMs={nowMs} connected={isLinkUp(linkState)} onMeasure={() => router.push('/hrv')} />
-      ) : null}
-
-      {loading ? (
-        <View style={styles.tiles}>
-          <Skeleton width="48%" height={84} radius={18} />
-          <Skeleton width="48%" height={84} radius={18} />
-        </View>
-      ) : (
-        <View style={styles.tiles}>
-          <StatTile icon="flame" tint="workouts" label={t('home.calories')} value={formatCount(view?.totals.calories ?? 0)} unit={t('home.kcal')} />
-          <StatTile icon="trail-sign" tint="steps" label={t('home.distance')} value={distance.value} unit={distance.unit} />
-        </View>
-      )}
-
-      <Section title={t('home.heartTitle')} icon="heart" tint="heart">
-        {view?.heart ? (
-          <View style={styles.heartRow}>
-            <View style={styles.heartCol}>
-              <Metric value={String(view.heart.latest.bpm)} unit="bpm" size="md" color={colors.heartText} unitColor={colors.mutedForeground} />
-              <AppText variant="caption" muted>
-                {t('home.latest', { time: formatClock(view.heart.latest.timestamp) })}
-              </AppText>
-            </View>
-            <View style={styles.heartCol}>
-              <Metric value={String(view.heart.min)} unit="bpm" size="md" />
-              <AppText variant="caption" muted>
-                {t('home.low')}
-              </AppText>
-            </View>
-            <View style={styles.heartCol}>
-              <Metric value={String(view.heart.max)} unit="bpm" size="md" />
-              <AppText variant="caption" muted>
-                {t('home.high')}
-              </AppText>
-            </View>
-          </View>
-        ) : loading ? (
-          <Skeleton width="60%" height={38} />
-        ) : (
-          <AppText variant="caption" muted>
-            {t('home.noHeart')}
-          </AppText>
-        )}
-      </Section>
-
-      <Section title={t('home.stepsTitle')} icon="footsteps" tint="steps">
-        <HourlyBars steps={view?.hourly ?? new Array<number>(24).fill(0)} />
-      </Section>
-
-      <Section title={t('home.sleepTitle')} icon="moon" tint="sleep" onPress={() => router.push('/sleep')}>
-        {loading ? <Skeleton width="50%" height={38} /> : <SleepSummaryView summary={view?.sleep ?? null} score={view?.sleepScore ?? null} />}
-      </Section>
-
-      <Card>
-        <NavRow
-          icon="pulse"
-          tint="heart"
-          title={t('home.healthTitle')}
-          subtitle={t('home.healthSubtitle')}
-          onPress={() => router.push('/health')}
-        />
-      </Card>
+      {visibleHomeCards(homeCards).map((id) => (
+        <Fragment key={id}>{cards[id]}</Fragment>
+      ))}
       <Details title={t('home.aboutTitle')}>
         {t(view?.totalsFromWatch ? 'home.aboutWatch' : view?.hasSamples ? 'home.aboutSamples' : 'home.aboutNone')}
       </Details>
+      <Card>
+        <NavRow icon="albums" tint="neutral" title={t('cards.entry')} subtitle={t('cards.entrySubtitle')} onPress={() => router.push('/settings/home-cards')} />
+      </Card>
     </Screen>
   );
 }

@@ -4,7 +4,7 @@
  * - `getSnapshot()` / `subscribe()` (for `useSyncExternalStore`): Bluetooth state, scan results, and per sensor the link state, battery,
  *   manufacturer, model and a live preview of its readings. Updates caused by sensor values are throttled to one a second, so a
  *   chest strap does not re-render a screen at its own rate.
- * - `onValue()` / `onLocation()`: raw events for the recorder, unthrottled and in arrival order.
+ * - `onValue()` / `onLocation()` / `onSteps()`: raw events for the recorder, unthrottled and in arrival order.
  * - `onInfo()`: battery / manufacturer / model, so the provider can persist them.
  *
  * The native module is injected, so the hub runs under bun test with a fake. No React Native imports.
@@ -16,6 +16,7 @@ import {
   type LocationEvent,
   type ScanResultEvent,
   type ScanStateEvent,
+  type StepsEvent,
   type SensorLinkState,
   type ValueEvent,
 } from '../../../modules/ble-sensors/src/BleSensors.types';
@@ -104,6 +105,7 @@ export class SensorHub {
   private readonly listeners = new Set<() => void>();
   private readonly valueListeners = new Set<(e: ValueEvent) => void>();
   private readonly locationListeners = new Set<(e: LocationEvent) => void>();
+  private readonly stepsListeners = new Set<(e: StepsEvent) => void>();
   private readonly infoListeners = new Set<(i: SensorInfo) => void>();
   private readonly found = new Map<string, ScanItem>();
   private readonly trackers = new Map<string, SensorTracker>();
@@ -137,6 +139,11 @@ export class SensorHub {
     return () => this.locationListeners.delete(listener);
   }
 
+  onSteps(listener: (e: StepsEvent) => void): () => void {
+    this.stepsListeners.add(listener);
+    return () => this.stepsListeners.delete(listener);
+  }
+
   onInfo(listener: (i: SensorInfo) => void): () => void {
     this.infoListeners.add(listener);
     return () => this.infoListeners.delete(listener);
@@ -161,6 +168,9 @@ export class SensorHub {
       n.addListener('onValue', (e: ValueEvent) => this.value(e)),
       n.addListener('onLocation', (e: LocationEvent) => {
         for (const l of this.locationListeners) l(e);
+      }),
+      n.addListener('onSteps', (e: StepsEvent) => {
+        for (const l of this.stepsListeners) l(e);
       }),
       n.addListener('onBluetoothState', (e: { state: BluetoothState }) => this.set({ bluetooth: e.state })),
     ];

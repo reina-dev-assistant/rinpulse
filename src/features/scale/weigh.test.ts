@@ -4,19 +4,20 @@ import { FakeScaleNative } from './fakeNative.testkit';
 import { ScaleHub } from './hub';
 import type { ScaleNative } from './native';
 import { okokProtocol } from './protocols/okok';
+import { tuyaBeaconProtocol } from './protocols/tuyaBeacon';
 import type { GattProtocol, ScaleReading } from './types';
 import { WeighSession, type WeighStatus } from './weigh';
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const ID = 'AA:BB:CC:DD:EE:FF';
 
-function harness(protocol: Parameters<typeof WeighSession.prototype.constructor>[1]['protocol'], now = { t: 1_000 }) {
+function harness(protocol: Parameters<typeof WeighSession.prototype.constructor>[1]['protocol'], now = { t: 1_000 }, secret?: string) {
   const native = new FakeScaleNative();
   const hub = new ScaleHub(() => native as ScaleNative);
   const log = { statuses: [] as WeighStatus[], live: [] as ScaleReading[], final: [] as { r: ScaleReading; upgrade: boolean }[], problems: [] as string[], traces: [] as string[] };
   const session = new WeighSession(
     hub,
-    { id: ID, protocol },
+    { id: ID, protocol, secret },
     { lowLatency: true, user: () => null, now: () => now.t, cooldownMs: 0, timezoneOffsetMin: () => 420 },
     {
       onStatus: (s) => log.statuses.push(s),
@@ -82,6 +83,47 @@ describe('WeighSession with a broadcast scale', () => {
     native.failing.add('scan');
     await expect(session.start()).rejects.toBeDefined();
     expect(session.running).toBe(false);
+  });
+});
+
+// Frames of the owner's HAN RIVER HRTZC01 weigh-in under a fake key (see tuyaBeacon.test.ts): sn 19 = 107.5 kg, sn 20 and 21 = 108.6 kg.
+const TUYA_KEY = 'TestKey012345678';
+const TUYA = { sn19: '05dc2353dce19500000013634307f6b1f76cf27e071f7e605a1dc1', sn20: '05dc2353dce195000000147ae0e1e1c8536c607b66042e7eac39b1', sn21: '05dc2353dce195000000150211f8168321f2c38c7e6b28085eb05a' };
+const tuyaAdv = (hex: string, ts: number) => ({ ...adv({ d007: hex }), ts });
+
+describe('WeighSession with a Tuya beacon scale (local key)', () => {
+  it('saves the settled 108.6 kg once: live while it settles, final when the next sn repeats it', async () => {
+    const { native, session, log } = harness(tuyaBeaconProtocol, { t: 1_000 }, TUYA_KEY);
+    await session.start();
+    native.emit('onScaleAdvertisement', tuyaAdv(TUYA.sn19, 0));
+    native.emit('onScaleAdvertisement', tuyaAdv(TUYA.sn20, 20_000));
+    native.emit('onScaleAdvertisement', tuyaAdv(TUYA.sn20, 20_300));
+    expect(log.final).toHaveLength(0);
+    expect(log.live.map((r) => r.weightKg)).toEqual([107.5, 108.6, 108.6]);
+    native.emit('onScaleAdvertisement', tuyaAdv(TUYA.sn21, 37_000));
+    expect(log.final.map((f) => f.r)).toEqual([{ weightKg: 108.6, stable: true }]);
+    native.emit('onScaleAdvertisement', tuyaAdv(TUYA.sn21, 37_300));
+    expect(log.final).toHaveLength(1);
+    session.stop();
+  });
+
+  it('reads nothing with a wrong key and without one', async () => {
+    for (const secret of ['TestKey012345679', undefined]) {
+      const { native, session, log } = harness(tuyaBeaconProtocol, { t: 1_000 }, secret);
+      await session.start();
+      for (const [i, hex] of [TUYA.sn20, TUYA.sn21].entries()) native.emit('onScaleAdvertisement', tuyaAdv(hex, i * 1000));
+      expect(log.live).toHaveLength(0);
+      expect(log.final).toHaveLength(0);
+      session.stop();
+    }
+  });
+
+  it('ignores another scale\'s beacons', async () => {
+    const { native, session, log } = harness(tuyaBeaconProtocol, { t: 1_000 }, TUYA_KEY);
+    await session.start();
+    native.emit('onScaleAdvertisement', { ...tuyaAdv(TUYA.sn20, 0), id: '11:22:33:44:55:66' });
+    expect(log.live).toHaveLength(0);
+    session.stop();
   });
 });
 

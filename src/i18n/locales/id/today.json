@@ -306,5 +306,54 @@
       "signedIn": "Kalori setiap latihan beban yang kamu simpan dikirim ke buku harian makan JoyoRogo, jadi sisa kalori harianmu ikut menghitung latihan.",
       "signedOut": "Masuk dengan JoyoRogo supaya kalori latihanmu masuk ke buku harian makan dan riwayat latihan tersimpan di cloud (cloud butuh Pro)."
     }
+  },
+  "heartDay": {
+    "title": "Detak jantung seharian",
+    "today": "Hari ini",
+    "yesterday": "Kemarin",
+    "prevDay": "Hari sebelumnya",
+    "nextDay": "Hari berikutnya",
+    "min": "Terendah",
+    "avg": "Rata-rata",
+    "max": "Tertinggi",
+    "resting": "Istirahat",
+    "hint": "Sentuh dan geser grafik untuk melihat jam dan bpm",
+    "readoutAvg": "rata-rata",
+    "readoutMax": "tertinggi",
+    "readoutNone": "Tidak ada bacaan",
+    "peak": "Puncak {{bpm}} bpm pukul {{time}}",
+    "peakA11y": "Puncak {{bpm}} bpm pukul {{time}}. Tandai di grafik.",
+    "emptyToday": "Belum ada detak jantung tersimpan hari ini. Sinkron untuk mengambil dari jam.",
+    "emptyPast": "Tidak ada detak jantung tersimpan pada tanggal ini.",
+    "zonesTitle": "Waktu di tiap zona",
+    "zone": "Zona {{n}}",
+    "zoneRange": "{{from}} bpm ke atas",
+    "zonesNote": "Warna garis di grafik mengikuti zona, dihitung dari detak jantung maksimal perkiraanmu ({{max}} bpm). Celah di grafik berarti jam tidak mencatat.",
+    "loadError": "Gagal membaca detak jantung: {{error}}",
+    "chartLabel": "Grafik detak jantung {{day}}"
+  },
+  "cards": {
+    "entry": "Atur kartu Beranda",
+    "entrySubtitle": "Pilih kartu yang tampil dan urutannya",
+    "title": "Kartu Beranda",
+    "lead": "Laporan harian ada di atas, kartu lain di bawah. Matikan kartu yang tidak kamu perlukan atau pindahkan urutannya. Kartu jam di paling atas tetap di tempatnya.",
+    "moveUp": "Naikkan {{card}}",
+    "moveDown": "Turunkan {{card}}",
+    "position": "{{card}}, urutan {{n}} dari {{total}}",
+    "reset": "Kembalikan urutan awal",
+    "names": {
+      "scores": "Pemulihan, strain, dan tidur",
+      "activity": "Kalori dan jarak",
+      "heart": "Detak jantung",
+      "steps": "Langkah per jam",
+      "sleep": "Ringkasan tidur",
+      "energy": "Energi Tubuh",
+      "fitness": "Kebugaran",
+      "coach": "Saran Coach",
+      "checkin": "Check-in pagi",
+      "family": "Pantau kabar keluarga",
+      "loop": "Loop baru dari rumah",
+      "health": "Metrik kesehatan"
+    }
   }
 }

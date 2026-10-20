@@ -116,6 +116,15 @@ describe('SensorHub', () => {
     expect(hub.getSnapshot().links.A!.preview.hr).toBe(141);
   });
 
+  it('hands the step counter readings to the recorder', async () => {
+    const { native, hub } = await setup();
+    const readings: number[] = [];
+    hub.onSteps((e) => readings.push(e.steps));
+    native.emit('onSteps', { ts: 1, steps: 0 });
+    native.emit('onSteps', { ts: 2, steps: 7 });
+    expect(readings).toEqual([0, 7]);
+  });
+
   it('learns links that were already up (JS reload)', async () => {
     const native = new FakeNative();
     native.states = [{ id: 'Z', state: 'connected', services: ['1818'], error: null }];

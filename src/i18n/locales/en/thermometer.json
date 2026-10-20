@@ -1,0 +1,62 @@
+{
+  "title": "Room thermometer",
+  "problem": {
+    "permission": "JoyoFit is not allowed to use Bluetooth yet. Open settings to allow it.",
+    "off": "Bluetooth is off. Turn it on, then try again.",
+    "notAllowed": "Android refused the background service. Open JoyoFit and try again.",
+    "unavailable": "Bluetooth cannot be used right now.",
+    "openSettings": "Open settings"
+  },
+  "card": {
+    "empty": "No thermometer yet. Find yours below.",
+    "reading": "{{temp}} °C, humidity {{rh}}%",
+    "noReading": "No reading yet. Bring your phone close to the thermometer and keep JoyoFit open for a moment.",
+    "lastAt": "Last reading {{ago}}",
+    "forget": "Forget",
+    "forgetTitle": "Forget this thermometer?",
+    "forgetMessage": "The temperature and humidity readings kept on this phone are deleted too. Nightly averages already sent to Sleep insights stay as they are."
+  },
+  "picker": {
+    "title": "Find thermometer",
+    "explain": "JoyoFit will scan nearby Bluetooth devices to find your thermometer. Scan results are only used on this phone.",
+    "continue": "Continue",
+    "hint": "Hold your phone close to the thermometer. Thermometers JoyoFit can read show up with their temperature.",
+    "search": "Find thermometer",
+    "stopSearch": "Stop searching",
+    "searching": "Searching…",
+    "none": "Nothing in sight yet. Make sure your phone's Bluetooth is on and the thermometer is close.",
+    "pick": "Use this one",
+    "chosen": "In use",
+    "unnamed": "No name",
+    "reading": "Reads {{temp}} °C, {{rh}}%",
+    "unreadable": "Cannot be read yet: the stock Xiaomi firmware does not broadcast its numbers openly. Flash the community firmware (see below)."
+  },
+  "firmware": {
+    "title": "What the thermometer needs",
+    "body": "JoyoFit reads a Xiaomi LYWSD03MMC (or similar) running the community firmware pvvx/ATC_MiThermometer, from its broadcasts only, without connecting. The format is ATC1441, PVVX custom or BTHome v2. The stock Xiaomi firmware broadcasts its data encrypted and the key lives in the Xiaomi app, so it cannot be read. The community firmware is flashed from a browser over Bluetooth. Check the hardware version first: units sold since March 2025 (B1.5 and B1.6) are not recommended by the firmware author."
+  },
+  "night": {
+    "title": "Watch overnight",
+    "explain": "One reading every 5 minutes is kept on this phone. The night's average is only sent to Sleep insights if you turn it on.",
+    "running": "Running until {{time}}",
+    "idle": "Not running",
+    "start": "Watch tonight",
+    "stop": "Stop",
+    "ios": "iPhone limits Bluetooth scanning in the background, so JoyoFit only reads the thermometer while the app is open. A night's average only builds up if JoyoFit stays open all night.",
+    "oldBuild": "Overnight watching needs an app update from the store, not a quick update. Until then JoyoFit only reads the thermometer while the app is open.",
+    "auto": "Start automatically at night",
+    "autoHint": "When you open JoyoFit between 7 PM and the morning, watching starts by itself. A notification stays up while it runs.",
+    "until": "Stop at"
+  },
+  "privacy": {
+    "title": "Your room data",
+    "body": "Raw readings stay on this phone and are deleted after 120 days. All that can leave the phone is the average temperature and humidity per night (mean, lowest, highest and number of readings), and only when Sleep insights is on in Settings, Connections, JoyoRogo. A night with too few readings sends no room data."
+  },
+  "capture": {
+    "notification": {
+      "title": "Watching the room temperature",
+      "text": "JoyoFit is listening to your room thermometer until morning.",
+      "stop": "Stop"
+    }
+  }
+}

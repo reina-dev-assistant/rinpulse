@@ -1,5 +1,5 @@
 import { estimateBody, type BodyEstimate } from './bodyComposition';
-import { bodyFormulaOf } from './registry';
+import { bodyFormulaOf, protocolById } from './registry';
 import type { ReportedBody, ScaleReading, ScaleUser } from './types';
 
 export interface BodyResult {
@@ -12,9 +12,10 @@ export interface BodyResult {
 /**
  * What body composition a weigh-in can honestly show. The scale's own values win; otherwise, with an impedance and a profile (height, age,
  * sex), the published openScale formula of that scale family gives an estimate. Nothing is invented: no impedance, no profile, no known
- * formula or an out-of-range input means no values.
+ * formula or an out-of-range input means no values. A weight-only protocol never has any, whatever a frame might carry.
  */
 export function bodyOf(reading: ScaleReading, protocolId: string, user: ScaleUser | null): BodyResult {
+  if (protocolById(protocolId)?.weightOnly) return { reported: null, estimate: null };
   const reported = reading.reported && Object.keys(reading.reported).length > 0 ? reading.reported : null;
   if (reported?.bodyFatPct !== undefined) return { reported, estimate: null };
   const formula = bodyFormulaOf(protocolId);

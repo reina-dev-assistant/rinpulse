@@ -1,3 +1,4 @@
+import * as SecureStore from 'expo-secure-store';
 import { useSQLiteContext } from 'expo-sqlite';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +13,7 @@ import type { Reference } from '@/features/scale/guard';
 import { scaleHub } from '@/features/scale/instance';
 import { profileWeightKg, scaleUserFrom } from '@/features/scale/profile';
 import { protocolById } from '@/features/scale/registry';
+import { deleteScaleSecret, loadScaleSecret, saveScaleSecret } from '@/features/scale/secret';
 import {
   deleteWeighIn,
   latestWeighIn,
@@ -41,6 +43,9 @@ export interface ScaleSettings {
 
 export type ScaleProblem = 'permission' | 'off' | 'unavailable';
 
+/** The scale's secret (Tuya local key): `none` the protocol has none, `loading` the secure store is being read, `missing` the scale cannot be read yet, `saved` it is in the secure store. */
+export type ScaleSecretState = 'none' | 'loading' | 'missing' | 'saved';
+
 export interface ScaleLive {
   /** `off`: nothing is listening for the scale (no scale picked, auto-capture off and no test running, app in the background). */
   status: WeighStatus | 'off';
@@ -66,6 +71,10 @@ export interface ScaleContextValue {
   startTest: () => Promise<Granted>;
   stopTest: () => void;
   testing: boolean;
+  secret: ScaleSecretState;
+  /** Validates and keeps the key typed for the scale in use; false when the text is not a valid key. */
+  saveSecret: (text: string) => Promise<boolean>;
+  clearSecret: () => Promise<void>;
   /** Makes this scale the one JoyoFit listens to (replacing any earlier one). */
   pick: (found: { id: string; name: string; protocolId: string }) => Promise<void>;
   rename: (alias: string) => Promise<void>;
@@ -119,6 +128,8 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
   const [testing, setTesting] = useState(false);
   const [appActive, setAppActive] = useState(AppState.currentState === 'active');
   const [pending, setPending] = useState<PendingWeighIn | null>(null);
+  /** The secret of `scaleId`; `value` is null when none is saved. Absent while it is being read. */
+  const [stored, setStored] = useState<{ scaleId: string; value: string | null } | null>(null);
 
   const settingsRef = useRef(settings);
   useEffect(() => {
@@ -197,8 +208,8 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
             if (alive.current) setPending(result.pending);
             return;
           }
-          if (result.kind === 'saved') {
-            lastSavedRef.current = { id: result.weighIn.id, weightKg: result.weighIn.weightKg };
+          if (result.kind === 'saved' || result.kind === 'revised') {
+            lastSavedRef.current = { id: result.weighIn.id, weightKg: result.weighIn.weightKg, at: Date.now() };
             if (alive.current) setLastSaved(lastSavedRef.current);
           }
           await touchScale(db, found.id, Date.now());
@@ -224,13 +235,28 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
     finalRef.current = handleFinal;
   }, [scale, handleFinal]);
 
-  const listening = protocol !== null && (settings.autoCapture || testing) && appActive;
+  const wantsSecret = protocol?.kind === 'broadcast' && protocol.secret !== undefined;
+  const secretValue = stored?.scaleId === scaleId ? stored.value : undefined;
+  useEffect(() => {
+    if (scaleId === null || !wantsSecret) return;
+    let cancelled = false;
+    void loadScaleSecret(SecureStore, scaleId)
+      .catch(() => null)
+      .then((value) => {
+        if (!cancelled) setStored({ scaleId, value });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scaleId, wantsSecret]);
+
+  const listening = protocol !== null && (settings.autoCapture || testing) && appActive && (!wantsSecret || typeof secretValue === 'string');
   useEffect(() => {
     if (!listening || scaleId === null || protocol === null) return;
     let cancelled = false;
     const session = new WeighSession(
       scaleHub,
-      { id: scaleId, protocol },
+      { id: scaleId, protocol, secret: secretValue ?? undefined },
       { lowLatency: testing, user: () => scaleUserFrom(HuaweiWear.getUserProfile(), new Date().getFullYear()) },
       {
         onStatus: (status) => setLive((l) => ({ ...l, status })),
@@ -267,7 +293,7 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
       session.stop();
       setLive(OFF);
     };
-  }, [listening, scaleId, protocol, testing]);
+  }, [listening, scaleId, protocol, testing, secretValue]);
 
   const answerConfirm = useCallback(
     (mine: boolean) => {
@@ -278,7 +304,7 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
         .then(async () => {
           const result = await confirmPending(contextFor(scale), held);
           if (result.kind === 'saved') {
-            lastSavedRef.current = { id: result.weighIn.id, weightKg: result.weighIn.weightKg };
+            lastSavedRef.current = { id: result.weighIn.id, weightKg: result.weighIn.weightKg, at: Date.now() };
             if (alive.current) setLastSaved(lastSavedRef.current);
           }
           await reload();
@@ -314,8 +340,26 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
         return permission;
       },
       stopTest: () => setTesting(false),
+      secret: !wantsSecret ? 'none' : secretValue === undefined ? 'loading' : secretValue === null ? 'missing' : 'saved',
+      saveSecret: async (text) => {
+        const parsed = protocol?.kind === 'broadcast' ? (protocol.secret?.parse(text) ?? null) : null;
+        if (parsed === null || scaleId === null) return false;
+        await saveScaleSecret(SecureStore, scaleId, parsed);
+        setStored({ scaleId, value: parsed });
+        return true;
+      },
+      clearSecret: async () => {
+        if (scaleId === null) return;
+        setTesting(false);
+        await deleteScaleSecret(SecureStore, scaleId);
+        setStored({ scaleId, value: null });
+      },
       pick: async (found) => {
-        for (const old of await listScales(db)) if (old.id !== found.id) await removeScale(db, old.id);
+        for (const old of await listScales(db)) {
+          if (old.id === found.id) continue;
+          await removeScale(db, old.id);
+          await deleteScaleSecret(SecureStore, old.id).catch(() => {});
+        }
         await saveScale(db, found, Date.now());
         await reload();
       },
@@ -325,7 +369,10 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
       },
       forget: async () => {
         setTesting(false);
-        if (scale) await removeScale(db, scale.id);
+        if (scale) {
+          await removeScale(db, scale.id);
+          await deleteScaleSecret(SecureStore, scale.id).catch(() => {});
+        }
         await reload();
       },
       remove: async (id) => {
@@ -334,7 +381,7 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
       },
       retryPush: pushNow,
     }),
-    [db, listening, live, lastSaved, loaded, problem, protocol, pushNow, reload, rogoWaiting, scale, settings, testing, weighIns],
+    [db, listening, live, lastSaved, loaded, problem, protocol, pushNow, reload, rogoWaiting, scale, scaleId, secretValue, settings, testing, wantsSecret, weighIns],
   );
 
   return (

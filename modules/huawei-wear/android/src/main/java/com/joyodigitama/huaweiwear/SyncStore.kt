@@ -54,9 +54,11 @@ internal class SyncSummary(
   val totalDistance: Int,
   /** Workouts written (new or completed) by this sync's workout phase. */
   val workouts: Int = 0,
+  /** The watch the sync ran on (`device.address`); the Today ring needs it, a background visit reports a sync of a watch that is not the active one. */
+  val address: String? = null,
 ) {
   fun withWorkouts(count: Int) =
-    SyncSummary(from, to, samples, sleep, totalSteps, totalCalories, totalDistance, count)
+    SyncSummary(from, to, samples, sleep, totalSteps, totalCalories, totalDistance, count, address)
 
   fun toJs(): Map<String, Any?> = mapOf(
     "from" to from,
@@ -69,6 +71,7 @@ internal class SyncSummary(
       "calories" to totalCalories,
       "distance" to totalDistance,
     ),
+    "address" to address,
   )
 }
 

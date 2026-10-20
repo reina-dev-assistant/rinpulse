@@ -6,7 +6,7 @@ import { fmtDecimal } from '@/i18n';
 
 import { SPORT_ROWS, type ManualSport } from '../../workouts/manual';
 import { GPS_SPORTS } from '../controller';
-import { MAX_FIX_ACCURACY_M, type LiveStats, type RecordedLap } from '../recorder';
+import { FOOT_SPORTS, MAX_FIX_ACCURACY_M, type LiveStats, type RecordedLap } from '../recorder';
 
 export type GpsStatus = 'searching' | 'ready' | 'fair' | 'weak';
 
@@ -81,11 +81,13 @@ export interface PermissionPlan {
   location: boolean;
   /** Paired sensors will be connected. */
   bluetooth: boolean;
+  /** A run, walk or hike can count steps with the phone's step counter. Optional: never blocks `canPrepare`. */
+  steps: boolean;
 }
 
-/** What the recording of `sport` asks the person for: precise location outdoors, Bluetooth when a paired sensor will connect. */
+/** What the recording of `sport` asks the person for: precise location outdoors, Bluetooth when a paired sensor will connect, and for a foot sport the phone's step counter (optional). */
 export function permissionPlan(sport: ManualSport, autoSensors: number): PermissionPlan {
-  return { location: GPS_SPORTS.includes(sport), bluetooth: autoSensors > 0 };
+  return { location: GPS_SPORTS.includes(sport), bluetooth: autoSensors > 0, steps: FOOT_SPORTS.includes(sport) };
 }
 
 /**

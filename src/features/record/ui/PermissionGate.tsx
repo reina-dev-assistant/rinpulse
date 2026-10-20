@@ -8,7 +8,7 @@ import { Button } from '@/components/Button';
 import { IconChip, type IconName } from '@/components/IconChip';
 import { Card } from '@/components/Screen';
 import { Notice } from '@/components/States';
-import { ensureLocation, ensureSensorPermissions, locationGranted } from '@/features/sensors/permissions';
+import { ensureLocation, ensureSensorPermissions, ensureStepCounter, locationGranted, stepCounterState } from '@/features/sensors/permissions';
 import { spacing } from '@/theme';
 
 import type { PermissionAnswer, PermissionPlan } from './format';
@@ -37,9 +37,12 @@ interface RecordPermissions {
   location: PermissionAnswer;
   bluetooth: PermissionAnswer;
   /** Which question is on screen right now. */
-  asking: 'location' | 'bluetooth' | null;
+  /** The phone's step counter (optional: `canPrepare` never waits for it). `granted` also when the phone has none, so nothing is asked. */
+  steps: PermissionAnswer;
+  asking: 'location' | 'bluetooth' | 'steps' | null;
   askLocation: () => Promise<void>;
   askBluetooth: () => Promise<void>;
+  askSteps: () => Promise<void>;
   /** `prepare` was refused for the location after all (the permission was taken back): ask again. */
   locationRefused: () => void;
 }
@@ -52,13 +55,20 @@ interface RecordPermissions {
 export function useRecordPermissions(plan: PermissionPlan, radio: BluetoothState): RecordPermissions {
   const [location, setLocation] = useState<PermissionAnswer>('unknown');
   const [bluetooth, setBluetooth] = useState<PermissionAnswer>('unknown');
+  const [steps, setSteps] = useState<PermissionAnswer>('unknown');
   const [asking, setAsking] = useState<RecordPermissions['asking']>(null);
 
   useEffect(() => {
     let live = true;
     const check = () => {
-      void Promise.all([locationGranted().then(Boolean, () => null), bluetoothGranted(radio).catch(() => null)]).then(([locationAllowed, bluetoothAllowed]) => {
+      void Promise.all([
+        locationGranted().then(Boolean, () => null),
+        bluetoothGranted(radio).catch(() => null),
+        stepCounterState().catch(() => 'unavailable' as const),
+      ]).then(([locationAllowed, bluetoothAllowed, stepCounter]) => {
         if (!live) return;
+        // A phone without a step counter has nothing to ask; Android cannot tell "never asked" from "refused", iOS can.
+        setSteps((prev) => (stepCounter === 'unavailable' ? 'granted' : stepCounter === 'denied' && Platform.OS !== 'android' ? 'denied' : settle(stepCounter === 'granted', prev)));
         setLocation((prev) => settle(locationAllowed, prev));
         setBluetooth((prev) =>
           bluetoothAllowed === false && Platform.OS !== 'android' && radio === 'unauthorized' ? 'denied' : settle(bluetoothAllowed, prev),
@@ -84,6 +94,15 @@ export function useRecordPermissions(plan: PermissionPlan, radio: BluetoothState
     }
   }, []);
 
+  const askSteps = useCallback(async () => {
+    setAsking('steps');
+    try {
+      setSteps(await ensureStepCounter());
+    } finally {
+      setAsking(null);
+    }
+  }, []);
+
   const askBluetooth = useCallback(async () => {
     setAsking('bluetooth');
     try {
@@ -97,9 +116,11 @@ export function useRecordPermissions(plan: PermissionPlan, radio: BluetoothState
   return {
     location: plan.location ? location : 'granted',
     bluetooth: plan.bluetooth ? bluetooth : 'granted',
+    steps: plan.steps ? steps : 'granted',
     asking,
     askLocation,
     askBluetooth,
+    askSteps,
     locationRefused: () => setLocation('denied'),
   };
 }
@@ -139,7 +160,7 @@ interface PermissionCardsProps {
 /** The cards and notices of the permissions the recording still needs: an explanation first, a way to the settings after a refusal. */
 export function PermissionCards({ permissions, plan }: PermissionCardsProps) {
   const { t } = useTranslation('workouts');
-  const { location, bluetooth, asking } = permissions;
+  const { location, bluetooth, steps, asking } = permissions;
   const settings = { label: t('record.permission.openSettings'), onPress: () => void Linking.openSettings() };
   return (
     <>
@@ -175,6 +196,24 @@ export function PermissionCards({ permissions, plan }: PermissionCardsProps) {
               body={t('record.permission.bluetooth.body')}
               busy={asking === 'bluetooth'}
               onContinue={() => void permissions.askBluetooth()}
+            />
+          ) : null}
+        </>
+      ) : null}
+      {plan.steps && steps !== 'granted' ? (
+        <>
+          {steps === 'denied' || steps === 'blocked' ? (
+            <Notice tone="info" icon="footsteps-outline" action={settings}>
+              {t('record.permission.steps.denied')}
+            </Notice>
+          ) : null}
+          {steps === 'unknown' ? (
+            <ExplainCard
+              icon="footsteps-outline"
+              title={t('record.permission.steps.title')}
+              body={t('record.permission.steps.body')}
+              busy={asking === 'steps'}
+              onContinue={() => void permissions.askSteps()}
             />
           ) : null}
         </>

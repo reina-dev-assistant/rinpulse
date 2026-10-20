@@ -30,6 +30,9 @@ internal class WearSettings(context: Context) {
   private val prefs: SharedPreferences =
     context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+  /** Watches that pull their whole history on the next sync because the link was moved to them from another watch. */
+  val switchBackfill = SwitchBackfill(prefs)
+
   /** The watch last connected from the app or enabled for background (uppercase MAC). */
   var watchAddress: String?
     get() = prefs.getString(KEY_ADDRESS, null)

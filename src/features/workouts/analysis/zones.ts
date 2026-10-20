@@ -47,7 +47,7 @@ export function thresholdPace(candidates: readonly EffortCandidate[]): number | 
 }
 
 /** The 1 mile, 5 km, 10 km and half-marathon efforts of this workout and of the history, as threshold candidates. */
-export function thresholdCandidates(efforts: readonly AnalysisBestEffort[], history: readonly EffortSeconds[]): EffortCandidate[] {
+function thresholdCandidates(efforts: readonly AnalysisBestEffort[], history: readonly EffortSeconds[]): EffortCandidate[] {
   const out: EffortCandidate[] = [];
   for (const key of THRESHOLD_KEYS) {
     const distM = BEST_EFFORT_DISTANCES[key];
@@ -59,6 +59,15 @@ export function thresholdCandidates(efforts: readonly AnalysisBestEffort[], hist
     }
   }
   return out;
+}
+
+/**
+ * The one threshold pace (seconds per km) of the app: from this workout's own best efforts (none for the coach) and the best
+ * efforts of the runs of the last `THRESHOLD_WINDOW_DAYS` days (`inEffortWindow`). Both the workout analysis and the coach
+ * call it, so they never disagree. Null until some effort of 8 minutes or more exists.
+ */
+export function thresholdPaceFromEfforts(own: readonly AnalysisBestEffort[], history: readonly EffortSeconds[]): number | null {
+  return thresholdPace(thresholdCandidates(own, history));
 }
 
 /** Zone edges as a share of threshold pace, slow to fast; `from` is the slow edge. */

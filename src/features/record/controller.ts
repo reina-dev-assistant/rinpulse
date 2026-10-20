@@ -11,14 +11,14 @@
  * with GPS at once, so the first fix is already on its way when the person taps "Mulai"; `prepare` then takes the running session over
  * instead of starting one. `stopWarmUp` (leaving the picker, another sport, the app going to the background) ends it again.
  */
-import type { LocationEvent, ValueEvent, WorkoutAction, WorkoutSessionOptions, WorkoutSessionState } from '../../../modules/ble-sensors/src/BleSensors.types';
+import type { LocationEvent, StepCounterPermission, StepsEvent, ValueEvent, WorkoutAction, WorkoutSessionOptions, WorkoutSessionState } from '../../../modules/ble-sensors/src/BleSensors.types';
 import type { ManualSport } from '../workouts/manual';
 import type { SavedSensor } from '../sensors/store';
 import type { WorkoutSensor } from '../sensors/store';
 import { cscModeOf, hexToBytes, parseCsc, type SensorKind } from '../sensors/gatt';
 import type { LinkInfo } from '../sensors/hub';
 import { appendJournal, clearJournal, loadJournal, saveJournalState } from './journal';
-import { Recorder, MAX_FIX_ACCURACY_M, type LiveStats, type RecordedLap, type RecordedWorkout, type RecorderMeta, type RecorderStatus } from './recorder';
+import { Recorder, FOOT_SPORTS, MAX_FIX_ACCURACY_M, type LiveStats, type RecordedLap, type RecordedWorkout, type RecorderMeta, type RecorderStatus } from './recorder';
 import type { EnergyProfile } from './energy';
 import { saveRecordedWorkout, type SaveDb } from './save';
 import type { VirtualRide } from '../workouts/summary';
@@ -54,6 +54,8 @@ export interface RecordingSnapshot {
   noService: boolean;
   /** Error code of the last failed sensor connect (ERR_BLUETOOTH_OFF, ...), null while fine. */
   sensorError: string | null;
+  /** The phone's step counter is on for this recording (a foot sport with the permission): cadence and steps come from it when no running pod reports. */
+  phoneSteps: boolean;
 }
 
 /** What an observer of the running recording gets each second. */
@@ -78,6 +80,8 @@ export interface SessionApi {
 export interface HubApi {
   onValue(listener: (e: ValueEvent) => void): () => void;
   onLocation(listener: (e: LocationEvent) => void): () => void;
+  /** Readings of the phone's step counter (only while the native session runs with `steps`). */
+  onSteps(listener: (e: StepsEvent) => void): () => void;
   /** Connects the sensor and keeps it connected; a link that is down and waiting out its retry delay is restarted at once. */
   connect(id: string): Promise<void>;
   disconnect(id: string): Promise<void>;
@@ -90,6 +94,8 @@ export type RecordingDb = SaveDb & Pick<SQLiteDatabase, 'runAsync' | 'getFirstAs
 export interface RecordingDeps {
   hub: HubApi;
   session: SessionApi;
+  /** Whether the phone's step counter may be used right now, without asking. Never blocks a recording. */
+  stepCounter: () => Promise<StepCounterPermission>;
   db: RecordingDb;
   now: () => number;
   profile: () => EnergyProfile;
@@ -146,6 +152,8 @@ export class RecordingController {
   private wantWarm: { sport: ManualSport; title: string } | null = null;
   /** The sport of the running warm-up session, null while there is none. */
   private warmSport: ManualSport | null = null;
+  /** The native session that runs counts steps with the phone's step counter. */
+  private sessionSteps = false;
   private warmNoService = false;
   /** `prepare` is under way: the warm-up is its to take over, `stopWarmUp` leaves it alone. */
   private preparing = false;
@@ -220,15 +228,17 @@ export class RecordingController {
       if (gps && this.warmSport !== null) {
         noService = this.warmNoService;
         this.warmSport = null;
+        // The warm-up ran for another sport (a ride): the running session has no step counter, ask for it now.
+        if (!this.sessionSteps && (await this.wantsSteps(sport))) noService = await this.beginSession(gps, title, sport);
       } else {
         if (this.warmSport !== null) await this.endWarm();
         this.resetFix();
         this.attach();
-        noService = await this.beginSession(gps, title);
+        noService = await this.beginSession(gps, title, sport);
       }
       const ids = this.deps.sensors().filter((s) => s.autoConnect).map((s) => s.id);
       this.resetSensors();
-      this.snap = { ...idleSnapshot(), phase: 'ready', sport, gps, noService, sensorIds: ids };
+      this.snap = { ...idleSnapshot(), phase: 'ready', sport, gps, noService, sensorIds: ids, phoneSteps: this.sessionSteps };
       this.beginTimer();
       this.publish();
       const sensorError = await this.connectAll(ids);
@@ -267,7 +277,7 @@ export class RecordingController {
       this.resetFix();
       this.attach();
       try {
-        this.warmNoService = await this.beginSession(true, want.title);
+        this.warmNoService = await this.beginSession(true, want.title, want.sport);
       } catch (error) {
         this.deps.log?.(`GPS warm-up not started: ${String(error)}`);
         return;
@@ -289,6 +299,7 @@ export class RecordingController {
     this.warmSport = null;
     this.resetFix();
     await this.deps.session.end().catch((e) => this.deps.log?.(`ending the warm-up failed: ${String(e)}`));
+    this.sessionSteps = false;
     this.publish({ warm: false, noService: false });
   }
 
@@ -359,8 +370,8 @@ export class RecordingController {
     this.attach();
     const recorder = Recorder.restore(meta, journal.samples);
     this.recorder = recorder;
-    const noService = await this.beginSession(meta.config.gps, title);
-    this.snap = { ...idleSnapshot(), phase: 'active', sport: meta.config.sport, gps: meta.config.gps, noService, sensorIds };
+    const noService = await this.beginSession(meta.config.gps, title, meta.config.sport);
+    this.snap = { ...idleSnapshot(), phase: 'active', sport: meta.config.sport, gps: meta.config.gps, noService, sensorIds, phoneSteps: this.sessionSteps };
     const sensorError = await this.connectAll(sensorIds);
     this.beginTimer();
     this.publish({ sensorError });
@@ -483,6 +494,9 @@ export class RecordingController {
     this.off = [
       this.deps.session.onAction((action) => this.onNotificationAction(action)),
       this.deps.hub.onValue((e) => this.onSensorValue(e)),
+      this.deps.hub.onSteps((e) => {
+        if (this.recorder && this.snap.phase === 'active') this.recorder.steps(e.steps, e.ts);
+      }),
       this.deps.hub.onLocation((e) => {
         this.lastFix = e;
         const now = this.deps.now();
@@ -581,17 +595,31 @@ export class RecordingController {
   }
 
   /** True when the Android foreground service was refused. */
-  private async beginSession(gps: boolean, title: string): Promise<boolean> {
+  private async beginSession(gps: boolean, title: string, sport: ManualSport): Promise<boolean> {
+    const steps = await this.wantsSteps(sport);
     try {
-      await this.deps.session.start({ title, text: title, gps });
+      await this.deps.session.start({ title, text: title, gps, ...(steps ? { steps: true } : {}) });
+      this.sessionSteps = steps;
       return false;
     } catch (error) {
       if (codeOf(error) === 'ERR_SERVICE_NOT_ALLOWED') {
         this.deps.log?.('the foreground service was refused; recording without it');
+        this.sessionSteps = steps;
         return true;
       }
       this.detach();
       throw error;
+    }
+  }
+
+  /** A foot sport uses the phone's step counter for cadence and steps when it may; a refusal or a failed check never blocks the recording. */
+  private async wantsSteps(sport: ManualSport): Promise<boolean> {
+    if (!FOOT_SPORTS.includes(sport)) return false;
+    try {
+      return (await this.deps.stepCounter()) === 'granted';
+    } catch (error) {
+      this.deps.log?.(`step counter check failed: ${String(error)}`);
+      return false;
     }
   }
 
@@ -654,9 +682,10 @@ export class RecordingController {
     this.connected = [];
     this.retries.clear();
     await this.deps.session.end().catch((e) => this.deps.log?.(`ending the session failed: ${String(e)}`));
+    this.sessionSteps = false;
   }
 }
 
 function idleSnapshot(): RecordingSnapshot {
-  return { phase: 'idle', sport: null, gps: false, warm: false, status: 'idle', live: null, laps: [], sensorIds: [], fix: null, noService: false, sensorError: null };
+  return { phase: 'idle', sport: null, gps: false, warm: false, status: 'idle', live: null, laps: [], sensorIds: [], fix: null, noService: false, sensorError: null, phoneSteps: false };
 }

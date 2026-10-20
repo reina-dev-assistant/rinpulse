@@ -137,6 +137,22 @@ final class MultiWatchTests: XCTestCase {
         XCTAssertEqual(try step(store, 1000)?.0, 28)
     }
 
+    /// docs/multi-watch.md, section 7: a day an older build let another watch overwrite (rows with no watch, zero) comes back when the
+    /// owner's watch pulls its whole history; the band's own later sync cannot undo it once the owner's watch is primary. Mirrors
+    /// `SwitchBackfillTest` and src/db/watchSwitch.test.ts.
+    func testAFullPullOfTheOwnersWatchBringsBackDaysTheOtherWatchWroteOver() throws {
+        let store = try store()
+        try exec(store, "INSERT INTO step_samples (timestamp, steps, calories, distance) VALUES (1000, 0, 0, 0), (1060, 0, 0, 0), (1120, 0, 0, 0)")
+        _ = try store.save(address: a, result: result(samples: [sample(1000, steps: 12, hr: 90), sample(1060, steps: 14, hr: 91)]))
+        XCTAssertEqual(try rows(store, "SELECT SUM(steps) FROM step_samples") { $0.int(0) }, [26])
+        try exec(store, "UPDATE device SET is_primary = (address = '\(a)')")
+        _ = try store.save(address: b, result: result(samples: [sample(1000, steps: 30, hr: 100), sample(1060, steps: 0), sample(1120, steps: 20, hr: 95)]))
+        XCTAssertEqual(try step(store, 1000)?.1, a)
+        XCTAssertEqual(try step(store, 1060)?.1, a)
+        XCTAssertEqual(try step(store, 1120)?.1, b, "a minute the owner's watch has no data for is the band's")
+        XCTAssertEqual(try rows(store, "SELECT SUM(steps) FROM step_samples WHERE device = '\(a)'") { $0.int(0) }, [26])
+    }
+
     // MARK: sleep
 
     private func sleepRows(_ store: SyncStore) throws -> [String] {

@@ -11,6 +11,7 @@
  */
 
 import { type FitFieldDef, type FitFieldType, type FitValue, FitWriter, toFitTime, toSemicircles } from './fitEncoder';
+import { plausibleStepLength } from '../workouts/analysis/stride';
 import { movingOf } from '../workouts/times';
 import { FIT_MANUFACTURER_DEVELOPMENT, type StravaDevice } from './device';
 
@@ -39,9 +40,14 @@ export interface StravaWorkout {
   avgPower?: number | null;
   maxPower?: number | null;
   normalizedPower?: number | null;
-  /** Steps per minute on foot, rpm on a bike, from `summary_json`; a foot sport without `steps` takes its cadence from here. */
+  /**
+   * Steps per minute on foot, rpm on a bike. The caller resolves them as the workout screen does (`cadenceFigures`: samples, the
+   * summary, the watch's per-km blocks, the step count); a foot sport without them takes its cadence from `steps` and the active time.
+   */
   avgCadence?: number | null;
   maxCadence?: number | null;
+  /** Metres per step, the session's and the single lap's `avg_step_length`. */
+  avgStepLengthM?: number | null;
   /** The person marked this ride as an e-bike ride: Strava's `EBikeRide` instead of `Ride`. */
   ebike?: boolean;
   /** Ride metrics of a bike workout (`cycling/analyzeRide`) that the session carries where FIT has a field for them. */
@@ -76,6 +82,8 @@ export interface StravaPoint {
   speed?: number | null;
   /** Steps per minute on foot, rpm on a bike (as `workout_points.cadence`). */
   cadence?: number | null;
+  /** Metres per step (as `workout_points.stride`): written as the record's `step_length` only where the point has one. */
+  stride?: number | null;
   power?: number | null;
 }
 
@@ -214,6 +222,8 @@ interface Sample {
   hr: number | null;
   speed: number | null;
   cadence: number | null;
+  /** Metres per step. */
+  stride: number | null;
   power: number | null;
   /** Cumulative metres, filled in by `withDistance`. */
   distance: number;
@@ -244,7 +254,7 @@ function collectSamples(workout: StravaWorkout, points: readonly StravaPoint[]):
   const at = (ts: number): Sample => {
     let sample = bySecond.get(ts);
     if (!sample) {
-      sample = { ts, lat: null, lon: null, alt: null, hr: null, speed: null, cadence: null, power: null, distance: 0 };
+      sample = { ts, lat: null, lon: null, alt: null, hr: null, speed: null, cadence: null, stride: null, power: null, distance: 0 };
       bySecond.set(ts, sample);
     }
     return sample;
@@ -260,6 +270,8 @@ function collectSamples(workout: StravaWorkout, points: readonly StravaPoint[]):
     if (p.hr !== null && p.hr > 0 && p.hr < 255) sample.hr = Math.round(p.hr);
     if (p.speed !== null && p.speed !== undefined && Number.isFinite(p.speed) && p.speed >= 0 && p.speed < 100) sample.speed = p.speed;
     if (p.cadence !== null && p.cadence !== undefined && Number.isFinite(p.cadence) && p.cadence >= 0 && p.cadence < 500) sample.cadence = Math.round(p.cadence);
+    const stride = plausibleStepLength(p.stride);
+    if (stride !== null) sample.stride = stride;
     if (p.power !== null && p.power !== undefined && Number.isFinite(p.power) && p.power >= 0 && p.power < 4000) sample.power = Math.round(p.power);
   }
   at(workout.start);
@@ -425,6 +437,26 @@ type Entry = readonly [num: number, type: FitFieldType, value: FitValue];
 /** A whole number above zero, or null: what the watch did not measure is not written. */
 const positive = (value: number | null | undefined): number | null => (value !== null && value !== undefined && value > 0 ? Math.round(value) : null);
 
+/** FIT's `step_length` and `avg_step_length` are a uint16 of millimetres x 10; a value that is not a human step length is not written. */
+const stepLengthRaw = (metres: number | null | undefined): number | null => {
+  const length = plausibleStepLength(metres);
+  return length === null ? null : Math.round(length * 10_000);
+};
+
+/** Mean of `pick` over the samples that have it, null when none does. */
+function meanOf(samples: readonly Sample[], pick: (s: Sample) => number | null): { avg: number | null } {
+  let sum = 0;
+  let count = 0;
+  for (const s of samples) {
+    const v = pick(s);
+    if (v !== null) {
+      sum += v;
+      count += 1;
+    }
+  }
+  return { avg: count > 0 ? sum / count : null };
+}
+
 /**
  * One set of a strength workout as a FIT `set` message (global message 225). Times are epoch milliseconds; `buildFit` rounds them
  * to seconds and keeps them inside the workout. `category` is a FIT `exercise_category` (see `exerciseCategory`).
@@ -487,11 +519,29 @@ export function buildFit(
   const maxSpeed = workout.maxSpeed && workout.maxSpeed > 0 ? Math.max(workout.maxSpeed, avgSpeed ?? 0) : null;
   const foot = sport.fitSport === FIT_SPORT.running || sport.fitSport === FIT_SPORT.walking || sport.fitSport === FIT_SPORT.hiking;
   const strides = foot && workout.steps && workout.steps > 0 ? Math.round(workout.steps / 2) : null;
-  /** FIT counts running and walking cadence per leg (strides per minute); the app keeps steps per minute on foot, rpm on a bike. */
-  const fitCadence = (c: number | null | undefined): number | null => (c === null || c === undefined || c < 0 ? null : Math.min(254, Math.round(foot ? c / 2 : c)));
-  const cadenceOf = (c: number | null | undefined): number | null => (c !== null && c !== undefined && c > 0 ? fitCadence(c) : null);
-  const avgCadence = strides !== null && timer > 0 ? Math.round(strides / (timer / 60)) : cadenceOf(workout.avgCadence);
-  const maxCadence = cadenceOf(workout.maxCadence);
+  /**
+   * FIT counts running and walking cadence per leg (strides per minute) in `cadence` plus `fractional_cadence` (1/128 of a stride), so
+   * 171 steps per minute is 85 and 64/128; the app keeps steps per minute on foot, rpm on a bike (a bike has no fractional field).
+   */
+  const fitCadence = (c: number | null | undefined): { whole: number | null; fraction: number | null } => {
+    if (c === null || c === undefined || !(c >= 0)) return { whole: null, fraction: null };
+    if (!foot) return { whole: Math.min(254, Math.round(c)), fraction: null };
+    const legs = Math.round((c / 2) * 128) / 128;
+    const whole = Math.min(254, Math.floor(legs));
+    return { whole, fraction: Math.round((legs - whole) * 128) };
+  };
+  const fitCadenceFields = (c: number | null): [number | null, ...(number | null)[]] => {
+    const { whole, fraction } = fitCadence(c);
+    return foot ? [whole, fraction] : [whole];
+  };
+  const positiveCadence = (c: number | null | undefined) => fitCadence(c !== null && c !== undefined && c > 0 ? c : null);
+  // The caller resolves the figures like the app's analysis does (`cadenceFigures`); a workout without them falls back to the step count over the active time.
+  const avgCadence = workout.avgCadence != null && workout.avgCadence > 0
+    ? fitCadence(workout.avgCadence)
+    : strides !== null && timer > 0
+      ? { whole: Math.round(strides / (timer / 60)), fraction: null }
+      : { whole: null, fraction: null };
+  const maxCadence = positiveCadence(workout.maxCadence);
   const ascent = workout.elevationGain !== null && workout.elevationGain !== undefined && workout.elevationGain >= 0 ? Math.round(workout.elevationGain) : null;
   const descent = workout.elevationLoss !== null && workout.elevationLoss !== undefined && workout.elevationLoss >= 0 ? Math.round(workout.elevationLoss) : null;
 
@@ -560,9 +610,12 @@ export function buildFit(
   if (hasAlt) recordFields.push({ num: 2, type: 'uint16' }, { num: 78, type: 'uint32' });
   if (hasHr) recordFields.push({ num: 3, type: 'uint8' });
   const hasCadence = samples.some((s) => s.cadence !== null);
+  const hasStride = samples.some((s) => s.stride !== null);
   const hasSpeed = samples.some((s) => s.speed !== null);
   const hasPower = samples.some((s) => s.power !== null);
   if (hasCadence) recordFields.push({ num: 4, type: 'uint8' });
+  if (hasCadence && foot) recordFields.push({ num: 53, type: 'uint8' });
+  if (hasStride) recordFields.push({ num: 85, type: 'uint16' });
   // Speed is metres per second x 1000 in both the 16-bit and the enhanced 32-bit field.
   if (hasSpeed) recordFields.push({ num: 6, type: 'uint16' }, { num: 73, type: 'uint32' });
   if (hasPower) recordFields.push({ num: 7, type: 'uint16' });
@@ -587,7 +640,8 @@ export function buildFit(
     // Altitude is `(metres + 500) * 5` in both the 16-bit and the enhanced 32-bit field.
     if (hasAlt) values.push(s.alt === null ? null : (s.alt + 500) * 5, s.alt === null ? null : (s.alt + 500) * 5);
     if (hasHr) values.push(s.hr);
-    if (hasCadence) values.push(fitCadence(s.cadence));
+    if (hasCadence) values.push(...fitCadenceFields(s.cadence));
+    if (hasStride) values.push(s.stride === null ? null : Math.round(s.stride * 10_000));
     if (hasSpeed) values.push(s.speed === null ? null : s.speed * 1000, s.speed === null ? null : s.speed * 1000);
     if (hasPower) values.push(s.power);
     fit.write(record, values);
@@ -669,6 +723,13 @@ export function buildFit(
       const lapSpeed = lapDistance > 0 && lapTimer > 0 ? lapDistance / lapTimer : null;
       const lapSpeedMax = stats(inLap, (s) => s.speed).max;
       const lapPower = stats(inLap, (s) => s.power);
+      // The lap's own cadence when the recorder kept one (a phone recording's laps), else the mean and peak of the samples inside it.
+      const lapSamples = stats(inLap, (s) => (s.cadence !== null && s.cadence > 0 ? s.cadence : null));
+      const lapCadence = {
+        avg: fitCadence(lap.avgCadence !== null && lap.avgCadence > 0 ? lap.avgCadence : lapSamples.avg),
+        max: fitCadence(lapSamples.max),
+      };
+      const lapStride = meanOf(inLap, (s) => s.stride);
       message(4, MESG.lap, [
         [253, 'uint32', toFitTime(lapEnd)],
         [2, 'uint32', toFitTime(lapStart)],
@@ -681,7 +742,8 @@ export function buildFit(
         [14, 'uint16', lapSpeedMax === null ? null : Math.max(lapSpeedMax, lapSpeed ?? 0) * 1000],
         [15, 'uint8', positive(lap.avgHr)],
         [16, 'uint8', positive(lap.maxHr)],
-        [17, 'uint8', cadenceOf(lap.avgCadence)],
+        [17, 'uint8', lapCadence.avg.whole],
+        [18, 'uint8', lapCadence.max.whole],
         [19, 'uint16', positive(lapPower.avg)],
         [20, 'uint16', positive(lapPower.max)],
         [0, 'enum', FIT.eventLap],
@@ -691,6 +753,9 @@ export function buildFit(
         [25, 'enum', sport.fitSport],
         [39, 'enum', sport.fitSubSport],
         [110, 'uint32', lapSpeed === null ? null : lapSpeed * 1000],
+        [80, 'uint8', lapCadence.avg.fraction],
+        [81, 'uint8', lapCadence.max.fraction],
+        [120, 'uint16', stepLengthRaw(lapStride.avg)],
         [254, 'uint16', index],
       ]);
     });
@@ -709,8 +774,8 @@ export function buildFit(
       [14, 'uint16', maxSpeed === null ? null : maxSpeed * 1000],
       [15, 'uint8', positive(workout.avgHr)],
       [16, 'uint8', positive(workout.maxHr)],
-      [17, 'uint8', avgCadence],
-      [18, 'uint8', maxCadence],
+      [17, 'uint8', avgCadence.whole],
+      [18, 'uint8', maxCadence.whole],
       [19, 'uint16', sessionPower.avg],
       [20, 'uint16', sessionPower.max],
       [21, 'uint16', ascent],
@@ -725,6 +790,9 @@ export function buildFit(
       [110, 'uint32', avgSpeed === null ? null : avgSpeed * 1000],
       [111, 'uint32', maxSpeed === null ? null : maxSpeed * 1000],
       [254, 'uint16', 0],
+      [80, 'uint8', avgCadence.fraction],
+      [81, 'uint8', maxCadence.fraction],
+      [120, 'uint16', stepLengthRaw(workout.avgStepLengthM)],
     ]);
   }
 
@@ -743,8 +811,8 @@ export function buildFit(
     [15, 'uint16', maxSpeed === null ? null : maxSpeed * 1000],
     [16, 'uint8', positive(workout.avgHr)],
     [17, 'uint8', positive(workout.maxHr)],
-    [18, 'uint8', avgCadence],
-    [19, 'uint8', maxCadence],
+    [18, 'uint8', avgCadence.whole],
+    [19, 'uint8', maxCadence.whole],
     [20, 'uint16', sessionPower.avg],
     [21, 'uint16', sessionPower.max],
     [22, 'uint16', ascent],
@@ -763,6 +831,9 @@ export function buildFit(
     [56, 'sint16', ride?.minGradePct != null ? ride.minGradePct * 100 : null],
     [0, 'enum', FIT.eventSession],
     [1, 'enum', FIT.eventTypeStop],
+    [92, 'uint8', avgCadence.fraction],
+    [93, 'uint8', maxCadence.fraction],
+    [134, 'uint16', stepLengthRaw(workout.avgStepLengthM)],
     [124, 'uint32', avgSpeed === null ? null : avgSpeed * 1000],
     [125, 'uint32', maxSpeed === null ? null : maxSpeed * 1000],
     [254, 'uint16', 0],

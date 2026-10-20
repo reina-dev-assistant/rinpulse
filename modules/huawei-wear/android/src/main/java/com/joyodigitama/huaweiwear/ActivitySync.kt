@@ -62,6 +62,7 @@ internal class SyncResult(
 internal class ActivitySync(
   private val session: HuaweiSession,
   private val events: WearEvents,
+  private val dataTimeoutMs: Long = Timeouts.SYNC_DATA_MS,
 ) {
   private val params get() = session.params
 
@@ -116,6 +117,8 @@ internal class ActivitySync(
     val segments = ArrayList<SleepSegment>()
     val maxCount = messageCount(FitnessData.MessageCount.sleepId, start, end, "SleepDataCount")
     if (maxCount <= 0) return segments
+    frameTimeouts = 0
+    stalled = false
 
     var count = 0
     while (true) {
@@ -124,12 +127,13 @@ internal class ActivitySync(
         session
           .request(
             FitnessData.MessageData.Request(params, FitnessData.MessageData.sleepId, count.toShort()),
-            Timeouts.SYNC_DATA_MS,
+            dataTimeoutMs,
             label,
           )
           .expect<FitnessData.MessageData.SleepResponse>(label)
       }
       if (response == null) {
+        if (stalled) { logStalled(label, "sleep"); break }
         if (count + 1 < maxCount) { count += 1; continue } else break
       }
 
@@ -173,6 +177,8 @@ internal class ActivitySync(
       return samples
     }
     val stats = StepFrameStats()
+    frameTimeouts = 0
+    stalled = false
 
     var count = 0
     var requests = 0
@@ -182,12 +188,13 @@ internal class ActivitySync(
         session
           .request(
             FitnessData.MessageData.Request(params, FitnessData.MessageData.stepId, count.toShort()),
-            Timeouts.SYNC_DATA_MS,
+            dataTimeoutMs,
             label,
           )
           .expect<FitnessData.MessageData.StepResponse>(label)
       }
       if (response == null) {
+        if (stalled) { logStalled(label, "step"); break }
         if (count + 1 < maxCount) { count += 1; continue } else break
       }
 
@@ -268,20 +275,30 @@ internal class ActivitySync(
   /** Consecutive data frames the watch left unanswered; reset by any answer. */
   private var frameTimeouts = 0
 
+  /** Set once [MAX_SKIPPED_FRAMES] frames in a row got no answer: the rest of that data type is left out. */
+  private var stalled = false
+
   /**
    * [skippable] for one sleep or step data frame, which also skips a frame that got no answer. Over LE on Android 14+ the
    * stack discards a 514-byte notification, so a reply longer than that loses its head and only its tail arrives (logged as
-   * "Magic mismatch"); without this one such frame aborts a whole history pull. A second unanswered frame in a row means the
-   * link is gone, and that still aborts.
+   * "Magic mismatch"); without this one such frame aborts a whole history pull. On a Band 11 Pro the last frames of a pull (37 and 38
+   * of 40 in the 2026-10-20 report) are lost every time, so several in a row go missing; after [MAX_SKIPPED_FRAMES] the
+   * pull of that data type stops with what it has ([stalled]) and the sync goes on with workouts and the rest. A dead link
+   * still fails, at the next request that is not skippable.
    */
   private suspend fun <T> dataFrame(label: String, block: suspend () -> T): T? =
     try {
       skippable(label, block).also { frameTimeouts = 0 }
     } catch (e: WearException) {
-      if (e.errorCode != ErrorCodes.TIMEOUT || ++frameTimeouts > MAX_SKIPPED_FRAMES) throw e
+      if (e.errorCode != ErrorCodes.TIMEOUT) throw e
       events.log(LogDirection.ERROR, null, null, null, "$label: ${e.message}; skipping this frame")
+      if (++frameTimeouts >= MAX_SKIPPED_FRAMES) stalled = true
       null
     }
+
+  private fun logStalled(label: String, kind: String) {
+    events.log(LogDirection.ERROR, null, null, null, "$label: $MAX_SKIPPED_FRAMES frames in a row got no answer; stopping the $kind pull with what arrived")
+  }
 
   /** GB casts to short and maps -1 (field absent / 0xFFFF) to 0. */
   private fun nonNegative(value: Int): Int {
@@ -297,6 +314,6 @@ internal class ActivitySync(
 
   private companion object {
     const val MIN_START_SEC = 946684800L
-    const val MAX_SKIPPED_FRAMES = 1
+    const val MAX_SKIPPED_FRAMES = 3
   }
 }

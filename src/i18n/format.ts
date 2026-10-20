@@ -63,7 +63,9 @@ export type DateStyle =
   /** "Min" / "Sun" */
   | 'dayShort'
   /** "Minggu" / "Sunday" */
-  | 'dayLong';
+  | 'dayLong'
+  /** "Okt" / "Oct" */
+  | 'monthShort';
 
 const DATE_OPTIONS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   short: { day: 'numeric', month: 'short' },
@@ -73,6 +75,7 @@ const DATE_OPTIONS: Record<DateStyle, Intl.DateTimeFormatOptions> = {
   month: { month: 'long', year: 'numeric' },
   dayShort: { weekday: 'short' },
   dayLong: { weekday: 'long' },
+  monthShort: { month: 'short' },
 };
 
 /** A date in the phone's local time zone, from a Date or unix SECONDS. */

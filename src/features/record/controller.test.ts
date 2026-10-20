@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import type { LocationEvent, ValueEvent, WorkoutAction, WorkoutSessionOptions, WorkoutSessionState } from '../../../modules/ble-sensors/src/BleSensors.types';
+import type { LocationEvent, StepCounterPermission, StepsEvent, ValueEvent, WorkoutAction, WorkoutSessionOptions, WorkoutSessionState } from '../../../modules/ble-sensors/src/BleSensors.types';
 import { bytesToHex } from '../sensors/gatt';
 import { ensureSensorSchema, type SavedSensor } from '../sensors/store';
 import { RecordingController, type HubApi, type SessionApi } from './controller';
@@ -27,6 +27,7 @@ const idle: SavedSensor = { ...strap, id: 'AA:BB:CC:DD:EE:02', name: 'Old TICKR'
 class FakeHub implements HubApi {
   values: ((e: ValueEvent) => void)[] = [];
   fixes: ((e: LocationEvent) => void)[] = [];
+  steps: ((e: StepsEvent) => void)[] = [];
   connects: string[] = [];
   disconnects: string[] = [];
   failConnect: string | null = null;
@@ -35,6 +36,10 @@ class FakeHub implements HubApi {
   onValue(l: (e: ValueEvent) => void) {
     this.values.push(l);
     return () => (this.values = this.values.filter((x) => x !== l));
+  }
+  onSteps(l: (e: StepsEvent) => void) {
+    this.steps.push(l);
+    return () => (this.steps = this.steps.filter((x) => x !== l));
   }
   onLocation(l: (e: LocationEvent) => void) {
     this.fixes.push(l);
@@ -51,6 +56,9 @@ class FakeHub implements HubApi {
   }
   links() {
     return Object.fromEntries(Object.entries(this.state).map(([id, state]) => [id, { state, error: null, lastFailure: null }]));
+  }
+  emitSteps(ts: number, steps: number) {
+    for (const l of this.steps) l({ ts, steps });
   }
   emitValue(id: string, characteristic: string, hex: string, ts: number) {
     for (const l of this.values) l({ id, ts, service: '', characteristic, value: hex });
@@ -85,7 +93,7 @@ class FakeSession implements SessionApi {
   }
 }
 
-async function setup(sensors: SavedSensor[] = [strap, idle]) {
+async function setup(sensors: SavedSensor[] = [strap, idle], stepCounter: StepCounterPermission | (() => Promise<StepCounterPermission>) = 'unavailable') {
   const { db, all } = openDb();
   await ensureSensorSchema(db as never);
   await ensureRecordingSchema(db as never);
@@ -96,6 +104,7 @@ async function setup(sensors: SavedSensor[] = [strap, idle]) {
   const controller = new RecordingController({
     hub,
     session,
+    stepCounter: typeof stepCounter === 'function' ? stepCounter : async () => stepCounter,
     db,
     now: () => clock,
     profile: () => ({ weightKg: 70, age: 35, sex: 'male' }),
@@ -531,6 +540,7 @@ describe('restore after the app was killed', () => {
     const back = new RecordingController({
       hub,
       session,
+      stepCounter: async () => 'unavailable',
       db: first.db,
       now: () => clock,
       profile: () => ({ weightKg: 70, age: 35, sex: 'male' }),
@@ -581,5 +591,78 @@ describe('a failed save', () => {
     const result = await controller.finish();
     expect(result).not.toBeNull();
     expect(all('SELECT * FROM workouts')).toHaveLength(1);
+  });
+});
+
+describe("the phone's step counter", () => {
+  it('asks the native session for steps only on foot and only with the permission', async () => {
+    for (const [sport, permission, asked] of [
+      ['run', 'granted', true],
+      ['walk', 'granted', true],
+      ['hike', 'granted', true],
+      ['ride', 'granted', false],
+      ['treadmill', 'granted', false],
+      ['run', 'denied', false],
+      ['run', 'undetermined', false],
+      ['run', 'unavailable', false],
+    ] as const) {
+      const { controller, session } = await setup([strap, idle], permission);
+      await controller.prepare(sport, 'x');
+      expect(session.starts[0]!.steps === true).toBe(asked);
+      await controller.cancel();
+    }
+  });
+
+  it('a check that fails does not stop the recording from preparing', async () => {
+    const { controller, session } = await setup([], async () => {
+      throw new Error('no module');
+    });
+    live = controller;
+    await controller.prepare('run', 'x');
+    expect(controller.getSnapshot()).toMatchObject({ phase: 'ready', phoneSteps: false });
+    expect(session.starts[0]!.steps).toBeUndefined();
+  });
+
+  it('feeds the readings to the recorder only while the recording is active, and saves cadence and steps', async () => {
+    const { controller, hub, run, all } = await setup([], 'granted');
+    live = controller;
+    await controller.prepare('run', 'Lari');
+    expect(controller.getSnapshot().phoneSteps).toBe(true);
+    // ready: not recording yet, so this reading is not the baseline
+    hub.emitSteps(T0, 900);
+    controller.start();
+    let steps = 0;
+    run(20, (clock) => {
+      steps += 3;
+      hub.emitSteps(clock, steps);
+    });
+    expect(controller.getSnapshot().live!.cadence).toBe(180);
+    const result = await controller.finish();
+    // the first reading after the start is the baseline: 20 readings, 19 differences of 3 steps
+    const [row] = all<{ steps: number }>('SELECT steps FROM workouts WHERE id = ?', result!.workoutId);
+    expect(row!.steps).toBe(57);
+    const cadences = all<{ cadence: number | null }>('SELECT cadence FROM workout_points WHERE workout_id = ? ORDER BY ts', result!.workoutId).map((r) => r.cadence);
+    expect(cadences.at(-1)).toBe(180);
+    expect(cadences[0]).toBeNull();
+    // after the finish the controller no longer listens
+    expect(hub.steps).toHaveLength(0);
+  });
+
+  it('keeps feeding through a pause but counts none of it, and ignores readings before the start', async () => {
+    const { controller, hub, run, all } = await setup([], 'granted');
+    live = controller;
+    await controller.prepare('walk', 'Jalan');
+    controller.start();
+    let steps = 0;
+    const feed = (clock: number) => hub.emitSteps(clock, (steps += 2));
+    run(6, feed);
+    controller.pause();
+    run(10, feed);
+    controller.resume();
+    run(4, feed);
+    const result = await controller.finish();
+    const [row] = all<{ steps: number }>('SELECT steps FROM workouts WHERE id = ?', result!.workoutId);
+    // 20 readings of 2 steps: the first is the baseline, the 10 of the pause are skipped
+    expect(row!.steps).toBe(2 * (6 - 1) + 2 * 4);
   });
 });

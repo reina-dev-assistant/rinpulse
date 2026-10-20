@@ -101,6 +101,7 @@ jobs:
         working-directory: .
       - run: bun install --frozen-lockfile
       - run: bun run build
+      - run: bun test scripts
 
   kotlin:
     name: Kotlin (unit tests, NewApi lint)

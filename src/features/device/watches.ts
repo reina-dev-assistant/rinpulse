@@ -63,6 +63,11 @@ export function watchLabel(watch: Pick<WatchRow, 'alias' | 'name' | 'address'>):
 }
 
 /** The alias to store: trimmed and cut to [MAX_ALIAS_LENGTH]; an empty text clears the alias. */
+/** "Connect" when no watch is linked at all; "Switch to this watch" only while a different one is. */
+export function watchActionKey(activeAddress: string | null, linkState: string): 'connect' | 'switchTo' {
+  return activeAddress !== null && linkState !== 'disconnected' ? 'switchTo' : 'connect';
+}
+
 export function normalizeAlias(text: string): string | null {
   const alias = text.trim().slice(0, MAX_ALIAS_LENGTH).trim();
   return alias.length > 0 ? alias : null;

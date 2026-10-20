@@ -91,7 +91,7 @@ class FakeSocket implements SocketLike {
 }
 
 function recorderSnapshot(patch: Partial<RecordingSnapshot> = {}): RecordingSnapshot {
-  return { phase: 'idle', sport: null, gps: false, warm: false, status: 'idle', live: null, laps: [], sensorIds: [], fix: null, noService: false, sensorError: null, ...patch } as RecordingSnapshot;
+  return { phase: 'idle', sport: null, gps: false, warm: false, status: 'idle', live: null, laps: [], sensorIds: [], fix: null, noService: false, sensorError: null, phoneSteps: false, ...patch } as RecordingSnapshot;
 }
 
 class FakeRecorder implements RecorderPort {

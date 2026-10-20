@@ -14,7 +14,8 @@
       "off": "Tidak mendengarkan. Nyalakan Tangkap otomatis atau tekan Coba timbang."
     },
     "test": "Coba timbang",
-    "stop": "Berhenti"
+    "stop": "Berhenti",
+    "needsKey": "Masukkan kunci timbangan di bawah dulu, baru timbangan ini bisa dibaca."
   },
   "problem": {
     "permission": "JoyoFit belum boleh memakai Bluetooth. Buka pengaturan untuk mengizinkan.",
@@ -29,7 +30,9 @@
     "forget": "Lupakan",
     "forgetTitle": "Lupakan timbangan ini?",
     "forgetMessage": "Riwayat timbangmu tetap tersimpan.",
-    "empty": "Belum ada timbangan. Cari timbanganmu di bawah."
+    "empty": "Belum ada timbangan. Cari timbanganmu di bawah.",
+    "kindWeightOnly": "Jenis: {{label}} (berat saja)",
+    "weightOnlyNote": "Berat saja: timbangan ini tidak mengirim lemak tubuh atau impedansi, jadi JoyoFit tidak menampilkannya."
   },
   "picker": {
     "title": "Cari timbangan",
@@ -45,7 +48,9 @@
     "pick": "Pakai ini",
     "chosen": "Dipakai",
     "reading": "Terbaca {{value}} kg",
-    "unnamed": "Tanpa nama"
+    "unnamed": "Tanpa nama",
+    "kindWeightOnly": "{{label}} (berat saja)",
+    "needsKey": "Perlu kunci timbangan"
   },
   "settings": {
     "title": "Pengaturan",
@@ -108,5 +113,19 @@
   "supported": {
     "title": "Timbangan yang didukung",
     "body": "JoyoFit membaca timbangan dengan protokol berikut. Timbangan lain bisa ditambahkan lewat Rekam data timbangan."
+  },
+  "secret": {
+    "title": "Kunci timbangan (lanjutan)",
+    "saved": "Kunci tersimpan di HP ini.",
+    "remove": "Hapus kunci",
+    "show": "Tampilkan",
+    "hide": "Sembunyikan",
+    "save": "Simpan kunci",
+    "length": "{{length}}/16 karakter",
+    "tuya-local-key": {
+      "label": "Local key (16 karakter)",
+      "explain": "Timbangan Tuya mengenkripsi beratnya, jadi JoyoFit butuh local key milik timbanganmu. Kuncinya ada di platform pengembang Tuya (iot.tuya.com): buat proyek cloud, tautkan akun aplikasi tempat timbangan terdaftar, lalu salin local_key perangkat itu. Ini langkah untuk yang paham teknis. Kunci disimpan terenkripsi di HP ini dan tidak dikirim ke mana pun.",
+      "invalid": "Local key harus tepat 16 karakter (huruf, angka, atau simbol biasa)."
+    }
   }
 }

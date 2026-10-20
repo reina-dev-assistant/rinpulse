@@ -126,6 +126,16 @@ const FIX_FRESH_MS = 5000;
 /** The web game reports its speed about once a second; one older than this is not the current speed. */
 const VIRTUAL_FRESH_MS = 5000;
 
+/** Sports where the phone's own step counter gives cadence and steps when no running pod does (the phone is carried on the body). */
+export const FOOT_SPORTS: readonly ManualSport[] = ['run', 'walk', 'hike'];
+
+/** A phone step counter reading counts for the cadence this long. */
+const PHONE_STEPS_FRESH_MS = 10_000;
+/** The cadence needs readings at least this far apart; a counter silent this long means the person stopped. */
+const PHONE_STEPS_MIN_SPAN_MS = 4000;
+/** More than this many steps per minute is not a human on foot (counter glitch, phone shaken). */
+const MAX_PHONE_CADENCE_SPM = 260;
+
 interface Segment {
   start: number;
   end: number | null;
@@ -145,6 +155,8 @@ export interface RecorderMeta {
   laps: RecordedLap[];
   lapStartIndex: number;
   lapStartDistance: number;
+  /** Steps counted by the phone's step counter, pauses excluded. Absent in a journal written before it existed. */
+  phoneSteps?: number;
 }
 
 const isCycling = (sport: ManualSport) => sport === 'ride' || sport === 'indoorRide';
@@ -158,7 +170,13 @@ export class Recorder {
   private drained = 0;
   private nextSec = 0;
   private distance = 0;
-  private steps = 0;
+  /** Steps added up from the running pod's cadence. */
+  private podSteps = 0;
+  /** Steps counted by the phone's step counter (cumulative readings differences), pauses excluded. */
+  private phoneSteps = 0;
+  /** The step counter readings of the last seconds, oldest first, and the newest raw count seen (also while paused) as the baseline of the next difference. */
+  private stepReadings: { ts: number; count: number }[] = [];
+  private stepCount: number | null = null;
   private kcalHr = 0;
   private kcalMet = 0;
   private hrSeconds = 0;
@@ -200,6 +218,8 @@ export class Recorder {
     this.tick(nowMs);
     this.closeSegment(nowMs);
     this.status = 'paused';
+    // Readings of the pause must not enter the cadence of the first seconds after it.
+    this.stepReadings = [];
   }
 
   resume(nowMs: number): void {
@@ -277,6 +297,30 @@ export class Recorder {
     this.virtual = { speedMps: Math.max(0, speedMps), at: nowMs };
   }
 
+  /**
+   * A reading of the phone's step counter: `count` steps counted since the workout session started (cumulative), `tsMs` the instant of
+   * the reading. Only foot sports use it. The steps counted between two readings are added to the workout's total while it records;
+   * the ones of a pause are skipped. A count lower than the one before (the counter restarted, the phone rebooted) starts the baseline
+   * over without subtracting anything. Readings before `start` and after `finish` are ignored.
+   */
+  steps(count: number, tsMs: number): void {
+    if (!FOOT_SPORTS.includes(this.config.sport)) return;
+    if (this.status !== 'recording' && this.status !== 'paused') return;
+    if (!Number.isFinite(count) || !Number.isFinite(tsMs)) return;
+    const before = this.stepCount;
+    this.stepCount = count;
+    if (before !== null && count < before) {
+      this.stepReadings = [];
+    } else if (before !== null && this.status === 'recording') {
+      this.phoneSteps += count - before;
+    }
+    if (this.status === 'recording') {
+      this.stepReadings.push({ ts: tsMs, count });
+      const cutoff = tsMs - 2 * PHONE_STEPS_FRESH_MS;
+      while (this.stepReadings.length > 2 && (this.stepReadings[0] as { ts: number }).ts < cutoff) this.stepReadings.shift();
+    }
+  }
+
   /** A raw characteristic value from a connected sensor; true when the tracker used it. `ts` is the radio timestamp in ms. */
   sensor(characteristic: string, hex: string, ts: number): boolean {
     return this.tracker.ingest(characteristic, hex, ts);
@@ -328,8 +372,13 @@ export class Recorder {
     }
     this.distance += delta;
 
-    const cadence = cycling ? (r.cadenceRpm !== undefined ? Math.round(r.cadenceRpm) : null) : r.podCadenceSpm ?? null;
-    if (!cycling && cadence !== null) this.steps += cadence / 60;
+    const podCadence = cycling ? null : r.podCadenceSpm ?? null;
+    if (podCadence !== null) this.podSteps += podCadence / 60;
+    const cadence = cycling
+      ? r.cadenceRpm !== undefined
+        ? Math.round(r.cadenceRpm)
+        : null
+      : podCadence ?? (FOOT_SPORTS.includes(sport) ? this.phoneCadence(nowMs) : null);
     const hr = r.hr ?? null;
     if (cycling && r.balanceLeftPct !== undefined && r.watts !== undefined && r.watts > 0) this.balances.push(r.balanceLeftPct);
 
@@ -352,6 +401,23 @@ export class Recorder {
       stride: !cycling && r.podStrideM !== undefined ? r.podStrideM : null,
       power: r.watts ?? null,
     });
+  }
+
+  /**
+   * Steps per minute from the step counter: the newest reading of the last 10 s minus the oldest of them, over the time between them
+   * (at least 4 s apart). 0 when the counter did not move over that span, or has said nothing for 4 s (it reports changes only, so
+   * silence is a stop); null without a fresh reading, with a single one, or above `MAX_PHONE_CADENCE_SPM`.
+   */
+  private phoneCadence(nowMs: number): number | null {
+    const fresh = this.stepReadings.filter((p) => nowMs - p.ts <= PHONE_STEPS_FRESH_MS);
+    const newest = fresh[fresh.length - 1];
+    const oldest = fresh[0];
+    if (!newest || !oldest) return null;
+    if (nowMs - newest.ts >= PHONE_STEPS_MIN_SPAN_MS) return 0;
+    const spanMs = newest.ts - oldest.ts;
+    if (spanMs < PHONE_STEPS_MIN_SPAN_MS) return null;
+    const spm = Math.round(((newest.count - oldest.count) / spanMs) * 60_000);
+    return spm > MAX_PHONE_CADENCE_SPM ? null : spm;
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -430,7 +496,8 @@ export class Recorder {
       segments: this.segments.map((s) => ({ ...s })),
       nextSec: this.nextSec,
       distanceM: this.distance,
-      steps: this.steps,
+      steps: this.podSteps,
+      phoneSteps: this.phoneSteps,
       kcalHr: this.kcalHr,
       kcalMet: this.kcalMet,
       hrSeconds: this.hrSeconds,
@@ -459,7 +526,8 @@ export class Recorder {
     }
     r.nextSec = last ? Math.max(meta.nextSec, last.ts + 1) : meta.nextSec;
     r.distance = meta.distanceM;
-    r.steps = meta.steps;
+    r.podSteps = meta.steps;
+    r.phoneSteps = meta.phoneSteps ?? 0;
     r.kcalHr = meta.kcalHr;
     r.kcalMet = meta.kcalMet;
     r.hrSeconds = meta.hrSeconds;
@@ -524,7 +592,8 @@ export class Recorder {
       distanceM: Math.round(this.distance),
       calories: kcal,
       kcalSource: source,
-      steps: Math.round(this.steps),
+      // A running pod's cadence wins; without one the phone's step counter has the count.
+      steps: Math.round(this.podSteps > 0 ? this.podSteps : this.phoneSteps),
       avgHr: hrs.length > 0 ? Math.round(mean(hrs)) : null,
       maxHr: hrs.length > 0 ? Math.max(...hrs) : null,
       minHr: hrs.length > 0 ? Math.min(...hrs) : null,

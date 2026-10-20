@@ -83,10 +83,11 @@
     "label": "{{pct}} persen dari rute ini lewat jalan yang belum kamu lalui"
   },
   "result": {
+    "short": "{{distance}} · {{pct}}% jalan baru",
     "summary": "Loop {{distance}}, {{pct}}% lewat jalan yang belum kamu lalui",
     "plain": "Loop {{distance}}",
     "noHistory": "Belum ada jejak jalan atau lari kamu di sekitar sini, jadi kebaruan jalan belum bisa dihitung.",
-    "lengthOff": "Panjangnya {{percent}}% dari target; layanan rute tidak menemukan yang lebih pas.",
+    "lengthOff": "Panjangnya meleset {{percent}}% dari target; layanan rute tidak menemukan yang lebih pas.",
     "history_other": "{{count}} jejak latihanmu tampil di peta sebagai garis tipis."
   },
   "actions": {
@@ -105,7 +106,11 @@
   "routeName": "Loop {{distance}} {{date}}",
   "errors": {
     "noRoad": "Tidak ada jalan atau jalur yang bisa dilewati dekat titik awal ini. Geser Rumah ke jalan terdekat, atau coba dari tempat lain.",
-    "noLoop": "Belum ketemu loop yang pas untuk jarak ini dari titik awalmu. Coba target lain atau cari lagi.",
+    "noLoop": "Tidak ada loop {{target}} yang pas dari titik awal ini: sungai, rel, atau gang buntu membuat semua percobaan meleset jauh dari jarak. Coba jarak lain atau mulai dari tempat lain.",
+    "noLoopLong": "Tidak ada loop {{target}} yang pas dari titik awal ini: sungai, rel, atau gang buntu membuat semua jalur jadi lebih panjang. Yang paling dekat {{closest}}, lebih {{percent}}%.",
+    "noLoopShort": "Tidak ada loop {{target}} yang pas dari titik awal ini: sungai, rel, atau gang buntu membuat semua jalur jadi lebih pendek. Yang paling dekat {{closest}}, kurang {{percent}}%.",
+    "showClosest": "Tampilkan loop {{closest}}",
+    "busy": "Layanan peta sedang sibuk atau tidak menjawab, jadi rute belum bisa dibuat. Tunggu sebentar lalu coba lagi.",
     "network": "Layanan rute tidak bisa dijangkau sekarang. Cek internetmu lalu coba lagi.",
     "save": "Rute belum tersimpan: {{message}}"
   },

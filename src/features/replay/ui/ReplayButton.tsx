@@ -15,10 +15,12 @@ interface Props {
   analysis: WorkoutAnalysis | null;
   /** The ride's climbs, for the climb pin; null for anything else. */
   climbs: readonly RideClimb[] | null;
+  /** Only the icon shows (the label stays as the accessibility label). */
+  iconOnly?: boolean;
 }
 
 /** "Putar ulang" of a workout with a GPS track: opens the replay player. Nothing is drawn for a workout without one. */
-export function ReplayButton({ workout, analysis, climbs }: Props) {
+export function ReplayButton({ workout, analysis, climbs, iconOnly }: Props) {
   const { t } = useTranslation('replay');
   const [open, setOpen] = useState(false);
   const track = useMemo(
@@ -30,7 +32,7 @@ export function ReplayButton({ workout, analysis, climbs }: Props) {
   if (!track) return null;
   return (
     <>
-      <Button label={t('entry.button')} icon="play-circle-outline" onPress={() => setOpen(true)} />
+      <Button label={t('entry.button')} icon="play-circle-outline" iconOnly={iconOnly} onPress={() => setOpen(true)} />
       <ReplayScreen track={track} sportLabel={label} visible={open} onClose={() => setOpen(false)} />
     </>
   );

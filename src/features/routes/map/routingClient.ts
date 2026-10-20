@@ -20,10 +20,16 @@ function coordinateText(value: number): string {
   return String(Number(value.toFixed(6)));
 }
 
+export interface ViaOptions {
+  /** Do not turn back at a waypoint: the line goes on along the street it arrived on, so a waypoint on a side street makes no out-and-back stub. */
+  noUTurns?: boolean;
+}
+
 /** The "driving" in the path is right for the foot and bike instances: it is the name of the profile they all share. */
-export function routeViaUrl(profile: RoutingProfile, waypoints: readonly LatLon[]): string {
+export function routeViaUrl(profile: RoutingProfile, waypoints: readonly LatLon[], options: ViaOptions = {}): string {
   const path = waypoints.map((p) => `${coordinateText(p.lon)},${coordinateText(p.lat)}`).join(';');
-  return `${ROUTING_BASE_URL}/routed-${profile}/route/v1/driving/${path}?overview=full&geometries=geojson`;
+  const straight = options.noUTurns ? '&continue_straight=true' : '';
+  return `${ROUTING_BASE_URL}/routed-${profile}/route/v1/driving/${path}?overview=full&geometries=geojson${straight}`;
 }
 
 export function routeUrl(profile: RoutingProfile, from: LatLon, to: LatLon): string {
@@ -31,8 +37,8 @@ export function routeUrl(profile: RoutingProfile, from: LatLon, to: LatLon): str
 }
 
 /** Waypoints within about a metre of each other are the same request (5 decimals is 1.1 m). */
-export function routeViaCacheKey(profile: RoutingProfile, waypoints: readonly LatLon[]): string {
-  return `${profile}:${waypoints.map((p) => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('>')}`;
+export function routeViaCacheKey(profile: RoutingProfile, waypoints: readonly LatLon[], options: ViaOptions = {}): string {
+  return `${profile}${options.noUTurns ? '!' : ''}:${waypoints.map((p) => `${p.lat.toFixed(5)},${p.lon.toFixed(5)}`).join('>')}`;
 }
 
 export function routeCacheKey(profile: RoutingProfile, from: LatLon, to: LatLon): string {
@@ -104,7 +110,7 @@ export interface RoutingClient {
   /** The snapped line from `from` to `to`, both ends at the road. Rejects with a `RequestError`; an abort has kind `aborted`. */
   route(profile: RoutingProfile, from: LatLon, to: LatLon, signal?: AbortSignal): Promise<readonly LatLon[]>;
   /** One line through all `waypoints` in order (at least two), in a single request. Same queue, cache and errors as `route`. */
-  routeVia(profile: RoutingProfile, waypoints: readonly LatLon[], signal?: AbortSignal): Promise<ViaRoute>;
+  routeVia(profile: RoutingProfile, waypoints: readonly LatLon[], signal?: AbortSignal, options?: ViaOptions): Promise<ViaRoute>;
 }
 
 export function createRoutingClient(options: RoutingClientOptions): RoutingClient {
@@ -113,13 +119,13 @@ export function createRoutingClient(options: RoutingClientOptions): RoutingClien
   const headers = { 'User-Agent': options.userAgent, Referer: options.referer, Accept: 'application/json' };
   const cache = new Map<string, ViaRoute>();
 
-  async function routeVia(profile: RoutingProfile, waypoints: readonly LatLon[], signal?: AbortSignal): Promise<ViaRoute> {
-    const key = routeViaCacheKey(profile, waypoints);
+  async function routeVia(profile: RoutingProfile, waypoints: readonly LatLon[], signal?: AbortSignal, via: ViaOptions = {}): Promise<ViaRoute> {
+    const key = routeViaCacheKey(profile, waypoints, via);
     const hit = cache.get(key);
     if (hit) return hit;
 
     const answer = await throttle(
-      async () => parseViaResponse(await getJson(options.fetch, routeViaUrl(profile, waypoints), { headers, timeoutMs, signal })),
+      async () => parseViaResponse(await getJson(options.fetch, routeViaUrl(profile, waypoints, via), { headers, timeoutMs, signal })),
       signal,
     );
     if (cache.size >= MAX_CACHED_LEGS) cache.delete(cache.keys().next().value as string);

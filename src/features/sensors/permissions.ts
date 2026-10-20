@@ -5,7 +5,7 @@
  */
 import { PermissionsAndroid, Platform } from 'react-native';
 
-import { BleSensors, type LocationPermission } from '@/ble';
+import { BleSensors, type LocationPermission, type StepCounterPermission } from '@/ble';
 import { ensureBluetoothConnect, ensureBluetoothScan, type PermissionStatus } from '@/features/device/useBluetoothPermission';
 
 export type Granted = Exclude<PermissionStatus, 'checking'>;
@@ -41,4 +41,25 @@ export async function ensureLocation(): Promise<Granted> {
 /** The location permission without asking. */
 export async function locationGranted(): Promise<boolean> {
   return (await BleSensors.locationPermission()) === 'granted';
+}
+
+/**
+ * The phone's step counter for cadence and steps of a run, walk or hike: ACTIVITY_RECOGNITION on Android 10+ (granted below it), the motion
+ * prompt on iOS. Optional: a refusal never stops a recording, it just has no phone cadence.
+ */
+export async function ensureStepCounter(): Promise<Granted> {
+  if (Platform.OS === 'android') {
+    const permission = PermissionsAndroid.PERMISSIONS.ACTIVITY_RECOGNITION;
+    if (await PermissionsAndroid.check(permission)) return 'granted';
+    const result = await PermissionsAndroid.request(permission);
+    if (result === PermissionsAndroid.RESULTS.GRANTED) return 'granted';
+    return result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ? 'blocked' : 'denied';
+  }
+  const answer: StepCounterPermission = await BleSensors.requestStepCounterPermission();
+  return answer === 'granted' ? 'granted' : 'denied';
+}
+
+/** The step counter permission without asking; `unavailable` when the phone has no step counter. */
+export function stepCounterState(): Promise<StepCounterPermission> {
+  return BleSensors.stepCounterPermission();
 }

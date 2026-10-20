@@ -6,6 +6,7 @@ import { etekcityFit8sProtocol } from './etekcityFit8s';
 import { okokProtocol } from './okok';
 import { qnBroadcastProtocol } from './qnBroadcast';
 import { scaleupProtocol } from './scaleup';
+import { tuyaBeaconProtocol } from './tuyaBeacon';
 
 export const BROADCAST_PROTOCOLS: ScaleProtocol[] = [
   aiLinkProtocol,
@@ -13,6 +14,7 @@ export const BROADCAST_PROTOCOLS: ScaleProtocol[] = [
   etekcityFit8sProtocol,
   okokProtocol,
   aaaxProtocol,
+  tuyaBeaconProtocol,
   // Last: it claims any nameless record whose company id low byte is 0xD0 / 0xE0.
   scaleupProtocol,
 ];

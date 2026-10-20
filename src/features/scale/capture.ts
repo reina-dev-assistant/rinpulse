@@ -1,7 +1,8 @@
 import { bodyOf } from './body';
 import { needsConfirmation, type Reference } from './guard';
+import { protocolById } from './registry';
 import { ROGO_MAX_KG, ROGO_MIN_KG } from './rogoMap';
-import { completeWeighIn, insertWeighIn, type ScaleDb, type WeighIn } from './store';
+import { completeWeighIn, insertWeighIn, reviseWeighIn, type ScaleDb, type WeighIn } from './store';
 import type { ScaleReading, ScaleUser } from './types';
 
 export interface CaptureContext {
@@ -31,14 +32,30 @@ export interface PendingWeighIn {
 export type CaptureResult =
   | { kind: 'saved'; weighIn: Pick<WeighIn, 'id' | 'weightKg' | 'takenAt'> }
   | { kind: 'completed'; id: number }
+  | { kind: 'revised'; weighIn: Pick<WeighIn, 'id' | 'weightKg'> }
   | { kind: 'confirm'; pending: PendingWeighIn };
 
 export interface LastSaved {
   id: number;
   weightKg: number;
+  /** Epoch ms of the last time this row was saved or revised. */
+  at: number;
 }
 
-async function save(ctx: CaptureContext, reading: ScaleReading, takenAt: number): Promise<CaptureResult> {
+/**
+ * A revision only replaces a row saved this recently and this close in weight. The decoder already limits a revision to one weigh-in (a
+ * weigh-in on this scale takes minutes, 200 s in the owner's recording); this is the check that the saved row is that weigh-in's and not an
+ * older one, for instance when the first settled weight was held back by "Ini kamu?" and never saved.
+ */
+const REVISION_WINDOW_MS = 10 * 60 * 1000;
+const REVISION_MAX_KG = 3;
+
+/** A weight-only scale keeps its weight and nothing else, whatever a frame might carry. */
+const keptOf = (reading: ScaleReading, protocolId: string): ScaleReading =>
+  protocolById(protocolId)?.weightOnly ? { weightKg: reading.weightKg, stable: reading.stable } : reading;
+
+async function save(ctx: CaptureContext, source: ScaleReading, takenAt: number): Promise<CaptureResult> {
+  const reading = keptOf(source, ctx.protocolId);
   const body = bodyOf(reading, ctx.protocolId, ctx.user);
   const inRogoRange = reading.weightKg >= ROGO_MIN_KG && reading.weightKg <= ROGO_MAX_KG;
   const id = await insertWeighIn(ctx.db, {
@@ -53,7 +70,8 @@ async function save(ctx: CaptureContext, reading: ScaleReading, takenAt: number)
 }
 
 /**
- * A settled weigh-in from the scale. Same weight again with impedance completes the row saved a moment ago (`upgrade`); a weight far from
+ * A settled weigh-in from the scale. Same weight again with impedance completes the row saved a moment ago (`upgrade`); a `revision` (the
+ * weigh-in settled again at another weight) replaces the weight of that row; a weight far from
  * the person's last one waits for "Ini kamu?"; anything else is saved.
  */
 export async function captureFinal(
@@ -62,9 +80,16 @@ export async function captureFinal(
   upgrade: boolean,
   last: LastSaved | null,
 ): Promise<CaptureResult> {
+  if (reading.revision && last && ctx.now - last.at <= REVISION_WINDOW_MS && Math.abs(last.weightKg - reading.weightKg) <= REVISION_MAX_KG) {
+    const weightKg = keptOf(reading, ctx.protocolId).weightKg;
+    const inRogoRange = weightKg >= ROGO_MIN_KG && weightKg <= ROGO_MAX_KG;
+    await reviseWeighIn(ctx.db, last.id, weightKg, ctx.pushToRogo && inRogoRange ? 'pending' : 'skipped');
+    return { kind: 'revised', weighIn: { id: last.id, weightKg } };
+  }
   if (upgrade && last && Math.abs(last.weightKg - reading.weightKg) <= 0.05) {
-    const body = bodyOf(reading, ctx.protocolId, ctx.user);
-    await completeWeighIn(ctx.db, last.id, { impedanceOhm: reading.impedanceOhm ?? null, reported: body.reported, estimate: body.estimate });
+    const kept = keptOf(reading, ctx.protocolId);
+    const body = bodyOf(kept, ctx.protocolId, ctx.user);
+    await completeWeighIn(ctx.db, last.id, { impedanceOhm: kept.impedanceOhm ?? null, reported: body.reported, estimate: body.estimate });
     return { kind: 'completed', id: last.id };
   }
   const reference = await ctx.reference();

@@ -40,6 +40,7 @@ import {
   Upload,
   Users,
   Watch,
+  Weight,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -64,6 +65,7 @@ import {
   STUDIO_URL,
   TESTER_GROUP_URL,
   TESTER_OPTIN_URL,
+  TIMBANGAN_PATH,
   TRAKTEER_URL,
   WATCH_REPORTS_URL,
   WATCH_REPORT_FORM_URL,
@@ -87,6 +89,7 @@ import { BlogIndexPage, BlogPostPage } from "./Blog";
 import { KeluargaPage } from "./Keluarga";
 import { PanduanPage } from "./Panduan";
 import { PrivasiPage } from "./Privasi";
+import { TimbanganPage } from "./Timbangan";
 import { isPublicPath } from "./seo";
 import { Testimonials } from "./testimonials-section";
 import { TESTIMONIALS } from "./testimonials";
@@ -288,6 +291,9 @@ function Footer() {
             </a>
             <a href={PANDUAN_PATH} className={link}>
               Panduan
+            </a>
+            <a href={TIMBANGAN_PATH} className={link}>
+              Timbangan
             </a>
             <a href={BLOG_PATH} className={link}>
               Blog
@@ -1480,6 +1486,25 @@ function JamTeaser() {
   );
 }
 
+function TimbanganTeaser() {
+  return (
+    <section data-section="timbangan" className="border-t border-border/70 py-14 md:py-16">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 md:flex-row md:items-center md:justify-between md:px-6">
+        <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
+          Punya timbangan badan Bluetooth? JoyoFit membaca Xiaomi, Renpho, Yunmai, dan merek lain, lalu
+          mengirim beratmu ke JoyoRogo. Baru satu jenis yang diuji di timbangan asli.
+        </p>
+        <div className="flex shrink-0 flex-wrap gap-3">
+          <ButtonLink variant="secondary" href={TIMBANGAN_PATH} {...goal("timbangan_click", "teaser")}>
+            <Weight aria-hidden />
+            Lihat daftar timbangan
+          </ButtonLink>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Promises() {
   return (
     <section aria-label="Janji privasi" className="border-y border-border/70 bg-card">
@@ -1848,6 +1873,7 @@ function Options() {
                 "Termasuk di JoyoRogo Pro (cadangan cloud JoyoFit)",
                 "Server kami yang urus, tanpa setup",
                 "Masuk dengan akun JoyoRogo yang sama",
+                "Dukungan prioritas: laporan dan permintaan fiturmu didahulukan",
               ].map((line) => (
                 <li key={line} className="flex gap-2">
                   <Check className="mt-0.5 size-4 shrink-0 text-makan-ink" aria-hidden />
@@ -2395,6 +2421,7 @@ function HomePage() {
       <RoadmapSection />
       <Testimonials items={TESTIMONIALS} />
       <JamTeaser />
+      <TimbanganTeaser />
       <Promises />
       <Switch />
       <Options />
@@ -2431,6 +2458,7 @@ const PAGE_BODIES: Record<string, () => React.JSX.Element> = {
   [STRAVA_PATH]: StravaPage,
   [IPHONE_PATH]: IphonePage,
   [JAM_PATH]: JamPage,
+  [TIMBANGAN_PATH]: TimbanganPage,
   [DUKUNG_JAM_PATH]: DukungJamPage,
   [SELF_HOST_PATH]: SelfHostPage,
   [PRIVASI_PATH]: PrivasiPage,

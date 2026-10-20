@@ -644,7 +644,13 @@ describe('healthSync wrapper', () => {
     },
   }));
   mock.module('@/cloud/api', () => ({
+    // Every export other modules import by name: the mock outlives this file, and a later file loading a module that imports a
+    // missing name fails with "Export named ... not found" depending on test order.
     NotSignedInError: class NotSignedInError extends Error {},
+    CloudNotConfiguredError: class CloudNotConfiguredError extends Error {},
+    CloudHttpError: class CloudHttpError extends Error {},
+    CloudLockedError: class CloudLockedError extends Error {},
+    withRetry: <T,>(request: () => Promise<T>) => request(),
     cloudRequest: async (_method: string, path: string) => {
       requests.push(path);
       const url = new URL(`https://x${path}`);

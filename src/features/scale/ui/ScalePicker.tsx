@@ -6,6 +6,7 @@ import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Divider, Section } from '@/components/Screen';
 import { fmtDecimal } from '@/i18n/format';
+import { protocolById } from '@/features/scale/registry';
 import type { Granted } from '@/features/sensors/permissions';
 import { Signal } from '@/features/sensors/ui/parts';
 import { spacing } from '@/theme';
@@ -20,6 +21,11 @@ interface ScalePickerProps {
   onPermission: (granted: Granted) => void;
   onPick: (device: DiscoveredDevice) => void;
 }
+
+const needsKey = (protocolId: string | null): boolean => {
+  const protocol = protocolId === null ? null : protocolById(protocolId);
+  return protocol?.kind === 'broadcast' && protocol.secret !== undefined;
+};
 
 /** Search for a scale and pick it. The first search is preceded by what it does and a "Lanjut" (it is what raises the iOS prompt). */
 export function ScalePicker({ discovery, currentId, onPermission, onPick }: ScalePickerProps) {
@@ -75,8 +81,13 @@ export function ScalePicker({ discovery, currentId, onPermission, onPick }: Scal
                     <View style={styles.text}>
                       <AppText variant="bodyStrong">{device.name ?? t('picker.unnamed')}</AppText>
                       <AppText variant="caption" muted>
-                        {device.protocolLabel}
+                        {protocolById(device.protocolId ?? '')?.weightOnly ? t('picker.kindWeightOnly', { label: device.protocolLabel }) : device.protocolLabel}
                       </AppText>
+                      {needsKey(device.protocolId) ? (
+                        <AppText variant="caption" muted>
+                          {t('picker.needsKey')}
+                        </AppText>
+                      ) : null}
                       {device.preview ? (
                         <AppText variant="caption">{t('picker.reading', { value: fmtDecimal(device.preview.weightKg, 1) })}</AppText>
                       ) : null}

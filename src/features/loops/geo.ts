@@ -55,6 +55,70 @@ export function resampleLine(line: readonly LatLon[], stepM: number): LatLon[] {
   return out;
 }
 
+/** A leg that goes out and comes back on the same street shorter than this (one way) is a spur. */
+export const SPUR_MAX_M = 150;
+/** The line is "back at the same place" when it is within this distance of where the leg started. */
+const SPUR_RETURN_M = 12;
+/** ...and the way back is "the same street" when every point of it is within this distance of the way out. */
+const SPUR_RETRACE_M = 18;
+/** The way back is compared with the way out every this many metres. */
+const SPUR_CHECK_STEP_M = 8;
+
+/** The point `d` metres along `line`, whose running lengths are `cum` (`cum[k]` is the length up to vertex `k`). */
+function pointAtDistance(line: readonly LatLon[], cum: readonly number[], d: number): LatLon {
+  let lo = 0;
+  let hi = cum.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (cum[mid] <= d) lo = mid;
+    else hi = mid;
+  }
+  const span = cum[hi] - cum[lo];
+  if (span <= 0) return line[lo];
+  const f = Math.min(1, Math.max(0, (d - cum[lo]) / span));
+  return { lat: line[lo].lat + (line[hi].lat - line[lo].lat) * f, lon: line[lo].lon + (line[hi].lon - line[lo].lon) * f };
+}
+
+/** Whether `line` from vertex `from` to `to` goes out and comes back the way it went: the second half mirrors the first. */
+function retraces(line: readonly LatLon[], from: number, to: number): boolean {
+  const part = line.slice(from, to + 1);
+  const cum = [0];
+  for (let k = 1; k < part.length; k++) cum.push(cum[k - 1] + haversineM(part[k - 1], part[k]));
+  const total = cum[cum.length - 1];
+  for (let d = SPUR_CHECK_STEP_M; d < total / 2; d += SPUR_CHECK_STEP_M) {
+    if (haversineM(pointAtDistance(part, cum, d), pointAtDistance(part, cum, total - d)) > SPUR_RETRACE_M) return false;
+  }
+  return true;
+}
+
+/**
+ * The line without its spurs: a stretch that leaves a point, goes out at most `maxSpurM` and returns to that point along the
+ * same street is cut down to the point. Routing through a waypoint on a dead-end side street makes these; they show as stubs on
+ * the map and add steps without adding anything to the loop. A longer out-and-back is kept (it is a real detour, and the loop's
+ * repeat score already counts it). The first and the last point stay where they are.
+ */
+export function removeSpurs(line: readonly LatLon[], maxSpurM = SPUR_MAX_M): LatLon[] {
+  const out = [...line];
+  const reach = 2 * maxSpurM + SPUR_RETURN_M;
+  let i = 0;
+  while (i < out.length - 2) {
+    let cut = -1;
+    let length = 0;
+    for (let j = i + 1; j < out.length; j++) {
+      length += haversineM(out[j - 1], out[j]);
+      if (length > reach) break;
+      if (j >= i + 2 && haversineM(out[i], out[j]) <= SPUR_RETURN_M && retraces(out, i, j)) cut = j;
+    }
+    if (cut < 0) {
+      i++;
+      continue;
+    }
+    // Drop everything between the two visits; the last point of the line is never dropped.
+    out.splice(i + 1, cut === out.length - 1 ? cut - i - 1 : cut - i);
+  }
+  return out;
+}
+
 /** The box around `center`, `radiusM` metres to every side, as `[south, west, north, east]`. */
 export function boxAround(center: LatLon, radiusM: number): [number, number, number, number] {
   const dLat = radiusM / M_PER_DEG;

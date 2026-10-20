@@ -14,6 +14,7 @@ import { Decoder, type FitMessages, Stream } from '@garmin/fitsdk';
 import { t } from '@/i18n';
 
 import { FIT_EPOCH_OFFSET } from '../strava/fitEncoder';
+import { MAX_PER_LEG_CADENCE } from '../workouts/analysis/stride';
 
 /** Why a file is not imported. `unreadable` (the phone could not open it), `duplicate` and `overlap` come from the callers of `parseFitActivity`. */
 export type FitImportFailure = 'unreadable' | 'not-fit' | 'corrupt' | 'not-activity' | 'no-session' | 'duplicate' | 'overlap';
@@ -172,6 +173,10 @@ export interface FitActivity {
   /** rpm of a bike, strides per minute of a foot sport. */
   avgCadence: number | null;
   maxCadence: number | null;
+  /** True when the file's cadence figures count one foot (FIT's rule, strides per minute); false when the file was found to count steps. */
+  cadencePerLeg: boolean;
+  /** Metres per step: the session's `avg_step_length` (millimetres in the file). */
+  avgStepLength: number | null;
   /** Watts. */
   avgPower: number | null;
   maxPower: number | null;
@@ -206,7 +211,7 @@ const failure = (reason: FitImportFailure, message: string): FitImportError => (
 
 const semicirclesToDegrees = (value: number): number => (value * 180) / 2 ** 31;
 
-function point(record: RecordMesg, foot: boolean): FitPoint | null {
+function point(record: RecordMesg, legs: 1 | 2): FitPoint | null {
   const t = seconds(record.timestamp);
   if (t === null || t < MIN_UTC_FIT_TIME) return null;
   const rawLat = num(record.positionLat);
@@ -233,17 +238,54 @@ function point(record: RecordMesg, foot: boolean): FitPoint | null {
     alt: num(record.enhancedAltitude) ?? num(record.altitude),
     hr: hr !== null && hr > 0 && hr < 255 ? Math.round(hr) : null,
     speed,
-    cadence: cadenceOf(record.cadence, record.fractionalCadence, foot),
+    cadence: cadenceOf(record.cadence, record.fractionalCadence, legs),
     stride: stepLength === null ? null : stepLength / 1000,
     power: power === null ? null : Math.round(power),
   };
 }
 
-/** `cadence` (+ `fractional_cadence`) in the unit the point stores; null when the file has no reading. */
-function cadenceOf(cadence: unknown, fractional: unknown, foot: boolean): number | null {
+/**
+ * `cadence` (+ `fractional_cadence`) in the unit the point stores; null when the file has no reading. `legs` is 2 when the file
+ * counts one foot (FIT's rule: strides per minute, doubled here to steps per minute), 1 for a bike and for a writer that counts
+ * steps. Per-leg values above `MAX_PER_LEG_CADENCE` are not doubled: no runner makes that many strides a minute.
+ */
+function cadenceOf(cadence: unknown, fractional: unknown, legs: 1 | 2): number | null {
   const whole = nonNegative(cadence);
   if (whole === null) return null;
-  return Math.round((whole + (nonNegative(fractional) ?? 0)) * (foot ? 2 : 1));
+  const perLeg = whole + (nonNegative(fractional) ?? 0);
+  return Math.round(perLeg * (legs === 2 && perLeg <= MAX_PER_LEG_CADENCE ? 2 : 1));
+}
+
+/** Records that must agree before a foot file is read as counting steps instead of strides. */
+const MIN_UNIT_EVIDENCE = 20;
+
+/**
+ * Which unit a foot file's `cadence` is in, from the file itself: FIT says strides per minute (one foot, factor 2), but some
+ * writers count steps per minute. A record that has speed, step length and cadence says which: the steps per minute the speed and
+ * the step length imply are twice the cadence when it is per leg and equal to it when it is already steps. Only a clear majority of
+ * at least `MIN_UNIT_EVIDENCE` records for steps changes the standard reading (2); a file without step lengths keeps it.
+ */
+function legFactor(records: readonly RecordMesg[]): 1 | 2 {
+  let perLeg = 0;
+  let perMinute = 0;
+  for (const r of records) {
+    const cadence = positive(r.cadence);
+    const speed = nonNegative(r.enhancedSpeed) ?? nonNegative(r.speed);
+    const stepMm = positive(r.stepLength);
+    if (cadence === null || speed === null || stepMm === null || speed < 0.8) continue;
+    const implied = (speed / (stepMm / 1000)) * 60;
+    const ratio = implied / (cadence + (nonNegative(r.fractionalCadence) ?? 0));
+    if (ratio > 1.6 && ratio < 2.5) perLeg += 1;
+    else if (ratio > 0.7 && ratio < 1.35) perMinute += 1;
+  }
+  return perMinute >= MIN_UNIT_EVIDENCE && perMinute > 2 * perLeg ? 1 : 2;
+}
+
+/** A session's average or maximum cadence as the file counts it (per leg on foot), whole and fractional part together; null without a reading above zero. */
+function sessionCadence(s: Session, which: 'avg' | 'max'): number | null {
+  const whole = positive(which === 'avg' ? s.avgCadence : s.maxCadence);
+  if (whole === null) return null;
+  return whole + (nonNegative(which === 'avg' ? s.avgFractionalCadence : s.maxFractionalCadence) ?? 0);
 }
 
 /**
@@ -275,13 +317,13 @@ function balanceLeft(records: readonly RecordMesg[], sessions: readonly Session[
 }
 
 /** One lap of a file; null without a start or a length. */
-function lap(mesg: LapMesg, foot: boolean): FitLap | null {
+function lap(mesg: LapMesg, legs: 1 | 2): FitLap | null {
   const start = seconds(mesg.startTime);
   const elapsed = positive(mesg.totalElapsedTime) ?? positive(mesg.totalTimerTime);
   if (start === null || start < MIN_UTC_FIT_TIME || elapsed === null) return null;
   const avgHr = positive(mesg.avgHeartRate);
   const maxHr = positive(mesg.maxHeartRate);
-  const cadence = cadenceOf(mesg.avgCadence, mesg.avgFractionalCadence, foot);
+  const cadence = cadenceOf(mesg.avgCadence, mesg.avgFractionalCadence, legs);
   return {
     startTs: start + FIT_EPOCH_OFFSET,
     endTs: Math.round(start + elapsed) + FIT_EPOCH_OFFSET,
@@ -337,6 +379,7 @@ function extent(values: readonly (number | null)[]): { min: number | null; max: 
 }
 
 const rounded = (value: number | null): number | null => (value === null ? null : Math.round(value));
+const round2 = (value: number | null): number | null => (value === null ? null : Math.round(value * 100) / 100);
 
 function balanceLeftRounded(records: readonly RecordMesg[], sessions: readonly Session[]): number | null {
   const share = balanceLeft(records, sessions);
@@ -375,12 +418,13 @@ export function parseFitActivity(bytes: Uint8Array): FitActivity | FitImportErro
 
   const longest = sessions.reduce((a, b) => ((positive(b.totalTimerTime) ?? 0) > (positive(a.totalTimerTime) ?? 0) ? b : a));
   const sport = sportFor(longest.sport, longest.subSport);
+  const legs = sport.foot ? legFactor(messages.recordMesgs ?? []) : 1;
   const points = (messages.recordMesgs ?? [])
-    .map((r) => point(r, sport.foot))
+    .map((r) => point(r, legs))
     .filter((p): p is FitPoint => p !== null)
     .sort((a, b) => a.ts - b.ts);
   const laps = (messages.lapMesgs ?? [])
-    .map((l) => lap(l, sport.foot))
+    .map((l) => lap(l, legs))
     .filter((l): l is FitLap => l !== null)
     .sort((a, b) => a.startTs - b.startTs);
 
@@ -420,8 +464,13 @@ export function parseFitActivity(bytes: Uint8Array): FitActivity | FitImportErro
     minAltitude: altitude.min,
     maxAltitude: altitude.max,
     steps: sport.foot && strides !== null ? Math.round(strides * 2) : 0,
-    avgCadence: rounded(weighted(sessions, (s) => positive(s.avgCadence))),
-    maxCadence: maxOf(sessions, (s) => positive(s.maxCadence)),
+    cadencePerLeg: sport.foot && legs === 2,
+    avgCadence: round2(weighted(sessions, (s) => sessionCadence(s, 'avg'))),
+    maxCadence: round2(maxOf(sessions, (s) => sessionCadence(s, 'max'))),
+    avgStepLength: weighted(sessions, (s) => {
+      const mm = positive(s.avgStepLength);
+      return mm === null ? null : mm / 1000;
+    }),
     avgPower: rounded(weighted(sessions, (s) => positive(s.avgPower))),
     maxPower: maxOf(sessions, (s) => positive(s.maxPower)),
     normalizedPower: rounded(weighted(sessions, (s) => positive(s.normalizedPower))),

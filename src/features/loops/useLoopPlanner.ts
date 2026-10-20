@@ -14,7 +14,8 @@ import { errorMessage } from '@/format';
 import { t } from '@/i18n';
 
 import { loadBody } from './bodyStore';
-import { DEFAULT_COUNT, generateLoops, LoopError, type LoopCandidate, type LoopFailure } from './generate';
+import { failureMessage } from './failure';
+import { DEFAULT_COUNT, generateLoops, type LoopCandidate } from './generate';
 import { loadPaintedArea, type PaintedArea } from './paintedStore';
 import { advance, currentLoop, poolKey, type Pool } from './pool';
 import { currentPosition } from './position';
@@ -59,6 +60,9 @@ export interface LoopPlanner {
   /** Which loop of the batch is being tried, while `status` is `finding`. */
   progress: { index: number; count: number } | null;
   error: string | null;
+  /** With `error`: the nearest loop that was routed when none fit the target; `showClosest` puts it on the map. */
+  closest: LoopCandidate | null;
+  showClosest: () => void;
   /** The loop on the map; null when there is none for the current target and start. */
   loop: LoopCandidate | null;
   /** The loops of the batch for the current plan, best first; empty when there is none. */
@@ -87,8 +91,6 @@ export interface LoopPlanner {
   sendToWatch: () => void;
 }
 
-const FAILURE_COPY: Record<LoopFailure, 'noRoad' | 'noLoop' | 'network'> = { no_road: 'noRoad', no_loop: 'noLoop', network: 'network' };
-
 /** Everything the loop screen does besides drawing: the choices, the data they need, finding loops, saving and sending one. */
 export function useLoopPlanner(maplibre: MapLibre): LoopPlanner {
   const db = useSQLiteContext();
@@ -104,14 +106,14 @@ export function useLoopPlanner(maplibre: MapLibre): LoopPlanner {
   const [pool, setPool] = useState<Pool | null>(null);
   const [status, setStatus] = useState<FindStatus>('idle');
   const [progress, setProgress] = useState<{ index: number; count: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failure, setFailure] = useState<{ message: string; closest: LoopCandidate | null } | null>(null);
   const [savedById, setSavedById] = useState<Readonly<Record<string, SavedRoute>>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const abort = useRef<AbortController | null>(null);
-  /** Routed length over ring size, learned from the batches so far; the next batch starts from it. */
-  const ratio = useRef<number | undefined>(undefined);
+  /** Routed length over ring size, learned from the batches so far at one start; the next batch there starts from it. */
+  const ratio = useRef<{ at: string; value: number } | undefined>(undefined);
   /** The loop length at the moment the activity changed: the new activity keeps it, in its own unit. */
   const keepMeters = useRef<number | null>(null);
   const sendAfterSave = useRef(false);
@@ -201,7 +203,7 @@ export function useLoopPlanner(maplibre: MapLibre): LoopPlanner {
 
   const update = useCallback((patch: Partial<LoopPrefs>) => {
     setPrefsState((current) => ({ ...current, ...patch }));
-    setError(null);
+    setFailure(null);
   }, []);
 
   const setActivity = useCallback(
@@ -224,7 +226,7 @@ export function useLoopPlanner(maplibre: MapLibre): LoopPlanner {
 
   const setValue = useCallback((next: number) => {
     setValueState(next);
-    setError(null);
+    setFailure(null);
   }, []);
 
   const setStartFrom = useCallback(
@@ -289,20 +291,21 @@ export function useLoopPlanner(maplibre: MapLibre): LoopPlanner {
     const controller = new AbortController();
     abort.current = controller;
     setStatus('finding');
-    setError(null);
+    setFailure(null);
+    const startText = `${start.lat.toFixed(5)},${start.lon.toFixed(5)}`;
     setProgress({ index: 1, count: DEFAULT_COUNT });
     generateLoops({
       start,
       targetM,
       painted: area.index,
       seed: Math.floor(Math.random() * 0x7fffffff),
-      ratio: ratio.current,
+      ratio: ratio.current?.at === startText ? ratio.current.value : undefined,
       signal: controller.signal,
-      router: (waypoints, signal) => routing.routeVia('foot', waypoints, signal),
+      router: (waypoints, signal) => routing.routeVia('foot', waypoints, signal, { noUTurns: true }),
       onProgress: (index, count) => setProgress({ index, count }),
     }).then(
       (result) => {
-        ratio.current = result.ratio;
+        ratio.current = { at: startText, value: result.ratio };
         setPool({ key, candidates: result.candidates, at: 0 });
         setStatus('idle');
         setProgress(null);
@@ -311,10 +314,17 @@ export function useLoopPlanner(maplibre: MapLibre): LoopPlanner {
         if (isAborted(e) || controller.signal.aborted) return;
         setStatus('error');
         setProgress(null);
-        setError(t(`loops:errors.${e instanceof LoopError ? FAILURE_COPY[e.kind] : 'network'}`));
+        setFailure(failureMessage(e, targetM));
       },
     );
   }, [start, targetM, area, key, pool]);
+
+  const closest = failure?.closest ?? null;
+  const showClosest = useCallback(() => {
+    if (closest === null || key === null) return;
+    setPool({ key, candidates: [closest], at: 0 });
+    setFailure(null);
+  }, [closest, key]);
 
   const saved = loop ? (savedById[loop.id] ?? null) : null;
   const points = useMemo<RoutePoint[]>(() => (loop ? loop.line.map((p) => ({ lat: p.lat, lon: p.lon, alt: null })) : []), [loop]);
@@ -389,7 +399,9 @@ export function useLoopPlanner(maplibre: MapLibre): LoopPlanner {
     area,
     status,
     progress,
-    error,
+    error: failure?.message ?? null,
+    closest,
+    showClosest,
     loop,
     candidates,
     candidateIndex: pool?.at ?? 0,

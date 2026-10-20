@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
+import { ChipRow } from '@/components/ChipRow';
 import { Button } from '@/components/Button';
 import { HeaderIconButton } from '@/components/HeaderIconButton';
 import { IconChip } from '@/components/IconChip';
@@ -27,12 +28,26 @@ import { workoutTotals } from '@/features/strength/calc';
 import type { StrengthWorkout } from '@/features/strength/types';
 import { ActiveWorkoutBanner } from '@/features/strength/ui/ActiveWorkoutBanner';
 import { volumeText } from '@/features/strength/ui/liftFormat';
+import { getStrengthMeta, setStrengthMeta } from '@/features/strength/store';
+import {
+  countGroups,
+  DEFAULT_VIEW,
+  effectiveFilter,
+  parseView,
+  VIEW_META_KEY,
+  visibleFilters,
+  workoutGroup,
+  type WorkoutView,
+} from '@/features/workouts/filter';
+import { PROGRESS_KINDS, progressSinceSec, type ProgressRow } from '@/features/workouts/progress';
+import { listProgressRows } from '@/features/workouts/progressQuery';
 import { sportIcon } from '@/features/workouts/sportIcon';
 import { sportLabel } from '@/features/workouts/sportLabel';
 import { formatElapsed, workoutDistanceParts } from '@/features/workouts/summary';
 import { workoutTimes } from '@/features/workouts/times';
 import { usePendingDelete } from '@/features/workouts/pendingDelete';
 import { DeleteWorkoutDialog, type DeleteTarget } from '@/features/workouts/ui/DeleteWorkoutDialog';
+import { ProgressCard } from '@/features/workouts/ui/ProgressCard';
 import { StartWorkoutSheet } from '@/features/workouts/ui/StartWorkoutSheet';
 import { useWorkoutStrain } from '@/features/workouts/useWorkoutStrain';
 import { errorMessage, formatCount, formatDateTime } from '@/format';
@@ -151,6 +166,9 @@ export default function WorkoutsScreen() {
   // A phone that never had a watch gets no Sync button and no "connect your watch" nagging; the strength logger is the point of this tab.
   const watchUi = presence !== null && showsWatchUi(presence);
   const [workouts, setWorkouts] = useState<WorkoutRow[] | null>(null);
+  // `at` is when the rows were read: the week and month the card sums are the ones that were running then.
+  const [progressData, setProgressData] = useState<{ rows: ProgressRow[]; at: number }>({ rows: [], at: 0 });
+  const [view, setView] = useState<WorkoutView>(DEFAULT_VIEW);
   const [error, setError] = useState<string | null>(null);
   const [pulling, setPulling] = useState(false);
   const [pickError, setPickError] = useState<string | null>(null);
@@ -166,6 +184,25 @@ export default function WorkoutsScreen() {
     return map;
   }, [strengthWorkouts]);
 
+  // The last chosen sport and chart range come back on the next visit.
+  useEffect(() => {
+    let cancelled = false;
+    getStrengthMeta(db, VIEW_META_KEY).then(
+      (json) => {
+        if (!cancelled) setView(parseView(json));
+      },
+      () => {},
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [db]);
+  const changeView = (patch: Partial<WorkoutView>) => {
+    const next = { ...view, ...patch };
+    setView(next);
+    void setStrengthMeta(db, VIEW_META_KEY, JSON.stringify(next));
+  };
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -180,6 +217,15 @@ export default function WorkoutsScreen() {
           if (!cancelled) setError(errorMessage(e));
         },
       );
+      const readAt = Math.floor(Date.now() / 1000);
+      listProgressRows(db, progressSinceSec(readAt)).then(
+        (rows) => {
+          if (!cancelled) setProgressData({ rows, at: readAt });
+        },
+        () => {
+          if (!cancelled) setProgressData({ rows: [], at: readAt });
+        },
+      );
       return () => {
         cancelled = true;
       };
@@ -190,7 +236,17 @@ export default function WorkoutsScreen() {
 
   const canSync = linkState === 'connected' && device !== null;
   const syncing = linkState === 'syncing';
-  const sections = useMemo(() => groupByMonth((workouts ?? []).filter((w) => w.start !== pendingDelete?.start)), [workouts, locale, pendingDelete?.start]);
+  const shown = useMemo(() => (workouts ?? []).filter((w) => w.start !== pendingDelete?.start), [workouts, pendingDelete?.start]);
+  const groupOf = useCallback((w: WorkoutRow) => workoutGroup(w.sportName, strengthByStart.has(w.start)), [strengthByStart]);
+  const counts = useMemo(() => countGroups(shown, groupOf), [shown, groupOf]);
+  const filter = effectiveFilter(view.filter, counts);
+  const chips = useMemo(() => visibleFilters(counts), [counts]);
+  const sections = useMemo(
+    () => groupByMonth(filter === 'all' ? shown : shown.filter((w) => groupOf(w) === filter)),
+    [shown, filter, groupOf, locale],
+  );
+  const progressKind = PROGRESS_KINDS.find((k) => k === filter);
+  const visibleProgressRows = useMemo(() => progressData.rows.filter((r) => r.start !== pendingDelete?.start), [progressData.rows, pendingDelete?.start]);
   const refreshControl = useRefreshControl({
     refreshing: pulling,
     enabled: canSync,
@@ -259,6 +315,25 @@ export default function WorkoutsScreen() {
               <Notice icon="watch-outline" action={connectAction}>
                 {t('list.connectToSync')}
               </Notice>
+            ) : null}
+            {chips.length > 1 ? (
+              <ChipRow
+                items={chips.map((f) => ({
+                  key: f,
+                  label: t(`list.filter.${f}`),
+                  selected: f === filter,
+                  onPress: () => changeView({ filter: f }),
+                }))}
+              />
+            ) : null}
+            {progressKind && progressData.at > 0 ? (
+              <ProgressCard
+                kind={progressKind}
+                rows={visibleProgressRows}
+                nowSec={progressData.at}
+                period={view.period}
+                onPeriodChange={(period) => changeView({ period })}
+              />
             ) : null}
           </View>
         }

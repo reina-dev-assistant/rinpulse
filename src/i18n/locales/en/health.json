@@ -141,6 +141,7 @@
     "caption": "Score"
   },
   "noStages": {
+    "title": "Why does this sleep have no stages?",
     "unsupported": "The watch told us when you slept but not the stages, and it has no TruSleep switch that JoyoFit can set.",
     "turnOn": "Turn on TruSleep so the watch records sleep stages, then sleep a night and sync.",
     "unknown": "The watch told us when you slept but not the stages. Newer watches send them with TruSleep on. Some older ones cannot, and may give light and deep sleep with TruSleep off instead.",

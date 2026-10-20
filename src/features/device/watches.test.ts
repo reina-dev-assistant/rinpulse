@@ -13,6 +13,7 @@ import {
   setPrimaryWatch,
   setTracksHealth,
   sourceName,
+  watchActionKey,
   watchLabel,
   MAX_ALIAS_LENGTH,
 } from './watches';
@@ -197,5 +198,15 @@ describe('where a workout came from', () => {
     for (const id of ids) names.push(sourceName(watches, await getWorkoutDevice(db, id), 'removed'));
     expect(names).toEqual(['Jam harian', 'removed', null]);
     expect(await getWorkoutDevice(db, 999)).toBeNull();
+  });
+});
+
+describe('watchActionKey', () => {
+  it('offers Connect when nothing is connected', () => {
+    expect(watchActionKey(null, 'disconnected')).toBe('connect');
+    expect(watchActionKey('AA', 'disconnected')).toBe('connect');
+  });
+  it('offers switching only while a watch is connected', () => {
+    expect(watchActionKey('AA', 'connected')).toBe('switchTo');
   });
 });

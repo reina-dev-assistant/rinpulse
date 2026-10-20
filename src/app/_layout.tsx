@@ -32,7 +32,9 @@ import { DbHealthNotice } from '@/features/dbhealth/DbHealthNotice';
 import { FamilyProvider } from '@/features/family/FamilyProvider';
 import { BikeRideProvider } from '@/features/bikecomputer/BikeRideProvider';
 import { lockPortrait } from '@/features/bikecomputer/ui/orientation';
+import { flushSupportReports } from '@/features/device/aturReports';
 import { LivePill } from '@/features/record/ui/LivePill';
+import { RoomCaptureRunner } from '@/features/thermometer/RoomCaptureRunner';
 import { UpdateBanner } from '@/features/updates/UpdateBanner';
 import { UpdateGateProvider, useUpdateGate } from '@/features/updates/UpdateGateProvider';
 import { LaunchUpdateScreen, UpdateRequiredScreen } from '@/features/updates/UpdateRequiredScreen';
@@ -129,6 +131,15 @@ function RootNavigator() {
     return () => sub.remove();
   }, []);
 
+  // Reports sent while the phone was offline go out at launch and whenever the app comes back.
+  useEffect(() => {
+    void flushSupportReports();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void flushSupportReports();
+    });
+    return () => sub.remove();
+  }, []);
+
   // app.json allows rotation so the bike computer screen can use landscape; everything else stays portrait.
   useEffect(() => {
     void lockPortrait();
@@ -162,6 +173,8 @@ function RootNavigator() {
                   <OnboardingProvider>
                   <FamilyProvider>
                   <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+                  {/* The bedroom thermometer's readings (foreground scan, overnight file); idle without a paired thermometer. */}
+                  <RoomCaptureRunner />
                   <View style={{ flex: 1 }}>
                   <Tabs
                     tabBar={(props) => <TabBarWithLive {...props} />}
@@ -230,6 +243,7 @@ function RootNavigator() {
                     {/* Pushed from Today (or Settings, for hrv); each draws its own header (HiddenTabHeader). */}
                     <Tabs.Screen name="health" options={{ href: null }} />
                     <Tabs.Screen name="hrv" options={{ href: null }} />
+                    <Tabs.Screen name="heart" options={{ href: null }} />
                     <Tabs.Screen name="sleep" options={{ href: null }} />
                     <Tabs.Screen name="readiness" options={{ href: null }} />
                     <Tabs.Screen name="trends" options={{ href: null }} />

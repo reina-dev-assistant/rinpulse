@@ -100,6 +100,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
             return () => sub.remove();
           },
         },
+        stepCounter: () => BleSensors.stepCounterPermission(),
         db,
         now: Date.now,
         profile: energyProfile,

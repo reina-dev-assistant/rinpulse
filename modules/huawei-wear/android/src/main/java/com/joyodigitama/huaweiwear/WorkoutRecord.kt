@@ -112,7 +112,7 @@ internal object WorkoutBuilder {
   fun points(parts: WorkoutParts): List<WorkoutPoint> {
     val out = ArrayList<WorkoutPoint>(parts.samples.size + parts.gps.size)
     val kind = WorkoutSportTypes.kind(parts.totals.type.toInt() and 0xFF)
-    // Same cadence field choice as SampleStats.of: the step-rate byte for new-algorithm walking, the cadence short otherwise.
+    // Same cadence choice as SampleStats.of.
     val walkingSteps = parts.newSteps && (kind == "WALKING" || kind == "OUTDOOR_WALKING")
     for (d in parts.samples) {
       val hr = validHeartRate(d.heartRate)
@@ -120,7 +120,7 @@ internal object WorkoutBuilder {
       // The wire speed is decimetres per second (SampleStats.maxSpeed divides by 10 the same way); step length is
       // centimetres. 0 and -1 (0xFF in the step-rate byte) are "no reading".
       val speed = d.speed.toInt().takeIf { it > 0 }?.let { it / 10.0 }
-      val cadence = if (walkingSteps) (d.stepRate.toInt() and 0xFF).takeIf { it in 1..0xFE } else d.cadence.toInt().takeIf { it > 0 }
+      val cadence = sampleCadence(d, kind, walkingSteps)
       val stride = d.stepLength.toInt().takeIf { it > 0 }?.let { it / 100.0 }
       val power = d.cyclingPower.toInt().takeIf { it > 0 }
       if (hr != null || alt != null || speed != null || cadence != null || stride != null || power != null) {
@@ -140,6 +140,19 @@ internal object WorkoutBuilder {
     }
     // Stable: samples before GPS points of the same second.
     return out.sortedBy { it.ts }
+  }
+
+  /**
+   * Cadence of one sample in steps per minute (revolutions per minute when cycling), or null for "no reading" (0 and -1).
+   * GB: with the new step algorithm walking reports it in the step-rate byte; every other sport in the cadence short.
+   * On foot a sample without a cadence short falls back to the step-rate byte, which a run may carry instead; a bike
+   * never reads it (its step rate is not pedalling).
+   */
+  fun sampleCadence(d: Workout.WorkoutData.Response.Data, kind: String, walkingSteps: Boolean): Int? {
+    val stepRate = (d.stepRate.toInt() and 0xFF).takeIf { it in 1..0xFE }
+    if (walkingSteps) return stepRate
+    val onFoot = kind.contains("RUN") || kind.contains("WALK") || kind.contains("TREADMILL") || kind == "HIKING"
+    return d.cadence.toInt().takeIf { it > 0 } ?: if (onFoot) stepRate else null
   }
 
   /** GB: the watch's 0 and -1 (0xFF) mean "no heart rate in this sample". */
@@ -420,13 +433,9 @@ internal class SampleStats private constructor() {
 
       for (d in samples) {
         if (d.speed.toInt() != -1) maxSpeed = maxOf(maxSpeed, d.speed.toInt())
-        // GB: with the new step algorithm walking reports cadence in the step-rate byte.
-        if (walkingSteps) {
-          if (d.stepRate.toInt() != -1) cadence.add(d.stepRate.toInt() and 0xFF)
-        } else if (d.cadence.toInt() != -1) {
-          cadence.add(d.cadence.toInt())
-        }
-        if (d.stepLength.toInt() != -1) stepLength.add(d.stepLength.toInt())
+        // The same reading the points keep: 0 and -1 are "no reading" and must not pull the average down.
+        WorkoutBuilder.sampleCadence(d, kind, walkingSteps)?.let { cadence.add(it) }
+        if (d.stepLength.toInt() > 0) stepLength.add(d.stepLength.toInt())
         if (d.groundContactTime.toInt() != -1) contact.add(d.groundContactTime.toInt())
         if (d.impact.toInt() != -1) {
           impact.add(d.impact.toInt())

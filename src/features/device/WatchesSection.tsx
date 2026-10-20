@@ -11,7 +11,7 @@ import { isIos } from '@/components/IosUnavailable';
 import { Divider, Section } from '@/components/Screen';
 import { SwitchRow } from '@/components/SwitchRow';
 import { isLinkUp, linkLabel } from '@/features/device/linkState';
-import { watchLabel, type WatchRow } from '@/features/device/watches';
+import { watchActionKey, watchLabel, type WatchRow } from '@/features/device/watches';
 import { RoutineNameDialog } from '@/features/strength/ui/RoutineNameDialog';
 import { formatSyncTime } from '@/format';
 import { fmtPercent } from '@/i18n';
@@ -144,9 +144,9 @@ function WatchItem({ watch: w, several, busy, onRename, onRemove }: WatchItemPro
       {!active ? (
         <View style={styles.actions}>
           <Button
-            label={t('multi.switchTo')}
+            label={t(`multi.${watchActionKey(live.activeAddress, live.linkState)}`)}
             variant="primary"
-            icon="swap-horizontal"
+            icon={watchActionKey(live.activeAddress, live.linkState) === 'connect' ? 'bluetooth' : 'swap-horizontal'}
             disabled={busy}
             onPress={() => void live.switchTo(w.address)}
           />

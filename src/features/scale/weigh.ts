@@ -3,6 +3,8 @@ import { ReadingGate } from './gate';
 import type { ScaleHub } from './hub';
 import type { AdFrame, GattContext, ScaleProtocol, ScaleReading, ScaleUser } from './types';
 
+type Decoder = (frame: AdFrame, user?: ScaleUser) => ScaleReading | null;
+
 export type WeighStatus = 'starting' | 'waiting' | 'connecting' | 'connected';
 
 export interface WeighHandlers {
@@ -32,6 +34,7 @@ export interface WeighOptions {
  *  - Connected scale: it only advertises while awake, so the session waits for its advertisement (cheap, scan-only), then connects, runs
  *    the protocol until the scale is done or drops, and goes back to waiting.
  * The scan is shared through the hub, so a picker or a recording can run beside it.
+ * A protocol with a secret (Tuya local key) decodes with the `secret` given here, and settles by its own rule (`createDecoder`).
  */
 export class WeighSession {
   private active = false;
@@ -41,14 +44,18 @@ export class WeighSession {
   private cooldownUntil = 0;
   private readonly gate: ReadingGate;
   private readonly now: () => number;
+  private readonly decode: Decoder | null;
 
   constructor(
     private readonly hub: ScaleHub,
-    private readonly scale: { id: string; protocol: ScaleProtocol },
+    private readonly scale: { id: string; protocol: ScaleProtocol; secret?: string },
     private readonly options: WeighOptions,
     private readonly handlers: WeighHandlers,
   ) {
-    this.gate = new ReadingGate({ repeats: scale.protocol.kind === 'broadcast' ? 2 : 1 });
+    const protocol = scale.protocol;
+    const ownDecoder = protocol.kind === 'broadcast' && scale.secret !== undefined ? protocol.createDecoder?.(scale.secret) : undefined;
+    this.decode = protocol.kind === 'broadcast' ? (ownDecoder ?? ((frame, user) => protocol.decode(frame, user))) : null;
+    this.gate = new ReadingGate({ repeats: protocol.kind === 'broadcast' && ownDecoder === undefined ? 2 : 1 });
     this.now = options.now ?? Date.now;
   }
 
@@ -103,10 +110,10 @@ export class WeighSession {
     if (!this.active || frame.id !== this.scale.id) return;
     const protocol = this.scale.protocol;
     if (protocol.kind === 'broadcast') {
-      if (!protocol.matches(frame)) return;
+      if (!this.decode || !protocol.matches(frame)) return;
       let reading: ScaleReading | null;
       try {
-        reading = protocol.decode(frame, this.options.user() ?? undefined);
+        reading = this.decode(frame, this.options.user() ?? undefined);
       } catch (e) {
         this.handlers.onTrace({ direction: 'error', message: `decoder failed: ${e instanceof Error ? e.message : String(e)}` });
         return;

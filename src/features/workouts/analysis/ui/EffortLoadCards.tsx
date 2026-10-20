@@ -110,7 +110,8 @@ function LoadBar({ label, value, fraction, color }: LoadBarProps) {
   );
 }
 
-function LoadCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
+/** `showExtras: false` leaves out the watch's own aerobic and anaerobic effect, recovery time and load, for a screen that shows them elsewhere. */
+function LoadCardImpl({ analysis, showExtras = true }: { analysis: WorkoutAnalysis; showExtras?: boolean }) {
   const { palette, t } = useAnalysisContext();
   const load = analysis.load;
   if (!load) return null;
@@ -120,10 +121,10 @@ function LoadCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
   const color = verdict ? verdictColor(palette, verdict) : palette.accent;
 
   const extras: { key: string; label: string; value: string }[] = [];
-  if (load.aerobicEffect !== null) extras.push({ key: 'aerobic', label: t('load.aerobic'), value: fmtDecimal(load.aerobicEffect, 1) });
-  if (load.anaerobicEffect !== null) extras.push({ key: 'anaerobic', label: t('load.anaerobic'), value: fmtDecimal(load.anaerobicEffect, 1) });
-  if (load.recoveryHours !== null) extras.push({ key: 'recovery', label: t('load.recovery'), value: t('load.recoveryHours', { value: fmtInt(load.recoveryHours) }) });
-  if (load.watchLoad !== null) extras.push({ key: 'watch', label: t('load.watchLoad'), value: fmtInt(load.watchLoad) });
+  if (showExtras && load.aerobicEffect !== null) extras.push({ key: 'aerobic', label: t('load.aerobic'), value: fmtDecimal(load.aerobicEffect, 1) });
+  if (showExtras && load.anaerobicEffect !== null) extras.push({ key: 'anaerobic', label: t('load.anaerobic'), value: fmtDecimal(load.anaerobicEffect, 1) });
+  if (showExtras && load.recoveryHours !== null) extras.push({ key: 'recovery', label: t('load.recovery'), value: t('load.recoveryHours', { value: fmtInt(load.recoveryHours) }) });
+  if (showExtras && load.watchLoad !== null) extras.push({ key: 'watch', label: t('load.watchLoad'), value: fmtInt(load.watchLoad) });
 
   return (
     <Card title={t('section.load')}>

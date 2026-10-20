@@ -10,6 +10,7 @@
     "koneksi": "AI connections",
     "joyorogo": "JoyoRogo",
     "scale": "Smart scale",
+    "thermometer": "Room thermometer",
     "importHuawei": "Import from Huawei Health",
     "importAppleHealth": "Import from Apple Health",
     "importFit": "Import a FIT file",
@@ -25,7 +26,8 @@
     "healthIos": "Apple Health",
     "gear": "Shoes & gear",
     "importAll": "Import data",
-    "akun": "Account"
+    "akun": "Account",
+    "homeCards": "Arrange Home cards"
   },
   "index": {
     "title": "Settings",
@@ -271,7 +273,17 @@
     "active": "Active",
     "pausedNotice": "Auto-reconnect paused. Connect again to resume.",
     "interval": "Sync interval",
-    "details": "Keeps the link to the watch up while the app is closed."
+    "details": "Keeps the link to the watch up while the app is closed.",
+    "limits": {
+      "title": "Battery and background",
+      "battery": "Battery optimization",
+      "exempt": "JoyoFit is exempt",
+      "limited": "Android may limit JoyoFit",
+      "restriction": "Background restriction",
+      "restricted": "Restricted",
+      "notRestricted": "Not restricted",
+      "ok": "Android will not stop JoyoFit when the screen is off."
+    }
   },
   "appleImport": {
     "title": "Import history from Apple Health",
@@ -639,7 +651,34 @@
     "errorValue": "{{message}} ({{when}})",
     "waitingHint": "Sent at the next sync. The last 30 days of workouts go; those JoyoRogo already has are not duplicated.",
     "autoSyncOff": "Automatic sync is off. Tap Send now to send.",
-    "sendNow": "Send now"
+    "sendNow": "Send now",
+    "sleep": {
+      "title": "Sleep insights",
+      "label": "Send sleep data to JoyoRogo (Sleep insights)",
+      "hint": "JoyoRogo looks for patterns in your sleep, like caffeine or a dinner that ran late. You see the results in JoyoRogo, Sleep tab.",
+      "viewIn": "Your sleep findings and patterns are in JoyoRogo, Sleep tab.",
+      "state": {
+        "loading": "Checking the setting on JoyoRogo...",
+        "unsupported": "Your JoyoRogo does not have Sleep insights yet. Try again once JoyoRogo is updated.",
+        "offline": "Cannot reach JoyoRogo right now, so this setting cannot be read or changed. Try again later.",
+        "nights_one": "JoyoRogo holds {{n}} night of your sleep.",
+        "nights_other": "JoyoRogo holds {{n}} nights of your sleep.",
+        "retry": "Try again"
+      },
+      "consent": {
+        "title": "Send sleep data to JoyoRogo?",
+        "body": "Sent each night: when you fell asleep and woke up, time asleep and awake, how many times you woke, sleep stages (only if your watch produces them), the watch's sleep score, last night's HRV and resting heart rate when available, and naps.\n\nNot sent: per-minute data, all-day heart rate, location, and workouts.\n\nJoyoRogo keeps the last 90 nights and uses them to build your sleep insights. This data is not shared and not used for ads. You can turn it off any time, here or in JoyoRogo; when you turn it off, all sleep data on the JoyoRogo server is deleted.",
+        "confirm": "Turn on",
+        "cancel": "Cancel"
+      },
+      "disable": {
+        "title": "Turn off Sleep insights?",
+        "body": "All your sleep data on JoyoRogo is deleted, including insights already made. Data on your phone does not change.",
+        "confirm": "Turn off and delete",
+        "cancel": "Cancel"
+      },
+      "errorTitle": "Did not work"
+    }
   },
   "weather": {
     "conditions": {

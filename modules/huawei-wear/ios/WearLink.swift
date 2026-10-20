@@ -361,6 +361,7 @@ public final class WearLink: @unchecked Sendable {
 
     /// The watch becomes the one background mode follows, and gets its row in the shared database.
     private func rememberWatch(address: String, name: String, info: WatchDeviceInfo) {
+        settings.noteConnect(previous: settings.watchAddress, address: address)
         settings.watchAddress = address
         settings.watchName = name
         do {
@@ -501,7 +502,8 @@ public final class WearLink: @unchecked Sendable {
 
     private func runSync(_ connection: Connection, fullHistory: Bool) async throws -> SyncSummary {
         let address = connection.address
-        let last = fullHistory ? nil : try storage { try syncStore.lastSync(address: address) }
+        let backfill = fullHistory || settings.switchBackfillPending(address)
+        let last = backfill ? nil : try storage { try syncStore.lastSync(address: address) }
         let nowSec = Int64(now().timeIntervalSince1970)
         // A watch that does not track health (a guest's band) stores no rows and runs no extension that does; the flag is read on every sync.
         if let empty = try storage({ try syncStore.untrackedSyncSummary(address: address, nowSec: nowSec) }) {
@@ -511,7 +513,7 @@ public final class WearLink: @unchecked Sendable {
         // The first sync and a full history both ask from the beginning of time (ActivitySync turns 0 into 2000-01-01) in slices.
         let from = syncWindowStart(lastSyncSec: last)
         let slices = syncSlices(fromSec: from, nowSec: nowSec)
-        events.info("History: \(fullHistory ? "full" : "incremental") pull in \(slices.count) slices from \(slices[0].from)")
+        events.info("History: \(fullHistory ? "full" : backfill ? "backfill after a switch" : "incremental") pull in \(slices.count) slices from \(slices[0].from)")
         let log = events.sink
         let session = connection.session!
         let caps = connection.caps
@@ -530,6 +532,7 @@ public final class WearLink: @unchecked Sendable {
             events.info("History: slice \(index + 1)/\(slices.count) \(slice.from)..\(slice.to): \(part.samples) step samples, \(part.sleep) sleep segments")
             finalSlice = part
         }
+        settings.switchBackfillDone(address)
         let finalPart = finalSlice!
         let workouts = try await WorkoutPhase.run(
             session: session, caps: caps, syncStore: syncStore, address: address, events: events, nowSec: Int64(now().timeIntervalSince1970), fullHistory: fullHistory

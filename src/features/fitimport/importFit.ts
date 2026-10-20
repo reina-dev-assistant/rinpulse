@@ -73,6 +73,9 @@ function summaryOf(a: FitActivity): string {
     maxAltitude: a.maxAltitude ?? undefined,
     avgCadence: a.avgCadence ?? undefined,
     maxCadence: a.maxCadence ?? undefined,
+    // FIT counts one foot; only a file found to count steps (see `legFactor` in parseFit) says otherwise.
+    cadencePerLeg: a.sport.foot && !a.cadencePerLeg ? false : undefined,
+    avgStepLengthM: a.avgStepLength === null ? undefined : Math.round(a.avgStepLength * 1000) / 1000,
     avgPower: a.avgPower ?? undefined,
     maxPower: a.maxPower ?? undefined,
     normalizedPower: a.normalizedPower ?? undefined,

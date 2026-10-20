@@ -1,86 +1,90 @@
 {
   "/": {
-    "hash": "27c9df8c659f27b5",
-    "lastmod": "2026-10-19"
+    "hash": "e137534ace6f1341",
+    "lastmod": "2026-10-20"
   },
   "/panduan": {
-    "hash": "129259d7fbe555c3",
-    "lastmod": "2026-10-19"
+    "hash": "edd51864be6ae204",
+    "lastmod": "2026-10-20"
   },
   "/strava": {
-    "hash": "576f4808b651db51",
-    "lastmod": "2026-10-19"
+    "hash": "44cc8136acf9e90d",
+    "lastmod": "2026-10-20"
   },
   "/iphone": {
-    "hash": "d9a3e7394f0e931e",
-    "lastmod": "2026-10-19"
+    "hash": "514ec3ebcf578519",
+    "lastmod": "2026-10-20"
   },
   "/jam": {
-    "hash": "80517ddf571b65e7",
-    "lastmod": "2026-10-19"
+    "hash": "961d9a1df7014f7f",
+    "lastmod": "2026-10-20"
+  },
+  "/timbangan": {
+    "hash": "38cbd085d32c334d",
+    "lastmod": "2026-10-20"
   },
   "/dukung-jam": {
-    "hash": "ae651c575e3a7794",
-    "lastmod": "2026-10-19"
+    "hash": "43e8ac9eb8930d06",
+    "lastmod": "2026-10-20"
   },
   "/self-host": {
-    "hash": "17f1bbe5faac000b",
-    "lastmod": "2026-10-19"
+    "hash": "9f92145c99bb3d08",
+    "lastmod": "2026-10-20"
   },
   "/privasi": {
-    "hash": "1544aab567cde405",
-    "lastmod": "2026-10-19"
+    "hash": "31e3128c3e700bea",
+    "lastmod": "2026-10-20"
   },
   "/keluarga": {
-    "hash": "12c3014b331843c7",
-    "lastmod": "2026-10-19"
+    "hash": "c63fb1d725128fdb",
+    "lastmod": "2026-10-20"
   },
   "/blog": {
-    "hash": "251b28a3e1631915",
-    "lastmod": "2026-10-19"
+    "hash": "ce0e6db5b215f226",
+    "lastmod": "2026-10-20"
   },
   "/blog/joyofit-web": {
-    "hash": "96792ab2273b8f7c",
-    "lastmod": "2026-10-19"
+    "hash": "12872702b04d55e5",
+    "lastmod": "2026-10-20"
   },
   "/blog/joyofit-ride": {
-    "hash": "b05ce14737a4b23d",
-    "lastmod": "2026-10-19"
+    "hash": "fc82b44df89777b8",
+    "lastmod": "2026-10-20"
   },
   "/blog/coach": {
-    "hash": "ef69a0b373c30113",
-    "lastmod": "2026-10-19"
+    "hash": "5d42f933ea5f37f3",
+    "lastmod": "2026-10-20"
   },
   "/blog/social-joyofit": {
-    "hash": "ae96f3a452ce37f3",
-    "lastmod": "2026-10-19"
+    "hash": "876fadecca6e9818",
+    "lastmod": "2026-10-20"
   },
   "/blog/bagikan-latihan-ke-joyorogo": {
-    "hash": "f4affad474b5f384",
-    "lastmod": "2026-10-19"
+    "hash": "08ba63222a681098",
+    "lastmod": "2026-10-20"
   },
   "/blog/panduan-awal": {
-    "hash": "cbea4d63d2252293",
-    "lastmod": "2026-10-19"
+    "hash": "ae05ae548acdb4ce",
+    "lastmod": "2026-10-20"
   },
   "/blog/strava-file-fit": {
-    "hash": "b686200b79043182",
-    "lastmod": "2026-10-19"
+    "hash": "217acc88e20a8d44",
+    "lastmod": "2026-10-20"
   },
   "/blog/kartu-bagikan": {
-    "hash": "48f634c02248e4ee",
-    "lastmod": "2026-10-19"
+    "hash": "419113c6d7c3421c",
+    "lastmod": "2026-10-20"
   },
   "/blog/tidur-hrv-cuaca": {
-    "hash": "f3bfb2344f7fa0dc",
-    "lastmod": "2026-10-19"
+    "hash": "01c90d51bf50b18e",
+    "lastmod": "2026-10-20"
   },
   "/blog/pembaruan-di-aplikasi": {
-    "hash": "b6a980f7dee729c3",
-    "lastmod": "2026-10-19"
+    "hash": "52640a26a805abda",
+    "lastmod": "2026-10-20"
   },
   "/404": {
-    "hash": "461935331b68b42c",
-    "lastmod": "2026-10-19"
+    "hash": "ba91de358047335f",
+    "lastmod": "2026-10-20"
   }
 }

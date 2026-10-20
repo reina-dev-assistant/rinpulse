@@ -23,6 +23,7 @@ export const CONTACT_EMAIL = "dzulfikar.at@gmail.com";
 export const DUKUNG_JAM_PATH = "/dukung-jam";
 export const SELF_HOST_PATH = "/self-host";
 export const JAM_PATH = "/jam";
+export const TIMBANGAN_PATH = "/timbangan";
 export const PANDUAN_PATH = "/panduan";
 export const PRIVASI_PATH = "/privasi";
 export const KELUARGA_PATH = "/keluarga";

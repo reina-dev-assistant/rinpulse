@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { fmtDecimal, fmtInt } from '@/i18n';
 
+import { isFootKind } from '../sport';
 import { formatDuration, formatPace, type WorkoutAnalysis } from '../types';
 import { distanceParts, kcalPerHour } from './chartMath';
 import { useAnalysisContext } from './context';
@@ -41,7 +42,23 @@ function StatCell({ cell, big }: { cell: Cell; big: boolean }) {
   );
 }
 
-function SummaryStripImpl({ analysis }: { analysis: WorkoutAnalysis }) {
+/** A figure the host adds to the grid that the analysis itself does not carry (the step count). */
+export interface ExtraStat {
+  key: string;
+  label: string;
+  value: string;
+  unit?: string;
+}
+
+interface SummaryStripProps {
+  analysis: WorkoutAnalysis;
+  /** Cells added to the grid, before the cadence. */
+  extra?: readonly ExtraStat[];
+  /** False leaves out the fat and carbohydrate line, for a screen that shows the burn in its own section. */
+  showFuel?: boolean;
+}
+
+function SummaryStripImpl({ analysis, extra = [], showFuel = true }: SummaryStripProps) {
   const { t } = useAnalysisContext();
   const { stats, sport, distanceM, elapsedSec, movingSec, elevation, calories } = analysis;
 
@@ -91,6 +108,7 @@ function SummaryStripImpl({ analysis }: { analysis: WorkoutAnalysis }) {
       sub: stats.maxHr !== null ? t('summary.maxHr', { value: Math.round(stats.maxHr) }) : undefined,
     });
   }
+  for (const stat of extra) grid.push(stat);
   if (stats.avgCad !== null) {
     grid.push({
       key: 'cad',
@@ -99,6 +117,9 @@ function SummaryStripImpl({ analysis }: { analysis: WorkoutAnalysis }) {
       unit: t(sport.kind === 'ride' ? 'unit.rpm' : 'unit.spm'),
       sub: stats.maxCad !== null ? t('summary.maxCadence', { value: Math.round(stats.maxCad) }) : undefined,
     });
+  }
+  if (stats.avgStrideM !== null && isFootKind(sport.kind)) {
+    grid.push({ key: 'stride', label: t('summary.stride'), value: fmtDecimal(stats.avgStrideM, 2), unit: t('unit.m') });
   }
   if (stats.avgPower !== null) {
     grid.push({
@@ -111,8 +132,8 @@ function SummaryStripImpl({ analysis }: { analysis: WorkoutAnalysis }) {
   }
 
   const fuel: string[] = [];
-  if (calories?.fatG != null) fuel.push(t('summary.fat', { value: Math.round(calories.fatG) }));
-  if (calories?.carbG != null) fuel.push(t('summary.carbs', { value: Math.round(calories.carbG) }));
+  if (showFuel && calories?.fatG != null) fuel.push(t('summary.fat', { value: Math.round(calories.fatG) }));
+  if (showFuel && calories?.carbG != null) fuel.push(t('summary.carbs', { value: Math.round(calories.carbG) }));
 
   return (
     <Card a11yLabel={t('summary.a11y')}>

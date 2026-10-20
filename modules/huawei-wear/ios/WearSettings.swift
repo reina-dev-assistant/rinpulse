@@ -137,6 +137,30 @@ public final class WearSettings: @unchecked Sendable {
         }
     }
 
+    // MARK: Backfill after a switch (docs/multi-watch.md, section 7; port of SwitchBackfill.kt)
+
+    private static let backfillKeyPrefix = "backfill_after_switch_"
+
+    private func backfillKey(_ address: String) -> String {
+        WearSettings.backfillKeyPrefix + address.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+    }
+
+    /// A connect to `address` that made it the remembered watch: a switch when `previous`, the watch remembered until now, is another one. A
+    /// switch marks `address`: its next activity sync pulls everything the watch holds, whatever its own `device.last_sync` says.
+    public func noteConnect(previous: String?, address: String) {
+        guard let previous, previous.caseInsensitiveCompare(address) != .orderedSame else { return }
+        defaults.set(true, forKey: backfillKey(address))
+    }
+
+    public func switchBackfillPending(_ address: String) -> Bool {
+        defaults.bool(forKey: backfillKey(address))
+    }
+
+    /// The steps and sleep of `address` were pulled from the beginning (or the watch was forgotten).
+    public func switchBackfillDone(_ address: String) {
+        defaults.removeObject(forKey: backfillKey(address))
+    }
+
     private func set(_ value: String?, forKey key: String) {
         if let value { defaults.set(value, forKey: key) } else { defaults.removeObject(forKey: key) }
     }

@@ -2,7 +2,9 @@ import type { WorkoutPointRow } from '@/db/queries';
 import { movingOf } from '@/features/workouts/times';
 
 import { cleanFixes, haversineM, type CleanFix } from './geo';
-import { hasPace } from './sport';
+import { isFootKind, hasPace } from './sport';
+import { minuteCadenceGrid, type MinuteSteps } from './minuteCadence';
+import { MAX_STEP_M, MIN_STEP_M } from './stride';
 import type { LatLon, SportKind } from './types';
 
 /** `workout_points` row with the per-sample columns of the watch's data frames; missing columns read as absent. */
@@ -51,6 +53,8 @@ export interface Grid {
   /** Altitude with the gaps filled and no smoothing: what the elevation gain and loss are computed from. */
   altRaw: (number | null)[] | null;
   cad: (number | null)[] | null;
+  /** Metres per step the source measured per sample (gaps filled like cadence); null when it did not, the chart then derives it from pace and cadence. */
+  stride: (number | null)[] | null;
   power: (number | null)[] | null;
   track: (LatLon | null)[] | null;
   /** Seconds counted as moving: the watch's active time when a pause explains the difference, else the elapsed time (see `times.ts`). */
@@ -69,6 +73,8 @@ export interface GridInput {
   distance: number;
   kind: SportKind;
   points: readonly AnalysisPoint[];
+  /** The watch's per-minute step samples of the workout's day; on foot they give a cadence series when the points carry none. */
+  minuteSteps?: readonly MinuteSteps[];
 }
 
 interface Sample {
@@ -267,7 +273,9 @@ export function buildGrid(input: GridInput): Grid {
 
   const hrRaw = bucketMean(collect(points, start, (p) => p.hr, (v) => v >= MIN_BPM && v <= MAX_BPM), stepSec, n);
   const hr = fillGaps(hrRaw, stepSec, fillSec);
-  const cad = fillGaps(bucketMean(collect(points, start, (p) => p.cadence, (v) => v > 0), stepSec, n), stepSec, fillSec);
+  const storedCad = fillGaps(bucketMean(collect(points, start, (p) => p.cadence, (v) => v > 0), stepSec, n), stepSec, fillSec);
+  const cad = hasValue(storedCad) || !isFootKind(kind) || !input.minuteSteps ? storedCad : (minuteCadenceGrid(input.minuteSteps, start, start + elapsedSec, stepSec, n) ?? storedCad);
+  const stride = fillGaps(bucketMean(collect(points, start, (p) => p.stride, (v) => v >= MIN_STEP_M && v <= MAX_STEP_M), stepSec, n), stepSec, fillSec);
   const power = fillGaps(bucketMean(collect(points, start, (p) => p.power, (v) => v >= 0), stepSec, n), stepSec, fillSec);
   const altRaw = altitudeGrid(points, start, stepSec, n);
   const alt = smooth(altRaw, stepSec);
@@ -309,6 +317,7 @@ export function buildGrid(input: GridInput): Grid {
     pace: hasValue(pace) ? pace : null,
     alt: hasValue(alt) ? alt : null,
     cad: hasValue(cad) ? cad : null,
+    stride: hasValue(stride) ? stride : null,
     power: hasValue(power) ? power : null,
     track: hasGps && track && track.some((p) => p !== null) ? track : null,
     movingSec: movingOf(elapsedSec, input.duration),

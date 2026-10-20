@@ -81,6 +81,15 @@
       "reportHelp": "If it still fails, send a report. It holds the latest Bluetooth log, without Bluetooth addresses or the serial number.",
       "report": "Send report"
     },
+    "limits": {
+      "optimized": "Android can stop JoyoFit when the screen is off or the app is closed to save battery. That is a common reason a watch disconnects by itself. Let JoyoFit run without battery limits.",
+      "restricted": "JoyoFit's background battery use is Restricted, so Android shuts it down when the screen is off and the watch disconnects. Open the app settings, choose Battery, then Unrestricted.",
+      "vendor": "{{maker}} phones also keep a list of apps that may start by themselves (auto-start). Turn JoyoFit on there too, or the watch can still disconnect with the battery setting right.",
+      "openBattery": "Open battery settings",
+      "openAutoStart": "Open auto-start",
+      "dismiss": "Dismiss",
+      "error": "That settings screen did not open on this phone. Open Settings, Apps, JoyoFit, then Battery."
+    },
     "status": {
       "linkA11y": "Link state: {{label}}",
       "battery": "Battery",
@@ -154,7 +163,20 @@
       "intro": "JoyoFit is tested on the Huawei Watch Fit 4 Pro. Other Huawei and Honor watches are experimental. If something does not work, connect once, then send a report. It lists what your watch answered on its last connect, without Bluetooth addresses or the serial number.",
       "copied": "The full report is on your clipboard. On GitHub, say what works and what does not, then paste the report into the Log field.",
       "github": "GitHub report",
-      "share": "Share text"
+      "share": "Share text",
+      "atur": {
+        "send": "Send report",
+        "messageLabel": "What happened? (optional)",
+        "messageHint": "The Bluetooth log, phone and watch details and the disconnect history go to the JoyoFit team, without Bluetooth addresses or the serial number.",
+        "messagePlaceholder": "For example: the watch will not connect after a restart, or steps do not sync.",
+        "emailLabel": "Email for a reply (optional)",
+        "emailHint": "Only used to reply to this report.",
+        "emailInvalid": "That email does not look right.",
+        "submit": "Send",
+        "sent": "Report sent as #{{number}}. Thanks for helping.",
+        "queued": "No internet right now. The report is saved on this phone and goes out by itself once you are online.",
+        "failed": "The report was not sent: {{reason}}"
+      }
     }
   },
   "alarms": {
@@ -515,6 +537,7 @@
     "neverSynced": "Never synced",
     "notTracked": "Its health data is not stored",
     "switchTo": "Switch to this watch",
+    "connect": "Connect",
     "manage": "Manage this watch",
     "makePrimary": "Make primary",
     "rename": {
@@ -545,7 +568,8 @@
       "hr": "Heart rate",
       "csc": "Speed and cadence",
       "power": "Power",
-      "rsc": "Running pod"
+      "rsc": "Running pod",
+      "thermometer": "Room thermometer"
     },
     "battery": "Battery {{value}}",
     "unnamed": "Unnamed sensor ({{tail}})",

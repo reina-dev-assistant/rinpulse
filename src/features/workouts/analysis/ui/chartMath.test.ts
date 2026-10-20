@@ -80,11 +80,32 @@ describe('metricValues and availableMetrics', () => {
 
   it('offers pace for runs, speed for rides, only series that exist', () => {
     const s = series({ cad: Array.from({ length: 11 }, () => 170), power: null });
-    expect(availableMetrics(s, 'run')).toEqual(['pace', 'hr', 'alt', 'cad']);
+    // Step length rides along on foot: pace and cadence give it. A ride has cadence in rpm, never a step length.
+    expect(availableMetrics(s, 'run')).toEqual(['pace', 'hr', 'alt', 'cad', 'stride']);
     expect(availableMetrics(s, 'ride')).toEqual(['speed', 'hr', 'alt', 'cad']);
     expect(availableMetrics(s, 'swim')).toEqual(['hr', 'alt', 'cad']);
     expect(availableMetrics(series({ pace: null, hr: null, alt: null }), 'run')).toEqual([]);
     expect(availableMetrics(series({ n: 1 }), 'run')).toEqual([]);
+  });
+});
+
+describe('step length metric', () => {
+  it('is speed over steps per second per sample, a gap where either is missing', () => {
+    // 300 s/km is 3.33 m/s; at 170 steps per minute a step is 1.176 m.
+    const s = series({ cad: Array.from({ length: 11 }, (_, i) => (i === 4 ? null : 170)), pace: Array.from({ length: 11 }, () => 300) });
+    const v = metricValues(s, 'stride')!;
+    expect(v[0]).toBeCloseTo(1.176, 3);
+    expect(v[4]).toBeNull();
+    expect(readoutAt(s, 2).stride).toBeCloseTo(1.176, 3);
+    expect(readoutAt(s, 4).stride).toBeNull();
+  });
+
+  it('prefers the measured series and hides the chip without cadence or pace', () => {
+    const measured = series({ stride: Array.from({ length: 11 }, () => 0.9), cad: Array.from({ length: 11 }, () => 170) });
+    expect(metricValues(measured, 'stride')!.every((x) => x === 0.9)).toBe(true);
+    expect(availableMetrics(series({ cad: null }), 'run')).not.toContain('stride');
+    expect(availableMetrics(series({ cad: Array.from({ length: 11 }, () => 170), pace: null }), 'run')).not.toContain('stride');
+    expect(availableMetrics(series({ cad: Array.from({ length: 11 }, () => 80) }), 'ride')).not.toContain('stride');
   });
 });
 

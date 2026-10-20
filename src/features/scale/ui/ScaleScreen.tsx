@@ -20,6 +20,7 @@ import { HistorySection } from './HistorySection';
 import { LiveCard } from './LiveCard';
 import { RecordSection } from './RecordSection';
 import { ScalePicker } from './ScalePicker';
+import { SecretSection } from './SecretSection';
 import { useDiscovery } from './useDiscovery';
 
 const GUARD_OPTIONS = [0, 6, 12] as const;
@@ -38,6 +39,7 @@ export function ScaleScreen() {
   useEffect(() => stopTest, [stopTest]);
 
   const protocol = s.scale ? protocolById(s.scale.protocolId) : null;
+  const secretKind = protocol?.kind === 'broadcast' ? (protocol.secret?.kind ?? null) : null;
   const hasProfile = scaleUserFrom(HuaweiWear.getUserProfile(), new Date().getFullYear()) !== null;
   const searchProblem =
     permission === 'denied' || permission === 'blocked' || discovery.error === 'ERR_BLUETOOTH_PERMISSION'
@@ -65,6 +67,8 @@ export function ScaleScreen() {
         <LiveCard
           scale={s.scale}
           kindLabel={protocol?.label ?? null}
+          weightOnly={protocol?.weightOnly === true}
+          needsKey={s.secret === 'missing'}
           live={s.live}
           testing={s.testing}
           onTest={() => void startTest()}
@@ -79,6 +83,10 @@ export function ScaleScreen() {
           </AppText>
         </Section>
       )}
+
+      {s.scale && secretKind && (s.secret === 'missing' || s.secret === 'saved') ? (
+        <SecretSection kind={secretKind} state={s.secret} onSave={s.saveSecret} onClear={s.clearSecret} />
+      ) : null}
 
       <ScalePicker
         discovery={discovery}
@@ -124,7 +132,7 @@ export function ScaleScreen() {
       <HistorySection
         weighIns={s.weighIns}
         rogoWaiting={s.rogoWaiting}
-        needsProfile={!hasProfile}
+        needsProfile={!hasProfile && protocol?.weightOnly !== true}
         onRetry={() => void s.retryPush()}
         onDelete={(id) => void s.remove(id)}
       />

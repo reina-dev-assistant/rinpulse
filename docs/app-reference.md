@@ -11,6 +11,7 @@ Detail for the JoyoFit features that live on the phone: permissions, Health Conn
 | `POST_NOTIFICATIONS` | show the service notification (runtime prompt on Android 13+) |
 | `RECEIVE_BOOT_COMPLETED` | restart background mode after a reboot or app update |
 | `WAKE_LOCK` | keep the CPU awake while a reconnect or sync runs in the background |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | sideload APK only: the system's "allow JoyoFit to ignore battery optimization" dialog, opened from the battery notice on the Watch tab or Settings → Sync, so Android does not stop the watch link with the screen off. The Google Play build does not have it and opens Android's battery optimization list instead |
 | Notification access (special, granted in Android settings) | read posted notifications to forward them |
 | `VIBRATE` | find my phone vibration |
 | `READ_PHONE_STATE`, `READ_CALL_LOG`, `READ_CONTACTS` | show incoming calls on the watch: call state, the caller's number, the contact name (runtime prompt from Settings; only the first is required). The Google Play build has only `READ_PHONE_STATE`: the watch shows "Incoming call" without a caller |
@@ -187,8 +188,8 @@ are in [`docs/strava.md`](strava.md) section 1.
   loss, average and maximum speed, and, for running, walking and hiking, the step count as strides plus the average
   cadence over the active time, then a mapped FIT sport/sub-sport and `sport_type`. The file names the recording watch (`file_id` and a creator
   `device_info`: Huawei watches as manufacturer 348, the model name, the firmware) and JoyoFit as the writing software; Strava does not show
-  a device line for it until Strava adds the model to its device list (docs/strava.md 3a). The watch gives no per-sample speed or
-  cadence and no list of pauses: when its elapsed time exceeds its active time by 30 s or more, the pause is written as a
+  a device line for it until Strava adds the model to its device list (docs/strava.md 3a). Records carry speed, cadence and step length where the
+  stored points have them (see Workout analysis, cadence). The watch gives no list of pauses: when its elapsed time exceeds its active time by 30 s or more, the pause is written as a
   timer stop and start (`elapsed - active` long, centred on the longest gap between GPS fixes, else between samples),
   because Strava takes a run's moving time from the file's timer events and otherwise recomputes it from the distance
   stream. Strava then keeps the watch's numbers. The upload goes
@@ -280,13 +281,18 @@ been checked against a real export yet. The first real file may need field-name 
 
 One workout opens a Strava-style analysis, computed on the phone from the stored points and summary (`src/features/workouts/analysis/`: `analyzeWorkout`,
 history from `loadAnalysisHistory`; the screen is `src/app/workouts/[id].tsx`, the views are in `analysis/ui/`). The summary card shows at once and the
-analysis fills in a moment later. Sections, each only when the data exists:
+analysis fills in a moment later. Every figure appears once, in the place it reads best: the header card holds only the sport, the date and one row of
+actions (a primary Share button plus icon buttons for Replay, Share to JoyoRogo and Save as route, and the small cloud line); the summary strip is the one
+stats grid (distance, moving and elapsed time, pace, elevation, calories, heart rate with its maximum, steps, cadence, step length, power); per-kilometre and
+per-sample detail lives in the charts and splits, the watch's training effect in its own section (not repeated in the load card), the heart-rate zone times
+in the zones card (the burn section only adds the fat and carbohydrate grams) and the strain in the effort card. The header keeps the totals itself only
+for a session that has no analysis card (a logged strength session, or an analysis that failed). Sections, each only when the data exists:
 
 - **Summary strip and map.** Distance, time, moving time, pace or speed, elevation. A tile map of the route (OpenFreeMap vector tiles drawn with
   react-native-svg, no native module, `src/features/map/`; cached on the phone) with a km marker per kilometre.
-- **Scrubber charts.** Pace or speed, heart rate, elevation, cadence and power on one shared time grid; touching a chart moves a dot on the map and fills a
+- **Scrubber charts.** Pace or speed, heart rate, elevation, cadence, step length and power on one shared time grid; touching a chart moves a dot on the map and fills a
   readout. The screen's scroll freezes while a chart is touched.
-- **Splits and laps.** Per kilometre (pace, heart rate, climb, cadence) and the watch's or FIT file's laps.
+- **Splits and laps.** Per kilometre (pace, heart rate, climb, cadence, and step length when the row has room) and the watch's or FIT file's laps.
 - **Heart-rate zones, pace zones, best efforts** (400 m, 1 km, 1 mile, 5 km, 10 km, half marathon, ranked against the same sport of the last 120 days),
   **effort** (JoyoFit workout strain), **training load** (acute against chronic, with the watch's own training effect and recovery time when it reports them)
   and **comparison** with similar earlier workouts.
@@ -310,6 +316,43 @@ Data availability:
 
 SQLite migration 12 adds per-sample `speed`, `cadence`, `stride` and `power` to `workout_points`. They are only filled for workouts synced or imported after
 that version; older workouts show the analysis without those charts. The migration needs the new native build (the schema is shared with the native module).
+
+**Cadence and step length ("Panjang langkah").** The summary card shows average cadence (steps per minute on foot, rpm on a bike, with the maximum) and,
+for runs and walks, the average step length in metres. The chart tab "Kadens" plots the cadence series and "Panjang langkah" the step length (hidden when its series is empty). On foot a workout whose points
+carry no cadence gets a real per-minute cadence from the watch's minute step samples (`step_samples`, the day view's data, passed in as `daySamples`;
+`analysis/minuteCadence.ts`): only minutes wholly inside the workout, a minute outside 40 to 260 steps stays a gap, nothing is smoothed or filled, and an
+average is never drawn as a flat line. The step length series is speed over steps per second per sample (pace and cadence series, same bounds as below); a
+per-sample `stride` the source measured wins and is the one optional series field, `series.stride`, which travels in the cloud analysis only when measured
+(`ANALYSIS_ENGINE_REV` 6). `analyzeWorkout` (`buildStats`, computed on every
+open, so it also fills workouts stored earlier) takes each figure from the first source that has it:
+
+| | Cadence | Step length |
+| --- | --- | --- |
+| 1 | mean of the per-sample `cadence` (zeros are gaps) | mean of the per-sample `stride` |
+| 2 | the summary: a FIT import's session average (per leg on foot, so doubled), else the watch's `summary.samples.avgCadence` / `avgStepRate` | the FIT session's `avg_step_length` (`summary.avgStepLengthM`), else the watch's `samples.avgStepLength` (centimetres) |
+| 3 | the watch's per-km `summary.sections[].cadence`, weighted by block length | `sections[].stepLength` the same way |
+| 4 | on foot, the workout's step count over its moving time | on foot, average speed over average cadence (`speed / (cadence / 60)`) |
+
+Estimates (3 and 4) are dropped, never clamped, outside 40 to 260 steps per minute and 0.2 to 2.5 m (`analysis/stride.ts`); a speed under 0.5 m/s gives no
+step length. The sources are resolved in one place (`analysis/cadence.ts`, `cadenceFigures`), so the card, the share card, the cloud analysis and the Strava
+file (`strava/cadenceFields.ts`: session and lap cadence, `avg_step_length`, per-record `step_length` where a point has one) show the same numbers.
+
+- **Watch sync.** Cadence comes from the sample's cadence short and, on foot, from its step-rate byte when the short has no reading
+  (`WorkoutBuilder.sampleCadence`); the `samples` averages leave zero readings out (averages stored before that change may include them, and are used
+  only when a workout has no per-sample cadence).
+- **FIT import.** FIT counts one foot, so a foot sport's cadence (+ `fractional_cadence`, session and lap fractions too) is doubled to steps per minute.
+  A per-leg figure above 130 (over 260 steps per minute) is never doubled, and a file whose records carry speed, step length and cadence that agree
+  with steps per minute rather than strides (20 records and a clear majority) is read as counting steps (`legFactor` in `parseFit.ts`; the summary then
+  holds `cadencePerLeg: false`). A file without step lengths keeps FIT's rule. The session's `avg_step_length` is kept as `summary.avgStepLengthM`.
+- **Huawei export import.** Per-sample cadence (`tp=s-r`) is kept; the export has no step length, so the card derives it, and the workout's step count
+  covers a workout without samples.
+- **Phone recording.** Cadence and steps come from a paired running pod, else from the phone's own step counter (docs/sensors.md); never a per-sample step
+  length (derived on the card).
+- **Cloud and share.** The cloud document carries the samples (`cadence`, `stride`) and `summary_json` verbatim, so a restore recomputes the same figures; the
+  shared analysis carries `stats.avgCad`, `maxCad`, `avgStrideM` and the cadence series, which JoyoRogo's web feed and fit viewer show in the summary.
+- **Not recoverable.** The raw FIT file is not kept. A file imported before per-sample cadence existed has none, and one whose only step length was the
+  session's `avg_step_length` lost it before it was stored (the card derives an estimate instead). A GPX file is not a workout import (the route planner
+  reads GPX).
 
 Map data © OpenStreetMap contributors, tiles by [OpenFreeMap](https://openfreemap.org); the attribution is drawn on every map.
 
@@ -404,8 +447,8 @@ arrives through the `CFBundleDocumentTypes` entry for `.fit` in `app.json` (not 
 | `file_id.type` must be `activity`, `file_id.manufacturer` names the workout (`Ride (iGPSPORT)`; unknown brands give `Ride`) | `workouts.sport_name` |
 | `session` (several, as some head units write after a pause, are added up): start, `total_elapsed_time`, `total_timer_time`, distance, calories, avg/max heart rate, ascent | `workouts.start`, `end`, `duration` (active seconds), `distance`, `calories`, `avg_hr`, `max_hr`, `summary_json` |
 | `session.sport` / `sub_sport` | `sport_type`: cycling 3, indoor cycling or virtual 7, running 1, trail run 11, treadmill 5, walking 2, indoor walking 13, hiking 14, anything else 255 (Exercise) |
-| avg/max speed, ascent/descent, altitude range, avg/max cadence, avg/max/normalized power | `summary_json` (`workout_points` has no columns for power or cadence) |
-| `record`: time, position (semicircles to degrees), altitude, heart rate | `workout_points` (`ts`, `lat`, `lon`, `alt`, `hr`) |
+| avg/max speed, ascent/descent, altitude range, avg/max cadence (per leg on foot), `avg_step_length` (mm), avg/max/normalized power | `summary_json` (`avgCadence`, `maxCadence`, `avgStepLengthM`, ...) |
+| `record`: time, position (semicircles to degrees), altitude, heart rate, speed, cadence (+ `fractional_cadence`, doubled to steps per minute on foot), `step_length` (mm), power | `workout_points` (`ts`, `lat`, `lon`, `alt`, `hr`, `speed`, `cadence`, `stride`, `power`) |
 | `record.heart_rate`, averaged per minute | `step_samples.heart_rate`, `imported = 1`: Strain, Readiness and Trends read the per-minute heart rate, not `workouts` |
 
 Same rules as the Huawei import: the row has `imported = 1`, so the cloud upload, Health Connect / Apple Health and the
@@ -430,7 +473,7 @@ instructions are sent. The P2P push is native (`modules/huawei-wear`, `HuaweiWea
   `.gpx`/`.tcx` name; iOS declares `com.joyodigitama.joyofit.gpx` and `.tcx`; `src/features/sharedfile/` classifies by name,
   MIME type or the first 1 KB), Gambar di peta (`src/features/routes/map/`, OpenFreeMap tiles, FOSSGIS OSRM, Open-Meteo
   elevation), Dari latihan (GPS rows of a stored workout; also a button on the workout screen).
-  Loop baru dari rumah (`src/features/loops/`, [loops.md](loops.md)): a dotted round trip of a chosen number of steps, kilometres,
+  Loop baru dari rumah (`src/features/loops/`, [loops.md](loops.md)): a round trip (solid outlined line with arrows) of a chosen number of steps, kilometres,
   minutes or kcal from the phone's position or a saved Home point, on streets the person has not walked.
 - **Parsers.** `gpx.ts` (track, else `rte`), `tcx.ts` (course, else activity), on a small tolerant scanner (`xml.ts`, no
   dependency, no DTD, namespaces and CDATA handled). Points without a position or at 0,0 and consecutive repeats are dropped; fewer

@@ -69,7 +69,13 @@ export async function ensureSensorSchema(db: SQLiteDatabase): Promise<void> {
   `);
 }
 
-const KINDS: readonly SensorKind[] = ['hr', 'power', 'csc', 'rsc'];
+const KINDS: readonly SensorKind[] = ['hr', 'power', 'csc', 'rsc', 'thermometer'];
+
+/** A bedroom thermometer: read from its advertisements (`features/thermometer`), never connected, never part of a workout. */
+export const isThermometer = (s: Pick<SavedSensor, 'kinds'>): boolean => s.kinds.includes('thermometer');
+
+/** What workouts, the Watch tab's sensor card and the sensor manager deal with: every paired sensor except the thermometers. */
+export const isSportSensor = (s: Pick<SavedSensor, 'kinds'>): boolean => !isThermometer(s);
 
 function parseKinds(json: string): SensorKind[] {
   try {

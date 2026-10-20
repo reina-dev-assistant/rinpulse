@@ -10,6 +10,7 @@
 - [JoyoFit Web](https://fit.joyorogo.com/blog/joyofit-web): analisis latihan di browser (app.fit.joyorogo.com, JoyoRogo Pro) dan Studio untuk merancang tampilan jam, gratis.
 - [Ride](https://fit.joyorogo.com/ride): permainan sepeda virtual indoor di browser, gratis; penjelasannya di [blog](https://fit.joyorogo.com/blog/joyofit-ride).
 - [Jam yang didukung](https://fit.joyorogo.com/jam): yang sudah diuji, eksperimen, dan yang belum bisa.
+- [Timbangan](https://fit.joyorogo.com/timbangan): timbangan badan Bluetooth yang dibaca JoyoFit lewat protokol openScale, per merek, dengan data yang didapat; baru satu jenis (Tuya beacon, HAN RIVER HRTZC01, berat saja) yang diuji di timbangan asli.
 - [Dukung jam](https://fit.joyorogo.com/dukung-jam): membantu jam baru masuk daftar uji.
 - [Strava](https://fit.joyorogo.com/strava): kirim olahraga dari jam ke Strava; slot penuh, ada daftar tunggu.
 - [iPhone](https://fit.joyorogo.com/iphone): beta publik TestFlight; versi App Store menunggu review Apple.

@@ -161,8 +161,11 @@ time), `total_distance`, `total_calories`, heart rate, `total_ascent`/`total_des
 hiking, `total_cycles` (strides = steps / 2) and `avg_cadence`, and an `activity`. The sport comes from the FIT
 `session.sport`/`sub_sport` mapped from the Huawei sport type; the form's `sport_type` overrides what Strava detects from the
 file. The recording device is the watch (section 3a); Strava shows no device line for it yet. `external_id = joyofit-<workout start>` (a second upload of the same workout is refused by Strava
-as a duplicate and the app then links the existing activity). The watch provides no per-sample speed or cadence and no
-list of pauses. Strava's moving time (<https://support.strava.com/en-us/articles/15401804-moving-time-speed-and-pace-calculations>)
+as a duplicate and the app then links the existing activity). Per-sample speed, cadence and step length are written only where the stored points have
+them (watch workouts synced after migration 12, FIT imports, phone recordings): a foot sport's cadence goes out per leg with `fractional_cadence`
+(FIT counts one foot), and the session and the single lap carry the cadence the workout screen shows (`cadenceFigures`: samples, then the summary, then
+the watch's per-km blocks, then the step count over the active time), its maximum and `avg_step_length`; a phone recording's laps carry their own cadence.
+Nothing is invented per record. The watch gives no list of pauses. Strava's moving time (<https://support.strava.com/en-us/articles/15401804-moving-time-speed-and-pace-calculations>)
 comes from the file's timer events when it has any and is otherwise recomputed from the GPS and distance stream (it ignores
 `total_timer_time`: the first FIT showed 32:33 for 36:09 walked). So when the watch's elapsed time exceeds its active time by
 30 s or more, the file gets a timer stop and start `elapsed - active` long, centred on the longest gap between GPS fixes

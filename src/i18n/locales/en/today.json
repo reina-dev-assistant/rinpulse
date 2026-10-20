@@ -322,5 +322,54 @@
       "signedIn": "The energy of every strength workout you save goes to your JoyoRogo food diary, so your daily calories account for training.",
       "signedOut": "Sign in with JoyoRogo so your workout energy lands in the food diary and your history is stored in the cloud (cloud needs Pro)."
     }
+  },
+  "heartDay": {
+    "title": "Heart rate all day",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "min": "Lowest",
+    "avg": "Average",
+    "max": "Highest",
+    "resting": "Resting",
+    "hint": "Touch and drag the chart to see the time and bpm",
+    "readoutAvg": "average",
+    "readoutMax": "highest",
+    "readoutNone": "No reading",
+    "peak": "Peak {{bpm}} bpm at {{time}}",
+    "peakA11y": "Peak {{bpm}} bpm at {{time}}. Mark it on the chart.",
+    "emptyToday": "No heart rate stored yet today. Sync to fetch it from the watch.",
+    "emptyPast": "No heart rate stored for this date.",
+    "zonesTitle": "Time in each zone",
+    "zone": "Zone {{n}}",
+    "zoneRange": "{{from}} bpm and up",
+    "zonesNote": "The line colour follows the zones, worked out from your estimated maximum heart rate ({{max}} bpm). A gap in the chart means the watch recorded nothing.",
+    "loadError": "Could not read heart rate: {{error}}",
+    "chartLabel": "Heart rate chart, {{day}}"
+  },
+  "cards": {
+    "entry": "Arrange Home cards",
+    "entrySubtitle": "Choose which cards show and in what order",
+    "title": "Home cards",
+    "lead": "The daily report is at the top, the other cards below. Turn off cards you do not need or change their order. The watch card at the very top stays put.",
+    "moveUp": "Move {{card}} up",
+    "moveDown": "Move {{card}} down",
+    "position": "{{card}}, position {{n}} of {{total}}",
+    "reset": "Restore the original order",
+    "names": {
+      "scores": "Recovery, strain and sleep",
+      "activity": "Calories and distance",
+      "heart": "Heart rate",
+      "steps": "Steps per hour",
+      "sleep": "Sleep summary",
+      "energy": "Body Energy",
+      "fitness": "Fitness",
+      "coach": "Coach suggestion",
+      "checkin": "Morning check-in",
+      "family": "Family check-ins",
+      "loop": "New loop from home",
+      "health": "Health metrics"
+    }
   }
 }

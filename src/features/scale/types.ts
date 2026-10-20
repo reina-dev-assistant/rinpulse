@@ -9,7 +9,8 @@
  *    driver (`driver.ts`) feeds it discovered services and notifications and executes the actions it returns.
  *
  * Ported from openScale (https://github.com/oliexdev/openScale, GPL-3.0-or-later; JoyoFit is AGPL-3.0, compatible). Every protocol
- * names its openScale source files in `source`, and keeps openScale's copyright notice in its file header.
+ * names its openScale source files in `source`, and keeps openScale's copyright notice in its file header. `protocols/tuyaBeacon.ts` is the exception: reverse
+ * engineered from a real scale, `source` is empty.
  */
 
 export type WeightUnit = 'kg' | 'lb' | 'jin' | 'st';
@@ -58,6 +59,8 @@ export interface ScaleReading {
   userSlot?: number;
   /** Values computed by the scale itself. */
   reported?: ReportedBody;
+  /** Settled again within the same weigh-in at a slightly different weight: replaces the weigh-in already saved for it, never adds one. */
+  revision?: true;
 }
 
 /** A broadcast advertisement as the native scan reports it, with the identifiers normalised (see `uuid.ts`). */
@@ -128,8 +131,20 @@ interface ProtocolBase {
   label: string;
   /** Brands / apps that use it, for the picker ("OKOK International", "Fitdays"). */
   brands: string[];
-  /** openScale files this was ported from, relative to `android_app/app/src/main/java/com/health/openscale/core/bluetooth/`. */
+  /** openScale files this was ported from, relative to `android_app/app/src/main/java/com/health/openscale/core/bluetooth/`. Empty for a protocol that is not from openScale. */
   source: string[];
+  /** The scale sends the weight and nothing else (no impedance, no body values), so none is ever shown for it. */
+  weightOnly?: true;
+  /** The decoder was checked against a real scale in hand, not only against vectors built from a layout description. */
+  realScaleTested?: true;
+}
+
+/** A per-scale secret the person types in because the scale's frames are encrypted with it (never sent anywhere, kept in the secure store). */
+export interface ProtocolSecret {
+  /** Selects the explanation the screen shows (i18n `secret.<kind>`). */
+  kind: 'tuya-local-key';
+  /** What the person typed as the secret to keep (cleaned of paste whitespace), or null when it is not a usable one. */
+  parse(text: string): string | null;
 }
 
 export interface BroadcastProtocol extends ProtocolBase {
@@ -137,6 +152,14 @@ export interface BroadcastProtocol extends ProtocolBase {
   matches(frame: AdFrame): boolean;
   /** Null for advertisements that carry no reading (idle beacons, unknown frame types). Never throws on short or odd data. */
   decode(frame: AdFrame, user?: ScaleUser): ScaleReading | null;
+  /** Present when the frames are encrypted: the scale is unusable until the person saves this secret for it. `decode` then reads nothing. */
+  secret?: ProtocolSecret;
+  /**
+   * A decoder for one scale with the secret and a memory of the frames it saw (the scale's frame counter decides what is settled). One
+   * per listening session. When this exists the session uses it instead of `decode`, and what it marks `stable` is final at once: the
+   * protocol has its own settle rule, so the gate does not wait for a second equal frame.
+   */
+  createDecoder?(secret: string): (frame: AdFrame, user?: ScaleUser) => ScaleReading | null;
 }
 
 export interface GattProtocol extends ProtocolBase {

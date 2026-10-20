@@ -11,7 +11,7 @@ import { sensorStatus, type SensorStatus, type StatusLink } from '../linkStatus'
 import type { Granted } from '../permissions';
 
 /** The order sensor kinds are listed in everywhere: the same as `kindsOfServices`. */
-const KIND_ORDER: readonly SensorKind[] = ['hr', 'power', 'csc', 'rsc'];
+const KIND_ORDER: readonly SensorKind[] = ['hr', 'power', 'csc', 'rsc', 'thermometer'];
 
 const KIND_GLYPH: Readonly<Record<SensorKind, ChipGlyph>> = {
   hr: { icon: 'heart' },
@@ -19,6 +19,7 @@ const KIND_GLYPH: Readonly<Record<SensorKind, ChipGlyph>> = {
   power: { icon: 'flash' },
   // A running speed and cadence sensor sits on a shoe: the runner, not a speed dial.
   rsc: { sport: 'run' },
+  thermometer: { icon: 'thermometer-outline' },
 };
 
 export function sortKinds(kinds: readonly SensorKind[]): SensorKind[] {

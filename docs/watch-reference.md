@@ -21,8 +21,8 @@ A Huawei or Honor watch that is not in the list is **unknown**: JoyoFit tries to
 If you own an experimental or unknown model, connecting once helps a lot:
 
 1. Pair the watch and connect it in JoyoFit.
-2. Open the **Watch** tab, then **Help support your watch**, then **Report on GitHub**.
-3. The app opens a prefilled [watch report issue](https://github.com/dzulfikar08/joyofit/issues/new?template=watch-report.yml) and copies the full report to the clipboard. Say what works and what does not, paste the report into the **Log** field, and submit. **Share as text** sends the same report anywhere else.
+2. Open the **Watch** tab, then **Help support your watch**, then **Send report**. Say what happened and, if you want an answer, leave an email. The summary, the whole log and the disconnect history go to the JoyoFit board in Atur ([docs/atur-reports.md](atur-reports.md)). Without internet the report waits on the phone and goes out by itself. (The button appears once the board's token is set in `src/features/device/aturConfig.ts`.)
+3. Or tap **Report on GitHub**: the app opens a prefilled [watch report issue](https://github.com/dzulfikar08/joyofit/issues/new?template=watch-report.yml) and copies the full report to the clipboard. Say what works and what does not, paste the report into the **Log** field, and submit. **Share as text** sends the same report anywhere else.
 
 The report is plain text: app version, phone, watch model and software, supported commands, ExpandCapability and the connect log. It has no Bluetooth addresses and no serial number.
 
@@ -34,7 +34,7 @@ The Fit 4 Pro (and the other Classic watches) use **Bluetooth Classic RFCOMM** b
 protocol over **Bluetooth LE GATT** (service `0xFE86`, write `FE01`, notifications `FE02`; Honor Band 7, 9 and 10 use Honor's own
 service), which `BleTransport` carries. The Fit 4 Pro also exposes that service over LE: with the developer switch below, link params,
 HiChain3 auth, battery and an activity sync all ran over GATT on a real watch (see `protocol/README.md`, Observations). `WatchModels.kt`
-picks the transport per model. See [`protocol/README.md`](../protocol/README.md) for the frame format,
+picks the transport per model unless a connect to that watch already worked over the other one (`TransportChoice`, below). See [`protocol/README.md`](../protocol/README.md) for the frame format,
 the commands used, and how the app picks an auth path.
 
 **Developer switch: Bluetooth LE link.** Settings, Advanced, Experimental (the Experimental row is in the Advanced group) has a switch that makes the next connect open GATT (`BleTransport`)
@@ -202,6 +202,19 @@ nothing in the app removes a pairing or deletes a key on its own: only the perso
 - **Bluetooth LE bands**: the GATT link is two direct attempts of at most 8 s each, then one with autoConnect, which Android keeps pending until the watch answers,
   within `Timeouts.CONNECT_MS` (`LeConnectPlan`). Before, a direct attempt waited the ~30 s Android gives it, longer than the whole connect, so the autoConnect
   attempt was never reached. A Classic watch whose RFCOMM failed gets the same LE attempt with `Timeouts.LE_AFTER_RFCOMM_MS` for its autoConnect step.
+- **Which link a connect opens** (`TransportChoice`): the link that last opened and authenticated for that watch, kept per address with its identity (`DeviceIdentity.linkTransport`,
+  gone with **Forget pairing**), else the model table's link, else for a name in no list what Android knows of the device. The table is Gadgetbridge's guess and can be wrong for one
+  phone and watch: a Huawei Band 11 Pro (Candy-B49WG) is listed as LE and answers over RFCOMM. Its first connect had no Bluetooth name, so it was tried as an unlisted watch (RFCOMM,
+  which worked); once the name was stored every reconnect went to GATT and timed out after 45 s (`protocol/README.md`, 2026-10-20). A connect moves to the other link when the first does not
+  open: Classic to LE always (the old stale-pairing case), LE to Classic only for a watch LE never worked for, and only when Android already holds a pairing or the person tapped
+  Connect (`confirmPairing`, single use, never passed by the background loop or the automatic reconnect, so neither starts an Android pairing). LE reached only because Classic failed is not remembered. The connect log says which of these chose the link.
+- **Why a watch drops by itself**: the support report carries `Background mode`, `Background limits` (manufacturer, battery optimization exemption, background restriction) and `Disconnects`
+  lines. The last 30 rows of `Disconnects` (a link that dropped with how long it had held, or an attempt that never connected, with the link, whether the screen was off or the phone in Doze,
+  and the reason) are kept in their own preferences file, so they survive the 1000-line log and app restarts; an attempt that fails the same way again is one row with a count.
+  Android stops background apps with the screen off unless the app is exempt from battery optimization, so the Watch tab shows a dismissible notice (and Settings, Sync, a section) while it is not,
+  with the button that opens the exemption. The sideload build opens the system's "allow" dialog (`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`); the Google Play build opens the battery
+  optimization list instead and does not declare that permission (`docs/play-store.md`). A "Restricted" app is opened on its own settings screen. On Infinix, Tecno, itel, Xiaomi,
+  OPPO, realme and vivo phones a second button opens the maker's auto-start list (explicit component names from community lists, not verified on a device) and falls back to JoyoFit's settings screen.
 
 ### Watch history and how long the watch keeps it
 
@@ -212,8 +225,11 @@ watch** (Android) runs the full pull again; rows already stored are upserted by 
 
 Over Bluetooth LE on Android 14 and newer the phone discards any 514-byte notification, so a watch reply longer than that loses its head
 (the log shows "Magic mismatch" and the request times out). A step or sleep frame that gets no answer is skipped and logged as
-`... skipping this frame`; a second unanswered frame in a row aborts the pull. Classic (RFCOMM) watches are not affected; the developer LE
-switch only applies in debug builds.
+`... skipping this frame`; three unanswered frames in a row end the pull of that data type with what arrived (a Band 11 Pro, 2026-10-20
+report: StepData 37/40 and 38/40 got only the tail of their reply ("Magic mismatch") on every sync while frames 1 to 36 were answered; that
+the newest frames, a workout's minutes, are the long ones is [INFERENCE]). The sync then goes on with workouts. If the activity
+pull itself fails (an unanswered count request, a storage error), the workouts are still synced before the error is reported. Classic
+(RFCOMM) watches are not affected; the developer LE switch only applies in debug builds.
 
 To read how far back the watch actually reaches, run a sync and read the `History:` lines (logcat tag `JoyoFit`):
 

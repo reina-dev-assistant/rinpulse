@@ -15,6 +15,7 @@ import {
   PRIVASI_PATH,
   SELF_HOST_PATH,
   STRAVA_PATH,
+  TIMBANGAN_PATH,
 } from "./lib.ts";
 
 export const SITE_URL = "https://fit.joyorogo.com";
@@ -72,6 +73,12 @@ const STATIC_PAGES = {
     name: "Jam yang didukung",
     description:
       "Daftar jam Huawei dan Honor di JoyoFit, mengikuti katalog Gadgetbridge: Watch Fit 4 Pro sudah diuji, sisanya eksperimen. Cara mengirim laporan dukungan.",
+  },
+  [TIMBANGAN_PATH]: {
+    title: "Timbangan Bluetooth yang Didukung JoyoFit: Xiaomi, Renpho, Yunmai, dan Lainnya",
+    name: "Timbangan",
+    description:
+      "Daftar timbangan badan Bluetooth yang dibaca JoyoFit lewat protokol openScale, dikelompokkan menurut merek, dengan data yang didapat dari tiap timbangan. Baru satu jenis yang diuji di timbangan asli. Berat masuk ke catatan JoyoRogo.",
   },
   [DUKUNG_JAM_PATH]: {
     title: "Dukung Jam Barumu di JoyoFit",

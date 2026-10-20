@@ -412,6 +412,7 @@ public final class WearRuntime: @unchecked Sendable {
 
     public func forget(_ rawAddress: String) {
         let address = DeviceStore.normalize(rawAddress)
+        settings.switchBackfillDone(address)
         link.forget(address)
         dropNearbyCache()
         if let remembered = settings.watchAddress, remembered.caseInsensitiveCompare(address) == .orderedSame {

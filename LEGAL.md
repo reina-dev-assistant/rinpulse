@@ -35,7 +35,13 @@ the ported files. The protocol notes in [`protocol/`](protocol/README.md) descri
   way to forge a Huawei signature and does not try.
 - It does not need, store or ask for a Huawei account, and it does not impersonate Huawei's apps.
 - It does not collect your health data on a server of ours unless you choose to sign in to the optional cloud (see the
-  [privacy page](https://fit.joyorogo.com/privasi)).
+  [privacy page](https://fit.joyorogo.com/privasi)). One more exception, off by default: if you turn on Sleep insights
+  (Wawasan tidur) in Settings, JoyoRogo, a nightly sleep summary (when you slept and woke, time asleep and awake, awakenings,
+  sleep stages if your watch gives them, the watch's sleep score, overnight HRV and resting heart rate, naps, and, if you
+  paired a bedroom thermometer, the room's average, lowest and highest temperature and humidity over that night) goes to your
+  own JoyoRogo account. The thermometer's raw readings (one every 5 minutes) stay on your phone and are deleted after 120 days
+  or when you forget the thermometer. The nightly summary is kept for 90 nights, deleted when you turn the switch off or delete your data, not shared, and not
+  used for ads or tracking.
 
 ## Not a medical device
 

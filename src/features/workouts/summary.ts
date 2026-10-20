@@ -12,6 +12,16 @@ export interface PaceBlock {
   pace: number;
 }
 
+/** One block of the watch's `Sections` answer (`summary_json.sections`); a field is -1 or 0 when the watch gave none. */
+export interface SummarySection {
+  /** The block's length in the watch's unit; only used as a weight. */
+  distance?: number;
+  /** Steps per minute. */
+  cadence?: number;
+  /** Centimetres per step. */
+  stepLength?: number;
+}
+
 /** The fields of `workouts.summary_json` the app shows (see `WorkoutRecord.kt`); everything is optional. */
 /** What the web game reports at the end of a ride (`sum` in features/ride/protocol.ts), kept with the workout. */
 export interface VirtualRide {
@@ -64,6 +74,10 @@ export interface WorkoutSummary {
   balanceLeftPct?: number;
   avgCadence?: number;
   maxCadence?: number;
+  /** On a foot-sport FIT import: false when the file's `avgCadence` and `maxCadence` already count steps per minute instead of strides (one foot). Absent means per leg. */
+  cadencePerLeg?: boolean;
+  /** Metres per step: a FIT session's `avg_step_length`. A watch keeps the mean of its samples in centimetres under `samples.avgStepLength`. */
+  avgStepLengthM?: number;
   /** Set on workouts imported from a FIT file: the device brand, or `FIT file` when the file does not say. */
   importedFrom?: string;
   /** `phone`: recorded by this phone (GPS and any paired sensors), see `features/record`. */
@@ -82,6 +96,7 @@ export interface WorkoutSummary {
   };
   samples?: Record<string, number>;
   paceBlocks?: PaceBlock[];
+  sections?: SummarySection[];
   paceFastestSecPerKm?: number;
   paceSlowestSecPerKm?: number;
   /** Watch laps, unix seconds; absent for workouts stored before laps were kept. */

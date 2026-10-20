@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { haversineM } from '@/features/routes/routeModel';
 
-import { boxAround, destination, pathLengthM, resampleLine, seededRandom } from './geo';
+import { boxAround, destination, pathLengthM, removeSpurs, resampleLine, seededRandom } from './geo';
 
 const HOME = { lat: -6.2088, lon: 106.8456 };
 
@@ -58,6 +58,49 @@ describe('boxAround', () => {
     expect(east).toBeGreaterThan(west);
     const [, w2, , e2] = boxAround({ lat: 60, lon: 18 }, 1000);
     expect(e2 - w2).toBeGreaterThan(east - west);
+  });
+});
+
+describe('removeSpurs', () => {
+  const at = (east: number, north = 0) => destination(destination(HOME, 90, east), 0, north);
+  /** A street 600 m east, with a dead-end side street of `spur` metres north at 300 m. */
+  const withSpur = (spur: number) => [at(0), at(150), at(300), at(300, spur / 2), at(300, spur), at(300, spur / 2), at(300), at(450), at(600)];
+
+  test('cuts a short out-and-back down to the point it left', () => {
+    const out = removeSpurs(withSpur(100));
+    expect(out).toEqual([at(0), at(150), at(300), at(450), at(600)]);
+    expect(pathLengthM(out)).toBeCloseTo(600, 0);
+  });
+
+  test('keeps an out-and-back longer than the limit', () => {
+    const line = withSpur(400);
+    expect(removeSpurs(line)).toEqual(line);
+  });
+
+  test('keeps a block walked around, which returns to its corner by another street', () => {
+    const block = [at(0), at(200), at(200, 100), at(0, 100), at(0), at(-150)];
+    expect(removeSpurs(block)).toEqual(block);
+  });
+
+  test('cuts a spur inside a spur and several in a row', () => {
+    const line = [at(0), at(100), at(100, 40), at(100, 80), at(100, 40), at(100), at(200), at(200, 60), at(200), at(300)];
+    expect(removeSpurs(line)).toEqual([at(0), at(100), at(200), at(300)]);
+  });
+
+  test('keeps the last point of the line', () => {
+    const line = [at(0), at(100), at(100, 60), at(100)];
+    const out = removeSpurs(line);
+    expect(out[0]).toEqual(at(0));
+    expect(out[out.length - 1]).toEqual(at(100));
+    expect(pathLengthM(out)).toBeCloseTo(100, 0);
+  });
+
+  test('leaves short and spur-free lines alone', () => {
+    expect(removeSpurs([])).toEqual([]);
+    expect(removeSpurs([at(0)])).toEqual([at(0)]);
+    expect(removeSpurs([at(0), at(100)])).toEqual([at(0), at(100)]);
+    const straight = [at(0), at(100), at(200), at(300)];
+    expect(removeSpurs(straight)).toEqual(straight);
   });
 });
 

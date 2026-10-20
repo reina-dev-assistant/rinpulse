@@ -122,7 +122,7 @@ internal object RecordingNotification {
   }
 
   /** The status bar icon lives in another module (huawei-wear's `ic_stat_joyofit`); the app icon is the fallback. */
-  private fun smallIcon(context: Context): Int {
+  fun smallIcon(context: Context): Int {
     val statIcon = context.resources.getIdentifier("ic_stat_joyofit", "drawable", context.packageName)
     if (statIcon != 0) return statIcon
     val appIcon = context.applicationInfo.icon

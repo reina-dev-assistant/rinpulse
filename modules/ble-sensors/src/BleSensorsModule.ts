@@ -4,6 +4,10 @@ import type {
   BluetoothState,
   ConnectionEvent,
   LocationPermission,
+  RoomAdvert,
+  RoomCaptureOptions,
+  RoomCaptureState,
+  StepCounterPermission,
   WorkoutSessionOptions,
   WorkoutSessionState,
 } from './BleSensors.types';
@@ -49,6 +53,17 @@ declare class BleSensorsModule extends NativeModule<BleSensorsModuleEvents> {
   requestLocationPermission(): Promise<LocationPermission>;
 
   /**
+   * The phone's step counter, used by a workout session started with `steps`. `unavailable` without the sensor. Android: `granted` or
+   * `denied` (ACTIVITY_RECOGNITION, asked through PermissionsAndroid; always granted before Android 10). iOS: CMPedometer authorization.
+   */
+  stepCounterPermission(): Promise<StepCounterPermission>;
+  /**
+   * iOS only: starts a tiny pedometer query so the system raises its motion prompt, and resolves with the answer. Android asks through
+   * PermissionsAndroid (features/sensors/permissions.ts), so this function does not exist there.
+   */
+  requestStepCounterPermission(): Promise<StepCounterPermission>;
+
+  /**
    * Bathroom scales. Starts an UNFILTERED scan (a scale that broadcasts its weight hides it in manufacturer data, so there is no service
    * to filter by) and reports each advertisement as `onScaleAdvertisement`; an identical repeat arrives at most every 2 s, a changed payload
    * at once. `ids` limits it to scales already picked (empty = everything around). `lowLatency` false asks for the battery friendly radio duty cycle (Android; iOS has one mode). Ends by itself after `durationMs` (5 s .. 180 s) or at
@@ -75,11 +90,30 @@ declare class BleSensorsModule extends NativeModule<BleSensorsModuleEvents> {
   scaleWrite(id: string, service: string, characteristic: string, hex: string, withResponse: boolean): Promise<void>;
 
   /**
+   * ANDROID ONLY, store build only: absent on iOS and on a binary built before it existed, so check `typeof module.startRoomCapture ===
+   * 'function'` first (`src/features/thermometer/native.ts` does).
+   *
+   * Starts the overnight scan of the bedroom thermometer: a foreground service (type connectedDevice) with an ongoing notification and a
+   * low-power scan filtered by `ids` in the Bluetooth controller, so it keeps running with the screen off and the app closed. It keeps one
+   * advertisement per sensor per 5 minutes in a file and ends at `untilMs`, on the notification's Stop button, or at `stopRoomCapture`.
+   * Calling it while a capture runs replaces the request. Call it while the app is visible. Rejects with ERR_BLUETOOTH_PERMISSION,
+   * ERR_BLUETOOTH_OFF, ERR_BLUETOOTH_UNAVAILABLE, ERR_INVALID_ARGUMENT (no address, end time not ahead) or ERR_SERVICE_NOT_ALLOWED.
+   */
+  startRoomCapture(options: RoomCaptureOptions): Promise<void>;
+  /** Stops the overnight scan. What it already kept stays for `roomAdverts`. Resolves even when none ran. */
+  stopRoomCapture(): Promise<void>;
+  roomCaptureState(): Promise<RoomCaptureState>;
+  /** What the overnight scan kept and JS has not removed yet, oldest first. Reading does not remove. */
+  roomAdverts(): Promise<RoomAdvert[]>;
+  /** Removes the advertisements heard at `upToTs` (epoch ms) or earlier: call it after they were stored. */
+  clearRoomAdverts(upToTs: number): Promise<void>;
+
+  /**
    * Starts the phone side of a recorded workout so it survives a locked screen:
    * - Android: a foreground service (type location when `gps`, plus connectedDevice) with an ongoing notification and a partial wake lock.
    * - iOS: background location updates when `gps` (blue status-bar pill), nothing else; Bluetooth keeps running through the
    *   `bluetooth-central` background mode.
-   * With `gps` it also starts GPS fixes, delivered as `onLocation` about once a second. Calling it while a session runs only updates
+   * With `gps` it also starts GPS fixes, delivered as `onLocation` about once a second. With `steps` it also starts the phone's step counter, delivered as `onSteps`. Calling it while a session runs only updates
    * the options. Rejects with ERR_LOCATION_PERMISSION (`gps` without precise location), ERR_SERVICE_NOT_ALLOWED (Android refused
    * the foreground service: GPS fixes and the wake lock run anyway and the promise rejects only after they started, so the caller
    * continues and warns that the recording may stop with the screen locked).

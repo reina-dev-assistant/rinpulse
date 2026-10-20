@@ -7,6 +7,7 @@ import { ensureGearSchema } from '@/features/gear/store';
 import { ensureRecordingSchema } from '@/features/record/journal';
 import { ensureScaleSchema } from '@/features/scale/store';
 import { ensureSensorSchema } from '@/features/sensors/store';
+import { ensureEnvSchema } from '@/features/thermometer/store';
 import { ensureStrengthSchema } from '@/features/strength/store';
 
 /** The database file in expo-sqlite's folder. The native writer (`SyncStore.kt`, `SyncStore.swift`) opens the same name. */
@@ -22,6 +23,7 @@ export async function buildAppSchema(db: SQLiteDatabase): Promise<void> {
   await ensureStrengthSchema(db);
   await ensureCoachSchema(db);
   await ensureSensorSchema(db);
+  await ensureEnvSchema(db);
   await ensureScaleSchema(db);
   await ensureCyclingSchema(db);
   await ensureRecordingSchema(db);

@@ -432,3 +432,143 @@ describe('virtual speed from the web game (indoor ride, cadence sensor only)', (
     expect(run(false).distanceM).toBe(0);
   });
 });
+
+describe("the phone's step counter", () => {
+  /** A counter reading at second `sec` of a walk at `spm` steps per minute that began at `from` with `base` steps already counted. */
+  const reading = (r: Recorder, sec: number, spm: number, from = 0, base = 0) => r.steps(base + (spm * (sec - from)) / 60, T0 + sec * 1000);
+
+  /** Records `seconds` of 170 spm with a reading per second; the recorder has ticked up to `seconds`. */
+  const walk = (sport: RecorderConfig['sport'], seconds: number) => {
+    const r = new Recorder(config(sport));
+    r.start(T0);
+    for (let s = 1; s <= seconds; s++) {
+      reading(r, s, 170);
+      r.tick(T0 + s * 1000);
+    }
+    return r;
+  };
+
+  it('gives the cadence of a counter that runs at 170 steps per minute', () => {
+    const w = walk('run', 20).finish(T0 + 20_000)!;
+    // the first seconds have too few readings, from the 5th second on the span is 4 s or more
+    expect(w.samples[2]!.cadence).toBeNull();
+    expect(w.samples.slice(6).every((p) => p.cadence === 170)).toBe(true);
+    expect(w.avgCadence).toBe(170);
+    expect(w.maxCadence).toBe(170);
+    expect(w.samples.every((p) => p.stride === null)).toBe(true);
+  });
+
+  it('counts the steps of the workout from the first reading, and the ones of a pause not at all', () => {
+    const r = new Recorder(config('walk'));
+    r.start(T0);
+    r.steps(1000, T0 + 1000); // baseline
+    r.steps(1010, T0 + 2000);
+    r.pause(T0 + 3000);
+    r.steps(1040, T0 + 4000); // while paused
+    r.steps(1070, T0 + 5000);
+    r.resume(T0 + 6000);
+    r.steps(1075, T0 + 7000);
+    r.tick(T0 + 7000);
+    const w = r.finish(T0 + 7000)!;
+    expect(w.steps).toBe(15);
+  });
+
+  it('ignores readings before start and after finish', () => {
+    const r = new Recorder(config('run'));
+    r.steps(500, T0 - 1000);
+    r.start(T0);
+    r.steps(600, T0);
+    r.steps(650, T0 + 1000);
+    expect(r.finish(T0 + 1000)!.steps).toBe(50);
+    r.steps(900, T0 + 5000);
+    expect(r.meta().phoneSteps).toBe(50);
+  });
+
+  it('lets a running pod win, with the old accumulation of its steps', () => {
+    const r = new Recorder(config('run'));
+    r.start(T0);
+    for (let s = 1; s <= 10; s++) {
+      reading(r, s, 120);
+      r.sensor('2a53', bytesToHex(new Uint8Array([0x05, ...u16(768), 160, ...u16(110)])), T0 + s * 1000);
+      r.tick(T0 + s * 1000);
+    }
+    const w = r.finish(T0 + 10_000)!;
+    expect(w.samples.slice(1).every((p) => p.cadence === 160)).toBe(true);
+    // 160 spm for 10 seconds, not the 20 steps of the counter
+    expect(w.steps).toBe(Math.round((160 / 60) * 10));
+  });
+
+  it('starts the baseline over when the counter goes backwards, without taking steps away', () => {
+    const r = new Recorder(config('run'));
+    r.start(T0);
+    r.steps(5000, T0 + 1000);
+    r.steps(5100, T0 + 2000);
+    r.steps(3, T0 + 3000); // the phone restarted
+    r.steps(23, T0 + 4000);
+    expect(r.finish(T0 + 4000)!.steps).toBe(120);
+  });
+
+  it('has no cadence while only one reading spans less than 4 s, and drops absurd values', () => {
+    const r = new Recorder(config('run'));
+    r.start(T0);
+    r.steps(0, T0 + 1000);
+    r.steps(8, T0 + 2000);
+    r.tick(T0 + 2000);
+    // 480 spm over the 4 s of a glitch: dropped, not clamped
+    r.steps(32, T0 + 5000);
+    r.steps(40, T0 + 6000);
+    r.tick(T0 + 6000);
+    const s = r.finish(T0 + 6000)!.samples;
+    expect(s[2]!.cadence).toBeNull();
+    expect(s[6]!.cadence).toBeNull();
+  });
+
+  it('gives 0 when the counter stops moving, then nothing once the readings are stale', () => {
+    const r = new Recorder(config('run'));
+    r.start(T0);
+    for (let s = 1; s <= 6; s++) {
+      reading(r, s, 150);
+      r.tick(T0 + s * 1000);
+    }
+    // the person stands still: the counter repeats its value, then says nothing at all
+    r.steps(15, T0 + 8000);
+    r.steps(15, T0 + 12_000);
+    r.steps(15, T0 + 16_000);
+    r.tick(T0 + 16_000);
+    r.tick(T0 + 21_000);
+    r.tick(T0 + 27_000);
+    const s = r.finish(T0 + 27_000)!.samples;
+    expect(s[16]!.cadence).toBe(0);
+    expect(s[21]!.cadence).toBe(0);
+    expect(s[27]!.cadence).toBeNull();
+  });
+
+  it('does nothing for other sports', () => {
+    const r = walk('ride', 12);
+    const w = r.finish(T0 + 12_000)!;
+    expect(w.steps).toBe(0);
+    expect(w.samples.every((p) => p.cadence === null)).toBe(true);
+    const gym = walk('treadmill', 12).finish(T0 + 12_000)!;
+    expect(gym.steps).toBe(0);
+    expect(gym.avgCadence).toBeNull();
+  });
+
+  it('survives the journal: samples, totals and the baseline over again', () => {
+    const r = walk('run', 20);
+    const samples = r.drainNew();
+    const meta = JSON.parse(JSON.stringify(r.meta()));
+    const back = Recorder.restore(meta, samples);
+    expect(back.status).toBe('paused');
+    // the counter restarted from 0 with the new session; the first reading is the baseline
+    back.steps(0, T0 + 100_000);
+    back.resume(T0 + 101_000);
+    for (let s = 102; s <= 112; s++) {
+      reading(back, s, 170, 101);
+      back.tick(T0 + s * 1000);
+    }
+    const w = back.finish(T0 + 112_000)!;
+    expect(w.steps).toBe(Math.round((170 / 60) * 19 + (170 / 60) * 11));
+    expect(w.avgCadence).toBe(170);
+    expect(w.samples[w.samples.length - 1]!.cadence).toBe(170);
+  });
+});

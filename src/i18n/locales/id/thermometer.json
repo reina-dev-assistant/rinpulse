@@ -1,0 +1,62 @@
+{
+  "title": "Termometer kamar",
+  "problem": {
+    "permission": "JoyoFit belum boleh memakai Bluetooth. Buka pengaturan untuk mengizinkan.",
+    "off": "Bluetooth mati. Nyalakan dulu, lalu coba lagi.",
+    "notAllowed": "Android menolak layanan latar. Buka JoyoFit lalu coba lagi.",
+    "unavailable": "Bluetooth tidak bisa dipakai sekarang.",
+    "openSettings": "Buka pengaturan"
+  },
+  "card": {
+    "empty": "Belum ada termometer. Cari termometermu di bawah.",
+    "reading": "{{temp}} °C, kelembapan {{rh}}%",
+    "noReading": "Belum ada pembacaan. Dekatkan HP ke termometer dan biarkan JoyoFit terbuka sebentar.",
+    "lastAt": "Pembacaan terakhir {{ago}}",
+    "forget": "Lupakan",
+    "forgetTitle": "Lupakan termometer ini?",
+    "forgetMessage": "Pembacaan suhu dan kelembapan yang tersimpan di HP ini ikut dihapus. Rata-rata malam yang sudah terkirim ke Wawasan tidur tidak berubah."
+  },
+  "picker": {
+    "title": "Cari termometer",
+    "explain": "JoyoFit akan memindai perangkat Bluetooth di sekitar untuk menemukan termometermu. Hasil pindai hanya dipakai di HP ini.",
+    "continue": "Lanjut",
+    "hint": "Taruh HP dekat termometer. Termometer yang bisa dibaca muncul dengan suhunya.",
+    "search": "Cari termometer",
+    "stopSearch": "Berhenti mencari",
+    "searching": "Mencari…",
+    "none": "Belum ada yang terlihat. Pastikan Bluetooth HP aktif dan termometer dekat.",
+    "pick": "Pakai ini",
+    "chosen": "Dipakai",
+    "unnamed": "Tanpa nama",
+    "reading": "Terbaca {{temp}} °C, {{rh}}%",
+    "unreadable": "Belum bisa dibaca: firmware bawaan Xiaomi tidak menyiarkan angkanya secara terbuka. Pasang firmware komunitas (lihat di bawah)."
+  },
+  "firmware": {
+    "title": "Syarat termometer",
+    "body": "JoyoFit membaca Xiaomi LYWSD03MMC (atau yang sejenis) yang sudah dipasangi firmware komunitas pvvx/ATC_MiThermometer, dari siarannya saja, tanpa menyambung. Formatnya ATC1441, PVVX custom, atau BTHome v2. Firmware bawaan Xiaomi menyiarkan datanya terenkripsi dan kuncinya hanya ada di aplikasi Xiaomi, jadi tidak bisa dibaca. Firmware komunitas dipasang dari peramban lewat Bluetooth. Cek versi hardware dulu: unit yang dijual sejak Maret 2025 (B1.5 dan B1.6) tidak disarankan oleh pembuat firmware."
+  },
+  "night": {
+    "title": "Pantau semalaman",
+    "explain": "Tiap 5 menit satu pembacaan disimpan di HP ini. Rata-rata malamnya baru dikirim ke Wawasan tidur kalau kamu menyalakannya.",
+    "running": "Berjalan sampai {{time}}",
+    "idle": "Tidak berjalan",
+    "start": "Pantau malam ini",
+    "stop": "Berhenti",
+    "ios": "iPhone membatasi pemindaian Bluetooth di latar, jadi JoyoFit hanya membaca termometer saat aplikasi terbuka. Rata-rata malam baru terkumpul kalau JoyoFit dibiarkan terbuka semalaman.",
+    "oldBuild": "Pemantauan semalaman butuh pembaruan aplikasi dari toko, bukan pembaruan cepat. Sampai saat itu JoyoFit hanya membaca termometer saat aplikasi terbuka.",
+    "auto": "Mulai otomatis malam hari",
+    "autoHint": "Kalau kamu membuka JoyoFit antara pukul 19.00 dan pagi, pemantauan mulai sendiri. Notifikasi tetap muncul selama berjalan.",
+    "until": "Berhenti pukul"
+  },
+  "privacy": {
+    "title": "Data kamarmu",
+    "body": "Pembacaan mentah tersimpan di HP ini saja dan dihapus setelah 120 hari. Yang bisa keluar dari HP hanya rata-rata suhu dan kelembapan per malam (rata-rata, terendah, tertinggi, dan jumlah pembacaan), dan hanya kalau Wawasan tidur menyala di Pengaturan, Koneksi, JoyoRogo. Malam dengan pembacaan terlalu sedikit tidak dikirim datanya."
+  },
+  "capture": {
+    "notification": {
+      "title": "Memantau suhu kamar",
+      "text": "JoyoFit mendengarkan termometer kamarmu sampai pagi.",
+      "stop": "Berhenti"
+    }
+  }
+}

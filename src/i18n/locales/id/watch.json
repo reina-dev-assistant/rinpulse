@@ -81,6 +81,15 @@
       "reportHelp": "Kalau masih gagal, kirim laporan. Isinya log Bluetooth terakhir, tanpa alamat Bluetooth atau nomor seri.",
       "report": "Kirim laporan"
     },
+    "limits": {
+      "optimized": "Android bisa menghentikan JoyoFit saat layar mati atau aplikasi ditutup untuk menghemat baterai. Itu penyebab umum jam putus sendiri. Izinkan JoyoFit berjalan tanpa pembatasan baterai.",
+      "restricted": "Pemakaian baterai JoyoFit di latar belakang dibatasi (Restricted), jadi Android mematikannya saat layar mati dan jam putus. Buka pengaturan aplikasi, pilih Baterai, lalu Tanpa batasan.",
+      "vendor": "HP {{maker}} juga punya daftar aplikasi yang boleh jalan sendiri (auto-start). Aktifkan JoyoFit di sana, kalau tidak jam bisa putus walau pengaturan baterai sudah benar.",
+      "openBattery": "Buka pengaturan baterai",
+      "openAutoStart": "Buka auto-start",
+      "dismiss": "Tutup",
+      "error": "Layar pengaturan itu tidak bisa dibuka di HP ini. Buka Pengaturan, Aplikasi, JoyoFit, lalu Baterai."
+    },
     "status": {
       "linkA11y": "Status koneksi: {{label}}",
       "battery": "Baterai",
@@ -154,7 +163,20 @@
       "intro": "JoyoFit diuji di Huawei Watch Fit 4 Pro. Jam Huawei dan Honor lainnya masih eksperimental. Kalau ada yang tidak jalan, hubungkan sekali, lalu kirim laporan. Isinya jawaban jam-mu saat terakhir terhubung, tanpa alamat Bluetooth atau nomor seri.",
       "copied": "Laporan lengkap ada di clipboard. Di GitHub, ceritakan apa yang jalan dan apa yang tidak, lalu tempel laporan ke kolom Log.",
       "github": "Lapor ke GitHub",
-      "share": "Bagikan teks"
+      "share": "Bagikan teks",
+      "atur": {
+        "send": "Kirim laporan",
+        "messageLabel": "Apa yang terjadi? (boleh dikosongkan)",
+        "messageHint": "Log Bluetooth, info HP dan jam, serta riwayat putus ikut terkirim ke tim JoyoFit, tanpa alamat Bluetooth atau nomor seri.",
+        "messagePlaceholder": "Misalnya: jam tidak mau tersambung setelah restart, atau langkah tidak masuk.",
+        "emailLabel": "Email untuk balasan (boleh dikosongkan)",
+        "emailHint": "Dipakai hanya untuk membalas laporan ini.",
+        "emailInvalid": "Format email belum benar.",
+        "submit": "Kirim",
+        "sent": "Laporan terkirim sebagai #{{number}}. Terima kasih sudah membantu.",
+        "queued": "Belum ada koneksi internet. Laporan disimpan di HP dan terkirim sendiri begitu internet tersedia.",
+        "failed": "Laporan tidak terkirim: {{reason}}"
+      }
     }
   },
   "alarms": {
@@ -513,6 +535,7 @@
     "neverSynced": "Belum pernah sinkron",
     "notTracked": "Data kesehatannya tidak disimpan",
     "switchTo": "Ganti ke jam ini",
+    "connect": "Sambungkan",
     "manage": "Atur jam ini",
     "makePrimary": "Jadikan utama",
     "rename": {
@@ -543,7 +566,8 @@
       "hr": "Detak jantung",
       "csc": "Kecepatan dan kadence",
       "power": "Daya",
-      "rsc": "Pod lari"
+      "rsc": "Pod lari",
+      "thermometer": "Termometer kamar"
     },
     "battery": "Baterai {{value}}",
     "unnamed": "Sensor tanpa nama ({{tail}})",

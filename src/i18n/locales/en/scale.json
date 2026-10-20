@@ -14,7 +14,8 @@
       "off": "Not listening. Turn on Capture automatically or tap Try a weigh-in."
     },
     "test": "Try a weigh-in",
-    "stop": "Stop"
+    "stop": "Stop",
+    "needsKey": "Enter the scale key below first, then this scale can be read."
   },
   "problem": {
     "permission": "JoyoFit is not allowed to use Bluetooth yet. Open settings to allow it.",
@@ -29,7 +30,9 @@
     "forget": "Forget",
     "forgetTitle": "Forget this scale?",
     "forgetMessage": "Your weigh-in history stays.",
-    "empty": "No scale yet. Find yours below."
+    "empty": "No scale yet. Find yours below.",
+    "kindWeightOnly": "Type: {{label}} (weight only)",
+    "weightOnlyNote": "Weight only: this scale sends no body fat or impedance, so JoyoFit shows none."
   },
   "picker": {
     "title": "Find your scale",
@@ -45,7 +48,9 @@
     "pick": "Use this one",
     "chosen": "In use",
     "reading": "Reading {{value}} kg",
-    "unnamed": "No name"
+    "unnamed": "No name",
+    "kindWeightOnly": "{{label}} (weight only)",
+    "needsKey": "Needs the scale key"
   },
   "settings": {
     "title": "Settings",
@@ -108,5 +113,19 @@
   "supported": {
     "title": "Supported scales",
     "body": "JoyoFit reads scales with the protocols below. Others can be added through Record scale data."
+  },
+  "secret": {
+    "title": "Scale key (advanced)",
+    "saved": "Key saved on this phone.",
+    "remove": "Remove key",
+    "show": "Show",
+    "hide": "Hide",
+    "save": "Save key",
+    "length": "{{length}}/16 characters",
+    "tuya-local-key": {
+      "label": "Local key (16 characters)",
+      "explain": "Tuya scales encrypt their weight, so JoyoFit needs your scale's local key. It comes from the Tuya developer platform (iot.tuya.com): create a cloud project, link the app account the scale is paired in, then copy that device's local_key. This is a technical step. The key is stored encrypted on this phone and is not sent anywhere.",
+      "invalid": "The local key must be exactly 16 characters (letters, digits or plain symbols)."
+    }
   }
 }

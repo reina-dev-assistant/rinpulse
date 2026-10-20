@@ -9,6 +9,7 @@ import { Notice } from '@/components/States';
 import { BikeReadyPanel } from '@/features/bikecomputer/record/BikeReadyPanel';
 import { useBikeSettings } from '@/features/bikecomputer/ui/useBikeSettings';
 import { SensorLinkRow } from '@/features/sensors/ui/SensorLinkRow';
+import { FOOT_SPORTS } from '../recorder';
 import { SPORT_ROWS } from '@/features/workouts/manual';
 import { sportLabel } from '@/features/workouts/sportLabel';
 import { useRecorder } from '@/state/RecorderProvider';
@@ -73,6 +74,10 @@ export function ReadyView() {
         <Notice icon="battery-half" action={{ label: t('record.permission.openSettings'), onPress: () => void Linking.openSettings() }}>
           {t('record.ready.noService')}
         </Notice>
+      ) : null}
+
+      {snapshot.sport !== null && FOOT_SPORTS.includes(snapshot.sport) && !snapshot.phoneSteps ? (
+        <Notice icon="footsteps-outline">{t('record.ready.noPhoneSteps')}</Notice>
       ) : null}
 
       <Button label={t('record.ready.start')} variant="primary" icon="play" style={styles.start} onPress={start} />

@@ -89,6 +89,16 @@ export interface LocationEvent {
 
 export type LocationPermission = 'granted' | 'denied' | 'undetermined';
 
+/** The phone's step counter. `unavailable`: the device has none (or, iOS, no motion coprocessor). */
+export type StepCounterPermission = 'granted' | 'denied' | 'undetermined' | 'unavailable';
+
+export interface StepsEvent {
+  /** Milliseconds since the epoch of the counter reading itself. */
+  ts: number;
+  /** Steps counted since the workout session started (cumulative, it only goes up). The first reading of a session may be 0. */
+  steps: number;
+}
+
 export interface WorkoutSessionOptions {
   /** Notification title (Android), e.g. "Lari". */
   title: string;
@@ -96,6 +106,12 @@ export interface WorkoutSessionOptions {
   text: string;
   /** Record GPS: starts location updates and, on Android, the location foreground type. */
   gps: boolean;
+  /**
+   * Count steps with the phone's own step counter and deliver them as `onSteps`. Starts only when the permission is granted (Android:
+   * ACTIVITY_RECOGNITION; iOS: motion) and the device has the sensor; otherwise it silently does not, the workout runs without steps.
+   * Default false.
+   */
+  steps?: boolean;
   /**
    * Android: the link (`joyofit://...`) tapping the notification opens, so it lands on the recording screen whatever screen was open last.
    * Without it, or when it is not a link of the app, the tap resumes the app where it was. iOS has no notification: ignored.
@@ -166,12 +182,48 @@ export interface ScaleLinkEvent {
   error: string | null;
 }
 
+/**
+ * Overnight capture of the bedroom thermometer (Android only; see `docs/sleep-insights.md`). A foreground service listens to the sensors'
+ * advertisements with the app closed and keeps one per sensor per 5 minutes; the app reads them when it opens and decodes them in
+ * TypeScript (`src/features/sensors/thermometerAdvert.ts`).
+ */
+export interface RoomCaptureOptions {
+  /** Bluetooth addresses (`AA:BB:CC:DD:EE:FF`) of the thermometers to listen to; anything else is ignored. */
+  ids: string[];
+  /** Epoch ms the capture ends by itself; must be in the future and is capped at 18 h from now. */
+  untilMs: number;
+  /** Notification title, text and Stop button label, in the app's language. */
+  title: string;
+  text: string;
+  stopLabel: string;
+}
+
+export interface RoomCaptureState {
+  active: boolean;
+  /** Epoch ms the running capture ends, null when none runs. */
+  untilMs: number | null;
+  ids: string[];
+  /** Epoch ms the person last stopped a capture (Stop button or `stopRoomCapture`), null if never or since started again: the app does not restart it by itself that night. */
+  userStoppedAt: number | null;
+}
+
+/** One advertisement the overnight scan kept: the service data under `uuid` (`181a` or `fcd2`) as lowercase hex, heard at `ts` (epoch ms). */
+export interface RoomAdvert {
+  /** Bluetooth address, upper case. */
+  id: string;
+  ts: number;
+  uuid: string;
+  hex: string;
+}
+
 export type BleSensorsModuleEvents = {
   onScanResult: (event: ScanResultEvent) => void;
   onScanState: (event: ScanStateEvent) => void;
   onConnection: (event: ConnectionEvent) => void;
   onValue: (event: ValueEvent) => void;
   onLocation: (event: LocationEvent) => void;
+  /** Only while a workout session runs with `steps`. */
+  onSteps: (event: StepsEvent) => void;
   onBluetoothState: (event: { state: BluetoothState }) => void;
   /** Android: a button of the recording notification was pressed (only with `WorkoutSessionOptions.controls`). */
   onWorkoutAction: (event: { action: WorkoutAction }) => void;

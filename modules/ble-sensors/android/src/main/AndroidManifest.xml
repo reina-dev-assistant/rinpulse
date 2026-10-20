@@ -7,6 +7,8 @@
   <!-- GPS fixes of a phone-recorded workout. Android 10 and 11 also need it to deliver scan results. -->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <!-- The recording service is started while the app is visible, so it keeps location access with the screen off and ACCESS_BACKGROUND_LOCATION is not needed. -->
+  <!-- The phone's step counter during a recorded run, walk or hike: cadence and steps when no running pod is paired. Asked at runtime on Android 10 and newer. -->
+  <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
@@ -19,5 +21,10 @@
       android:name=".RecordingService"
       android:exported="false"
       android:foregroundServiceType="location|connectedDevice" />
+    <!-- Overnight scan of the bedroom thermometer (Settings, Termometer kamar): started by the person or by the app while it is open in the evening. -->
+    <service
+      android:name=".RoomScanService"
+      android:exported="false"
+      android:foregroundServiceType="connectedDevice" />
   </application>
 </manifest>

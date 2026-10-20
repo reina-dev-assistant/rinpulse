@@ -82,6 +82,7 @@ export default function SettingsScreen() {
     data: [
       { key: 'profile', title: t('screens.profile'), icon: 'person', onPress: go('/settings/profile') },
       { key: 'scale', title: t('screens.scale'), icon: 'scale-outline', onPress: go('/settings/scale') },
+      { key: 'thermometer', title: t('screens.thermometer'), icon: 'thermometer-outline', onPress: go('/settings/thermometer') },
       { key: 'cycling', title: tOther('cycling:settings.title'), icon: 'bicycle', onPress: go('/settings/cycling') },
       ...(withWatch ? [{ key: 'goals', title: t('screens.goals'), icon: 'flag' as const, onPress: go('/settings/goals') }] : []),
       { key: 'cycle', title: t('screens.cycle'), icon: 'calendar', tint: 'heart', onPress: go('/settings/cycle') },
@@ -120,6 +121,9 @@ export default function SettingsScreen() {
     title: t('hub.groups.app'),
     data: [
       { key: 'appearance', title: t('screens.appearance'), icon: 'color-palette', onPress: go('/settings/appearance') },
+      ...(withWatch
+        ? [{ key: 'home-cards', title: t('screens.homeCards'), icon: 'albums' as const, onPress: go('/settings/home-cards') }]
+        : []),
       { key: 'guide', title: t('index.rows.guide.title'), icon: 'compass', onPress: () => guide.open() },
       { key: 'advanced', title: t('screens.advanced'), icon: 'information-circle', onPress: go('/settings/advanced') },
     ],

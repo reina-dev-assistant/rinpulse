@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
-import { captureFinal, confirmPending, type CaptureContext } from './capture';
+import { captureFinal, confirmPending, type CaptureContext, type LastSaved } from './capture';
 import { ensureScaleSchema, listWeighIns, type ScaleDb } from './store';
 import type { ScaleReading } from './types';
 
@@ -95,5 +95,46 @@ describe('captureFinal', () => {
     const [row] = await listWeighIns(c.db);
     expect(row.reported).toEqual({ bodyFatPct: 18.5, waterPct: 55 });
     expect(row.estimate).toBeNull();
+  });
+});
+
+describe('captureFinal for a weight-only scale', () => {
+  it('stores no body values and no impedance, even for a frame that carries them, and still queues the weight for JoyoRogo', async () => {
+    const c = await ctx({ protocolId: 'tuya-beacon-broadcast', reference: async () => null });
+    await captureFinal(c, final(108.6, { impedanceOhm: 500, reported: { bodyFatPct: 30 } }), false, null);
+    const [row] = await listWeighIns(c.db);
+    expect(row).toMatchObject({ weightKg: 108.6, impedanceOhm: null, reported: null, estimate: null, rogoState: 'pending' });
+  });
+});
+
+describe('captureFinal with a revision', () => {
+  const settle = (weightKg: number): ScaleReading => ({ weightKg, stable: true, revision: true });
+
+  it('replaces the weight of the row saved for the same weigh-in and queues it for JoyoRogo again', async () => {
+    const c = await ctx({ protocolId: 'tuya-beacon-broadcast', reference: async () => null });
+    const first = await captureFinal(c, final(107.9), false, null);
+    if (first.kind !== 'saved') throw new Error('unreachable');
+    const last: LastSaved = { id: first.weighIn.id, weightKg: 107.9, at: NOW };
+    const revised = await captureFinal({ ...c, now: NOW + 160_000 }, settle(108.6), false, last);
+    expect(revised).toEqual({ kind: 'revised', weighIn: { id: first.weighIn.id, weightKg: 108.6 } });
+    const rows = await listWeighIns(c.db);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ weightKg: 108.6, takenAt: NOW, rogoState: 'pending', rogoError: null });
+  });
+
+  it('is a new weigh-in when there is no row from this weigh-in: nothing saved, an older row far away, or one saved long ago', async () => {
+    const c = await ctx({ reference: async () => null });
+    expect((await captureFinal(c, settle(108.6), false, null)).kind).toBe('saved');
+    expect((await captureFinal(c, settle(108.6), false, { id: 1, weightKg: 70, at: NOW })).kind).toBe('saved');
+    expect((await captureFinal(c, settle(108.6), false, { id: 1, weightKg: 108, at: NOW - 3_600_000 })).kind).toBe('saved');
+    expect(await listWeighIns(c.db)).toHaveLength(3);
+  });
+
+  it('a revised row stays out of JoyoRogo when pushing is off', async () => {
+    const c = await ctx({ pushToRogo: false, reference: async () => null });
+    const first = await captureFinal(c, final(107.9), false, null);
+    if (first.kind !== 'saved') throw new Error('unreachable');
+    await captureFinal(c, settle(108.6), false, { id: first.weighIn.id, weightKg: 107.9, at: NOW });
+    expect((await listWeighIns(c.db))[0]).toMatchObject({ weightKg: 108.6, rogoState: 'skipped' });
   });
 });

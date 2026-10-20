@@ -1,6 +1,7 @@
 import { NotSignedInError } from '@/cloud/api';
 import { authClient } from '@/cloud/auth';
 import { JOYOROGO_URL } from '@/cloud/config';
+import { createSleepInsightsClient } from '@/cloud/sleepInsightsClient';
 import { getLocale, t } from '@/i18n';
 import type { WorkoutAnalysis } from '@/features/workouts/analysis/types';
 import type { SportKind } from '@/features/social/feedRoute';
@@ -440,6 +441,8 @@ export const rogo = {
     rogoCall<RogoFoodItem>('food/add', { ...input, source: 'manual' }),
   /** Stores the day's Recovery / Strain / Sleep and body metrics (sleep hours, resting HR, HRV, VO2max, training status, recovery time) for JoyoRogo's diary and its AI connector. JoyoRogo answers 404 until it is deployed with the `fitness` router. */
   pushScores: (days: RogoScoreDay[]) => rogoCall<{ saved: number }>('fitness/upsertScores', { days }),
+  /** Wawasan tidur: the server consent switch and the nightly sleep rows (JoyoRogo computes and shows the findings). Status and push treat a JoyoRogo without the router (404/405) as a typed outcome. */
+  ...createSleepInsightsClient(rogoCall),
   avatar: {
     /** Replaces the profile photo; the answer is the new server-relative `/avatar/...` path. */
     upload: (input: { imageBase64: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp' }) =>

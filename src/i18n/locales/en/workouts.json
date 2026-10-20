@@ -41,6 +41,7 @@
       "maxHr": "max {{value}} bpm",
       "cadence": "Cadence",
       "maxCadence": "max {{value}}",
+      "stride": "Step length",
       "power": "Avg power",
       "normalizedPower": "NP {{value}} W",
       "fuel": "Estimated fuel",
@@ -55,6 +56,7 @@
       "hr": "Heart rate",
       "elevation": "Elevation",
       "cadence": "Cadence",
+      "stride": "Step length",
       "power": "Power"
     },
     "chart": {
@@ -70,6 +72,7 @@
       "elev": "Elev",
       "hr": "HR",
       "cad": "Cad",
+      "stride": "Step",
       "a11yRowPace": "Split {{label}}, {{value}} per kilometre",
       "a11yRowSpeed": "Split {{label}}, {{value}} kilometres per hour",
       "a11yHint": "Moves the marker on the charts and the map"
@@ -118,7 +121,7 @@
       },
       "outOf": "of 21",
       "addedToDay": "+{{value}} to the day",
-      "explain": "Relative Effort is JoyoFit's strain for this workout on a 0 to 21 scale: the longer your heart works at a high level, the higher it goes (TRIMP {{trimp}}).",
+      "explain": "Relative Effort is JoyoFit's strain for this workout on a 0 to 21 scale: the longer your heart works at a high level, the higher it goes.",
       "a11y": "Relative effort {{value}} of 21, {{band}}"
     },
     "load": {
@@ -178,7 +181,7 @@
     "note": {
       "effort": "Each minute of heart rate counts by the zone it falls in (Edwards TRIMP) and the total is mapped onto the 0 to 21 scale. It relies on your max heart rate, so set it in your profile for best results.",
       "load": "Load is the Edwards TRIMP: minutes in each heart rate zone multiplied by the zone number. The last 7 days add up to this workout; the weekly average is the mean of the 28 days before it.",
-      "threshold": "Threshold pace is estimated from your best 1 mile, 5 km, 10 km and half marathon efforts, slowed to a one hour effort. Zones are set as shares of it."
+      "threshold": "Threshold pace is estimated from your best 1 mile, 5 km, 10 km and half marathon efforts over all your runs of the last 90 days (walks and hikes do not count), slowed to a one hour effort. It does not slow down just because your latest runs were easy. Zones are set as shares of it."
     },
     "empty": {
       "noSeries": "Charts, map and splits are not available for this workout because no detailed samples were recorded."
@@ -228,8 +231,69 @@
       "bpmAvg": "bpm avg",
       "strain": "strain"
     },
+    "filter": {
+      "all": "All",
+      "run": "Run",
+      "walk": "Walk",
+      "ride": "Ride",
+      "swim": "Swim",
+      "strength": "Strength",
+      "other": "Other"
+    },
     "strengthElsewhere_one": "{{count}} strength workout from JoyoRogo is in the strength history, not in this list.",
     "strengthElsewhere_other": "{{count}} strength workouts from JoyoRogo are in the strength history, not in this list."
+  },
+  "progress": {
+    "period": {
+      "week": "Week",
+      "month": "Month"
+    },
+    "periodA11y": "Chart range",
+    "current": {
+      "week": "This week",
+      "month": "This month"
+    },
+    "chart": {
+      "week": "Distance per week",
+      "month": "Distance per month"
+    },
+    "chartA11y": {
+      "week": "Distance per week, last 12 weeks. Longest {{value}}.",
+      "month": "Distance per month, last 12 months. Longest {{value}}."
+    },
+    "stat": {
+      "time": "Time",
+      "elevation": "Elevation",
+      "count": "Activities"
+    },
+    "compare": {
+      "up": {
+        "week": "{{value}} more than last week",
+        "month": "{{value}} more than last month"
+      },
+      "down": {
+        "week": "{{value}} less than last week",
+        "month": "{{value}} less than last month"
+      },
+      "same": {
+        "week": "Same as last week",
+        "month": "Same as last month"
+      },
+      "none": {
+        "week": "No activity last week",
+        "month": "No activity last month"
+      }
+    },
+    "kind": {
+      "run": "running",
+      "walk": "walking",
+      "ride": "cycling",
+      "swim": "swimming"
+    },
+    "empty": {
+      "week": "No {{sport}} activity in the last 12 weeks.",
+      "month": "No {{sport}} activity in the last 12 months."
+    }
   },
   "detail": {
     "title": "Workout",
@@ -253,15 +317,6 @@
       "bpm": "bpm"
     },
     "gpsFailed": "The watch did not provide a GPS file for this workout.",
-    "strain": {
-      "title": "Strain",
-      "a11y": "Workout strain {{value}} of {{max}}",
-      "toTheDay": "to the day",
-      "dayNow": "Day strain now {{value}}",
-      "how": "How is this calculated?",
-      "explain": "An estimate by JoyoFit, the watch does not report it: the heart-rate zones of this workout, with a maximum of {{maxHr}} bpm, are summed (Edwards TRIMP: zones 1 to 5 count 1 to 5 per minute) and mapped onto 0 to 21 like the strain of a day. Zones are 50 to 60 % of max for Z1 up to 90 to 100 % for Z5. Pauses over two minutes count for nothing. The added part is the strain of the day with this workout minus the strain of the day without its minutes, so the same workout adds less on a day that already carried load.",
-      "noHr": "No heart rate stored for this workout, so no strain."
-    },
     "effect": {
       "title": "Training effect",
       "aerobic": "Aerobic effect",
@@ -291,30 +346,21 @@
         "4": "Anaerobic",
         "5": "Extreme"
       },
-      "zoneRow": "Zone {{zone}} {{label}} · {{time}}",
-      "zoneRowBelow": "{{label}} · {{time}}",
+      "zoneRow": "Zone {{zone}} {{label}}",
       "grams": "fat {{fat}} g, carbs {{carbs}} g",
       "how": "How is this calculated?",
       "explain": "An estimate by JoyoFit, the watch does not measure it: the {{kcal}} kcal are split over the time you actually spent at each heart rate, with a maximum of {{maxHr}} bpm (220 minus your age from the profile). Easier effort burns a larger share of fat."
     },
     "more": {
       "title": "More stats",
-      "timeOfDay": "Time of day",
-      "timeRange": "{{from}} to {{to}}",
       "avgPace": "Average pace",
       "bestPace": "Best pace",
       "avgSpeed": "Average speed",
       "topSpeed": "Top speed",
       "lowestHr": "Lowest heart rate",
-      "elevGain": "Elevation gain",
-      "elevLoss": "Elevation loss",
       "highest": "Highest point",
       "lowest": "Lowest point",
-      "avgPower": "Average power",
-      "normPower": "Normalized power",
       "peakPower": "Peak power",
-      "avgCadence": "Average cadence",
-      "peakCadence": "Peak cadence",
       "maxDepth": "Maximum depth",
       "imported": "Imported from a {{brand}} FIT file. Stays on this phone, not sent to the cloud or {{health}}.",
       "healthIos": "Apple Health",
@@ -516,6 +562,11 @@
         "title": "Bluetooth",
         "body": "Used to connect the heart rate strap and other sensors you paired.",
         "denied": "Bluetooth is not allowed yet, so your sensors will not connect. You can still record without sensors, or open settings to allow it."
+      },
+      "steps": {
+        "title": "Count steps and cadence from the phone",
+        "body": "Optional. The phone's step counter gives the cadence and step count of a run, walk or hike when the phone is in a pocket, in your hand or in an armband. Nothing leaves the phone. You can start without this permission.",
+        "denied": "Step counter access is not allowed yet, so this recording has no cadence or steps from the phone. It still records. Open settings if you want to allow it."
       }
     },
     "gps": {
@@ -529,6 +580,7 @@
       "gps": "GPS",
       "hint": "You can start without waiting for GPS. Distance counts as soon as the signal is ready.",
       "hintNoGps": "Press Start when you are ready.",
+      "noPhoneSteps": "The phone step counter is off, so cadence and steps are only recorded when a running pod is connected.",
       "noService": "A dark screen can stop the recording. Allow notifications and turn off battery saver for JoyoFit in the phone's settings so it keeps running.",
       "start": "Start",
       "cancel": "Cancel"

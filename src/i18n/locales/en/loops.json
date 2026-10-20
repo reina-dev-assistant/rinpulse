@@ -83,6 +83,7 @@
     "label": "{{pct}} percent of this route is on streets you have not been on"
   },
   "result": {
+    "short": "{{distance}} · {{pct}}% new streets",
     "summary": "{{distance}} loop, {{pct}}% on streets you have not painted",
     "plain": "{{distance}} loop",
     "noHistory": "No walk or run tracks of yours around here yet, so new streets cannot be counted.",
@@ -106,7 +107,11 @@
   "routeName": "Loop {{distance}} {{date}}",
   "errors": {
     "noRoad": "There is no street or path to walk on near this start point. Move Home to the nearest street, or try another place.",
-    "noLoop": "No good loop of this length was found from your start. Try another target or search again.",
+    "noLoop": "No loop of {{target}} fits around this start: rivers, rails or dead-end streets keep every try far off the length. Try another length or another start.",
+    "noLoopLong": "No loop of {{target}} fits around this start: rivers, rails or dead-end streets push every path longer. The closest is {{closest}}, {{percent}}% over.",
+    "noLoopShort": "No loop of {{target}} fits around this start: rivers, rails or dead-end streets cut every path short. The closest is {{closest}}, {{percent}}% under.",
+    "showClosest": "Show the {{closest}} loop",
+    "busy": "The map service is busy or not answering right now, so no route could be built. Wait a moment and try again.",
     "network": "The routing service could not be reached. Check your internet and try again.",
     "save": "The route was not saved: {{message}}"
   },

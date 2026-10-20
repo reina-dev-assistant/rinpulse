@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test';
 
-import type { LocationEvent, ValueEvent, WorkoutSessionOptions } from '../../../modules/ble-sensors/src/BleSensors.types';
+import type { LocationEvent, StepsEvent, ValueEvent, WorkoutSessionOptions } from '../../../modules/ble-sensors/src/BleSensors.types';
 import { cscFrames, type CscFrame } from '../sensors/cscSim';
 import { ensureSensorSchema, type SavedSensor } from '../sensors/store';
 import { RecordingController, type HubApi, type SessionApi } from './controller';
@@ -36,6 +36,7 @@ type State = 'connecting' | 'connected' | 'disconnected';
 class Radio implements HubApi {
   values: ((e: ValueEvent) => void)[] = [];
   fixes: ((e: LocationEvent) => void)[] = [];
+  steps: ((e: StepsEvent) => void)[] = [];
   connects: number[] = [];
   disconnects = 0;
   state: State | null = null;
@@ -56,6 +57,10 @@ class Radio implements HubApi {
   onValue(l: (e: ValueEvent) => void) {
     this.values.push(l);
     return () => (this.values = this.values.filter((x) => x !== l));
+  }
+  onSteps(l: (e: StepsEvent) => void) {
+    this.steps.push(l);
+    return () => (this.steps = this.steps.filter((x) => x !== l));
   }
   onLocation(l: (e: LocationEvent) => void) {
     this.fixes.push(l);
@@ -140,6 +145,7 @@ async function session(opts: Session) {
     db,
     now: () => clock,
     profile: () => ({ weightKg: 70, age: 35, sex: 'male' }),
+    stepCounter: async () => 'unavailable',
     wheelCircumferenceM: () => 2.105,
     sensors: () => [vor],
     log: (m) => logs.push(m),

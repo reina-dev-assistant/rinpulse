@@ -16,6 +16,7 @@ import { getLastSync } from '@/db/queries';
 import { purgeDeletedWorkouts } from '@/features/workouts/purgeDeleted';
 import { useWatchList, type WatchListActions } from '@/features/device/useWatchList';
 import type { WatchRow } from '@/features/device/watches';
+import type { WatchTotals } from '@/features/device/watchDayTotals';
 import { describeConnectFailure, errorCode } from '@/features/device/connectFailure';
 import { outcomeOfFailure, type AutoOutcome } from '@/features/device/autoReconnect';
 import { reportDatabaseError } from '@/db/recovery';
@@ -24,13 +25,11 @@ import { pushLog } from '@/state/logStore';
 import { setDisconnectedByUser, useAutoReconnect, useAutoReconnectControl } from '@/state/useAutoReconnect';
 import {
   HuaweiWear,
+  hasNative,
   type DeviceInfo,
-  type FitnessTotals,
   type LinkState,
   type SyncSummary,
 } from '@/wear';
-
-export type WatchTotals = FitnessTotals & { at: number };
 
 export interface WatchContextValue {
   linkState: LinkState;
@@ -127,9 +126,10 @@ export function WatchProvider({ children }: { children: ReactNode }) {
     if (address) setLastSync(await getLastSync(db, address));
   }, [db]);
 
-  const applySummary = useCallback((summary: SyncSummary) => {
+  /** [address]: the watch the link is up to, for a summary that does not name its watch (iOS, older binaries). */
+  const applySummary = useCallback((summary: SyncSummary, address: string | null) => {
     setLastSync(summary.to);
-    setTotals({ ...summary.totals, at: summary.to });
+    setTotals({ ...summary.totals, at: summary.to, address: summary.address ?? address });
     setDataVersion((v) => v + 1);
   }, []);
 
@@ -168,7 +168,9 @@ export function WatchProvider({ children }: { children: ReactNode }) {
   });
   useEventListener(HuaweiWear, 'onBattery', (event) => setBattery(event.level));
   useEventListener(HuaweiWear, 'onLog', pushLog);
-  useEventListener(HuaweiWear, 'onSyncComplete', applySummary);
+  useEventListener(HuaweiWear, 'onSyncComplete', (summary) =>
+    applySummary(summary, HuaweiWear.getDevice()?.address ?? HuaweiWear.getBackgroundStatus().address),
+  );
 
   /**
    * One connect to [address]. `silent` is the automatic reconnect: it asks nothing and shows nothing (no error, no Retry, no first-bind
@@ -187,6 +189,8 @@ export function WatchProvider({ children }: { children: ReactNode }) {
       setActiveAddress(address);
       connectInFlight.current = true;
       try {
+        // A tap may open Android's pairing when the watch has to be tried over the other link (a Band whose table entry is wrong); the automatic reconnect never does.
+        if (!silent && hasNative('confirmPairing')) HuaweiWear.confirmPairing(address);
         const info = await HuaweiWear.connect(address);
         setDevice(info);
         setBattery(info.batteryLevel);
@@ -296,7 +300,7 @@ export function WatchProvider({ children }: { children: ReactNode }) {
       syncing.current = true;
       setError(null);
       try {
-        applySummary(await pull());
+        applySummary(await pull(), device.address);
       } catch (e) {
         // The native writer (Kotlin, its own SQLite) can be the one that meets a damaged file; the repair starts for it too.
         reportDatabaseError(e);

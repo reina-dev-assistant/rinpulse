@@ -31,6 +31,8 @@ interface Props {
   analysis: WorkoutAnalysis | null;
   /** True until the analysis has either arrived or failed; posting waits for it so the detail is never a downgrade. */
   analysisPending: boolean;
+  /** Only the icon shows (the label stays as the accessibility label). */
+  iconOnly?: boolean;
 }
 
 /**
@@ -38,7 +40,7 @@ interface Props {
  * data, the route (the post's map, "Tampilkan peta", on by default when the workout has GPS) and the comparison with earlier workouts go along. Free for everyone to share; JoyoRogo decides who may view the detail. Renders nothing for
  * a workout that may not be shared (see `canShareToRogo`).
  */
-export function ShareToRogoButton({ workout, points, analysis, analysisPending }: Props) {
+export function ShareToRogoButton({ workout, points, analysis, analysisPending, iconOnly }: Props) {
   const { t } = useTranslation(['social', 'common']);
   const router = useRouter();
   const colors = useColors();
@@ -85,7 +87,7 @@ export function ShareToRogoButton({ workout, points, analysis, analysisPending }
 
   return (
     <>
-      <Button label={t('share.button')} icon="people-outline" onPress={() => setOpen(true)} />
+      <Button label={t('share.button')} icon="people-outline" iconOnly={iconOnly} onPress={() => setOpen(true)} />
       <Modal visible={open} animationType="slide" onRequestClose={close} statusBarTranslucent>
         <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top }]}>
           <View style={styles.header}>

@@ -12,6 +12,10 @@ import { spacing } from '@/theme';
 interface LiveCardProps {
   scale: SavedScale;
   kindLabel: string | null;
+  /** The scale sends the weight and nothing else: say so instead of leaving body values to be missed. */
+  weightOnly: boolean;
+  /** The scale's key is not saved yet, so nothing can be read from it. */
+  needsKey: boolean;
   live: ScaleLive;
   testing: boolean;
   onTest: () => void;
@@ -21,7 +25,7 @@ interface LiveCardProps {
 }
 
 /** The picked scale: what it sends right now, a test weigh-in, rename and forget. */
-export function LiveCard({ scale, kindLabel, live, testing, onTest, onStopTest, onRename, onForget }: LiveCardProps) {
+export function LiveCard({ scale, kindLabel, weightOnly, needsKey, live, testing, onTest, onStopTest, onRename, onForget }: LiveCardProps) {
   const { t } = useTranslation('scale');
   const headline =
     live.reading === null
@@ -29,7 +33,9 @@ export function LiveCard({ scale, kindLabel, live, testing, onTest, onStopTest, 
       : t('live.weight', { value: fmtDecimal(live.reading.weightKg, 1) });
   const sub =
     live.reading === null
-      ? t(`live.status.${live.status}`)
+      ? needsKey
+        ? t('live.needsKey')
+        : t(`live.status.${live.status}`)
       : live.settled
         ? t('live.settled')
         : t('live.unsettled');
@@ -37,7 +43,12 @@ export function LiveCard({ scale, kindLabel, live, testing, onTest, onStopTest, 
     <Section title={scaleLabel(scale)} icon="scale-outline">
       {kindLabel ? (
         <AppText variant="caption" muted>
-          {t('card.kind', { label: kindLabel })}
+          {weightOnly ? t('card.kindWeightOnly', { label: kindLabel }) : t('card.kind', { label: kindLabel })}
+        </AppText>
+      ) : null}
+      {weightOnly ? (
+        <AppText variant="caption" muted>
+          {t('card.weightOnlyNote')}
         </AppText>
       ) : null}
       <View style={styles.reading} accessibilityLiveRegion="polite">
@@ -50,7 +61,7 @@ export function LiveCard({ scale, kindLabel, live, testing, onTest, onStopTest, 
         {testing ? (
           <Button label={t('live.stop')} icon="stop-circle-outline" onPress={onStopTest} />
         ) : (
-          <Button label={t('live.test')} icon="play-circle-outline" variant="primary" onPress={onTest} />
+          <Button label={t('live.test')} icon="play-circle-outline" variant="primary" disabled={needsKey} onPress={onTest} />
         )}
         <Button label={t('card.rename')} icon="create-outline" onPress={onRename} />
         <Button label={t('card.forget')} icon="trash-outline" variant="ghost" onPress={onForget} />

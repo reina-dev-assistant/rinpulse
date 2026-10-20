@@ -6,11 +6,15 @@ Settings > Timbangan (`/settings/scale`). **This changes native code** (new scal
 
 Few cheap scales implement the Bluetooth SIG Weight Scale Service (0x181D) or Body Composition Service (0x181B). Most use a vendor protocol, and many cheap ones do not connect at all: they put the weight in the manufacturer data of their advertisement (OKOK / Chipsea, QN broadcast, AiLink, Etekcity, Scale Up, Yunmai X, AAA-series). So the native side has two modes: an unfiltered scan that reports every advertisement, and a GATT link JS drives byte by byte.
 
-Decoders are ported from [openScale](https://github.com/oliexdev/openScale) (GPL-3.0-or-later; JoyoFit is AGPL-3.0, compatible). Every protocol file names its openScale source and keeps its copyright line.
+Decoders are ported from [openScale](https://github.com/oliexdev/openScale) (GPL-3.0-or-later; JoyoFit is AGPL-3.0, compatible). Every protocol file names its openScale source and keeps its copyright line. The exception is `protocols/tuyaBeacon.ts`, reverse engineered from the owner's scale (no openScale source).
 
 ### What the HAN RIVER scale uses
 
-Not established. What was found: the Shopee listing "HAN RIVER Smart Body Fat Scale", model HRTZC01WT (rechargeable, 180 kg, 0.1 kg, up to 10 users, "Body Fat Monitor with App"), sold by HK HAN RIVER (hanriver.asia, a Shenzhen white-label of kitchen and home appliances). None of the listings, the brand site or the two Indonesian video reviews names the phone app, and the Play Store app called "Han River" (`asmart.ad`) is the brand's smart-home app, not a scale app. White-label scales of this price are almost always one of the Chipsea / OKOK, Fitdays (AAA-series, AiLink) or QN families, which are all decoded here, but that is an inference, not a fact. The first thing to do when it arrives is the test below: the recorder tells which family it is.
+Established on the owner's own scale (HRTZC01, Tuya product `bbrs03yc`): it advertises encrypted **Tuya BLE beacons** (manufacturer data, company id 0xD007) and never connects. The weight is `u16be / 10` kg in the decrypted `broadcast_data` DP; nothing else in the frame changes between weigh-ins (2.5 to 108.6 kg), so the scale is **weight only** for JoyoFit (the body fat its own app shows is not in the beacon). Protocol `tuya-beacon-broadcast`, see below. Other HAN RIVER / white-label scales that use another chip may still be one of the Chipsea / OKOK, Fitdays (AAA-series, AiLink) or QN families: that is an inference, the recorder tells.
+
+## Website list
+
+fit.joyorogo.com/timbangan (`site/src/Timbangan.tsx`) lists the protocols in `registry.ts`: `site/scripts/timbangan.ts` reads the registry for labels and brands and writes `site/src/timbangan.ts` (`bun run timbangan`, also the first step of `bun run build`). The grouping by brand and the "what you get" tag (weight only, scale-reported body values, estimated body values, depends on model) are editorial and live in `GROUPS` in that script. A new protocol makes the build and `bun test scripts` fail until it is added there, so the page cannot silently miss a scale. Three protocol fields come from the registry, not from `GROUPS`: `weightOnly` (the script refuses an entry tagged anything but "berat"), `realScaleTested` (the row shows "Sudah diuji di timbangan asli" and the banner names it) and `secret` (the row shows "Perlu kunci timbangan"). Set `realScaleTested` only for a protocol checked against a real scale in hand (today only `tuya-beacon-broadcast`), then run `bun run timbangan` in `site/`; the banner copy follows the registry. The site FAQ, `seo.ts` and `llms.txt` also state how many are tested.
 
 ## Protocols
 
@@ -26,6 +30,7 @@ All ids are in `src/features/scale/registry.ts`. "Vectors" says where the test b
 | `aaax-broadcast` | advertisement | Fitdays AAA-series, Posture FG220LB | `scales/AAAxHandler.kt` | `AAAxHandlerTest.kt` |
 | `etekcity-fit8s-broadcast` | advertisement | Etekcity / VeSync Fit 8S | `scales/EtekcityFit8SHandler.kt` | built from the documented layout |
 | `scaleup-broadcast` | advertisement | Scale Up | `scales/ScaleupHandler.kt` | built from the documented layout |
+| `tuya-beacon-broadcast` | advertisement, encrypted, weight only | HAN RIVER HRTZC01, Tuya Smart / Smart Life beacon scales | none (not openScale; reverse engineered, see `protocols/tuyaBeacon.ts`) | the owner's HRTZC01 recording (values, sn and timing; display locked at 108.6 kg) re-encrypted under a fake key, its own local key is not in the repo |
 | `yunmai-x` | advertisement | Yunmai X | `scales/YunmaiXHandler.kt` | `YunmaiXHandlerTest.kt` |
 | `qn-scale` | GATT FFE0 | QN-Scale, Yolanda, Renpho (QN), FITINDEX, GE Fit Plus | `scales/QNHandler.kt` | real "Fit Plus" capture and handshake from `QNHandlerProtocolTest.kt` |
 | `one-by-one-health-scale`, `eufy-one-by-one` | GATT | 1byone, iWellness, Eufy C1 / P1 / A1 | `scales/OneByoneHandler.kt` | `OneByoneHandlerTest.kt` |
@@ -35,6 +40,15 @@ All ids are in `src/features/scale/registry.ts`. "Vectors" says where the test b
 | `inlife`, `senssun-fat`, `excelvan-cf36x`, `hesley-yunchen`, `exingtech-y1` | GATT | Inlife, Senssun, Excelvan / generic "Electronic Scale", Hesley, Exingtech VScale | `scales/{Inlife,Senssun,ExcelvanCF36x,Hesley,ExingtechY1}Handler.kt` | built from the layout |
 
 "Built from the layout" means the decoder matches the openScale source and its checksum rule, nothing more: the first real capture of such a scale may show a difference. Not covered: iComon, Lefu, Huawei, Beurer BF700, Omron, Medisana, Picooc, Huami S400 and the other openScale devices that are not in the table (no verifiable bytes were ported for them). A scale that is not recognised goes through "Rekam data timbangan".
+
+### Tuya beacon scales (weight only, needs the local key)
+
+Protocol `tuya-beacon-broadcast` (`protocols/tuyaBeacon.ts`, the same layer as the other decoders: XXTEA, CRC-8 and the parser are ported there, no native code). Frame: manufacturer data 0xD007, `0x05 | mac[6] | sn[4 BE] | enc[16]`; `enc` is one XXTEA block under the 16 ASCII characters of the device's Tuya `local_key`; plaintext `sn | dp 1 raw len 7 | value[7] | crc8 | 00`; weight = `u16be(value[0..2]) / 10` kg. A wrong key or a damaged frame fails the echoed sn or the CRC and reads nothing. Head `0x01` frames (idle, sn 0..2) do not decrypt and carry no reading; they only make the picker list the scale.
+
+- **Settle rule**: there is no stable flag. The scale follows the weight while the person settles and then repeats the value with a higher `sn`, so a frame is final when the frame before it (lower `sn`, within 5 minutes) had the same weight. The same advertisement arriving again keeps its verdict. The decoder has memory, so it is built per listening session (`createDecoder`, `weigh.ts`), and `WeighSession` takes its stable flag as final at once (the gate's usual "two equal stable frames" would be a second, redundant rule). One weigh-in saves one row: frames less than 2 minutes apart (`SESSION_GAP_MS`; the owner's recording has sn steps 37, 19, 71, 58 and 17 s apart, so 71 s is the longest wait seen) are one weigh-in. The scale can sit on a value for two frames before the person has finished settling (107.9, 107.9, 107.9, 107.5, 108.6, 108.6 kg in the capture), so the first settled value is saved at once (the app may be closed right after) and a later settled value of the same weigh-in, within 3 kg, arrives marked `revision` and replaces that row (`reviseWeighIn`; the row goes back to `pending` for JoyoRogo, which keeps the last weight of the day). A lower sn, a silence over 2 minutes or a weight more than 3 kg away (someone else) starts a new weigh-in.
+- **Key**: Settings > Timbangan shows "Kunci timbangan (lanjutan)" once a scale of this protocol is picked: 16 printable ASCII characters (surrounding whitespace is dropped), explained as coming from the Tuya developer platform (iot.tuya.com: cloud project, link the app account the scale is paired in, copy the device's `local_key`). It is kept per scale in `expo-secure-store` (`features/scale/secret.ts`, key `joyofit.scale.secret.<scale id with : as _>`), the same place as the sign-in token; not in the scale table, the log or the recording. Forgetting the scale, picking another one or "Hapus kunci" deletes it. Until it is saved, nothing listens for the scale and "Coba timbang" is disabled. A scale is bound by its address (Android MAC, which the beacon repeats; iOS peripheral id): the session only decodes advertisements of that id.
+- **Weight only**: `weightOnly` on the protocol. `bodyOf` and `capture.ts` drop any impedance or body value for such a protocol, the UI says "berat saja" (picker, scale card), and the "fill in your profile for estimates" hint is not shown. The weight goes through the usual path: local history, the "Ini kamu?" guard, JoyoRogo's weight log.
+- **Over the air**: JS only (`expo-secure-store` is already in the binary), so it ships with `scripts/ota.sh` to any build that already has the scale scan (the 2026-10-19 scale build). No native or `app.json` change.
 
 ### Body composition
 
@@ -49,7 +63,7 @@ All ids are in `src/features/scale/registry.ts`. "Vectors" says where the test b
 ## Behaviour
 
 - Picking a scale makes it the only one. While the app is open, "Tangkap otomatis" is on (default) and a scale is picked, one `WeighSession` waits for it (slow radio duty cycle on Android). A test weigh-in switches to the fast one.
-- Broadcast scale: each advertisement of that address is decoded; a weigh-in is final after two equal stable frames (some formats have no stable flag). Connected scale: it only advertises while awake, so the session waits for the advertisement, connects, runs the protocol, saves, disconnects and waits again.
+- Broadcast scale: each advertisement of that address is decoded; a weigh-in is final after two equal stable frames (some formats have no stable flag). A protocol with its own settle rule (Tuya beacon) is final at once on the frame it marks stable. Connected scale: it only advertises while awake, so the session waits for the advertisement, connects, runs the protocol, saves, disconnects and waits again.
 - The same weight within 2 minutes is not saved again (`gate.ts`), except to add impedance to the weigh-in just saved.
 - Multi-user guard (`guard.ts`): a weight more than 6 % (Normal; 12 % Longgar; Mati) from the person's last weight asks "Ini kamu?" before saving. The yardstick is the last local weigh-in (up to 45 days old), else JoyoRogo's latest weight, else the profile weight. "Bukan aku" discards it.
 - The scan is shared (`hub.ts`): the picker, the recorder and the live session can run together; the hub runs one native scan for the union of what they ask.
@@ -61,9 +75,11 @@ Reuses `ensureSensorPermissions` (`features/sensors/permissions.ts`): Android 12
 ## Files
 
 - Native: `modules/ble-sensors/android/.../{ScaleRadio,ScaleLink,ScaleLogic}.kt` (+ `SensorHub.kt`, `BleSensorsModule.kt`, `SensorErrors.kt`), `modules/ble-sensors/ios/{ScaleCentral,ScaleLogic}.swift` (+ `BleSensorsModule.swift`, `SensorCentral.swift`: `requireOn` is no longer private), `modules/ble-sensors/src/{BleSensors.types,BleSensorsModule}.ts`. Tests: `ScaleLogicTest.kt` and `SensorLogicTests/.../ScaleLogicTests.swift` (the Swift package symlinks `ScaleLogic.swift`).
-- JS: `src/features/scale/` (`types`, `uuid`, `registry`, `protocols/*`, `bodyComposition`, `body`, `gate`, `guard`, `capture`, `store`, `sync`, `rogoMap`, `hub`, `driver`, `weigh`, `discovery`, `recorder`, `report`, `profile`, `settings`, `ui/*`), `src/state/ScaleProvider.tsx`, `src/app/settings/scale.tsx`, `src/cloud/rogo.ts` (`checkInWeight`), `src/db/appSchema.ts`, i18n namespace `scale`.
+- JS: `src/features/scale/` (`types`, `uuid`, `registry`, `protocols/*`, `secret`, `bodyComposition`, `body`, `gate`, `guard`, `capture`, `store`, `sync`, `rogoMap`, `hub`, `driver`, `weigh`, `discovery`, `recorder`, `report`, `profile`, `settings`, `ui/*`), `src/state/ScaleProvider.tsx`, `src/app/settings/scale.tsx`, `src/cloud/rogo.ts` (`checkInWeight`), `src/db/appSchema.ts`, i18n namespace `scale`.
 
 ## Test script for when the scale arrives
+
+(For a Tuya beacon scale: pick it, "Kunci timbangan (lanjutan)" asks for the local key; with it saved, "Coba timbang" and step on. It reads weight only.)
 
 1. Install a build that contains this branch (native change: store build or EAS development build, not OTA). Charge or put batteries in the scale, enable Bluetooth on the phone, sign in to JoyoRogo.
 2. Settings > Timbangan > "Lanjut", allow Bluetooth. Step on the scale until its display is on, tap "Cari timbangan". A recognised scale shows with its type and, for advertisement scales, a live "Terbaca ... kg". Tap "Pakai ini".

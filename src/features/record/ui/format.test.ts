@@ -80,10 +80,12 @@ describe('pace and speed per sport', () => {
 
 describe('permissions before prepare', () => {
   it('asks for location outdoors and Bluetooth when a sensor will connect', () => {
-    expect(permissionPlan('run', 0)).toEqual({ location: true, bluetooth: false });
-    expect(permissionPlan('treadmill', 2)).toEqual({ location: false, bluetooth: true });
-    expect(permissionPlan('ride', 1)).toEqual({ location: true, bluetooth: true });
-    expect(permissionPlan('other', 0)).toEqual({ location: false, bluetooth: false });
+    expect(permissionPlan('run', 0)).toEqual({ location: true, bluetooth: false, steps: true });
+    expect(permissionPlan('treadmill', 2)).toEqual({ location: false, bluetooth: true, steps: false });
+    expect(permissionPlan('ride', 1)).toEqual({ location: true, bluetooth: true, steps: false });
+    expect(permissionPlan('other', 0)).toEqual({ location: false, bluetooth: false, steps: false });
+    expect(permissionPlan('hike', 0).steps).toBe(true);
+    expect(permissionPlan('walk', 0).steps).toBe(true);
   });
 
   it('needs precise location outdoors', () => {
@@ -92,6 +94,10 @@ describe('permissions before prepare', () => {
     expect(canPrepare(plan, 'denied', 'unknown')).toBe(false);
     expect(canPrepare(plan, 'blocked', 'unknown')).toBe(false);
     expect(canPrepare(plan, 'granted', 'unknown')).toBe(true);
+  });
+
+  it('never waits for the step counter', () => {
+    expect(canPrepare(permissionPlan('hike', 0), 'granted', 'unknown')).toBe(true);
   });
 
   it('needs no location indoors', () => {

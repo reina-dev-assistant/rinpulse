@@ -203,6 +203,9 @@ internal class SensorHub private constructor(val context: Context) {
 
   fun canConnect() = hasConnectPermission()
 
+  /** Throws the coded error a scan would fail with right now (no permission, Bluetooth off): the overnight room scan asks before it starts its service. */
+  fun requireScanReady() = requireScan()
+
   fun disconnect(id: String) = onHub { links.remove(id.trim().uppercase())?.stop() }
 
   fun disconnectAll() = onHub {

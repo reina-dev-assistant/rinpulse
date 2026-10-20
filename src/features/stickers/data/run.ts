@@ -4,6 +4,7 @@ import { effortKind } from '@/features/share/shareStats';
 import { downsample, formatElapsed, kmSplits, type RoutePoint, type WorkoutSummary } from '@/features/workouts/summary';
 import { sportLabel } from '@/features/workouts/sportLabel';
 import { averagePaceSec, averageSpeedMs, workoutTimes } from '@/features/workouts/times';
+import { summaryCadence } from '@/features/workouts/analysis/cadence';
 import { sportKind, hasPace } from '@/features/workouts/analysis/sport';
 import {
   BEST_EFFORT_DISTANCES,
@@ -160,7 +161,7 @@ export function buildRunSubject(input: RunSubjectInput, locale: 'id' | 'en' | Lo
   if (pos(kcal)) run.kcal = Math.round(kcal);
   const elev = summary.elevationGain ?? analysis?.elevation?.gainM;
   if (num(elev) && elev >= 1) run.elevGainM = Math.round(elev);
-  const cadence = analysis?.stats.avgCad ?? summary.avgCadence;
+  const cadence = analysis?.stats.avgCad ?? summaryCadence(kind, summary, 'avg');
   if (pos(cadence)) run.cadence = Math.round(cadence);
   const power = analysis?.stats.avgPower ?? summary.avgPower;
   if (pos(power)) run.power = Math.round(power);

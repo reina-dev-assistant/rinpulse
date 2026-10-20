@@ -41,6 +41,7 @@
       "maxHr": "maks {{value}} bpm",
       "cadence": "Kadens",
       "maxCadence": "maks {{value}}",
+      "stride": "Panjang langkah",
       "power": "Daya rata-rata",
       "normalizedPower": "NP {{value}} W",
       "fuel": "Perkiraan bahan bakar",
@@ -55,6 +56,7 @@
       "hr": "Detak jantung",
       "elevation": "Elevasi",
       "cadence": "Kadens",
+      "stride": "Panjang langkah",
       "power": "Daya"
     },
     "chart": {
@@ -70,6 +72,7 @@
       "elev": "Elev",
       "hr": "HR",
       "cad": "Kad",
+      "stride": "Lgk",
       "a11yRowPace": "Split {{label}}, {{value}} per kilometer",
       "a11yRowSpeed": "Split {{label}}, {{value}} kilometer per jam",
       "a11yHint": "Memindahkan penanda di grafik dan peta"
@@ -118,7 +121,7 @@
       },
       "outOf": "dari 21",
       "addedToDay": "+{{value}} ke hari ini",
-      "explain": "Usaha Relatif adalah strain JoyoFit untuk latihan ini dalam skala 0 sampai 21: makin lama jantungmu bekerja di level tinggi, makin besar angkanya (TRIMP {{trimp}}).",
+      "explain": "Usaha Relatif adalah strain JoyoFit untuk latihan ini dalam skala 0 sampai 21: makin lama jantungmu bekerja di level tinggi, makin besar angkanya.",
       "a11y": "Usaha relatif {{value}} dari 21, {{band}}"
     },
     "load": {
@@ -176,7 +179,7 @@
     "note": {
       "effort": "Tiap menit detak jantung dihitung menurut zona tempatnya berada (TRIMP Edwards), lalu totalnya dipetakan ke skala 0 sampai 21. Hasilnya bergantung pada detak jantung maksimalmu, jadi isi di profil untuk hasil terbaik.",
       "load": "Beban adalah TRIMP Edwards: menit di tiap zona detak jantung dikali nomor zonanya. 7 hari terakhir dijumlahkan sampai latihan ini; rata-rata mingguan adalah rata-rata 28 hari sebelumnya.",
-      "threshold": "Pace ambang diperkirakan dari performa terbaikmu di 1 mil, 5 km, 10 km, dan half marathon, lalu diperlambat ke usaha satu jam. Zona ditentukan sebagai persentase dari pace ini."
+      "threshold": "Pace ambang diperkirakan dari performa terbaikmu di 1 mil, 5 km, 10 km, dan half marathon pada semua lari 90 hari terakhir (jalan dan hiking tidak dihitung), lalu diperlambat ke usaha satu jam. Pace ini tidak melambat hanya karena lari terbaru santai. Zona ditentukan sebagai persentase dari pace ini."
     },
     "empty": {
       "noSeries": "Grafik, peta, dan split tidak tersedia untuk latihan ini karena tidak ada sampel detail yang direkam."
@@ -226,7 +229,68 @@
       "bpmAvg": "bpm rata-rata",
       "strain": "strain"
     },
+    "filter": {
+      "all": "Semua",
+      "run": "Lari",
+      "walk": "Jalan",
+      "ride": "Sepeda",
+      "swim": "Renang",
+      "strength": "Kekuatan",
+      "other": "Lainnya"
+    },
     "strengthElsewhere_other": "{{count}} latihan beban dari JoyoRogo ada di riwayat latihan beban, tidak di daftar ini."
+  },
+  "progress": {
+    "period": {
+      "week": "Minggu",
+      "month": "Bulan"
+    },
+    "periodA11y": "Rentang grafik",
+    "current": {
+      "week": "Minggu ini",
+      "month": "Bulan ini"
+    },
+    "chart": {
+      "week": "Jarak per minggu",
+      "month": "Jarak per bulan"
+    },
+    "chartA11y": {
+      "week": "Jarak per minggu, 12 minggu terakhir. Terjauh {{value}}.",
+      "month": "Jarak per bulan, 12 bulan terakhir. Terjauh {{value}}."
+    },
+    "stat": {
+      "time": "Waktu",
+      "elevation": "Tanjakan",
+      "count": "Sesi"
+    },
+    "compare": {
+      "up": {
+        "week": "{{value}} lebih jauh dari minggu lalu",
+        "month": "{{value}} lebih jauh dari bulan lalu"
+      },
+      "down": {
+        "week": "{{value}} lebih pendek dari minggu lalu",
+        "month": "{{value}} lebih pendek dari bulan lalu"
+      },
+      "same": {
+        "week": "Sama dengan minggu lalu",
+        "month": "Sama dengan bulan lalu"
+      },
+      "none": {
+        "week": "Tidak ada aktivitas minggu lalu",
+        "month": "Tidak ada aktivitas bulan lalu"
+      }
+    },
+    "kind": {
+      "run": "lari",
+      "walk": "jalan",
+      "ride": "sepeda",
+      "swim": "renang"
+    },
+    "empty": {
+      "week": "Tidak ada aktivitas {{sport}} dalam 12 minggu terakhir.",
+      "month": "Tidak ada aktivitas {{sport}} dalam 12 bulan terakhir."
+    }
   },
   "detail": {
     "title": "Latihan",
@@ -250,15 +314,6 @@
       "bpm": "bpm"
     },
     "gpsFailed": "Jam tidak menyediakan file GPS untuk latihan ini.",
-    "strain": {
-      "title": "Strain",
-      "a11y": "Strain latihan {{value}} dari {{max}}",
-      "toTheDay": "ke hari ini",
-      "dayNow": "Strain hari ini sekarang {{value}}",
-      "how": "Bagaimana ini dihitung?",
-      "explain": "Perkiraan dari JoyoFit, jam tidak melaporkannya: zona detak jantung latihan ini, dengan maksimum {{maxHr}} bpm, dijumlahkan (TRIMP Edwards: zona 1 sampai 5 dihitung 1 sampai 5 per menit) lalu dipetakan ke 0 sampai 21 seperti strain harian. Zona berkisar dari 50 sampai 60 % dari maks untuk Z1 sampai 90 sampai 100 % untuk Z5. Jeda lebih dari dua menit tidak dihitung. Bagian tambahannya adalah strain hari itu dengan latihan ini dikurangi strain hari itu tanpa menit-menitnya, jadi latihan yang sama menambah lebih sedikit pada hari yang sudah berbeban.",
-      "noHr": "Tidak ada detak jantung tersimpan untuk latihan ini, jadi tidak ada strain."
-    },
     "effect": {
       "title": "Efek latihan",
       "aerobic": "Efek aerobik",
@@ -287,30 +342,21 @@
         "4": "Anaerobik",
         "5": "Ekstrem"
       },
-      "zoneRow": "Zona {{zone}} {{label}} · {{time}}",
-      "zoneRowBelow": "{{label}} · {{time}}",
+      "zoneRow": "Zona {{zone}} {{label}}",
       "grams": "lemak {{fat}} g, karbo {{carbs}} g",
       "how": "Bagaimana ini dihitung?",
       "explain": "Perkiraan dari JoyoFit, jam tidak mengukurnya: {{kcal}} kcal dibagi menurut waktu yang benar-benar kamu habiskan di tiap detak jantung, dengan maksimum {{maxHr}} bpm (220 dikurangi usiamu dari profil). Usaha yang lebih ringan membakar porsi lemak yang lebih besar."
     },
     "more": {
       "title": "Statistik lainnya",
-      "timeOfDay": "Waktu latihan",
-      "timeRange": "{{from}} sampai {{to}}",
       "avgPace": "Pace rata-rata",
       "bestPace": "Pace terbaik",
       "avgSpeed": "Kecepatan rata-rata",
       "topSpeed": "Kecepatan tertinggi",
       "lowestHr": "Detak jantung terendah",
-      "elevGain": "Tanjakan",
-      "elevLoss": "Turunan",
       "highest": "Titik tertinggi",
       "lowest": "Titik terendah",
-      "avgPower": "Daya rata-rata",
-      "normPower": "Daya ternormalisasi",
       "peakPower": "Daya puncak",
-      "avgCadence": "Kadens rata-rata",
-      "peakCadence": "Kadens puncak",
       "maxDepth": "Kedalaman maksimum",
       "imported": "Diimpor dari file FIT {{brand}}. Tetap di ponsel ini, tidak dikirim ke cloud atau {{health}}.",
       "healthIos": "Apple Health",
@@ -511,6 +557,11 @@
         "title": "Bluetooth",
         "body": "Dipakai untuk menyambung strap detak jantung dan sensor lain yang sudah kamu pasangkan.",
         "denied": "Izin Bluetooth belum diberikan, jadi sensor tidak akan tersambung. Kamu tetap bisa merekam tanpa sensor, atau buka pengaturan untuk mengizinkannya."
+      },
+      "steps": {
+        "title": "Hitung langkah dan kadens dari HP",
+        "body": "Opsional. Penghitung langkah di HP dipakai untuk kadens dan jumlah langkah saat kamu lari, jalan, atau hiking dengan HP di saku, tangan, atau armband. Datanya tidak keluar dari HP. Kamu tetap bisa mulai tanpa izin ini.",
+        "denied": "Izin penghitung langkah belum diberikan, jadi rekaman ini tidak punya kadens dan langkah dari HP. Rekaman tetap jalan. Buka pengaturan kalau kamu ingin mengizinkannya."
       }
     },
     "gps": {
@@ -524,6 +575,7 @@
       "gps": "GPS",
       "hint": "Kamu bisa mulai tanpa menunggu GPS. Jarak dihitung begitu sinyalnya siap.",
       "hintNoGps": "Tekan Mulai kalau kamu sudah siap.",
+      "noPhoneSteps": "Penghitung langkah HP tidak aktif, jadi kadens dan langkah hanya terekam kalau ada sensor lari yang tersambung.",
       "noService": "Layar mati bisa menghentikan rekaman. Izinkan notifikasi dan matikan penghemat baterai untuk JoyoFit di pengaturan HP supaya rekaman tetap jalan.",
       "start": "Mulai",
       "cancel": "Batal"

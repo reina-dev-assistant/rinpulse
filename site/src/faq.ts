@@ -1,4 +1,4 @@
-import { IOS_TESTFLIGHT_LIVE, STRAVA_PATH } from "./lib.ts";
+import { IOS_TESTFLIGHT_LIVE, STRAVA_PATH, TIMBANGAN_PATH } from "./lib.ts";
 
 /** A tracking goal for the link at the end of an answer. */
 export type FaqLink = { href: string; label: string; goal?: { name: string; location: string } };
@@ -27,12 +27,17 @@ export const FAQ: readonly FaqItem[] = [
         : ""),
   },
   {
+    q: "Timbangan Bluetooth apa yang bisa dipakai?",
+    a: "JoyoFit membaca timbangan badan lewat protokol openScale: timbangan Bluetooth standar (Weight Scale dan Body Composition, misalnya Beurer, Sanitas, A&D) dan protokol beberapa merek seperti Xiaomi Mi Scale, Renpho dan QN, Fitdays dan AiLink, OKOK dan Chipsea, Yunmai, 1byone, Eufy, Etekcity, Inlife, Senssun, Excelvan, Hesley, Exingtech, dan timbangan Tuya yang menyiarkan berat lewat Bluetooth. Satu jenis sudah kami coba di timbangan asli, yaitu timbangan Tuya HAN RIVER HRTZC01 yang hanya mengirim berat dan perlu local key dari platform pengembang Tuya; yang lain belum diuji langsung. Timbangan yang belum dikenali bisa direkam lewat Rekam data timbangan supaya dukungannya ditambahkan. Berat dan komposisi tubuh ikut masuk ke catatan berat badan JoyoRogo kalau kamu masuk dengan akunnya, dan kalau timbangannya dipakai serumah, berat yang jauh beda dari timbangan terakhirmu ditanyakan dulu.",
+    link: { href: TIMBANGAN_PATH, label: "Lihat daftar timbangan", goal: { name: "timbangan_click", location: "faq" } },
+  },
+  {
     q: "Bisa dipakai tanpa jam?",
     a: "Bisa. Pencatat latihan beban, rutinitas, perpustakaan gerakan, riwayat, dan upload ke Strava jalan dari HP saja, dan panduan awal punya jalur tanpa jam. Kalori latihan beban diperkirakan dari jumlah set dengan metode MET. Coach (JoyoRogo Pro) memakai jawabanmu atas badan terasa bagaimana hari ini sebagai pengganti data kesiapan dari jam.",
   },
   {
     q: "Apa yang gratis dan apa yang JoyoRogo Pro?",
-    a: "Sinkron jam, skor, analisis latihan, pencatat latihan beban, Strava, perlengkapan, dan membagikan latihan ke Social gratis. JoyoRogo Pro dipakai untuk Coach (saran harian, rencana lari dan beban, Tanya coach) dan salinan cloud untuk olahraga, riwayat beban, perlengkapan, dan rencana Coach.",
+    a: "Sinkron jam, skor, analisis latihan, pencatat latihan beban, Strava, perlengkapan, dan membagikan latihan ke Social gratis. JoyoRogo Pro dipakai untuk Coach (saran harian, rencana lari dan beban, Tanya coach) dan salinan cloud untuk olahraga, riwayat beban, perlengkapan, dan rencana Coach. Pelanggan Pro juga dapat dukungan prioritas: laporan dan permintaan fitur mereka didahulukan.",
   },
   {
     q: "Kapan dukungan lebih dari satu jam dan sensor Bluetooth rilis?",

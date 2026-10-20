@@ -19,6 +19,22 @@ final class SettingsAndIdentityTests: XCTestCase {
         XCTAssertNil(settings.watchAddress)
     }
 
+    /// docs/multi-watch.md, section 7 (SwitchBackfillTest on Android): only moving the link to another watch marks it for a full pull.
+    func testSwitchBackfillMarksTheWatchTheLinkMovedToUntilItIsDone() {
+        let settings = WearSettings(defaults: ephemeralDefaults())
+        settings.noteConnect(previous: nil, address: "AA")
+        settings.noteConnect(previous: "AA", address: "aa")
+        XCTAssertFalse(settings.switchBackfillPending("AA"))
+        settings.noteConnect(previous: "AA", address: "BB")
+        XCTAssertTrue(settings.switchBackfillPending("BB"))
+        XCTAssertTrue(settings.switchBackfillPending("bb"))
+        XCTAssertFalse(settings.switchBackfillPending("AA"), "the watch the link left is not marked")
+        settings.noteConnect(previous: "BB", address: "AA")
+        settings.switchBackfillDone("BB")
+        XCTAssertFalse(settings.switchBackfillPending("BB"))
+        XCTAssertTrue(settings.switchBackfillPending("AA"))
+    }
+
     func testProfileRoundTripAndClear() {
         let settings = WearSettings(defaults: ephemeralDefaults())
         XCTAssertNil(settings.profile)

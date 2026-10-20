@@ -1,8 +1,10 @@
-import { memo, useCallback, useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
 import { fmtDecimal } from '@/i18n';
 
+import { isFootKind } from '../sport';
+import { stepLengthFromSpeed } from '../stride';
 import { formatPace, type AnalysisSplit, type WorkoutAnalysis } from '../types';
 import { fastestIndex, paceBarFractions, speedKmhFromPace, splitAtIndex, splitEndIndices, splitLabel } from './chartMath';
 import { useAnalysisContext } from './context';
@@ -14,11 +16,17 @@ const W_PACE = 44;
 const W_ELEV = 56;
 const W_HR = 34;
 const W_CAD = 36;
+const W_STRIDE = 44;
+/** The pace bar needs at least this much room (its minimum width plus padding) once every fixed column is placed. */
+const MIN_BAR_ROOM = 24 + 16;
+/** Horizontal padding of a row (6 on each side). */
+const ROW_PAD = 12;
 
 interface Columns {
   elev: boolean;
   hr: boolean;
   cad: boolean;
+  stride: boolean;
 }
 
 interface RowProps {
@@ -38,6 +46,7 @@ const SplitRow = memo(function SplitRow({ split, index, fraction, fastest, activ
   const kmh = speedKmhFromPace(split.paceSecKm);
   const valueText = speed ? (kmh !== null ? fmtDecimal(kmh, 1) : '--') : formatPace(split.paceSecKm);
   const label = splitLabel(split);
+  const stride = columns.stride ? stepLengthFromSpeed(split.paceSecKm !== null && split.paceSecKm > 0 ? 1000 / split.paceSecKm : null, split.cad) : null;
   const elev =
     split.gainM !== null || split.lossM !== null ? `+${Math.round(split.gainM ?? 0)}/-${Math.round(split.lossM ?? 0)}` : '--';
   const body = (
@@ -85,6 +94,13 @@ const SplitRow = memo(function SplitRow({ split, index, fraction, fastest, activ
           </Txt>
         </View>
       ) : null}
+      {columns.stride ? (
+        <View style={{ width: W_STRIDE }}>
+          <Txt size={12} muted align="right">
+            {stride !== null ? fmtDecimal(stride, 2) : '--'}
+          </Txt>
+        </View>
+      ) : null}
     </>
   );
   const style = [styles.row, active ? { backgroundColor: palette.surfaceAlt } : null];
@@ -118,14 +134,22 @@ function SplitsCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
   const ends = useMemo(() => (series ? splitEndIndices(series, splits) : []), [series, splits]);
   const fractions = useMemo(() => paceBarFractions(splits.map((s) => s.paceSecKm)), [splits]);
   const fastest = useMemo(() => fastestIndex(splits.map((s) => s.paceSecKm)), [splits]);
-  const columns = useMemo<Columns>(
-    () => ({
+  const [width, setWidth] = useState(0);
+  const onLayout = useCallback((e: LayoutChangeEvent) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    setWidth((prev) => (prev === w ? prev : w));
+  }, []);
+  const columns = useMemo<Columns>(() => {
+    const base = {
       elev: splits.some((s) => s.gainM !== null || s.lossM !== null),
       hr: splits.some((s) => s.hr !== null),
       cad: splits.some((s) => s.cad !== null),
-    }),
-    [splits],
-  );
+    };
+    // Step length (from each split's pace and cadence) is the last column and shows only while the bar keeps its room.
+    const wantsStride = isFootKind(sport.kind) && splits.some((s) => s.paceSecKm !== null && s.cad !== null);
+    const fixed = W_KM + W_PACE + (base.elev ? W_ELEV : 0) + (base.hr ? W_HR : 0) + (base.cad ? W_CAD : 0) + W_STRIDE + ROW_PAD;
+    return { ...base, stride: wantsStride && width > 0 && width - fixed >= MIN_BAR_ROOM };
+  }, [splits, sport.kind, width]);
 
   const select = useCallback((i: number) => ends[i] !== undefined && store.set(ends[i]!), [ends, store]);
   const activeSplit = useScrubSelector(
@@ -137,7 +161,7 @@ function SplitsCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
   const tappable = ends.length === splits.length;
   return (
     <Card title={t('section.splits')}>
-      <View style={styles.headRow}>
+      <View style={styles.headRow} onLayout={onLayout}>
         <View style={{ width: W_KM }}>
           <Txt size={11} muted>
             {t('splits.km')}
@@ -167,6 +191,13 @@ function SplitsCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
           <View style={{ width: W_CAD }}>
             <Txt size={11} muted align="right">
               {t('splits.cad')}
+            </Txt>
+          </View>
+        ) : null}
+        {columns.stride ? (
+          <View style={{ width: W_STRIDE }}>
+            <Txt size={11} muted align="right">
+              {t('splits.stride')}
             </Txt>
           </View>
         ) : null}
