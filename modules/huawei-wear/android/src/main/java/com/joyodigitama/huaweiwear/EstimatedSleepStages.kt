@@ -57,12 +57,12 @@ internal object EstimatedSleepStages {
   private const val ACC_PER_MOVEMENT = 8f
 
   /**
-   * The percentile of a stream [calibrate] anchors, and the movement value it is placed on. The value is the
-   * median movement of the real night the estimator's constants were fitted on (Garmin Venu SQ, the fixture
-   * of its own test), read off that night's minutes; the median is the steadiest of the candidates — the
-   * 75th and 90th percentiles of a sparse watch file move with how much of the night was restless.
+   * The movement value [calibrate] places a stream's anchor on. It is the median movement of the real night the
+   * estimator's constants were fitted on (Garmin Venu SQ, the fixture of its own test), read off that night's
+   * minutes; the median is the steadiest of the candidates — the 75th and 90th percentiles of a sparse watch file
+   * move with how much of the night was restless. That night has no zero-valued minute, so the value stands for
+   * the midpoint of a *moving* minute, which is what [anchorOf] falls back to on a watch that writes zeros.
    */
-  private const val REFERENCE_PERCENTILE = 0.5
   private const val REFERENCE_MOVEMENT = 2.23f
 
   /**
@@ -280,10 +280,37 @@ internal object EstimatedSleepStages {
    */
   fun calibrate(minutes: List<SleepMinute>): List<SleepMinute> {
     if (minutes.isEmpty()) return minutes
-    val at = percentile(minutes.map { it.movement }, REFERENCE_PERCENTILE)
+    val at = anchorOf(minutes.map { it.movement })
     if (at <= 0f) return minutes
     val factor = REFERENCE_MOVEMENT / at
     return minutes.map { it.copy(movement = maxOf(it.movement * factor, 0f)) }
+  }
+
+  /**
+   * The movement value [calibrate] places on [REFERENCE_MOVEMENT]: the median of [values] when it is above zero,
+   * otherwise the median of the values that are above zero.
+   *
+   * The median is the anchor for the reason [calibrate] gives, and on the night the constants were fitted on it
+   * is 2.23 with **no** zero-valued minute at all (measured on that fixture), so the value it stands for is the
+   * midpoint of a *moving* minute. This watch writes an exact 0 for every minute the wearer did not stir, so its
+   * median is 0 and the guard in [calibrate] then returned the minutes untouched — leaving the stream in the
+   * watch's own unit, which is the one thing the calibration exists to prevent, and the log says what that costs:
+   * `movement p50=0.0 ... longest quiet run 50min` followed by `the stage estimate found no night`.
+   *
+   * The fallback matches like for like — a moving minute's midpoint against a moving minute's midpoint — instead
+   * of inventing a constant, and because it only engages when the median is zero it is a no-op on any stream whose
+   * median is real: the fitted night is bit-identical either way (measured, 522 min asleep and the same staged
+   * shares). A stream with no movement above zero at all still returns zero and [calibrate] still leaves it alone.
+   */
+  private fun anchorOf(values: List<Float>): Float {
+    if (values.isEmpty()) return 0f
+    val sorted = values.sorted()
+    val median = sorted[(sorted.size - 1) / 2]
+    if (median > 0f) return median
+    val from = sorted.indexOfFirst { it > 0f }
+    if (from < 0) return 0f
+    val moving = sorted.subList(from, sorted.size)
+    return moving[(moving.size - 1) / 2]
   }
 
   /**

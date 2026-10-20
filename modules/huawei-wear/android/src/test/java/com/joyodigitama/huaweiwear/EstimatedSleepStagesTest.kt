@@ -473,4 +473,63 @@ class EstimatedSleepStagesTest {
     assertEquals(1, parsed.dataACCs.size)
     assertTrue(EstimatedSleepStages.heartRateFromPpg(parsed.dataPPGs).isEmpty())
   }
+
+  // Calibration: the anchor sets what the movement numbers mean.
+
+  /**
+   * The watch writes an exact 0 for a minute the wearer did not stir, so a night that is mostly still has a
+   * median of 0. The calibration used to bail on that and return the minutes untouched, leaving the raw spikes
+   * in the watch's own unit -- the log reported `movement p50=0.0 ... longest quiet run 50min` and then
+   * `the stage estimate found no night`. The anchor now falls back to the midpoint of the moving minutes.
+   */
+  @Test
+  fun `a night whose still minutes are all zero is still calibrated`() {
+    // The log's shape: half the minutes exactly 0, the rest spread up to the saturated 63.75.
+    val start = Instant.parse("2026-10-19T20:09:00Z")
+    val minutes = (0 until 600).map { i ->
+      val movement = when (i % 100) {
+        in 0..49 -> 0f
+        in 50..78 -> ((i * 7) % 8).toFloat()
+        else -> 8f + ((i * 13) % 100) * 0.5575f
+      }
+      SleepMinute(start.plusSeconds(60L * i), SleepMinuteKind.RAW, movement)
+    }
+
+    val calibrated = EstimatedSleepStages.calibrate(minutes)
+
+    // The median is zero, so the anchor must come from the moving minutes: the stream is rescaled, not passed through.
+    assertTrue("the stream was left untouched", calibrated.map { it.movement } != minutes.map { it.movement })
+    // The anchor is the moving minutes' midpoint placed on the reference, so half of them are now below it.
+    val moving = calibrated.map { it.movement }.filter { it > 0f }.sorted()
+    assertTrue("anchor landed at ${moving[(moving.size - 1) / 2]}", moving[(moving.size - 1) / 2] in 1f..3.5f)
+  }
+
+  /** A stream with no movement at all has no anchor and must be passed through, not divided by zero. */
+  @Test
+  fun `a stream that never moved is left alone`() {
+    val start = Instant.parse("2026-10-19T20:09:00Z")
+    val minutes = (0 until 300).map { SleepMinute(start.plusSeconds(60L * it), SleepMinuteKind.RAW, 0f) }
+
+    assertEquals(0f, EstimatedSleepStages.calibrate(minutes).first().movement)
+  }
+
+  /**
+   * The night the estimator's constants were fitted on has no zero-valued minute, so its median is already real
+   * and the fallback must not engage: the calibration stays a no-op there.
+   */
+  @Test
+  fun `a stream with a real median is calibrated exactly as before`() {
+    val start = Instant.parse("2026-10-19T20:09:00Z")
+    val minutes = (0 until 400).map { i ->
+      SleepMinute(start.plusSeconds(60L * i), SleepMinuteKind.RAW, 2f + (i % 20) * 0.5f)
+    }
+
+    val calibrated = EstimatedSleepStages.calibrate(minutes)
+
+    // The median sits on 2.23, so the factor is 2.23 / that median and every value moves by it.
+    val median = minutes.map { it.movement }.sorted()[(400 - 1) / 2]
+    for ((before, after) in minutes.zip(calibrated)) {
+      assertEquals(before.movement * (2.23f / median), after.movement, 0.001f)
+    }
+  }
 }
