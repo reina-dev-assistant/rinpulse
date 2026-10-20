@@ -286,6 +286,42 @@ internal object EstimatedSleepStages {
     return minutes.map { it.copy(movement = maxOf(it.movement * factor, 0f)) }
   }
 
+  /**
+   * The minutes the estimator is about to read, in one compact line, so a night that comes out wrong can be
+   * replayed and tuned without another guess.
+   *
+   * Format: `firstEpochSecond/mv:hr;mv:hr;...`, one entry per minute from the first to the last, where `mv` is
+   * the movement count times eight (the file's two activity bytes, undivided: 510 is 63.75) and `hr` is the
+   * minute's beats per minute or `x` when it carried none. Movement times eight keeps every sample an integer
+   * and stays inside the byte the estimator divides, so the line replays exactly.
+   *
+   * The stream is written as [estimate] receives it (bounded to the watch's ranges and gap-filled, before
+   * [calibrate]) so the tuning is done on the numbers the watch produced rather than on a scaled copy of them.
+   * The log screen can copy it out whole.
+   */
+  fun dump(minutes: List<SleepMinute>): String {
+    if (minutes.isEmpty()) return "empty"
+    val ordered = minutes.sortedBy { it.time.epochSecond }
+    val first = ordered.first().time.epochSecond
+    val at = ordered.first().time.epochSecond / SECONDS_PER_MINUTE * SECONDS_PER_MINUTE
+    val out = StringBuilder(ordered.size * 8)
+    out.append(first).append('/')
+    var expected = at
+    for (minute in ordered) {
+      // A minute the hold did not cover cannot be inferred, so it is written out as its own marker.
+      while (expected < minute.time.epochSecond) {
+        out.append("g;")
+        expected += SECONDS_PER_MINUTE
+      }
+      out.append((minute.movement * 8f).roundToInt()).append(':')
+      val bpm = minute.heartRate
+      if (bpm == null || !bpm.isFinite() || bpm <= 0f) out.append('x') else out.append(bpm.roundToInt())
+      out.append(';')
+      expected += SECONDS_PER_MINUTE
+    }
+    return out.toString()
+  }
+
   /** The [p] (0..1) of [values]; 0 when there are none. */
   fun percentile(values: List<Float>, p: Double): Float {
     if (values.isEmpty()) return 0f

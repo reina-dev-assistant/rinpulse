@@ -172,6 +172,9 @@ internal class SleepSync(
         EstimatedSleepStages.coverage(minutes, EstimatedSleepStages.fillGaps(minutes)) +
         " inside ${windows.size} watched sleep range(s) for the stage estimate",
     )
+    // The minutes themselves, so a night that comes out wrong can be replayed and tuned off the watch's real data
+    // instead of a guess (see EstimatedSleepStages.dump). Written after the hold, before the calibration.
+    log("TruSleep: stage minutes ${EstimatedSleepStages.dump(EstimatedSleepStages.fillGaps(minutes))}")
     log("TruSleep: stage scoring: ${EstimatedSleepStages.scoring(EstimatedSleepStages.calibrate(EstimatedSleepStages.fillGaps(minutes)))}")
     val sessions = EstimatedSleepStages.estimate(minutes, windows)
     val segments = EstimatedSleepStages.segments(sessions)
