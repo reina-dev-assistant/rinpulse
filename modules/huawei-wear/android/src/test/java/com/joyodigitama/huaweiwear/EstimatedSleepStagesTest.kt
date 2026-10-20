@@ -404,4 +404,73 @@ class EstimatedSleepStagesTest {
     assertEquals("rem", EstimatedSleepStages.stageOf(EstimatedStage.REM))
     assertNull(EstimatedSleepStages.stageOf(EstimatedStage.UNKNOWN))
   }
+
+  /**
+   * A PPG packet exactly as the watch writes it: tag 0x02, a two-byte length, the packet's start second, the peak
+   * count, then the peaks and the amplitudes as raw little-endian shorts. A peak is in hundredths of a second after
+   * the packet's start ([HuaweiTruSleepParser.decodePpg]), so 97 is 970 ms — an interval between two beats.
+   */
+  /** A minute's start, so a packet's beats do not spill into the next minute and split the rate in two. */
+  private val MINUTE_START = 1_000_020
+
+  private fun ppgPacket(startSecond: Int, beats: List<Int>): ByteArray {
+    val body = java.nio.ByteBuffer.allocate(7 + beats.size * 4).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    body.putInt(startSecond)
+    body.put(beats.size.toByte())
+    body.put(0xaa.toByte()) // uncompressed peaks
+    for (beat in beats) body.putShort(beat.toShort())
+    body.put(0xaa.toByte()) // uncompressed amplitudes
+    for (beat in beats) body.putShort((beat / 2).toShort())
+    val packet = java.nio.ByteBuffer.allocate(3 + body.capacity()).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    packet.put(2.toByte()) // TAG_PPG
+    packet.putShort(body.capacity().toShort())
+    packet.put(body.array())
+    return packet.array()
+  }
+
+  /** [expected] peak marks, `intervalCs` hundredths of a second apart from the packet's own start. */
+  private fun beatsFor(intervalCs: Int, expected: Int): List<Int> =
+    List(expected) { index -> index * intervalCs }
+
+  @Test
+  fun `the file's own PPG gives the night's heart rate`() {
+    // The watch writes a packet a minute at night; 97 hundredths of a second between peaks is 970 ms = 61.9 bpm.
+    val packet = ppgPacket(MINUTE_START, beatsFor(97, 60))
+    val ppgs = HuaweiTruSleepParser.parseData(packet).dataPPGs
+    assertTrue("expected the packet to parse, got ${ppgs.size} beats", ppgs.size >= 50)
+
+    val rate = EstimatedSleepStages.heartRateFromPpg(ppgs)
+    assertEquals(1, rate.size)
+    // Sixty-odd beats a minute, a plausible night value; the fixtures come out at 48-75 bpm.
+    assertEquals(62, rate.values.first())
+  }
+
+  @Test
+  fun `a gap between two packets is not read as a slow heart rate`() {
+    // Two packets a minute apart: the interval spanning the gap is a hole in the data, not a beat, so it is dropped
+    // rather than averaged in. One packet alone still yields its own minute's rate.
+    val first = ppgPacket(MINUTE_START, beatsFor(97, 60))
+    val second = ppgPacket(MINUTE_START + 60, beatsFor(97, 60))
+    val ppgs = HuaweiTruSleepParser.parseData(first + second).dataPPGs
+
+    val rate = EstimatedSleepStages.heartRateFromPpg(ppgs)
+    // Both minutes are covered, and neither rate has been dragged down by the packet boundary.
+    assertEquals(2, rate.size)
+    assertTrue("rates were $rate", rate.values.all { it in 55..70 })
+  }
+
+  @Test
+  fun `a file with no PPG leaves the night without a heart rate`() {
+    val accOnly = acc(bedtime, 8, 8)
+    val packet = java.nio.ByteBuffer.allocate(1 + 1 + 7).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+      .put(1.toByte()) // TAG_ACC
+      .put(7.toByte()) // length
+      .putInt(accOnly.startTime)
+      .putShort(accOnly.flags)
+      .array()
+    val parsed = HuaweiTruSleepParser.parseData(packet)
+
+    assertEquals(1, parsed.dataACCs.size)
+    assertTrue(EstimatedSleepStages.heartRateFromPpg(parsed.dataPPGs).isEmpty())
+  }
 }

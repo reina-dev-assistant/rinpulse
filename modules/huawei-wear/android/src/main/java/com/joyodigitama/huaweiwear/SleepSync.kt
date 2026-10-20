@@ -145,16 +145,27 @@ internal class SleepSync(
       log("TruSleep: the watch named no sleep range, no stages estimated (the ACC file covers the whole day)")
       return emptyList()
     }
-    val accs = try {
-      HuaweiTruSleepParser.parseData(sleepData).dataACCs
+    val parsed = try {
+      HuaweiTruSleepParser.parseData(sleepData)
     } catch (e: Exception) {
       log("TruSleep: sleep_data.bin could not be parsed (${e.message ?: e.javaClass.simpleName}), no stages estimated")
       return emptyList()
     }
+    val accs = parsed.dataACCs
+    // The night's heart rate comes from the file's own PPG, which beats per second at night; the phone's step
+    // samples are only a fallback for a file whose PPG is empty (see EstimatedSleepStages.heartRateFromPpg).
+    // Without heart rate the estimator's deep/REM decision has no deviation to work with and falls back to the
+    // time-of-night prior, which is what a night of 59% light / 39% REM / 1% deep looks like.
+    val fromPpg = EstimatedSleepStages.heartRateFromPpg(parsed.dataPPGs)
+    val heartRate = fromPpg.ifEmpty { nightHeartRate }
     val windows = stateSegments.map { it.start to it.end }
     val minutes = EstimatedSleepStages.within(
-      EstimatedSleepStages.withHeartRate(EstimatedSleepStages.minutesFromAcc(accs), nightHeartRate),
+      EstimatedSleepStages.withHeartRate(EstimatedSleepStages.minutesFromAcc(accs), heartRate),
       windows,
+    )
+    log(
+      "TruSleep: sleep_data.bin has ${accs.size} ACC and ${parsed.dataPPGs.size} PPG samples, " +
+        "heart rate from ${if (fromPpg.isEmpty()) "the phone's step samples (${heartRate.size} min)" else "the file's own PPG (${fromPpg.size} min)"}",
     )
     log(
       "TruSleep: sleep_data.bin has " +

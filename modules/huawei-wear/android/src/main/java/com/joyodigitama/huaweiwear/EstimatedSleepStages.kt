@@ -4,6 +4,7 @@
 package com.joyodigitama.huaweiwear
 
 import java.time.Instant
+import kotlin.math.roundToInt
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiTruSleepParser
 import nodomain.freeyourgadget.gadgetbridge.util.sleep.EstimatedSleepSession
 import nodomain.freeyourgadget.gadgetbridge.util.sleep.EstimatedStage
@@ -91,6 +92,17 @@ internal object EstimatedSleepStages {
 
   private const val SECONDS_PER_MINUTE = 60L
 
+  /** One minute in milliseconds, for turning a beat interval into a rate. */
+  private const val MILLIS_PER_MINUTE = 60_000.0
+
+  /**
+   * The plausible range of a PPG peak-to-peak interval, in milliseconds: 800 ms is 75 bpm, 1250 ms is 48 bpm.
+   * The watch writes a packet every 60 s at night, so an interval between the last peak of one packet and the
+   * first of the next is a gap in the data rather than a slow beat, and is dropped instead of averaged in.
+   */
+  private const val MIN_BEAT_INTERVAL_MILLIS = 500L
+  private const val MAX_BEAT_INTERVAL_MILLIS = 1500L
+
   /**
    * How far outside its range an estimated row may reach and still count as inside it. The estimator's grid runs to
    * the last minute it was given, and a range's own end can fall mid-minute, so a row's `end` can sit up to a minute
@@ -140,6 +152,42 @@ internal object EstimatedSleepStages {
       val bpm = heartRate ?: continue
       if (bpm <= 0) continue
       out[timestamp / 60 * 60] = bpm
+    }
+    return out
+  }
+
+  /**
+   * The heart rate of each minute the accelerometer file covers, read from its own PPG.
+   *
+   * The file is not only the accelerometer: it interleaves accelerometer packets with photoplethysmogram
+   * packets, and those carry the **interval between two blood-flow peaks**, in milliseconds
+   * ([HuaweiTruSleepParser.decodePpg]: `startTime * 1000 + peak * 10`). At night the watch samples them every
+   * second, so the file holds the night's own heart rate and the phone's step samples are not needed for it.
+   * Measured on the parser's own fixtures: intervals of 800–1250 ms, i.e. 48–75 bpm, a plausible night.
+   *
+   * This matters because the estimator splits deep from REM by heart rate against its own slow baseline
+   * ([SleepStageEstimator.StageFeatures]): with no heart rate that deviation is zero for every minute and the
+   * decision collapses to the time-of-night prior alone. Measured on Hilmi's watch: `0 with heart rate`, and the
+   * night came back as 59% light, 39% REM, 1% deep over two runs.
+   *
+   * The intervals are averaged per minute (they are beats, so their mean is the minute's rate); intervals outside
+   * [MIN_BEAT_INTERVAL_MILLIS]..[MAX_BEAT_INTERVAL_MILLIS] are dropped rather than averaged in, since a gap between
+   * two packets or a missed beat would otherwise read as an implausibly slow rate.
+   */
+  fun heartRateFromPpg(ppgs: List<HuaweiTruSleepParser.TruSleepDataPpg>): Map<Long, Int> {
+    if (ppgs.size < 2) return emptyMap()
+    val ordered = ppgs.sortedBy { it.startTime }
+    val beats = HashMap<Long, MutableList<Double>>()
+    for (index in 1 until ordered.size) {
+      val gap = ordered[index].startTime - ordered[index - 1].startTime
+      if (gap < MIN_BEAT_INTERVAL_MILLIS || gap > MAX_BEAT_INTERVAL_MILLIS) continue
+      val minute = ordered[index].startTime / 1000 / SECONDS_PER_MINUTE * SECONDS_PER_MINUTE
+      beats.getOrPut(minute) { ArrayList() }.add(gap.toDouble())
+    }
+    val out = HashMap<Long, Int>(beats.size)
+    for ((minute, gaps) in beats) {
+      val bpm = (MILLIS_PER_MINUTE / (gaps.sum() / gaps.size)).roundToInt()
+      if (bpm > 0) out[minute] = bpm
     }
     return out
   }
