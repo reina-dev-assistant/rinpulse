@@ -48,6 +48,22 @@ internal object WatchSql {
        ON CONFLICT(start, type) DO UPDATE SET
          end = excluded.end, stage = excluded.stage, device = excluded.device, imported = 0"""
 
+  /**
+   * (type, type): drops an estimated row that lies outside every judged-asleep range of the watch. The estimate
+   * is only ever produced inside those ranges (`EstimatedSleepStages.within`), so a row outside them cannot have
+   * been derived by the current rule: it is left over from a build that estimated the file unbounded, when the
+   * accelerometer's 24 hours of daytime were read as sleep. Such a row covered a whole day, so it stayed in the
+   * database through every later sync and held the day's total at 177 h. Imported stages and a watch's own staged
+   * rows are left alone.
+   */
+  const val DELETE_ESTIMATED_OUTSIDE_RANGES =
+    """DELETE FROM sleep_segments AS e
+       WHERE e.type = ? AND e.imported = 0
+         AND NOT EXISTS (
+           SELECT 1 FROM sleep_segments r
+            WHERE r.stage IS NULL AND (r.device IS NULL OR r.device = e.device)
+              AND r.start <= e.start AND r.end >= e.end)"""
+
   /** (start, end, score, efficiency, device) */
   const val UPSERT_SLEEP_SCORE =
     """INSERT INTO sleep_scores (start, end, score, efficiency, device) VALUES (?, ?, ?, ?, ?)

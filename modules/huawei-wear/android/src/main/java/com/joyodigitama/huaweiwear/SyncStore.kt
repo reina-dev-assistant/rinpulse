@@ -233,6 +233,14 @@ internal class SyncStore(context: Context) {
           arrayOf<Any?>(s.start, s.end, s.score, s.efficiency, address),
         )
       }
+      // An estimate from a build that read the accelerometer's whole day as sleep left rows reaching far outside
+      // the watch's judged-asleep ranges. They cover a day each, so they outlive every later sync and keep the
+      // day's total wrong. The current rule only ever estimates inside those ranges, so a row outside all of them
+      // cannot be current: it is dropped here, on every sync, and a fresh install simply finds nothing to drop.
+      db.execSQL(
+        WatchSql.DELETE_ESTIMATED_OUTSIDE_RANGES,
+        arrayOf<Any?>(EstimatedSleepStages.RAW_ESTIMATED),
+      )
       db.execSQL(WatchSql.UPDATE_LAST_SYNC, arrayOf(result.to, address))
       db.setTransactionSuccessful()
     } finally {
