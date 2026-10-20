@@ -94,7 +94,8 @@ internal class ActivitySync(
     // TruSleep / dictionary sleep files newer watches use. A failure there is logged and leaves
     // the step data intact.
     // The same minute samples carry the night's heart rate, which the estimation of stages needs (see
-    // EstimatedSleepStages): the watch sends no stages, and the accelerometer file alone is half the input.
+    // EstimatedSleepStages): the watch sends no stages, and the accelerometer file is what the estimate is
+    // built on. The night's heart rate goes with it, which is what splits its stages.
     val trueSleep = SleepSync(session, events).sync(start.toInt(), end, EstimatedSleepStages.heartRateByMinute(samples.map { it.timestamp to it.heartRate }))
     val sleep = (frameSleep + trueSleep.segments).distinctBy { listOf(it.start, it.end, it.type) }.sortedBy { it.start }
 

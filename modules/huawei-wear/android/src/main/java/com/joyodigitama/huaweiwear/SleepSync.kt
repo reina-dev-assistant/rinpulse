@@ -47,8 +47,9 @@ internal class SleepSync(
    * Returns the sleep segments, or an empty list when GB would not download sleep for this watch
    * or the download failed (logged). Only a lost link or cancellation aborts the caller.
    *
-   * [nightHeartRate] is the heart rate per minute of the same sync, the other half of the input
-   * [EstimatedSleepStages] needs; without it the ACC file alone cannot be staged.
+   * [nightHeartRate] is the heart rate per minute of the same sync. The accelerometer alone still yields the
+   * night (measured); the heart rate is what the estimator uses to split its stages, so without it the stages
+   * are movement only.
    */
   suspend fun sync(sinceSec: Int, end: Int, nightHeartRate: Map<Long, Int> = emptyMap()): SleepDownload {
     // GB starts at the last stored sleep. Here `sinceSec` is the previous sync, and a night that
