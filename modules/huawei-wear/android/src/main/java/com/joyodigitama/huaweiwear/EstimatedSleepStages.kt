@@ -64,6 +64,13 @@ internal object EstimatedSleepStages {
   private const val REFERENCE_PERCENTILE = 0.5
   private const val REFERENCE_MOVEMENT = 2.23f
 
+  /**
+   * The estimator's `SleepEstimatorConfig.sleepThreshold`: a minute whose weighted movement is at or above this
+   * is awake. Used only to describe a stream in the log ([scoring]), never to score one -- the estimator does
+   * its own scoring with its own constants.
+   */
+  private const val SLEEP_THRESHOLD = 8f
+
   /** Below this many minutes a stream cannot hold a night (the estimator wants 150 of sleep in 180). */
   private const val MIN_MINUTES = 180
 
@@ -184,6 +191,13 @@ internal object EstimatedSleepStages {
    * estimator reports as "no night" exactly like a sparse stream does. Placing the stream's own
    * [REFERENCE_PERCENTILE] percentile on [REFERENCE_MOVEMENT] removes the unknown unit instead of
    * guessing it, and is the same transformation whatever the unit is.
+   *
+   * Why the midpoint of the stream rather than its median: a worn watch is quiet through the night and
+   * loud through the day, and only the night is scored, so a night's own readings sit near the bottom of
+   * the stream the day dragged up. The median of a file that holds nothing but night (this watch's
+   * `sleep_data.bin` covers the asleep window) is a night value, so the midpoint is used only when the
+   * median is not already below it — with a night-only file that leaves the median in charge, and with a
+   * 24-hour file it keeps the anchor on the night instead of the day.
    */
   fun calibrate(minutes: List<SleepMinute>): List<SleepMinute> {
     if (minutes.isEmpty()) return minutes
@@ -198,6 +212,37 @@ internal object EstimatedSleepStages {
     if (values.isEmpty()) return 0f
     val sorted = values.sorted()
     return sorted[((sorted.size - 1) * p).toInt()]
+  }
+
+  /**
+   * What the sleep/wake scoring actually made of these minutes, for the log. A night can fail to come out
+   * for reasons the file's density does not show: the estimator calls a minute asleep only when its weighted
+   * movement is under its threshold, and a run of minutes has to stay under it for a whole night to exist.
+   *
+   * The estimator's own scoring is not reachable from here (its grid and labels are internal to the ported
+   * package), so this reports the numbers that bound it instead of the labels: how the movement values are
+   * spread, how many minutes are quiet enough that the centre of the Cole-Kripke window alone lands under
+   * `SleepEstimatorConfig.sleepThreshold` (8, and the centre weight is 1), and the longest unbroken such run.
+   * A night that is genuinely there shows a long quiet run; values in the wrong unit show a short one.
+   */
+  fun scoring(minutes: List<SleepMinute>): String {
+    val raw = minutes.filter { it.kind == SleepMinuteKind.RAW }
+    if (raw.isEmpty()) return "no readings to score"
+    val values = raw.map { it.movement }
+    val ordered = raw.sortedBy { it.time.epochSecond }
+    var run = 0
+    var longest = 0
+    for (minute in ordered) {
+      if (minute.movement < SLEEP_THRESHOLD) {
+        run++
+        if (run > longest) longest = run
+      } else {
+        run = 0
+      }
+    }
+    val quiet = values.count { it < SLEEP_THRESHOLD } * 100 / values.size
+    return "movement p50=${percentile(values, 0.5)} p90=${percentile(values, 0.9)} max=${values.max()}, " +
+      "$quiet% of minutes under the $SLEEP_THRESHOLD threshold, longest quiet run ${longest}min"
   }
 
   /**

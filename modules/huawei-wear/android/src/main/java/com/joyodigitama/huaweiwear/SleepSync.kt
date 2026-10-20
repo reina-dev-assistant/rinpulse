@@ -144,6 +144,7 @@ internal class SleepSync(
         EstimatedSleepStages.coverage(minutes, EstimatedSleepStages.fillGaps(minutes)) +
         " for the stage estimate",
     )
+    log("TruSleep: stage scoring: ${EstimatedSleepStages.scoring(EstimatedSleepStages.calibrate(EstimatedSleepStages.fillGaps(minutes)))}")
     val sessions = EstimatedSleepStages.estimate(minutes)
     val segments = EstimatedSleepStages.segments(sessions)
     if (segments.isEmpty()) {
