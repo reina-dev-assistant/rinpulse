@@ -284,7 +284,10 @@ internal class FileDownloader(
       accept = { packet, _ ->
         val block = packet.expect<FileDownloadService0A.BlockResponse>("file data $name")
         val decodeError = block.e
-        if (decodeError is HuaweiPacket.CryptoException) {
+        // Both mean the same thing: the block looked encrypted but was not, so its plain layout is
+        // used. MissingTagException(0x7e) is the shape the Watch Fit 1 produces (see BlockResponse),
+        // and it used to abort the whole download, so it is worth seeing in the log.
+        if (decodeError is HuaweiPacket.CryptoException || decodeError is HuaweiPacket.MissingTagException) {
           log("$name: data could be decoded as TLV, but not decrypted (${decodeError.message})")
         }
         // GB compares the byte counter with `number - 1`; compared modulo 256 here so a block of

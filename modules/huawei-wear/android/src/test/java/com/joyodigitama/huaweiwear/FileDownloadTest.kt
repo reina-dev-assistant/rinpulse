@@ -236,6 +236,61 @@ class FileDownloadTest {
     }
   }
 
+  /**
+   * A 0x0A block whose packet number is 0x7c reads as an encrypted TLV (the number is the tag
+   * byte), and when its data happens to parse as a TLV chain with no 0x7e ciphertext,
+   * decryptRaw() throws MissingTagException(0x7e). That used to fail the whole download of
+   * sleep_data.bin -- a file big enough to reach packet 0x7c -- with "Missing tag: 7e", which is
+   * exactly the error the Watch Fit 1 showed. The plain layout must be used instead.
+   */
+  @Test
+  fun oldSyncBlockNumberedLikeACryptoTagStillDownloads() = runBlocking {
+    // 124 one-byte packets (numbers 0x00..0x7b), then the packet numbered 0x7c. Its data is
+    // 01 v0 01 v1, so after the number the parser sees {0x7c: 1, 0x01: 1}: a full TLV chain
+    // that says "encrypted" and carries no 0x7e. (Chosen so the chain parses exactly.)
+    val file = ByteArray(124) { (0x40 + it).toByte() } + byteArrayOf(0x01, 0x22, 0x01, 0x33)
+    val (_, session, events) = setup { r ->
+      when (r.command) {
+        0x01 -> listOf(tlvFrame(0x0a, 0x01, HuaweiTLV().put(0x01, "sleep_state.bin;sleep_data.bin")))
+        0x02 -> listOf(
+          tlvFrame(0x0a, 0x02, HuaweiTLV().put(0x01, "v1").put(0x02, true).put(0x03, 100.toShort()).put(0x04, 500.toShort()).put(0x05, 5.toShort())),
+        )
+        0x03 -> {
+          val name = r.tlv.getString(0x01)
+          val size = if (name == "sleep_state.bin") 1 else file.size
+          listOf(tlvFrame(0x0a, 0x03, HuaweiTLV().put(0x02, size)))
+        }
+        0x04 -> {
+          val name = r.tlv.getString(0x01)
+          val offset = r.tlv.getInteger(0x02)
+          val size = r.tlv.getInteger(0x03)
+          val content = if (name == "sleep_state.bin") byteArrayOf(0x00) else file
+          // Plain packets, numbered in order: the packet numbered 0x7c carries 4 data bytes.
+          var number = 0
+          val out = ArrayList<ByteArray>()
+          var pos = offset
+          while (pos < offset + size && pos < content.size) {
+            val chunkSize = if (number == 0x7c) 4 else 1
+            val chunk = content.copyOfRange(pos, minOf(pos + chunkSize, content.size))
+            out.add(frame(0x0a, 0x05, byteArrayOf(number.toByte()) + chunk))
+            pos += chunk.size
+            number++
+          }
+          out
+        }
+        else -> emptyList()
+      }
+    }
+    val downloader = FileDownloader(session, events)
+
+    downloader.download(FileRequest.sleepState(false, 1, 2))
+    val data = downloader.download(FileRequest.sleepData(false, 1, 2))
+
+    assertArrayEquals(file, data)
+    // The fallback is not silent: it reports the failed decryption the way the 0x0A path always has.
+    assertTrue(events.logs.any { it.contains("not decrypted") && it.contains("Missing tag") })
+  }
+
   // SleepSync
 
   private fun capsWithTruSleep(dict: Boolean, newSync: Boolean = true) {

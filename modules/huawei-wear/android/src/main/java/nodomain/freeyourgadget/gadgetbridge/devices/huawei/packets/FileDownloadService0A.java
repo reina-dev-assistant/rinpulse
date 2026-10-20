@@ -269,12 +269,17 @@ public class FileDownloadService0A {
         @Override
         public void parseTlv() throws ParseException {
             int offset;
-            // Try to decrypt TLV, and otherwise assume the data is not encrypted
+            // Try to decrypt TLV, and otherwise assume the data is not encrypted.
+            // MissingTagException(0x7e) belongs in this fallback too: a payload that starts with a
+            // crypto header (0x7c, usually with a 0x7d IV) but carries no 0x7e ciphertext is not
+            // encrypted, it only looks like it -- the Watch Fit 1 sends exactly that (see the same
+            // fallback in FileDownloadService2C.BlockResponse). Without this the whole download of
+            // sleep_data.bin failed with "Missing tag: 7e", taking the raw night with it.
             try {
                 HuaweiTLV tlv = new HuaweiTLV().parse(this.payload, 2 ,this.payload.length - 2);
                 this.payload = tlv.decryptRaw(paramsProvider);
                 offset = 0;
-            } catch (ArrayIndexOutOfBoundsException | HuaweiCrypto.CryptoException e) {
+            } catch (ArrayIndexOutOfBoundsException | HuaweiCrypto.CryptoException | HuaweiPacket.MissingTagException e) {
                 this.e = e;
                 offset = 2;
             }
