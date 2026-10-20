@@ -33,8 +33,15 @@ like Gadgetbridge does ("not analysed yet").
    watch whose vendor does staging on the phone.
 2. **`EstimatedSleepStages`** (this project) — the Huawei adapter: ACC seconds become the estimator's
    per-minute `SleepMinute`s, and the heart rate of the same sync (`step_samples.heart_rate`) is joined in.
-   The scale of a raw axis into a movement count is the one undocumented number; `ACC_PER_MOVEMENT` is the
-   first calibration and the first thing to tune against real nights.
+   The raw axis byte has no published unit, so `ACC_PER_MOVEMENT` turns it into a movement count and
+   `calibrate` then places the stream's own median on the one the estimator's constants were fitted on
+   (2.23 counts, the median of its Venu SQ night) — the unit cancels out instead of being guessed.
+   Two things about this watch's file had to be handled before any night came out at all (both measured,
+   see below): it carries a reading only every second or third minute, and the raw unit is unknown. The
+   first made the estimate come back empty on the device, because a minute with no reading counts as *not
+   worn*, which is never sleep, so no 180-minute window could hold the 150 sleep minutes a night needs;
+   `fillGaps` carries a reading across gaps of up to three minutes and leaves longer ones (watch off the
+   wrist) as the holes they are.
 3. **Storage** — the estimate is written to `sleep_segments` under raw kind `0x5657`
    (`RAW_ESTIMATED`), which no watch ever sends, with the usual `light` / `deep` / `rem` / `awake` names.
    No schema change: `stage` already exists.
@@ -62,7 +69,25 @@ segment or two will be wrong. The Sleep screen labels an estimated night as such
 
 The best ground truth available for tuning is the Huawei Health app, which shows Huawei's own stages for
 the same night. `TruSleep: stage estimate …` in the in-app log says how much the estimate had to work with
-for each sync, including how many of the minutes carried a heart rate.
+for each sync: minutes, the share of the span they cover, and how many carried a heart rate. Heart rate is
+*not* what decides whether a night is found (measured: dropping it entirely still yields the same nights);
+the density of the stream is, which is why it is in that line.
+
+## How the two thresholds were measured
+
+The `Venu SQ fixture` in the estimator's own test is a real night with a known answer, so it was replayed
+through the adapter's preprocessing to pick the two numbers rather than guess them:
+
+- **Density.** Thinning that fixture to one reading every second minute makes the estimator report no night
+  at all; a zero-order hold of up to 3 minutes recovers it. Replayed at 25% the hold needs 3. The Fit 1's
+  own file measured 41% (1370 readings over 3333 minutes), where a hold of 3 recovers 250 of the 252
+  minutes the dense copy of the same night holds.
+- **Scale.** Multiplying the same fixture's movement by 8 also produces no night. Anchoring the stream's
+  median on the fixture's median recovers the original three nights at every scale tried, from ×0.25 to
+  ×16, which is why calibration is by percentile and not by a fixed divisor.
+
+Both probes are throwaway JVM programs (`ScaleProbe`, `FillProbe`, `GapProbe` under `/tmp/rincheck`), not
+part of the repo: they exist to justify the constants, and the live behaviour is covered by the tests below.
 
 ## Tests
 

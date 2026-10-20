@@ -48,14 +48,37 @@ internal object EstimatedSleepStages {
 
   /**
    * ACC axis activity per movement unit, so a 0x00..0xff axis reads as 0..32 counts and the two axes of a
-   * sample add up to 0..64. Huawei does not document the unit, so this is a first calibration chosen to land
-   * in the range the estimator's own constants were fitted around — GB divides Huami's intensity by the same
-   * 8 (`HuamiEstimatedSleepSessionProvider`). It is the one number to tune first against real nights.
+   * sample add up to 0..64. Huawei does not document the unit, so this is where the raw byte becomes a
+   * number, and [calibrate] then places the stream's own spread in the range the estimator's constants were
+   * fitted on, which is what actually removes the guess. GB divides Huami's intensity by the same 8
+   * (`HuamiEstimatedSleepSessionProvider`).
    */
   private const val ACC_PER_MOVEMENT = 8f
 
+  /**
+   * The percentile of a stream [calibrate] anchors, and the movement value it is placed on. The value is the
+   * median movement of the real night the estimator's constants were fitted on (Garmin Venu SQ, the fixture
+   * of its own test), read off that night's minutes; the median is the steadiest of the candidates — the
+   * 75th and 90th percentiles of a sparse watch file move with how much of the night was restless.
+   */
+  private const val REFERENCE_PERCENTILE = 0.5
+  private const val REFERENCE_MOVEMENT = 2.23f
+
   /** Below this many minutes a stream cannot hold a night (the estimator wants 150 of sleep in 180). */
   private const val MIN_MINUTES = 180
+
+  /**
+   * How many consecutive minutes with no ACC reading a gap may hold and still be filled from the
+   * reading before it. The Watch Fit 1 logs 1370 readings over a 3333-minute span (41%), with gaps of
+   * two or three minutes; at that sparseness the estimator finds no night at all, because a minute the
+   * file skips is UNMEASURABLE, which is never sleep, so no 180-minute window can hold the 150 sleep
+   * minutes a night needs. A minute between two readings is not a break in the stream (the watch stayed
+   * on the wrist), so the earlier reading carries across it (zero-order hold). Three covers that 41%
+   * with margin: measured on a night replayed at 25% the hold needs 3, and at 41% it recovers 250 of
+   * the 252 minutes a dense copy of the same night holds. A longer stretch stays absent: that is the
+   * watch off the wrist or a real gap, and it must keep reading as a hole.
+   */
+  private const val MAX_FILLED_GAP_MINUTES = 3
 
   private const val SECONDS_PER_MINUTE = 60L
 
@@ -108,7 +131,71 @@ internal object EstimatedSleepStages {
   /** Every night the minutes hold, in time order; empty when there are too few minutes to be one. */
   fun estimate(minutes: List<SleepMinute>): List<EstimatedSleepSession> {
     if (minutes.size < MIN_MINUTES) return emptyList()
-    return SleepStageEstimator.estimateAll(minutes, SleepEstimatorConfig())
+    return SleepStageEstimator.estimateAll(calibrate(fillGaps(minutes)), SleepEstimatorConfig())
+  }
+
+  /**
+   * [minutes] with the short gaps between two readings filled from the reading before them (zero-order
+   * hold).
+   *
+   * The estimator reads a minute it has no reading for as not worn ([SleepMinuteKind.UNMEASURABLE]),
+   * which is never sleep, and it needs 150 sleep minutes inside a 180-minute window. A watch whose file
+   * carries a reading every other minute therefore cannot produce a night at all: no 180-minute window
+   * can hold 150 minutes of sleep when half of them are holes. The Watch Fit 1 does exactly this —
+   * its `sleep_data.bin` logged 1370 minutes over a 3333-minute span — and the estimate came back empty.
+   *
+   * A minute between two readings is not a break in the stream (the watch stayed on the wrist), so the
+   * earlier reading carries across it. A stretch longer than [MAX_FILLED_GAP_MINUTES] stays absent: that
+   * is the watch off the wrist or a real gap, and it must keep reading as a hole.
+   */
+  fun fillGaps(minutes: List<SleepMinute>, maxGapMinutes: Int = MAX_FILLED_GAP_MINUTES): List<SleepMinute> {
+    if (minutes.size < 2) return minutes
+    val slots = HashMap<Long, SleepMinute>(minutes.size * 2)
+    for (minute in minutes) slots[minute.time.epochSecond / SECONDS_PER_MINUTE * SECONDS_PER_MINUTE] = minute
+    val first = slots.keys.min()
+    val last = slots.keys.max()
+    val out = ArrayList<SleepMinute>(minutes.size)
+    var held: SleepMinute? = null
+    var heldMinutes = 0
+    var at = first
+    while (at <= last) {
+      val minute = slots[at]
+      if (minute != null) {
+        out.add(minute)
+        held = minute
+        heldMinutes = 0
+      } else if (held != null && heldMinutes <= maxGapMinutes) {
+        out.add(held.copy(time = Instant.ofEpochSecond(at)))
+      }
+      heldMinutes++
+      at += SECONDS_PER_MINUTE
+    }
+    return out
+  }
+
+  /**
+   * [minutes] with movement scaled so the stream's own spread sits in the range the estimator's
+   * constants were fitted on.
+   *
+   * Huawei does not document the unit of the accelerometer bytes, so a fixed divisor is a guess, and a
+   * wrong one does not merely shift the numbers: too large and every minute scores as awake, which the
+   * estimator reports as "no night" exactly like a sparse stream does. Placing the stream's own
+   * [REFERENCE_PERCENTILE] percentile on [REFERENCE_MOVEMENT] removes the unknown unit instead of
+   * guessing it, and is the same transformation whatever the unit is.
+   */
+  fun calibrate(minutes: List<SleepMinute>): List<SleepMinute> {
+    if (minutes.isEmpty()) return minutes
+    val at = percentile(minutes.map { it.movement }, REFERENCE_PERCENTILE)
+    if (at <= 0f) return minutes
+    val factor = REFERENCE_MOVEMENT / at
+    return minutes.map { it.copy(movement = maxOf(it.movement * factor, 0f)) }
+  }
+
+  /** The [p] (0..1) of [values]; 0 when there are none. */
+  fun percentile(values: List<Float>, p: Double): Float {
+    if (values.isEmpty()) return 0f
+    val sorted = values.sorted()
+    return sorted[((sorted.size - 1) * p).toInt()]
   }
 
   /**
@@ -140,13 +227,20 @@ internal object EstimatedSleepStages {
     EstimatedStage.UNKNOWN -> null
   }
 
-  /** One minute, in seconds, for the log line that says how much the estimate had to work with. */
+  /**
+   * One line for the log that says how much the estimate had to work with: the minutes it spanned, how
+   * many carried a heart rate, and how sparse the stream was. The density is the number that decided
+   * whether a night could be found at all before [fillGaps] existed, so it belongs in the log rather
+   * than being recomputed by hand from the timestamps.
+   */
   fun coverage(minutes: List<SleepMinute>): String {
     if (minutes.isEmpty()) return "no minutes"
     val withHeartRate = minutes.count { it.heartRate != null }
     val first = minutes.minOf { it.time }
     val last = minutes.maxOf { it.time }
-    return "${minutes.size} minutes $first..$last, $withHeartRate with heart rate"
+    val spanMinutes = (last.epochSecond - first.epochSecond) / SECONDS_PER_MINUTE + 1
+    val density = minutes.size * 100 / spanMinutes
+    return "${minutes.size} minutes $first..$last ($density% of the span), $withHeartRate with heart rate"
   }
 
   /**

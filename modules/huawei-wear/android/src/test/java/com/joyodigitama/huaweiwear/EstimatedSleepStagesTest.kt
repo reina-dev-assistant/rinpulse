@@ -5,6 +5,8 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiTruSleepParser
 import nodomain.freeyourgadget.gadgetbridge.util.sleep.EstimatedStage
+import nodomain.freeyourgadget.gadgetbridge.util.sleep.SleepMinute
+import nodomain.freeyourgadget.gadgetbridge.util.sleep.SleepMinuteKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -155,6 +157,63 @@ class EstimatedSleepStagesTest {
   fun `too few minutes are no night at all`() {
     val minutes = EstimatedSleepStages.minutesFromAcc(accMinutes(bedtime, 60) { 4 })
     assertEquals(emptyList<Any>(), EstimatedSleepStages.estimate(minutes))
+  }
+
+  @Test
+  fun `a reading every other minute still makes a night, and a long gap stays a hole`() {
+    // The watch's file on the wrist: a reading every other minute (the Fit 1 logged 1370 minutes over a
+    // 3333-minute span). Without the hold, no 180-minute window can hold 150 sleep minutes, so the whole
+    // night is lost -- the estimate came back empty on the device.
+    val sparse = aNight().filterIndexed { index, _ -> index % 2 == 0 }
+    val sparseMinutes = EstimatedSleepStages.minutesFromAcc(sparse)
+    assertEquals("half the readings", aNight().size / 2, sparseMinutes.size)
+
+    val filled = EstimatedSleepStages.fillGaps(sparseMinutes)
+    assertTrue("the gaps were filled, got ${filled.size}", filled.size > sparseMinutes.size * 3 / 2)
+
+    val sessions = EstimatedSleepStages.estimate(sparseMinutes)
+    assertEquals("a night out of a sparse stream", 1, sessions.size)
+
+    // A stretch the watch was off the wrist is not bridged for more than the hold's own limit; the rest
+    // keeps reading as a hole, so a night cannot be claimed over it.
+    val withBreak = EstimatedSleepStages.minutesFromAcc(
+      accMinutes(bedtime, 60) { 4 } + accMinutes(bedtime.plusSeconds(600 * 60L), 300) { 4 },
+    )
+    val bridged = EstimatedSleepStages.fillGaps(withBreak)
+    val holeStart = 60L
+    val holeEnd = 600L
+    val insideHole = bridged.filter {
+      val minute = (it.time.epochSecond - bedtime.epochSecond) / 60
+      minute in holeStart until holeEnd
+    }
+    assertEquals("only the hold's limit bridges into the gap", 3, insideHole.size)
+    assertTrue(
+      "the rest of the long gap stays absent",
+      bridged.any { (it.time.epochSecond - bedtime.epochSecond) / 60 == holeEnd },
+    )
+  }
+
+  @Test
+  fun `movement is calibrated onto the range the estimator was fitted on, whatever the raw unit`() {
+    fun minute(index: Int, movement: Float) =
+      SleepMinute(bedtime.plusSeconds(60L * index), SleepMinuteKind.RAW, movement)
+
+    val raw = listOf(1f, 2f, 3f, 4f, 5f).mapIndexed(::minute)
+    val scaled = EstimatedSleepStages.calibrate(raw)
+    // The stream's own median lands on the reference, so an undocumented unit cancels out.
+    assertEquals(2.23f, EstimatedSleepStages.percentile(scaled.map { it.movement }, 0.5), 0.001f)
+
+    // The same stream in a unit 64 times larger comes out identical: a wrong unit cannot turn every
+    // minute into awake, which is what the estimator reports as "no night".
+    val busy = listOf(1f, 2f, 3f, 4f, 5f).mapIndexed { index, movement -> minute(index, movement * 64f) }
+    val calibratedBusy = EstimatedSleepStages.calibrate(busy).map { it.movement }
+    scaled.forEachIndexed { index, minute ->
+      assertEquals("minute $index", minute.movement, calibratedBusy[index], 0.001f)
+    }
+
+    // A stream that never moves has no spread to anchor on and is left alone.
+    val still = listOf(0f, 0f, 0f, 0f).mapIndexed(::minute)
+    assertEquals(still.map { it.movement }, EstimatedSleepStages.calibrate(still).map { it.movement })
   }
 
   @Test
