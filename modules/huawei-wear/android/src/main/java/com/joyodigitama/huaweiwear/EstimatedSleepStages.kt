@@ -299,6 +299,50 @@ internal object EstimatedSleepStages {
   }
 
   /**
+   * The stored estimated rows a fresh estimate supersedes, so the caller can drop them by rowid.
+   *
+   * The estimate is rebuilt from the accelerometer file on every sync, so each run replaces the rows earlier runs
+   * wrote. An upsert cannot do that: the table is keyed `(start, type)`, and a re-run can begin at a different
+   * minute — the file grows at its oldest end and the estimate is bounded by the watch's judged-asleep ranges
+   * ([within]), which move with it — so a superseded row is not one the new rows collide with. Left behind, the
+   * rows accumulate: a build that estimated the file unbounded left one covering 24 h (the whole accelerometer day
+   * read as sleep), and it held the day's total at 177 h through every later sync. Measured on Hilmi's watch: 177 h
+   * reported from a 55-hour file, three runs deep.
+   *
+   * [stored] is what the database held *before* this run wrote anything, as `(rowid, start, end)`; [fresh] is the
+   * rows of this sync — only the estimated ones matter, and the watch's own stage-less ranges are ignored here even
+   * when the caller passes them, since a range that spans the night would otherwise cover every estimate inside it;
+   * [windows] are those stage-less ranges (its `sleep_state.bin` stretches), which say what is still reproducible.
+   *
+   * A row goes when:
+   *
+   *  - a fresh estimated row covers the same stretch — the re-run shifted and this is the run before it piling up; or
+   *  - it is not inside any window — the current rule only ever estimates inside them ([within]), so a row outside
+   *    all of them cannot be reproduced. This is exactly the unbounded 24-hour row, which lies across the whole day.
+   *
+   * A row sharing its *start* with a fresh row is not superseded but replaced: the upsert conflicted on
+   * `(start, type)` and wrote over that same rowid, so deleting it would drop the row just stored.
+   *
+   * A row inside a window that this run did not claim stays: the estimator can produce nothing for a night whose
+   * data is too sparse, and an estimate made for it earlier is still the best row for that night. When this run
+   * produced no estimate at all (no accelerometer file) there are no fresh rows, so only unreproducible ones go.
+   */
+  fun superseded(
+    stored: List<StoredEstimated>,
+    fresh: List<SleepSegment>,
+    windows: List<Pair<Long, Long>>,
+  ): List<StoredEstimated> {
+    val estimated = fresh.filter { it.type == RAW_ESTIMATED }
+    return stored.filter { row ->
+      when {
+        estimated.any { it.start == row.start } -> false
+        estimated.any { it.start < row.end && row.start < it.end } -> true
+        else -> windows.none { it.first <= row.start && row.end <= it.second }
+      }
+    }
+  }
+
+  /**
    * One line for the log that says how much the estimate had to work with: the minutes it spanned, how
    * many carried a heart rate, how sparse the stream was, and how much the hold then recovered. The
    * density is the number that decides whether a night can be found at all, so it belongs in the log

@@ -2,6 +2,12 @@
 package com.joyodigitama.huaweiwear
 
 /**
+ * One estimated row already in the database, as the rowid that drops it plus the span it covers (unix seconds).
+ * See [EstimatedSleepStages.superseded].
+ */
+internal class StoredEstimated(val rowid: Long, val start: Long, val end: Long)
+
+/**
  * One sleep span. `type` is GB's raw sample kind (frame sleep: the watch's state byte; TruSleep and
  * dictionary sleep: 0x06 light, 0x07 deep, 0x5656 REM, 0x5658 awake, 0x5659 nap, 1 unknown; and
  * [EstimatedSleepStages.RAW_ESTIMATED] for a row the phone's own estimate produced).

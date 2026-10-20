@@ -49,20 +49,24 @@ internal object WatchSql {
          end = excluded.end, stage = excluded.stage, device = excluded.device, imported = 0"""
 
   /**
-   * (type, type): drops an estimated row that lies outside every judged-asleep range of the watch. The estimate
-   * is only ever produced inside those ranges (`EstimatedSleepStages.within`), so a row outside them cannot have
-   * been derived by the current rule: it is left over from a build that estimated the file unbounded, when the
-   * accelerometer's 24 hours of daytime were read as sleep. Such a row covered a whole day, so it stayed in the
-   * database through every later sync and held the day's total at 177 h. Imported stages and a watch's own staged
-   * rows are left alone.
+   * (type, device): the estimated rows this watch has stored, as `(rowid, start, end)`.
+   *
+   * Read so the superseded ones can be dropped by rowid. The estimate is rebuilt from the accelerometer file on
+   * every sync, so a run supersedes what earlier runs wrote, but the upsert cannot see it: the table is keyed
+   * `(start, type)`, and a re-run can begin at a different minute — the file grows at its oldest end, and the
+   * estimate is bounded by the watch's judged-asleep ranges, which move with it — so a superseded row is not one
+   * the new rows collide with. Without dropping them the rows accumulate, and a build that estimated the file
+   * unbounded left one covering 24 h (the whole accelerometer day read as sleep), which held the day's total at
+   * 177 h through every later sync. [EstimatedSleepStages.superseded] decides which; this only lists candidates.
+   *
+   * A plain `SELECT` on columns, with no aliased `DELETE` and no correlated subquery, so it runs on any SQLite
+   * this app may sit on: the version expo-sqlite ships is not pinned here, and an aliased `DELETE` needs 3.33.
    */
-  const val DELETE_ESTIMATED_OUTSIDE_RANGES =
-    """DELETE FROM sleep_segments AS e
-       WHERE e.type = ? AND e.imported = 0
-         AND NOT EXISTS (
-           SELECT 1 FROM sleep_segments r
-            WHERE r.stage IS NULL AND (r.device IS NULL OR r.device = e.device)
-              AND r.start <= e.start AND r.end >= e.end)"""
+  const val SELECT_ESTIMATED_SEGMENTS =
+    "SELECT rowid, start, end FROM sleep_segments WHERE type = ? AND imported = 0 AND device = ?"
+
+  /** (rowid) */
+  const val DELETE_SEGMENT_BY_ROWID = "DELETE FROM sleep_segments WHERE rowid = ?"
 
   /** (start, end, score, efficiency, device) */
   const val UPSERT_SLEEP_SCORE =

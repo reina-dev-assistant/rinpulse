@@ -192,6 +192,18 @@ internal class SyncStore(context: Context) {
   }
 
   /**
+   * The estimated rows [address] has stored, as `(rowid, start, end)`. Read before a sync writes so the rows it
+   * supersedes can be dropped by rowid ([EstimatedSleepStages.superseded]); imported rows are not estimated ones
+   * and are never listed.
+   */
+  private fun storedEstimated(db: WearDatabase, address: String): List<StoredEstimated> =
+    db.rawQuery(WatchSql.SELECT_ESTIMATED_SEGMENTS, arrayOf(EstimatedSleepStages.RAW_ESTIMATED.toString(), address)).use { cursor ->
+      val out = ArrayList<StoredEstimated>(cursor.count)
+      while (cursor.moveToNext()) out.add(StoredEstimated(cursor.getLong(0), cursor.getLong(1), cursor.getLong(2)))
+      out
+    }
+
+  /**
    * Persists one sync in a single transaction and advances `device.last_sync` to `result.to`; every row carries [address]
    * in `device` and the triggers of migration 14 decide against another watch's rows.
    */
@@ -199,6 +211,9 @@ internal class SyncStore(context: Context) {
     val db = db()
     db.beginTransaction()
     try {
+      // The estimated rows on record before this run writes: the ones this run supersedes are dropped at the end,
+      // by rowid (`EstimatedSleepStages.superseded` explains why an upsert cannot replace them).
+      val stored = storedEstimated(db, address)
       val sample = db.compileStatement(WatchSql.UPSERT_STEP_SAMPLE)
       val segment = db.compileStatement(WatchSql.UPSERT_SLEEP_SEGMENT)
       try {
@@ -233,14 +248,17 @@ internal class SyncStore(context: Context) {
           arrayOf<Any?>(s.start, s.end, s.score, s.efficiency, address),
         )
       }
-      // An estimate from a build that read the accelerometer's whole day as sleep left rows reaching far outside
-      // the watch's judged-asleep ranges. They cover a day each, so they outlive every later sync and keep the
-      // day's total wrong. The current rule only ever estimates inside those ranges, so a row outside all of them
-      // cannot be current: it is dropped here, on every sync, and a fresh install simply finds nothing to drop.
-      db.execSQL(
-        WatchSql.DELETE_ESTIMATED_OUTSIDE_RANGES,
-        arrayOf<Any?>(EstimatedSleepStages.RAW_ESTIMATED),
-      )
+      // The estimate is rebuilt from the accelerometer file on every sync, so a run replaces the rows earlier runs
+      // wrote over the same nights. The upsert never catches them: the table is keyed (start, type) and a re-run
+      // can begin at a different minute, so a superseded row is not one the new rows collide with. Left in place
+      // they accumulate — a build that estimated the file unbounded left one covering 24 h, holding the day's total
+      // at 177 h. The watch's own stage-less ranges say which rows are still reproducible; an imported Huawei
+      // export is not `RAW_ESTIMATED`, so it is never listed and keeps its stages.
+      val windows = result.sleep.filter { it.type != EstimatedSleepStages.RAW_ESTIMATED && it.stage == null }
+        .map { it.start to it.end }
+      for (row in EstimatedSleepStages.superseded(stored, result.sleep, windows)) {
+        db.execSQL(WatchSql.DELETE_SEGMENT_BY_ROWID, arrayOf<Any?>(row.rowid))
+      }
       db.execSQL(WatchSql.UPDATE_LAST_SYNC, arrayOf(result.to, address))
       db.setTransactionSuccessful()
     } finally {

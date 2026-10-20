@@ -292,6 +292,68 @@ class EstimatedSleepStagesTest {
   }
 
   @Test
+  fun `the whole-day row a buggy build left behind is dropped, the night it covers is kept`() {
+    val night = bedtime.epochSecond to bedtime.epochSecond + 8 * 3600
+    val day = night.first - 12 * 3600 to night.first + 12 * 3600 // the unbounded estimate: one row over 24 h
+    val stored = listOf(
+      StoredEstimated(1, day.first, day.second), // 177 h bug: reaches outside the watch's own range
+      StoredEstimated(2, night.first, night.first + 3600), // a real estimated row inside it
+    )
+    val windows = listOf(night)
+    val fresh = listOf(SleepSegment(night.first, night.first + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
+
+    // The in-range row shares its start with a fresh row: the upsert wrote over that rowid, so it is replaced,
+    // not deleted. Only the unreproducible day-long row goes.
+    assertEquals(listOf(1L), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+  }
+
+  @Test
+  fun `a shifted re-run drops the rows it no longer lands on`() {
+    val at = bedtime.epochSecond
+    // The previous run's rows, at the minutes it began on; this run begins a minute earlier, so nothing collides.
+    val stored = listOf(StoredEstimated(1, at, at + 600), StoredEstimated(2, at + 600, at + 1200))
+    val fresh = listOf(
+      SleepSegment(at - 60, at + 540, EstimatedSleepStages.RAW_ESTIMATED, "light"),
+      SleepSegment(at + 540, at + 1140, EstimatedSleepStages.RAW_ESTIMATED, "deep"),
+    )
+    val windows = listOf(at - 3600 to at + 3600)
+
+    assertEquals(listOf(1L, 2L), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+  }
+
+  @Test
+  fun `a night this run could not estimate keeps its earlier rows`() {
+    val at = bedtime.epochSecond
+    // Sparse data: the estimator found no night this time, so there are no fresh rows at all.
+    val stored = listOf(StoredEstimated(1, at, at + 3600), StoredEstimated(2, at + 3600, at + 7200))
+    val windows = listOf(at to at + 8 * 3600)
+
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, emptyList(), windows).map { it.rowid })
+  }
+
+  @Test
+  fun `without the watch's ranges nothing is reproducible, so every stored row goes`() {
+    val at = bedtime.epochSecond
+    val stored = listOf(StoredEstimated(1, at, at + 3600))
+
+    assertEquals(listOf(1L), EstimatedSleepStages.superseded(stored, emptyList(), emptyList()).map { it.rowid })
+  }
+
+  @Test
+  fun `the watch's own stage-less ranges in this sync do not condemn the estimates inside them`() {
+    val at = bedtime.epochSecond
+    // The sync hands over the watch's own ranges alongside the estimate. A range spans the whole night, so if it
+    // counted as a "fresh row" every estimate inside it would read as covered and be dropped.
+    val stored = listOf(StoredEstimated(1, at, at + 3600), StoredEstimated(2, at + 3600, at + 7200))
+    val state = SleepSegment(at, at + 8 * 3600, 0x06, null)
+    val fresh = listOf(state) + listOf(SleepSegment(at, at + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
+    val windows = listOf(at to at + 8 * 3600)
+
+    // Only the row the estimate re-landed on is replaced; the one behind it keeps its earlier estimate.
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+  }
+
+  @Test
   fun `every stage the estimator can produce has a stored name, and a gap has none`() {
     assertEquals("awake", EstimatedSleepStages.stageOf(EstimatedStage.AWAKE))
     assertEquals("light", EstimatedSleepStages.stageOf(EstimatedStage.LIGHT))
