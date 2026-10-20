@@ -186,7 +186,7 @@ class EstimatedSleepStagesTest {
       val minute = (it.time.epochSecond - bedtime.epochSecond) / 60
       minute in holeStart until holeEnd
     }
-    assertEquals("only the hold's limit bridges into the gap", 3, insideHole.size)
+    assertEquals("only the hold's limit bridges into the gap", 5, insideHole.size)
     assertTrue(
       "the rest of the long gap stays absent",
       bridged.any { (it.time.epochSecond - bedtime.epochSecond) / 60 == holeEnd },

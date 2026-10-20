@@ -139,7 +139,11 @@ internal class SleepSync(
       return emptyList()
     }
     val minutes = EstimatedSleepStages.withHeartRate(EstimatedSleepStages.minutesFromAcc(accs), nightHeartRate)
-    log("TruSleep: sleep_data.bin has ${EstimatedSleepStages.coverage(minutes)} for the stage estimate")
+    log(
+      "TruSleep: sleep_data.bin has " +
+        EstimatedSleepStages.coverage(minutes, EstimatedSleepStages.fillGaps(minutes)) +
+        " for the stage estimate",
+    )
     val sessions = EstimatedSleepStages.estimate(minutes)
     val segments = EstimatedSleepStages.segments(sessions)
     if (segments.isEmpty()) {

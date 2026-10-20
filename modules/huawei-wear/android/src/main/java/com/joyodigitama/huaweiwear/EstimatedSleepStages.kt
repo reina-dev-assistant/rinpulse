@@ -69,16 +69,18 @@ internal object EstimatedSleepStages {
 
   /**
    * How many consecutive minutes with no ACC reading a gap may hold and still be filled from the
-   * reading before it. The Watch Fit 1 logs 1370 readings over a 3333-minute span (41%), with gaps of
-   * two or three minutes; at that sparseness the estimator finds no night at all, because a minute the
+   * reading before it. The Watch Fit 1 logs 1370 readings over a 3333-minute span (41%, gaps of two or
+   * three minutes on average), and at that sparseness the estimator finds no night at all: a minute the
    * file skips is UNMEASURABLE, which is never sleep, so no 180-minute window can hold the 150 sleep
    * minutes a night needs. A minute between two readings is not a break in the stream (the watch stayed
-   * on the wrist), so the earlier reading carries across it (zero-order hold). Three covers that 41%
-   * with margin: measured on a night replayed at 25% the hold needs 3, and at 41% it recovers 250 of
-   * the 252 minutes a dense copy of the same night holds. A longer stretch stays absent: that is the
-   * watch off the wrist or a real gap, and it must keep reading as a hole.
+   * on the wrist), so the earlier reading carries across it (zero-order hold).
+   *
+   * Five, measured on a night replayed at the cadences this file can have (dense = 403 sleep minutes):
+   * gaps of 2-3 min recover fully at 3, gaps of 3-7 min need 4, and gaps of 5-9 min need 8 while 5
+   * still recovers 336 of 403. It is deliberately well below the estimator's own 45-minute break, so a
+   * stretch the watch really was off the wrist is never claimed as sleep.
    */
-  private const val MAX_FILLED_GAP_MINUTES = 3
+  private const val MAX_FILLED_GAP_MINUTES = 5
 
   private const val SECONDS_PER_MINUTE = 60L
 
@@ -229,18 +231,20 @@ internal object EstimatedSleepStages {
 
   /**
    * One line for the log that says how much the estimate had to work with: the minutes it spanned, how
-   * many carried a heart rate, and how sparse the stream was. The density is the number that decided
-   * whether a night could be found at all before [fillGaps] existed, so it belongs in the log rather
-   * than being recomputed by hand from the timestamps.
+   * many carried a heart rate, how sparse the stream was, and how much the hold then recovered. The
+   * density is the number that decides whether a night can be found at all, so it belongs in the log
+   * rather than being recomputed by hand from the timestamps.
    */
-  fun coverage(minutes: List<SleepMinute>): String {
+  fun coverage(minutes: List<SleepMinute>, filled: List<SleepMinute>): String {
     if (minutes.isEmpty()) return "no minutes"
     val withHeartRate = minutes.count { it.heartRate != null }
     val first = minutes.minOf { it.time }
     val last = minutes.maxOf { it.time }
     val spanMinutes = (last.epochSecond - first.epochSecond) / SECONDS_PER_MINUTE + 1
     val density = minutes.size * 100 / spanMinutes
-    return "${minutes.size} minutes $first..$last ($density% of the span), $withHeartRate with heart rate"
+    val filledDensity = filled.size * 100 / spanMinutes
+    return "${minutes.size} minutes $first..$last ($density% of the span), $withHeartRate with heart rate; " +
+      "gaps up to $MAX_FILLED_GAP_MINUTES min filled to $filledDensity%"
   }
 
   /**
