@@ -29,7 +29,9 @@ internal class SleepDownload(val segments: List<SleepSegment>, val scores: List<
  *     stores one marker per [HuaweiTruSleepParser.TruSleepStatus] range and does not use the
  *     sleep_data content (its analysis call is commented out; Huawei Health works the stages out
  *     from it on the phone). The ranges are stored here without a stage ([segmentsFromState]), so
- *     they show as "asleep" and never as light sleep. The data file is only parsed for the log.
+ *     they show as "asleep" and never as light sleep, and the data file's raw accelerometer is
+ *     turned into estimated stages by [EstimatedSleepStages] plus the sync's heart rate — this
+ *     watch sends no stages any other way.
  *
  * GB's P2P data-dictionary sync (HuaweiP2PDataDictionarySyncService) is a different mechanism: it
  * carries skin temperature, HRV, emotion, sleep apnea and similar, never sleep stages, steps, heart
@@ -44,8 +46,11 @@ internal class SleepSync(
   /**
    * Returns the sleep segments, or an empty list when GB would not download sleep for this watch
    * or the download failed (logged). Only a lost link or cancellation aborts the caller.
+   *
+   * [nightHeartRate] is the heart rate per minute of the same sync, the other half of the input
+   * [EstimatedSleepStages] needs; without it the ACC file alone cannot be staged.
    */
-  suspend fun sync(sinceSec: Int, end: Int): SleepDownload {
+  suspend fun sync(sinceSec: Int, end: Int, nightHeartRate: Map<Long, Int> = emptyMap()): SleepDownload {
     // GB starts at the last stored sleep. Here `sinceSec` is the previous sync, and a night that
     // began before it (synced mid-sleep, or the file not yet written then) would fall outside the
     // window, so the sleep window reaches back at least [SLEEP_LOOKBACK_SEC]. The database
@@ -67,7 +72,7 @@ internal class SleepSync(
       return SleepDownload(emptyList(), emptyList())
     }
     return try {
-      if (supportsDict) dictionarySleep(start, end, supportsBedTime) else truSleep(start, end, newSync)
+      if (supportsDict) dictionarySleep(start, end, supportsBedTime) else truSleep(start, end, newSync, nightHeartRate)
     } catch (e: CancellationException) {
       throw e
     } catch (e: WearException) {
@@ -92,26 +97,59 @@ internal class SleepSync(
 
   // GB downloadTruSleepData, state + data files
 
-  private suspend fun truSleep(start: Int, end: Int, newSync: Boolean): SleepDownload {
+  private suspend fun truSleep(start: Int, end: Int, newSync: Boolean, nightHeartRate: Map<Long, Int>): SleepDownload {
     log("TruSleep: sleep_state/sleep_data download (${if (newSync) "service 2C" else "service 0A"}), start=$start end=$end")
     // GB's SleepFileDownloadCallback: each file is independent; a failed one just stays null.
     val state = downloadOrLog(FileRequest.sleepState(newSync, start, end))
     val sleepData = downloadOrLog(FileRequest.sleepData(newSync, start, end))
 
-    if (sleepData != null && sleepData.isNotEmpty()) {
-      val parsed = HuaweiTruSleepParser.parseData(sleepData)
-      log("TruSleep: sleep_data parsed, ${parsed.dataACCs.size} ACC and ${parsed.dataPPGs.size} PPG samples (not mapped, as GB)")
-    }
-    if (state == null || state.isEmpty()) {
+    // The watch never sends stages for a night like this (dictionary sleep, sleep frames and the state file are
+    // all silent about them), so the raw accelerometer of sleep_data.bin is put to work instead of only logged:
+    // EstimatedSleepStages turns it plus this sync's heart rate into staged rows. GB parses the same file and
+    // stops there ("not analysed yet"), which is why it can only offer "no sleep data" or "start and end time".
+    val estimated = estimateStages(sleepData, nightHeartRate)
+    val stateSegments = if (state == null || state.isEmpty()) {
       log("TruSleep: sleep state file empty")
-      return SleepDownload(emptyList(), emptyList())
+      emptyList()
+    } else {
+      // The 8 bytes after each range are not understood (GB drops them); kept in the log for the Support report.
+      log("TruSleep: sleep_state.bin ${state.size} bytes: ${state.copyOf(minOf(state.size, STATE_LOG_BYTES)).toHex()}${if (state.size > STATE_LOG_BYTES) "..." else ""}")
+      val ranges = segmentsFromState(HuaweiTruSleepParser.parseState(state))
+      if (ranges.isEmpty()) log("TruSleep: no sleep results")
+      for (s in ranges) log("TruSleep: sleep range ${s.start}..${s.end} type=${s.type} stage=${s.stage}")
+      ranges
     }
-    // The 8 bytes after each range are not understood (GB drops them); kept in the log for the Support report.
-    log("TruSleep: sleep_state.bin ${state.size} bytes: ${state.copyOf(minOf(state.size, STATE_LOG_BYTES)).toHex()}${if (state.size > STATE_LOG_BYTES) "..." else ""}")
-    val segments = segmentsFromState(HuaweiTruSleepParser.parseState(state))
-    if (segments.isEmpty()) log("TruSleep: no sleep results")
-    for (s in segments) log("TruSleep: sleep range ${s.start}..${s.end} type=${s.type} stage=${s.stage}")
-    return SleepDownload(segments, emptyList())
+    return SleepDownload(EstimatedSleepStages.withEstimatedStages(stateSegments, estimated), emptyList())
+  }
+
+  /**
+   * The stages [EstimatedSleepStages] worked out of `sleep_data.bin` and [nightHeartRate], or an empty list when
+   * the file is missing or holds no accelerometer minutes.
+   */
+  private fun estimateStages(sleepData: ByteArray?, nightHeartRate: Map<Long, Int>): List<SleepSegment> {
+    if (sleepData == null || sleepData.isEmpty()) {
+      log("TruSleep: no sleep_data.bin, no stages estimated")
+      return emptyList()
+    }
+    val accs = try {
+      HuaweiTruSleepParser.parseData(sleepData).dataACCs
+    } catch (e: Exception) {
+      log("TruSleep: sleep_data.bin could not be parsed (${e.message ?: e.javaClass.simpleName}), no stages estimated")
+      return emptyList()
+    }
+    val minutes = EstimatedSleepStages.withHeartRate(EstimatedSleepStages.minutesFromAcc(accs), nightHeartRate)
+    log("TruSleep: sleep_data.bin has ${EstimatedSleepStages.coverage(minutes)} for the stage estimate")
+    val sessions = EstimatedSleepStages.estimate(minutes)
+    val segments = EstimatedSleepStages.segments(sessions)
+    if (segments.isEmpty()) {
+      log("TruSleep: the stage estimate found no night in those minutes")
+    } else {
+      log(
+        "TruSleep: stage estimate from ${accs.size} ACC samples: ${sessions.size} night(s), ${segments.size} staged rows, " +
+          sessions.joinToString(" ") { "${it.onset}..${it.end} (${it.sleepMinutes} min asleep)" },
+      )
+    }
+    return segments
   }
 
   private suspend fun downloadOrLog(request: FileRequest): ByteArray? =

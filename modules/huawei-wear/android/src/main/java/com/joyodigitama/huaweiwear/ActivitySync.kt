@@ -29,17 +29,6 @@ internal class StepSample(
   )
 }
 
-/**
- * One sleep span. `type` is GB's raw sample kind (frame sleep: the watch's state byte; TruSleep and
- * dictionary sleep: 0x06 light, 0x07 deep, 0x5656 REM, 0x5658 awake, 0x5659 nap, 1 unknown).
- * `stage` is GB's `normalizeType` of it as 'light' | 'deep' | 'rem' | 'awake', null when GB has none.
- * [breakBefore] is only ever set by [SleepCleaning.cleanUnstagedSleep] (never stored): a workout or a long awake stretch
- * lies between this span and the one before it, so it starts a new sleep session however close the two are.
- */
-internal class SleepSegment(val start: Long, val end: Long, val type: Int, val stage: String?, val breakBefore: Boolean = false) {
-  fun toJs(): Map<String, Any?> = mapOf("start" to start, "end" to end, "type" to type, "stage" to stage)
-}
-
 internal class SyncResult(
   val from: Long,
   val to: Long,
@@ -104,7 +93,9 @@ internal class ActivitySync(
     // GB fetchActivityData: once the totals are in, downloadTruSleepData(start, end) fetches the
     // TruSleep / dictionary sleep files newer watches use. A failure there is logged and leaves
     // the step data intact.
-    val trueSleep = SleepSync(session, events).sync(start.toInt(), end)
+    // The same minute samples carry the night's heart rate, which the estimation of stages needs (see
+    // EstimatedSleepStages): the watch sends no stages, and the accelerometer file alone is half the input.
+    val trueSleep = SleepSync(session, events).sync(start.toInt(), end, EstimatedSleepStages.heartRateByMinute(samples.map { it.timestamp to it.heartRate }))
     val sleep = (frameSleep + trueSleep.segments).distinctBy { listOf(it.start, it.end, it.type) }.sortedBy { it.start }
 
     events.log(
@@ -156,6 +147,8 @@ internal class ActivitySync(
         val startSec = (b[0].toLong() shl 24) or (b[1].toLong() shl 16) or (b[2].toLong() shl 8) or b[3].toLong()
         val durationMin = (b[4] shl 8) or b[5]
         val type = container.type.toInt() and 0xFF
+        // A frame that says the watch judged you asleep only says when, never in which stage: it stays stage-less, and
+        // the estimate from sleep_data.bin fills the stages in (see EstimatedSleepStages).
         segments.add(SleepSegment(startSec, startSec + durationMin * 60L, type, SleepSync.stageForRawKind(type)))
       }
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import { applyLocale } from '@/i18n';
-import type { SleepSegment } from '@/wear';
+import type { SleepSegment, SleepStage } from '@/wear';
 
 import { buildNights, nightHasStages } from './nights';
 import { noStagesHint } from './noStagesHint';
@@ -87,5 +87,52 @@ describe('English copy', () => {
     } finally {
       await applyLocale('id');
     }
+  });
+});
+
+describe('a night whose shape came from the phone\'s own stage estimate', () => {
+  // EstimatedSleepStages stores its rows with raw kind 0x5657 and the stage it worked out; src/db/queries.ts marks
+  // them `estimated` before they reach here. The watch's own judged-asleep ranges (stage-less) sit around them.
+  const estimated = (start: number, end: number, stage: SleepStage): SleepSegment => ({
+    start,
+    end,
+    type: 0x5657,
+    stage,
+    estimated: true,
+  });
+
+  it('is staged, and says it is an estimate', () => {
+    const [night] = buildNights(
+      [
+        { start: START, end: START + 7 * H, type: 6, stage: null },
+        estimated(START + H, START + 3 * H, 'light'),
+        estimated(START + 3 * H, START + 4 * H, 'deep'),
+        estimated(START + 4 * H, START + 7 * H, 'rem'),
+      ],
+      [],
+    );
+    expect(nightHasStages(night)).toBe(true);
+    expect(night.estimated).toBe(true);
+    expect(night.seconds.deep).toBe(H);
+    // The stage-less range is not drawn as a stage of its own next to the estimates.
+    expect(night.seconds.asleep).toBe(0);
+  });
+
+  it('is not an estimate when the watch staged any part of the night itself', () => {
+    const [night] = buildNights(
+      [
+        { start: START, end: START + 3 * H, type: 6, stage: 'light' },
+        estimated(START + 3 * H, START + 5 * H, 'deep'),
+      ],
+      [],
+    );
+    expect(nightHasStages(night)).toBe(true);
+    expect(night.estimated).toBe(false);
+  });
+
+  it('a night with no stages at all is not called an estimate', () => {
+    const [night] = buildNights([{ start: START, end: START + 7 * H, type: 6, stage: null }], []);
+    expect(nightHasStages(night)).toBe(false);
+    expect(night.estimated).toBe(false);
   });
 });

@@ -11,6 +11,8 @@ export interface StagePeriod {
   start: number;
   end: number;
   stage: NightStage;
+  /** This period came from the phone's own stage estimate, not the watch's analysis (`SleepSegment.estimated`). */
+  estimated?: boolean;
 }
 
 /** Whether the watch gave any stage for this night; false when everything is `asleep` (the watch only said when you slept). */
@@ -34,6 +36,11 @@ export interface Night {
   awakenings: number;
   /** The watch's own score for this night, null when it gave none. */
   score: SleepScoreRow | null;
+  /**
+   * Every sleeping segment of the night came from the phone's own stage estimate (`EstimatedSleepStages`): the watch
+   * sent no stages, so the shape here was worked out from its raw night and is an estimate, not the watch's analysis.
+   */
+  estimated: boolean;
 }
 
 /** The watch score whose span overlaps `start`..`end` the most; the watch scores the main sleep, not naps. */
@@ -73,8 +80,11 @@ export function buildNights(segments: readonly SleepSpan[], scores: readonly Sle
     if (start >= seg.end) continue;
     const stage: NightStage = seg.stage ?? 'asleep';
     const last = periods[periods.length - 1];
+    const period = seg.breakBefore
+      ? { start, end: seg.end, stage, breakBefore: true, estimated: seg.estimated }
+      : { start, end: seg.end, stage, estimated: seg.estimated };
     if (last && last.stage === stage && last.end >= start && !seg.breakBefore) last.end = seg.end;
-    else periods.push(seg.breakBefore ? { start, end: seg.end, stage, breakBefore: true } : { start, end: seg.end, stage });
+    else periods.push(period);
     cursor = seg.end;
   }
 
@@ -104,6 +114,9 @@ export function buildNights(segments: readonly SleepSpan[], scores: readonly Sle
         nap: asleepSeconds < MIN_NIGHT_SEC,
         awakenings: session.filter((p, i) => p.stage === 'awake' && i > 0 && i < session.length - 1).length,
         score: scoreFor(session[0].start, end, scores),
+        // The stage estimate's rows are the whole story of this night's shape: nothing the watch staged is in it.
+        estimated:
+          session.some((p) => p.stage !== 'asleep') && session.every((p) => p.stage === 'asleep' || p.estimated === true),
       };
     })
     .reverse();

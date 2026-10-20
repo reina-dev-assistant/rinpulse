@@ -20,7 +20,7 @@ It is a sibling of [JoyoRogo](https://joyorogo.com) (food diary). They share one
 
 Free:
 
-- **Watch sync.** Per-minute steps, calories, distance, heart rate, SpO2, resting heart rate, TruSleep sleep stages, workouts with GPS, live heart rate. Background mode keeps the watch connected and syncs every 30 minutes.
+- **Watch sync.** Per-minute steps, calories, distance, heart rate, SpO2, resting heart rate, sleep (TruSleep stages where the watch sends them, otherwise stages estimated on the phone from its raw night — [docs/sleep-stages.md](docs/sleep-stages.md)), workouts with GPS, live heart rate. Background mode keeps the watch connected and syncs every 30 minutes.
 - **Scores and fitness metrics.** Recovery, strain, readiness, VO2max, recovery time, training status, race predictions, HRV status, sleep need. Every formula is a tested pure function and is documented.
 - **Workout analysis.** Map, scrubber charts, splits, laps, heart-rate zones, best efforts, training load, comparison with earlier workouts.
 - **Strength logger** (Hevy style). Active workout with a rest timer, exercise picker with custom exercises, set types, RPE, previous values, supersets, PRs, routines with folders and starter routines, history with calendar, per-exercise charts, weekly muscle heat map. See [docs/strength.md](docs/strength.md).
@@ -143,6 +143,7 @@ Site (`site/`): `bun install`, `bun run dev`, `bun run build` (typecheck, Vite b
 | Doc | Covers |
 |---|---|
 | [docs/watch-reference.md](docs/watch-reference.md) | Supported watches, protocol overview, what works, watch-side features, Studio |
+| [docs/sleep-stages.md](docs/sleep-stages.md) | Sleep stages for watches that do not send them: the estimator, what wins over what, how far to trust it |
 | [docs/app-reference.md](docs/app-reference.md) | Permissions, Health Connect, cloud sync, Strava, gear, imports, analysis, fitness metrics, sharing, social, routes, data storage |
 | [docs/strength.md](docs/strength.md), [docs/strength-cloud.md](docs/strength-cloud.md) | Strength logger and its cloud sync |
 | [docs/multi-watch.md](docs/multi-watch.md) | Several watches: device column, primary rules, switching, background visits |

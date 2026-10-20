@@ -88,19 +88,24 @@ async function sleepEvidence(db: SQLiteDatabase, from: number, to: number): Prom
 /**
  * Stored segments, with the stage-less ones cleaned of what was not sleep (`cleanUnstagedSleep`): workouts, spot HRV
  * measurements, minutes of walking, fragments too short to be sleep. The raw rows stay as the watch sent them, so a
- * rule change re-derives every stored night the next time it is read. Staged segments come back as stored.
+ * rule change re-derives every stored night the next time it is read. Staged segments come back as stored, marked
+ * when their stage came from the phone's own estimate rather than the watch's analysis.
  */
 async function cleanedSleep(db: SQLiteDatabase, rows: SleepSegment[]): Promise<SleepSpan[]> {
+  const marked = rows.map((r) => (r.type === RAW_ESTIMATED_STAGE ? { ...r, estimated: true } : r));
   let from = Infinity;
   let to = -Infinity;
-  for (const r of rows) {
+  for (const r of marked) {
     if (r.stage) continue;
     from = Math.min(from, r.start);
     to = Math.max(to, r.end);
   }
-  if (from > to) return rows;
-  return cleanUnstagedSleep(rows, await sleepEvidence(db, from, to));
+  if (from > to) return marked;
+  return cleanUnstagedSleep(marked, await sleepEvidence(db, from, to));
 }
+
+/** The raw kind the phone's own stage estimate stores (`EstimatedSleepStages.RAW_ESTIMATED`). */
+export const RAW_ESTIMATED_STAGE = 0x5657;
 
 /** Segments that end at or after `sinceSec`, oldest first. */
 export async function listSleepSince(db: SQLiteDatabase, sinceSec: number): Promise<SleepSpan[]> {

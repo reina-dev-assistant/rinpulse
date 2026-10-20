@@ -88,6 +88,7 @@
     "asleepA11y": "Tertidur {{duration}}",
     "stageSummary_other": "{{awakenings}} terbangun · {{count}} perubahan fase",
     "noStages": "Tidak ada fase dari jam",
+    "stageEstimate": "Fase diperkirakan di HP dari gerakan dan denyut nadi, bukan dari jam.",
     "napsIncluded": "termasuk tidur siang {{duration}}",
     "needSummary": "butuh {{need}}, tercapai {{percent}}%",
     "detailsAsleep": "Waktu tidur tidak termasuk waktu terjaga.",

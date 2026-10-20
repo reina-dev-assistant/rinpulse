@@ -84,6 +84,19 @@ internal class SqliteHuaweiImportStore(private val store: SyncStore) : HuaweiImp
       } finally {
         statement.close()
       }
+      // An estimate from the watch's raw night (type RAW_ESTIMATED, EstimatedSleepStages) is dropped for a window
+      // the export now states real stages for: real stages win. Runs after the insert, inside the same transaction,
+      // so the two never mix. `rawQuery` is used because WearDatabase binds statement args only there.
+      val stale = ArrayList<Long>()
+      db.rawQuery(
+        """SELECT e.rowid FROM sleep_segments e JOIN sleep_segments i
+             ON i.imported = 1 AND i.stage IS NOT NULL AND i.start < e.end AND e.start < i.end
+           WHERE e.type = ?""",
+        arrayOf(EstimatedSleepStages.RAW_ESTIMATED.toString()),
+      ).use { cursor ->
+        while (cursor.moveToNext()) stale.add(cursor.getLong(0))
+      }
+      for (rowid in stale) db.execSQL("DELETE FROM sleep_segments WHERE rowid = ?", arrayOf(rowid))
       db.setTransactionSuccessful()
     } finally {
       db.endTransaction()

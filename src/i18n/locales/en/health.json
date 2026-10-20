@@ -91,6 +91,7 @@
     "stageSummary_one": "{{awakenings}} awake · {{count}} stage change",
     "stageSummary_other": "{{awakenings}} awake · {{count}} stage changes",
     "noStages": "No stages from the watch",
+    "stageEstimate": "Stages estimated on the phone from movement and heart rate, not by the watch.",
     "napsIncluded": "includes naps, {{duration}}",
     "needSummary": "needed {{need}}, got {{percent}}%",
     "detailsAsleep": "Asleep time excludes time awake.",

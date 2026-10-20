@@ -98,6 +98,11 @@ export interface SleepSegment {
   end: number;
   type: number;
   stage?: SleepStage | null;
+  /**
+   * True when `type` is the raw kind the phone's own stage estimate stores (`EstimatedSleepStages.RAW_ESTIMATED`,
+   * 0x5657). The stages are then an estimate from the watch's raw night, not the watch's own analysis.
+   */
+  estimated?: boolean;
 }
 
 export interface FitnessTotals {

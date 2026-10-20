@@ -42,7 +42,8 @@ internal fun syncSlices(fromSec: Long, nowSec: Long): List<Pair<Long, Long>> {
   return slices
 }
 
-/** What one stored sync reports to JS (`SyncSummary` in `HuaweiWear.types.ts`). */
+/**
+ * What one stored sync reports to JS (`SyncSummary` in `HuaweiWear.types.ts`). */
 internal class SyncSummary(
   val from: Long,
   val to: Long,

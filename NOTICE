@@ -14,6 +14,12 @@ upstream commit bb7a1e83a29837153bf0c3a50e9869dec3dac0dd, licensed AGPL-3.0-or-l
 Original copyright notices are retained in each ported file; modified files carry a
 "Modified for watch-fit" line.
 
+The sleep-stage estimator under modules/huawei-wear/android/src/main/java/nodomain/freeyourgadget/gadgetbridge/util/sleep/
+(SleepStageEstimator.kt, SleepMinute.kt, SleepLabels.kt) is ported unchanged from that same project at upstream
+commit 94e29b935e5e945e9ebb4a4dda1249e6a7b35a00, where it was written by Manuel Marcatili (AGPL-3.0-or-later) as a
+port of OpenVitals. EstimatedSleepStages.kt in com/joyodigitama/huaweiwear/ is this project's adapter that feeds it
+the Watch Fit 1's own raw night.
+
 RouteFile.kt and RouteFile.swift (the route file sent to the watch) are ports of Gadgetbridge's HuaweiConvertTrack.java and
 HuaweiRouteTrack.java, and the route push in P2pController follows its HuaweiP2PFitnessData.java; verbatim copies of the two
 converter classes live in modules/huawei-wear/ios/HuaweiProtocol/GoldenGen/vendor/ only to generate the test fixtures.

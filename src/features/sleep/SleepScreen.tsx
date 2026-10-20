@@ -165,6 +165,7 @@ export function SleepScreen() {
         </View>
         <AppText variant="caption" muted>
           {[
+            night.estimated ? t('sleep.stageEstimate') : null,
             hasStages ? t('sleep.stageSummary', { awakenings: night.awakenings, count: changes.length }) : t('sleep.noStages'),
             dayNapSec > 0 ? t('sleep.napsIncluded', { duration: formatDuration(dayNapSec) }) : null,
             need ? t('sleep.needSummary', { need: formatDuration(need.seconds), percent: Math.round((dayAsleepSec / need.seconds) * 100) }) : null,
