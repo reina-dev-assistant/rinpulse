@@ -332,11 +332,25 @@ class EstimatedSleepStagesTest {
   }
 
   @Test
-  fun `without the watch's ranges nothing is reproducible, so every stored row goes`() {
+  fun `a night the sync never saw keeps its estimate`() {
+    val at = bedtime.epochSecond
+    val oldNight = at - 7 * 24 * 3600
+    // The sync is incremental: it re-derived this night, and the database also holds last week's.
+    val stored = listOf(StoredEstimated(1, oldNight, oldNight + 6 * 3600), StoredEstimated(2, at, at + 3600))
+    val fresh = listOf(SleepSegment(at, at + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
+    val windows = listOf(at to at + 8 * 3600)
+
+    // Last week's row is not judged at all: this run never saw its accelerometer minutes.
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+  }
+
+  @Test
+  fun `a sync that saw nothing judges nothing`() {
     val at = bedtime.epochSecond
     val stored = listOf(StoredEstimated(1, at, at + 3600))
 
-    assertEquals(listOf(1L), EstimatedSleepStages.superseded(stored, emptyList(), emptyList()).map { it.rowid })
+    // No estimate and no range: the file was missing, or the watch named no sleep. Nothing to judge a row against.
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, emptyList(), emptyList()).map { it.rowid })
   }
 
   @Test

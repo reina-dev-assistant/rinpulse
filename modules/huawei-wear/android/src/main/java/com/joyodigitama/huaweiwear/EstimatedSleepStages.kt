@@ -314,18 +314,23 @@ internal object EstimatedSleepStages {
    * when the caller passes them, since a range that spans the night would otherwise cover every estimate inside it;
    * [windows] are those stage-less ranges (its `sleep_state.bin` stretches), which say what is still reproducible.
    *
-   * A row goes when:
+   * Only rows overlapping what this run worked on are considered — the stretch [fresh] and [windows] together
+   * cover. A sync is incremental, so it re-derives one night while the database holds many: judging a night this
+   * run never saw against no window would delete an estimate that is still the best row for it. No fresh rows and
+   * no windows (the file was missing, or the watch named no sleep) means nothing is judged at all.
+   *
+   * A considered row goes when:
    *
    *  - a fresh estimated row covers the same stretch — the re-run shifted and this is the run before it piling up; or
    *  - it is not inside any window — the current rule only ever estimates inside them ([within]), so a row outside
-   *    all of them cannot be reproduced. This is exactly the unbounded 24-hour row, which lies across the whole day.
+   *    all of them cannot be reproduced by this night's run. This is exactly the unbounded 24-hour row, lying across
+   *    the night it was derived from.
    *
    * A row sharing its *start* with a fresh row is not superseded but replaced: the upsert conflicted on
    * `(start, type)` and wrote over that same rowid, so deleting it would drop the row just stored.
    *
-   * A row inside a window that this run did not claim stays: the estimator can produce nothing for a night whose
-   * data is too sparse, and an estimate made for it earlier is still the best row for that night. When this run
-   * produced no estimate at all (no accelerometer file) there are no fresh rows, so only unreproducible ones go.
+   * A considered row inside a window that this run did not claim stays: the estimator can produce nothing for a
+   * night whose data is too sparse, and an estimate made for it earlier is still the best row for that night.
    */
   fun superseded(
     stored: List<StoredEstimated>,
@@ -333,7 +338,12 @@ internal object EstimatedSleepStages {
     windows: List<Pair<Long, Long>>,
   ): List<StoredEstimated> {
     val estimated = fresh.filter { it.type == RAW_ESTIMATED }
+    val covered = estimated.map { it.start to it.end } + windows
+    if (covered.isEmpty()) return emptyList()
+    val from = covered.minOf { it.first }
+    val to = covered.maxOf { it.second }
     return stored.filter { row ->
+      if (row.end <= from || to <= row.start) return@filter false
       when {
         estimated.any { it.start == row.start } -> false
         estimated.any { it.start < row.end && row.start < it.end } -> true
