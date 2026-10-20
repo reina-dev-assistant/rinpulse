@@ -56,14 +56,29 @@ internal object WatchSql {
    * `(start, type)`, and a re-run can begin at a different minute — the file grows at its oldest end, and the
    * estimate is bounded by the watch's judged-asleep ranges, which move with it — so a superseded row is not one
    * the new rows collide with. Without dropping them the rows accumulate, and a build that estimated the file
-   * unbounded left one covering 24 h (the whole accelerometer day read as sleep), which held the day's total at
-   * 177 h through every later sync. [EstimatedSleepStages.superseded] decides which; this only lists candidates.
+   * unbounded left one covering 24 h (the whole accelerometer day read as sleep), which held the night's total at
+   * 152 h through every later sync. [EstimatedSleepStages.superseded] decides which; this only lists candidates.
    *
    * A plain `SELECT` on columns, with no aliased `DELETE` and no correlated subquery, so it runs on any SQLite
    * this app may sit on: the version expo-sqlite ships is not pinned here, and an aliased `DELETE` needs 3.33.
    */
   const val SELECT_ESTIMATED_SEGMENTS =
     "SELECT rowid, start, end FROM sleep_segments WHERE type = ? AND imported = 0 AND device = ?"
+
+  /**
+   * (device, estimated type): this watch's own stage-less sleep ranges, as `(start, end)`.
+   *
+   * `sleep_state.bin` says when the watch judged the wearer asleep and carries no stage; those rows are what the
+   * estimate is bounded by. Read back from the database rather than from the sync, because the estimate must be
+   * judged against *every* range on record: a row an earlier build left outside all of them stays wrong forever
+   * (see [SELECT_ESTIMATED_SEGMENTS]), and a sync only ever holds the ranges of the night it re-derived.
+   *
+   * The estimated type is excluded by name, not left to `stage IS NULL`: a build that wrote estimated rows without
+   * a stage would otherwise have them counted as ranges, and each stale row would then justify itself and never be
+   * dropped.
+   */
+  const val SELECT_SLEEP_RANGES =
+    "SELECT start, end FROM sleep_segments WHERE device = ? AND imported = 0 AND type <> ? AND stage IS NULL"
 
   /** (rowid) */
   const val DELETE_SEGMENT_BY_ROWID = "DELETE FROM sleep_segments WHERE rowid = ?"

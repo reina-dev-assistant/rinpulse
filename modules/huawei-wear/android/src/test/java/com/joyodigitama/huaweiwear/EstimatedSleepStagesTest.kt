@@ -296,15 +296,46 @@ class EstimatedSleepStagesTest {
     val night = bedtime.epochSecond to bedtime.epochSecond + 8 * 3600
     val day = night.first - 12 * 3600 to night.first + 12 * 3600 // the unbounded estimate: one row over 24 h
     val stored = listOf(
-      StoredEstimated(1, day.first, day.second), // 177 h bug: reaches outside the watch's own range
+      StoredEstimated(1, day.first, day.second), // the 177 h bug: reaches outside the watch's own range
       StoredEstimated(2, night.first, night.first + 3600), // a real estimated row inside it
     )
-    val windows = listOf(night)
+    val ranges = listOf(night)
     val fresh = listOf(SleepSegment(night.first, night.first + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
 
     // The in-range row shares its start with a fresh row: the upsert wrote over that rowid, so it is replaced,
     // not deleted. Only the unreproducible day-long row goes.
-    assertEquals(listOf(1L), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+    assertEquals(listOf(1L), EstimatedSleepStages.superseded(stored, fresh, ranges).map { it.rowid })
+  }
+
+  @Test
+  fun `stale rows an old build left are dropped even though this run never saw their nights`() {
+    val at = bedtime.epochSecond
+    // The 152 h report: a build that estimated the whole accelerometer day left several day-long rows behind, one
+    // per sync. Their own nights are long out of the sync window, so this run re-derived only tonight.
+    val old = at - 5 * 24 * 3600
+    val stored = listOf(
+      StoredEstimated(1, old, old + 24 * 3600),
+      StoredEstimated(2, old + 24 * 3600, old + 48 * 3600),
+      StoredEstimated(3, at, at + 3600),
+    )
+    val tonight = listOf(at to at + 8 * 3600)
+    val fresh = listOf(SleepSegment(at, at + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
+
+    // Judged against every range on record, the day-long rows sit outside all of them and go; tonight's stays.
+    assertEquals(listOf(1L, 2L), EstimatedSleepStages.superseded(stored, fresh, tonight).map { it.rowid })
+  }
+
+  @Test
+  fun `an older night's estimate is kept when its own range is on record`() {
+    val at = bedtime.epochSecond
+    val lastWeek = at - 7 * 24 * 3600
+    val stored = listOf(StoredEstimated(1, lastWeek, lastWeek + 3600), StoredEstimated(2, at, at + 3600))
+    val fresh = listOf(SleepSegment(at, at + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
+    // Both nights' ranges are on record: the incremental sync only re-derived tonight, but last week's row lies
+    // inside its own range, so it is still reproducible and stays.
+    val ranges = listOf(lastWeek to lastWeek + 8 * 3600, at to at + 8 * 3600)
+
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, fresh, ranges).map { it.rowid })
   }
 
   @Test
@@ -316,32 +347,20 @@ class EstimatedSleepStagesTest {
       SleepSegment(at - 60, at + 540, EstimatedSleepStages.RAW_ESTIMATED, "light"),
       SleepSegment(at + 540, at + 1140, EstimatedSleepStages.RAW_ESTIMATED, "deep"),
     )
-    val windows = listOf(at - 3600 to at + 3600)
+    val ranges = listOf(at - 3600 to at + 3600)
 
-    assertEquals(listOf(1L, 2L), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+    assertEquals(listOf(1L, 2L), EstimatedSleepStages.superseded(stored, fresh, ranges).map { it.rowid })
   }
 
   @Test
   fun `a night this run could not estimate keeps its earlier rows`() {
     val at = bedtime.epochSecond
-    // Sparse data: the estimator found no night this time, so there are no fresh rows at all.
+    // Sparse data: the estimator found no night this time, so there are no fresh rows at all. The range is still
+    // on record, so the rows inside it are still reproducible and stay.
     val stored = listOf(StoredEstimated(1, at, at + 3600), StoredEstimated(2, at + 3600, at + 7200))
-    val windows = listOf(at to at + 8 * 3600)
+    val ranges = listOf(at to at + 8 * 3600)
 
-    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, emptyList(), windows).map { it.rowid })
-  }
-
-  @Test
-  fun `a night the sync never saw keeps its estimate`() {
-    val at = bedtime.epochSecond
-    val oldNight = at - 7 * 24 * 3600
-    // The sync is incremental: it re-derived this night, and the database also holds last week's.
-    val stored = listOf(StoredEstimated(1, oldNight, oldNight + 6 * 3600), StoredEstimated(2, at, at + 3600))
-    val fresh = listOf(SleepSegment(at, at + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
-    val windows = listOf(at to at + 8 * 3600)
-
-    // Last week's row is not judged at all: this run never saw its accelerometer minutes.
-    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, emptyList(), ranges).map { it.rowid })
   }
 
   @Test
@@ -349,8 +368,18 @@ class EstimatedSleepStagesTest {
     val at = bedtime.epochSecond
     val stored = listOf(StoredEstimated(1, at, at + 3600))
 
-    // No estimate and no range: the file was missing, or the watch named no sleep. Nothing to judge a row against.
+    // No estimate and no range: the file was missing and no night is on record. Nothing to judge a row against.
     assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, emptyList(), emptyList()).map { it.rowid })
+  }
+
+  @Test
+  fun `an estimate overrunning its range by the minute the grid ends on is still inside it`() {
+    val at = bedtime.epochSecond
+    val range = at to at + 8 * 3600
+    // The grid runs to the last minute it was given, so a row's end can sit one minute past the range's end.
+    val stored = listOf(StoredEstimated(1, range.first, range.second + 60))
+
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, emptyList(), listOf(range)).map { it.rowid })
   }
 
   @Test
@@ -361,10 +390,10 @@ class EstimatedSleepStagesTest {
     val stored = listOf(StoredEstimated(1, at, at + 3600), StoredEstimated(2, at + 3600, at + 7200))
     val state = SleepSegment(at, at + 8 * 3600, 0x06, null)
     val fresh = listOf(state) + listOf(SleepSegment(at, at + 3600, EstimatedSleepStages.RAW_ESTIMATED, "light"))
-    val windows = listOf(at to at + 8 * 3600)
+    val ranges = listOf(at to at + 8 * 3600)
 
     // Only the row the estimate re-landed on is replaced; the one behind it keeps its earlier estimate.
-    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, fresh, windows).map { it.rowid })
+    assertEquals(emptyList<Long>(), EstimatedSleepStages.superseded(stored, fresh, ranges).map { it.rowid })
   }
 
   @Test

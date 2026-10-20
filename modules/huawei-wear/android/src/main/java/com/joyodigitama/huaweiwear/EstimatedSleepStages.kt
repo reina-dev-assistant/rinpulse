@@ -92,6 +92,13 @@ internal object EstimatedSleepStages {
   private const val SECONDS_PER_MINUTE = 60L
 
   /**
+   * How far outside its range an estimated row may reach and still count as inside it. The estimator's grid runs to
+   * the last minute it was given, and a range's own end can fall mid-minute, so a row's `end` can sit up to a minute
+   * past the range it was produced in.
+   */
+  private const val RANGE_SLACK_SEC = SECONDS_PER_MINUTE
+
+  /**
    * The watch's accelerometer as the estimator's minutes. Minutes the file does not cover stay absent (the
    * estimator fills them as not worn, so a sparse file behaves like a gap). Two samples in one minute keep
    * the larger movement: movement is a count, and the busiest reading of a minute is the honest one.
@@ -305,49 +312,49 @@ internal object EstimatedSleepStages {
    * wrote. An upsert cannot do that: the table is keyed `(start, type)`, and a re-run can begin at a different
    * minute — the file grows at its oldest end and the estimate is bounded by the watch's judged-asleep ranges
    * ([within]), which move with it — so a superseded row is not one the new rows collide with. Left behind, the
-   * rows accumulate: a build that estimated the file unbounded left one covering 24 h (the whole accelerometer day
-   * read as sleep), and it held the day's total at 177 h through every later sync. Measured on Hilmi's watch: 177 h
-   * reported from a 55-hour file, three runs deep.
+   * rows accumulate: a build that estimated the file unbounded left rows covering 24 h (the whole accelerometer day
+   * read as sleep), and they held the night's total at 177 h, then 152 h, through every later sync. Measured on
+   * Hilmi's watch: 177 h reported from a 55-hour file, three runs deep.
    *
    * [stored] is what the database held *before* this run wrote anything, as `(rowid, start, end)`; [fresh] is the
    * rows of this sync — only the estimated ones matter, and the watch's own stage-less ranges are ignored here even
    * when the caller passes them, since a range that spans the night would otherwise cover every estimate inside it;
-   * [windows] are those stage-less ranges (its `sleep_state.bin` stretches), which say what is still reproducible.
+   * [ranges] are this watch's stage-less ranges — its `sleep_state.bin` stretches, read from the database *and*
+   * including this run's, so a night derived for the first time is judged against itself.
    *
-   * Only rows overlapping what this run worked on are considered — the stretch [fresh] and [windows] together
-   * cover. A sync is incremental, so it re-derives one night while the database holds many: judging a night this
-   * run never saw against no window would delete an estimate that is still the best row for it. No fresh rows and
-   * no windows (the file was missing, or the watch named no sleep) means nothing is judged at all.
-   *
-   * A considered row goes when:
+   * A row goes when:
    *
    *  - a fresh estimated row covers the same stretch — the re-run shifted and this is the run before it piling up; or
-   *  - it is not inside any window — the current rule only ever estimates inside them ([within]), so a row outside
-   *    all of them cannot be reproduced by this night's run. This is exactly the unbounded 24-hour row, lying across
-   *    the night it was derived from.
+   *  - it lies outside every range — the rule only ever estimates inside them ([within]), so a row no range can
+   *    hold is one no run can produce again. This is exactly the unbounded 24-hour row.
+   *
+   * [ranges] covers the whole table, not just this run's night, and that is deliberate: a stale row is usually
+   * *older* than the sync that finds it (its own night has long passed out of the sync window), so a rule scoped to
+   * what this run re-derived never sees it — which is how 152 h survived a cleaner that had already dropped one
+   * 24-hour row. Judging against every range on record is still safe for an old night: its own range is on record
+   * too, so its estimate stays inside one and is kept.
    *
    * A row sharing its *start* with a fresh row is not superseded but replaced: the upsert conflicted on
    * `(start, type)` and wrote over that same rowid, so deleting it would drop the row just stored.
    *
-   * A considered row inside a window that this run did not claim stays: the estimator can produce nothing for a
-   * night whose data is too sparse, and an estimate made for it earlier is still the best row for that night.
+   * A row inside a range that this run did not claim stays: the estimator can produce nothing for a night whose
+   * data is too sparse, and an estimate made for it earlier is still the best row for that night.
    */
   fun superseded(
     stored: List<StoredEstimated>,
     fresh: List<SleepSegment>,
-    windows: List<Pair<Long, Long>>,
+    ranges: List<Pair<Long, Long>>,
   ): List<StoredEstimated> {
     val estimated = fresh.filter { it.type == RAW_ESTIMATED }
-    val covered = estimated.map { it.start to it.end } + windows
-    if (covered.isEmpty()) return emptyList()
-    val from = covered.minOf { it.first }
-    val to = covered.maxOf { it.second }
+    if (estimated.isEmpty() && ranges.isEmpty()) return emptyList()
+    // An estimate can overrun its range by the minute the grid ends on, so a row that starts and ends within one
+    // minute of a range still counts as inside it.
+    val slack = RANGE_SLACK_SEC
     return stored.filter { row ->
-      if (row.end <= from || to <= row.start) return@filter false
       when {
         estimated.any { it.start == row.start } -> false
         estimated.any { it.start < row.end && row.start < it.end } -> true
-        else -> windows.none { it.first <= row.start && row.end <= it.second }
+        else -> ranges.none { it.first - slack <= row.start && row.end <= it.second + slack }
       }
     }
   }

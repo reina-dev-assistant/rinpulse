@@ -203,6 +203,17 @@ internal class SyncStore(context: Context) {
       out
     }
 
+  /** Every stage-less range this watch has on record, as `(start, end)`; the estimate is only ever produced inside them. */
+  private fun storedSleepRanges(db: WearDatabase, address: String): List<Pair<Long, Long>> =
+    db.rawQuery(
+      WatchSql.SELECT_SLEEP_RANGES,
+      arrayOf(address, EstimatedSleepStages.RAW_ESTIMATED.toString()),
+    ).use { cursor ->
+      val out = ArrayList<Pair<Long, Long>>(cursor.count)
+      while (cursor.moveToNext()) out.add(cursor.getLong(0) to cursor.getLong(1))
+      out
+    }
+
   /**
    * Persists one sync in a single transaction and advances `device.last_sync` to `result.to`; every row carries [address]
    * in `device` and the triggers of migration 14 decide against another watch's rows.
@@ -251,12 +262,15 @@ internal class SyncStore(context: Context) {
       // The estimate is rebuilt from the accelerometer file on every sync, so a run replaces the rows earlier runs
       // wrote over the same nights. The upsert never catches them: the table is keyed (start, type) and a re-run
       // can begin at a different minute, so a superseded row is not one the new rows collide with. Left in place
-      // they accumulate — a build that estimated the file unbounded left one covering 24 h, holding the day's total
-      // at 177 h. The watch's own stage-less ranges say which rows are still reproducible; an imported Huawei
-      // export is not `RAW_ESTIMATED`, so it is never listed and keeps its stages.
-      val windows = result.sleep.filter { it.type != EstimatedSleepStages.RAW_ESTIMATED && it.stage == null }
-        .map { it.start to it.end }
-      for (row in EstimatedSleepStages.superseded(stored, result.sleep, windows)) {
+      // they accumulate — a build that estimated the file unbounded left rows covering 24 h each, holding the
+      // night's total at 152 h. The rows are judged against every stage-less range on record and not just this
+      // run's: a stale row's own night has long left the sync window, so scoping the rule to this run never sees
+      // it. An imported Huawei export is not `RAW_ESTIMATED`, so it is never listed and keeps its stages.
+      val ranges = storedSleepRanges(db, address).plus(
+        result.sleep.filter { it.type != EstimatedSleepStages.RAW_ESTIMATED && it.stage == null }
+          .map { it.start to it.end },
+      )
+      for (row in EstimatedSleepStages.superseded(stored, result.sleep, ranges)) {
         db.execSQL(WatchSql.DELETE_SEGMENT_BY_ROWID, arrayOf<Any?>(row.rowid))
       }
       db.execSQL(WatchSql.UPDATE_LAST_SYNC, arrayOf(result.to, address))
