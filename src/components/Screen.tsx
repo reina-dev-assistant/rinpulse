@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { IconChip, type IconName } from '@/components/IconChip';
 import { PressableScale } from '@/components/PressableScale';
+import { refreshSpinnerOffset } from '@/components/refreshSpinner';
+import { ThemeDecoration } from '@/components/ThemeDecoration';
 import { useTabBarInset } from '@/components/tabBarInset';
 import { useKeyboardOverlap } from '@/components/useKeyboardOverlap';
 import { spacing, useColors, useTheme, type Tint } from '@/theme';
@@ -32,8 +34,8 @@ export function useContentPadding(withTitle: boolean, clearTabBar = true): ViewS
   };
 }
 
-/** Pull-to-refresh control in the app colors. */
-export function useRefreshControl(refresh: RefreshProps | undefined) {
+/** Pull-to-refresh control in the app colors. `progressViewOffset` moves the spinner down (see `refreshSpinnerOffset`). */
+export function useRefreshControl(refresh: RefreshProps | undefined, progressViewOffset = 0) {
   const colors = useColors();
   if (!refresh) return undefined;
   return (
@@ -41,6 +43,7 @@ export function useRefreshControl(refresh: RefreshProps | undefined) {
       refreshing={refresh.refreshing}
       onRefresh={refresh.onRefresh}
       enabled={refresh.enabled ?? true}
+      progressViewOffset={progressViewOffset}
       colors={[colors.primary]}
       tintColor={colors.primary}
       progressBackgroundColor={colors.card}
@@ -85,14 +88,17 @@ interface ScreenProps {
   scrollRef?: RefObject<ScrollView | null>;
   /** A bar pinned under the scrolling content, lifted above the keyboard (a comment composer). */
   footer?: ReactNode;
+  /** Draws the theme's header decoration behind the title (Today). Only meaningful with a `title`. */
+  decorated?: boolean;
   children: ReactNode;
 }
 
-export function Screen({ title, caption, right, refresh, scrollEnabled = true, scrollRef, footer, children }: ScreenProps) {
+export function Screen({ title, caption, right, refresh, scrollEnabled = true, scrollRef, footer, decorated = false, children }: ScreenProps) {
   const colors = useColors();
   // With a footer the footer sits above the bar, so the content above it does not clear the bar again.
   const padding = useContentPadding(title !== undefined, footer === undefined);
-  const refreshControl = useRefreshControl(refresh);
+  const insets = useSafeAreaInsets();
+  const refreshControl = useRefreshControl(refresh, refreshSpinnerOffset(title !== undefined, insets.top));
   const keyboard = useKeyboardOverlap();
   const tabBar = useTabBarInset();
   const scroll = (
@@ -104,6 +110,7 @@ export function Screen({ title, caption, right, refresh, scrollEnabled = true, s
       refreshControl={refreshControl}
       scrollEnabled={scrollEnabled}
       showsVerticalScrollIndicator={false}>
+      {decorated ? <ThemeDecoration /> : null}
       {title ? <PageHeader title={title} caption={caption} right={right} /> : null}
       {children}
     </ScrollView>

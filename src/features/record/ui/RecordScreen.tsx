@@ -52,7 +52,10 @@ export function RecordScreen() {
   const bike = useBikeSettings();
   // Bike computer mode takes the whole screen (no header, no scrolling page) while a ride is recording.
   const bikeLive = bike.enabled && snapshot.sport === 'ride' && (phase === 'active' || phase === 'saving');
-  useHideTabBar(bikeLive && !leaving);
+  // Before the clock runs (picking the sport, then getting ready) the screen is a map under a sheet with its own back button: no header, no tab bar.
+  const stage = !leaving && !bikeLive && (phase === 'idle' || phase === 'ready');
+  useHideTabBar((bikeLive || stage) && !leaving);
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace(WORKOUTS_ROUTE));
 
   // Opened from another tab, from Manual entry or from the notification, the live screen can sit on its own or on a screen it has nothing
   // to do with. Putting the Workouts list under it makes back (hardware, header, iOS swipe) a plain pop onto the list with the live card.
@@ -119,7 +122,7 @@ export function RecordScreen() {
 
   return (
     <>
-      {bikeLive ? <Stack.Screen options={{ headerShown: false }} /> : null}
+      {bikeLive || stage ? <Stack.Screen options={{ headerShown: false }} /> : null}
       {bikeLive && !leaving ? (
         <BikeRideView
           saving={phase === 'saving'}
@@ -128,22 +131,22 @@ export function RecordScreen() {
           onSaveAgain={() => void save()}
           onDiscard={() => setDialog('discard')}
         />
+      ) : stage && phase === 'idle' ? (
+        <SetupView sport={sport} onSport={setSport} notice={notice} onBack={goBack} />
+      ) : stage ? (
+        <ReadyView onBack={goBack} />
       ) : (
-      <Screen>
-        {leaving ? null : phase === 'idle' ? (
-          <SetupView sport={sport} onSport={setSport} notice={notice} />
-        ) : phase === 'ready' ? (
-          <ReadyView />
-        ) : (
-          <LiveView
-            saving={phase === 'saving'}
-            saveError={saveError}
-            onFinish={askFinish}
-            onSaveAgain={() => void save()}
-            onDiscard={() => setDialog('discard')}
-          />
-        )}
-      </Screen>
+        <Screen>
+          {leaving ? null : (
+            <LiveView
+              saving={phase === 'saving'}
+              saveError={saveError}
+              onFinish={askFinish}
+              onSaveAgain={() => void save()}
+              onDiscard={() => setDialog('discard')}
+            />
+          )}
+        </Screen>
       )}
       <FinishDialog
         visible={dialog === 'finish'}

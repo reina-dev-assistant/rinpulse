@@ -8,6 +8,7 @@ import type { PersonalRecord } from '@/features/strength/calc';
 import type { Catalog } from '@/features/strength/catalog';
 import { listStrengthWorkoutsBetween } from '@/features/strength/store';
 import type { StrengthWorkout } from '@/features/strength/types';
+import { modelOfBluetoothName } from '@/features/device/watchName';
 import { modelName } from '@/features/strava/device';
 import { sportKind } from '@/features/workouts/analysis/sport';
 import type { WorkoutAnalysis } from '@/features/workouts/analysis/types';
@@ -35,7 +36,7 @@ interface Loaded {
 function watchModel(watches: readonly WatchRow[], address: string | null): string | null {
   const watch = address === null ? undefined : watches.find((w) => w.address === address);
   if (!watch) return null;
-  return watch.productModel?.trim() || modelName(watch.name) || null;
+  return modelOfBluetoothName(watch.name) || watch.productModel?.trim() || modelName(watch.name) || null;
 }
 
 export interface ThreadsRunArgs {

@@ -296,6 +296,23 @@
     "autoStravaHint": "Latihan yang selesai dikirim sebagai Weight Training kalau Strava sudah terhubung.",
     "savedRest": "Istirahat tersimpan per latihan",
     "savedRestEmpty": "Belum ada. Pilih \"Simpan untuk latihan ini\" di menu timer istirahat sebuah latihan.",
-    "clearRest": "Hapus waktu tersimpan {{name}}"
+    "clearRest": "Hapus waktu tersimpan {{name}}",
+    "watchTitle": "Jam tangan",
+    "startOnWatch": "Mulai juga di jam",
+    "startOnWatchHint": "Saat kamu memulai latihan beban di ponsel, jam ikut memulai Latihan kekuatan, ikut jeda saat kamu jeda, dan berhenti saat kamu selesai. Detak jantung dan kalori dari jam masuk ke latihanmu setelah sinkron.",
+    "startOnWatchOffline": "Berlaku saat jam terhubung. Jam belum terhubung sekarang.",
+    "startOnWatchUnsupported": "Jam ini belum bisa dimulai dari ponsel. Mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam."
+  },
+  "watch": {
+    "chip": "Jam",
+    "running": "Latihan berjalan di jam",
+    "paused": "Latihan dijeda di jam",
+    "unconfirmed": "Perintah mulai terkirim ke jam, belum dikonfirmasi",
+    "notConnected": "Jam belum terhubung, jadi latihan tidak ikut mulai di jam. Mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam.",
+    "refused": "Jam menolak perintah mulai. Mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam.",
+    "refusedCode": "Jam menolak perintah mulai (kode {{code}}). Mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam.",
+    "notWorn": "Jam bilang sedang tidak dipakai di pergelangan tangan dan menolak memulai latihan (kode {{code}}). Pakai jam dengan pas lalu ketuk Coba lagi, atau mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam.",
+    "lost": "Latihan ini sudah dimulai di jam sebelum aplikasi dibuka ulang, jadi jam tidak bisa dihentikan dari sini. Hentikan di jam setelah selesai.",
+    "retry": "Coba lagi"
   }
 }

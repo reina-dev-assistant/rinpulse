@@ -93,6 +93,14 @@ internal fun ModuleDefinitionBuilder.p2pApi(runtime: () -> WearRuntime) {
     runtime().p2p.pushCourse(course.toCourse())
   }
 
+  Function("getQuickReplies") {
+    runtime().p2p.quickRepliesStatus()
+  }
+
+  AsyncFunction("setQuickReplies") { replies: List<String> ->
+    runtime().p2p.setQuickReplies(replies)
+  }
+
   Function("getRoutes") {
     runtime().p2p.routesStatus()
   }

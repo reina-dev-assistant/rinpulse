@@ -1,3 +1,4 @@
+import { watchDisplayName } from '@/features/device/watchName';
 import type { SupportReport } from '@/wear';
 
 export const REPO_URL = 'https://github.com/dzulfikar08/joyofit';
@@ -5,9 +6,16 @@ export const REPO_URL = 'https://github.com/dzulfikar08/joyofit';
 /** Browsers and GitHub start refusing long links around 8 KB; the summary is cut to stay well under it. */
 const MAX_URL = 7000;
 
+/** The model name on top of the report; the raw Bluetooth name stays in the summary below it. Null when no watch is named. */
+function reportHeader(report: SupportReport): string | null {
+  if (!report.watch) return null;
+  return `Watch model: ${watchDisplayName({ name: report.watch, model: report.model })}`;
+}
+
 /** The whole report as one text, for the clipboard and the share sheet. */
 export function reportText(report: SupportReport): string {
-  return `${report.summary}\n\n${report.log}`;
+  const header = reportHeader(report);
+  return `${header ? `${header}\n` : ''}${report.summary}\n\n${report.log}`;
 }
 
 // i18n-ok: the issue is written for the maintainers' GitHub tracker, which is English.
@@ -17,7 +25,7 @@ export function reportText(report: SupportReport): string {
  * everywhere. The log does not fit a link; the user pastes it under "Log".
  */
 export function issueUrl(report: SupportReport): string {
-  const what = report.model ?? report.watch ?? 'unknown watch';
+  const what = report.watch ? watchDisplayName({ name: report.watch, model: report.model }) : 'unknown watch';
   const body = (summary: string) =>
     [
       `**Watch:** ${report.watch ?? 'no name'} (${report.model ?? 'not in the list'}, ${report.support})`,

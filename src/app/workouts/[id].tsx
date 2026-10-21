@@ -1,8 +1,8 @@
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { CloudWorkoutLine } from '@/cloud/CloudWorkoutLine';
 import { AppText } from '@/components/AppText';
@@ -13,6 +13,7 @@ import { KeyValue } from '@/components/KeyValue';
 import { Metric } from '@/components/Metric';
 import { HeaderIconButton } from '@/components/HeaderIconButton';
 import { Card, Screen, Section } from '@/components/Screen';
+import { useToast } from '@/components/Toast';
 import { Notice, Skeleton } from '@/components/States';
 import {
   getWorkout,
@@ -27,6 +28,8 @@ import { workoutStrain } from '@/features/today/strain';
 import { useWorkoutSource } from '@/features/device/useWorkoutSource';
 import { GearWorkoutSection } from '@/features/gear/ui/GearWorkoutSection';
 import { CoachFeedbackSection } from '@/features/coach/ui/CoachFeedbackSection';
+import { useWorkoutExport } from '@/features/export/useWorkoutExport';
+import { useExportItems, WorkoutExportRow } from '@/features/export/WorkoutExportSection';
 import { StravaWorkoutSection } from '@/features/strava/StravaWorkoutSection';
 import { ShareRunButton } from '@/features/stickers/ui/ShareRunButton';
 import { ReplayButton } from '@/features/replay/ui/ReplayButton';
@@ -136,6 +139,8 @@ export default function WorkoutDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const { toast, show } = useToast();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -254,6 +259,30 @@ export default function WorkoutDetailScreen() {
         : [],
     [loaded, t],
   );
+  const exporter = useWorkoutExport(db, loaded?.workout ?? null, loaded?.points ?? NO_POINTS);
+  const exportItems = useExportItems(exporter);
+  const savedFolder = exporter.saved?.folder;
+  useEffect(() => {
+    if (savedFolder !== undefined) show(t('export.saved', { folder: savedFolder }));
+  }, [savedFolder, exporter.saved, show, t]);
+  // iOS cannot present a second modal while the menu is still leaving: open the export sheet once the menu is gone.
+  const exportAfterMenu = useRef(false);
+  const menuItems: MenuItem[] = [
+    ...(exporter.entries.length > 0
+      ? [
+          {
+            key: 'export',
+            label: t('export.title'),
+            icon: 'download-outline',
+            onPress: () => {
+              if (Platform.OS === 'ios') exportAfterMenu.current = true;
+              else setExportOpen(true);
+            },
+          } satisfies MenuItem,
+        ]
+      : []),
+    { key: 'delete', label: t('delete.action'), icon: 'trash-outline', danger: true, onPress: () => setDeleteOpen(true) },
+  ];
 
   if (!loaded) {
     return (
@@ -346,8 +375,15 @@ export default function WorkoutDetailScreen() {
       <MenuSheet
         visible={menuOpen}
         onClose={() => setMenuOpen(false)}
-        items={[{ key: 'delete', label: t('delete.action'), icon: 'trash-outline', danger: true, onPress: () => setDeleteOpen(true) }] satisfies MenuItem[]}
+        onDismiss={() => {
+          if (exportAfterMenu.current) {
+            exportAfterMenu.current = false;
+            setExportOpen(true);
+          }
+        }}
+        items={menuItems}
       />
+      <MenuSheet visible={exportOpen} onClose={() => setExportOpen(false)} title={t('export.title')} items={exportItems} />
       <DeleteWorkoutDialog
         target={deleteOpen ? { start: workout.start, sportName: workout.sportName, name: loaded.strength?.name } : null}
         onClose={() => setDeleteOpen(false)}
@@ -495,6 +531,7 @@ export default function WorkoutDetailScreen() {
       ) : null}
 
       <GearWorkoutSection workout={workout} />
+      <WorkoutExportRow exporter={exporter} onOpen={() => setExportOpen(true)} />
       <StravaWorkoutSection workout={workout} />
 
       <Section title={t('detail.more.title')} icon="list">
@@ -564,6 +601,7 @@ export default function WorkoutDetailScreen() {
           ))}
         </Section>
       ) : null}
+      {toast}
     </Screen>
   );
 }

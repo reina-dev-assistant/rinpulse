@@ -17,6 +17,7 @@ import { scoreFor } from '@/features/sleep/nights';
 import { SleepSummaryView } from '@/features/today/SleepSummaryView';
 import { ownTotalsOf } from '@/features/device/watchDayTotals';
 import { isLinkUp } from '@/features/device/linkState';
+import { activeWatchName } from '@/features/device/watchName';
 import { SyncButton } from '@/features/device/SyncButton';
 import {
   heartRateStats,
@@ -189,6 +190,7 @@ function WatchToday() {
   return (
     <Screen
       title={t('common:nav.today')}
+      decorated
       caption={new Date().toLocaleDateString(INTL_TAG[getLocale()], WEEKDAY_FORMAT)}
       right={
         data && view ? (
@@ -199,7 +201,7 @@ function WatchToday() {
       <View style={styles.stack}>
         <WatchHero
           linkState={linkState}
-          deviceName={device ? (device.productModel ?? device.name) : null}
+          deviceName={device ? activeWatchName(device, watches) : null}
           steps={view?.totals.steps ?? 0}
           goal={goal}
           heart={heartReading}
@@ -263,7 +265,13 @@ function WatchToday() {
 export default function TodayScreen() {
   const { t } = useTranslation('common');
   const presence = useWatchPresence();
-  if (presence === null) return <Screen title={t('nav.today')}>{null}</Screen>;
+  if (presence === null) {
+    return (
+      <Screen title={t('nav.today')} decorated>
+        {null}
+      </Screen>
+    );
+  }
   return showsWatchUi(presence) ? <WatchToday /> : <TodayNoWatch />;
 }
 

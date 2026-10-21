@@ -18,6 +18,8 @@ internal class WatchNotification(
   val category: String?,
   val whenMs: Long,
   val isEmail: Boolean,
+  val hasReply: Boolean = false,
+  val replyKey: String? = null,
 )
 
 internal object NotificationPackets {
@@ -51,14 +53,15 @@ internal object NotificationPackets {
     val format = state.contentFormat.toByte()
 
     val additional = Notifications.NotificationActionRequest.AdditionalParams()
-    additional.supportsReply = state.supportsNotificationsReply
+    val canReply = state.supportsNotificationsReply && (n.hasReply || !n.replyKey.isNullOrEmpty())
+    additional.supportsReply = canReply
     additional.supportsRepeatedNotify = state.supportsNotificationsRepeatedNotify
     additional.supportsRemoveSingle = state.supportsNotificationsRemoveSingle
-    additional.supportsReplyActions = state.supportsNotificationsReplyActions
+    additional.supportsReplyActions = state.supportsNotificationsReplyActions && canReply
     additional.supportsTimestamp = state.supportsNotificationsAddIconTimestamp
     additional.notificationId = n.id
     additional.notificationKey = key(n)
-    additional.replyKey = ""
+    additional.replyKey = if (canReply) (n.replyKey ?: key(n)) else ""
     additional.channelId = n.channelId ?: ""
     additional.category = n.category ?: ""
     additional.address = ""

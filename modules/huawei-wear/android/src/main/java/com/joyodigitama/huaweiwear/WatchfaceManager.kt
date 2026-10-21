@@ -87,6 +87,7 @@ internal class WatchfaceList(
     "width" to screen?.width,
     "height" to screen?.height,
     "maxVersion" to screen?.maxVersion,
+    "requiresSignature" to screen?.takeIf { it.supportCapability >= 0 }?.supportsSignature,
     "faces" to faces.map { it.toJs() },
     "updatedAt" to updatedAtMs,
   )

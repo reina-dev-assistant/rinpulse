@@ -20,6 +20,14 @@
  * - Forest: moss green and bark, Fraunces titles, Archivo numerals. Light and dark follow the phone.
  * - Soft: pastel blush, rounded Nunito, very large radii. Light and dark follow the phone.
  * - Mono: black and white, square corners, JetBrains Mono numerals; only the heart is red. Light and dark follow the phone.
+ * - Sakura: blossom pink and deep rose, DM Serif Display titles, Quicksand text, petals in the header. Light and dark follow the phone.
+ * - Lavender: pale lilac and plum, Jakarta text, Quicksand titles. Light and dark follow the phone.
+ * - Peach: warm peach canvas and a coral primary, Archivo numerals, DM Serif Display titles. Always light.
+ * - Rose Gold: warm near-black, blush text, a rose-gold primary and a copper-to-rose watch panel, DM Serif Display titles. Always dark.
+ * - Strawberry Milk: milky pink and cream cards, strawberry red, the roundest shapes. Always light.
+ * - Matcha Latte: cream-green canvas, matcha primary, Quicksand text, Space Grotesk numerals. Always light.
+ *
+ * Decorations (`decoration`): Sogan draws a kawung batik, Sakura petals, Forest leaves, Neon track lanes behind the Today header.
  *
  * Contrast (enforced in `themes.test.ts` for every palette of every theme): every `*Text` on its
  * `*Soft` and on `card` is >= 4.5; base data colors on `card` are >= 3 (non-text 3:1); `mutedForeground`
@@ -127,6 +135,10 @@ export const FONT_FAMILY_NAMES = [
   'SpaceGrotesk_700Bold',
   'JetBrainsMono_800ExtraBold',
   'Fraunces_800ExtraBold',
+  'Quicksand_500Medium',
+  'Quicksand_600SemiBold',
+  'Quicksand_700Bold',
+  'DMSerifDisplay_400Regular',
 ] as const;
 
 export type FontFamilyName = (typeof FONT_FAMILY_NAMES)[number];
@@ -163,7 +175,19 @@ export type ThemeId =
   | 'retro'
   | 'forest'
   | 'soft'
-  | 'mono';
+  | 'mono'
+  | 'sakura'
+  | 'lavender'
+  | 'peach'
+  | 'rosegold'
+  | 'strawberry'
+  | 'matcha';
+
+/**
+ * A motif drawn behind the top-right of the Today header (`decorations.ts` draws it, `ThemeDecoration` renders it). It is faint,
+ * scrolls with the header, fades out toward the content and never sits under the watch hero panel.
+ */
+export type DecorationId = 'kawung' | 'petals' | 'leaves' | 'lanes';
 
 export interface Theme {
   id: ThemeId;
@@ -173,6 +197,8 @@ export interface Theme {
   palettes: { light: Colors; dark: Colors };
   radius: Radii;
   type: Typography;
+  /** Optional header motif; most themes have none. */
+  decoration?: DecorationId;
 }
 
 const JAKARTA = {
@@ -208,6 +234,12 @@ const SPACE_GROTESK = {
   w500: 'SpaceGrotesk_500Medium',
   w600: 'SpaceGrotesk_600SemiBold',
   w700: 'SpaceGrotesk_700Bold',
+} as const;
+
+const QUICKSAND = {
+  w500: 'Quicksand_500Medium',
+  w600: 'Quicksand_600SemiBold',
+  w700: 'Quicksand_700Bold',
 } as const;
 
 const classicLight: Colors = {
@@ -976,6 +1008,372 @@ const sunsetDark: Colors = {
   heroAccent: '#FFF0B8',
 };
 
+/** Sakura: blossom-pink canvas and a deep rose primary; dark is cherry-bark plum with a petal-pink primary. */
+const sakuraLight: Colors = {
+  background: '#FFF3F6',
+  card: '#FFFFFF',
+  foreground: '#3B2029',
+  muted: '#FBE4EA',
+  mutedForeground: '#7B5562',
+  hairline: 'rgba(59,32,41,0.1)',
+  primary: '#A8305E',
+  primaryForeground: '#FFFFFF',
+  destructive: '#B3261E',
+  destructiveSoft: '#FBE3E1',
+  warning: '#B25E09',
+  switchOff: '#E6CDD4',
+  steps: '#A8305E',
+  stepsSoft: '#FCE4EC',
+  stepsText: '#A8305E',
+  heart: '#DB4437',
+  heartSoft: '#FFE6E2',
+  heartText: '#B8392E',
+  sleep: '#7A68C8',
+  sleepSoft: '#ECE8FA',
+  sleepText: '#6959AC',
+  workouts: '#C0781B',
+  workoutsSoft: '#FFF0D9',
+  workoutsText: '#965E15',
+  link: '#3F8F62',
+  linkSoft: '#E1F4E8',
+  linkText: '#347550',
+  stageDeep: '#6A58BE',
+  stageRem: '#A98BE0',
+  stageLight: '#C9BCF0',
+  stageAwake: '#EDA64A',
+  hero: '#4A1F33',
+  heroEnd: '#4A1F33',
+  heroForeground: '#FFF4F7',
+  heroMuted: '#E3C3CF',
+  heroTrack: '#6E3A52',
+  heroDivider: 'rgba(255,244,247,0.14)',
+  heroSteps: '#FF9DBB',
+  heroHeart: '#FFA3A8',
+  heroLink: '#9FE0B3',
+  heroWarn: '#FFC878',
+  heroAccent: '#FFB3C9',
+};
+
+const sakuraDark: Colors = {
+  background: '#1C1116',
+  card: '#281A21',
+  foreground: '#FBEAF0',
+  muted: '#36242D',
+  mutedForeground: '#C2A3B0',
+  hairline: 'rgba(251,234,240,0.12)',
+  primary: '#F59AB8',
+  primaryForeground: '#3A0F20',
+  destructive: '#FF9A92',
+  destructiveSoft: '#4A2A2E',
+  warning: '#F0B060',
+  switchOff: '#52384A',
+  steps: '#F59AB8',
+  stepsSoft: '#4A2837',
+  stepsText: '#F59AB8',
+  heart: '#FF8A7A',
+  heartSoft: '#4C2A28',
+  heartText: '#FF8A7A',
+  sleep: '#B3A6F2',
+  sleepSoft: '#3F3452',
+  sleepText: '#B3A6F2',
+  workouts: '#F2B766',
+  workoutsSoft: '#4A3A2A',
+  workoutsText: '#F2B766',
+  link: '#8FD3A0',
+  linkSoft: '#2F4037',
+  linkText: '#8FD3A0',
+  stageDeep: '#6A58BE',
+  stageRem: '#C9B8F5',
+  stageLight: '#A99AE8',
+  stageAwake: '#F2B766',
+  hero: '#3E1B2D',
+  heroEnd: '#3E1B2D',
+  heroForeground: '#FFF4F7',
+  heroMuted: '#E3C3CF',
+  heroTrack: '#5E3248',
+  heroDivider: 'rgba(255,244,247,0.14)',
+  heroSteps: '#FF9DBB',
+  heroHeart: '#FFA3A8',
+  heroLink: '#9FE0B3',
+  heroWarn: '#FFC878',
+  heroAccent: '#FFB3C9',
+};
+
+/** Lavender: pale lilac canvas, plum primary; dark is night violet with a soft lilac primary. */
+const lavenderLight: Colors = {
+  background: '#F6F3FC',
+  card: '#FFFFFF',
+  foreground: '#261D3A',
+  muted: '#ECE6F8',
+  mutedForeground: '#62587E',
+  hairline: 'rgba(38,29,58,0.1)',
+  primary: '#6E3FA3',
+  primaryForeground: '#FFFFFF',
+  destructive: '#B3261E',
+  destructiveSoft: '#F6E2E4',
+  warning: '#A85A08',
+  switchOff: '#D5CCE6',
+  steps: '#6E3FA3',
+  stepsSoft: '#EEE6F8',
+  stepsText: '#6E3FA3',
+  heart: '#D63A66',
+  heartSoft: '#FFE4EB',
+  heartText: '#B83258',
+  sleep: '#4F6BD6',
+  sleepSoft: '#E4EAFC',
+  sleepText: '#4760C1',
+  workouts: '#C37819',
+  workoutsSoft: '#FFF0D9',
+  workoutsText: '#985E14',
+  link: '#2F8F68',
+  linkSoft: '#DFF4EA',
+  linkText: '#277555',
+  stageDeep: '#4F5BBE',
+  stageRem: '#9A78D8',
+  stageLight: '#BFB3EE',
+  stageAwake: '#E9A24A',
+  hero: '#2E1F4D',
+  heroEnd: '#2E1F4D',
+  heroForeground: '#F8F4FF',
+  heroMuted: '#CDC0E6',
+  heroTrack: '#4C3A75',
+  heroDivider: 'rgba(248,244,255,0.14)',
+  heroSteps: '#C6A8FF',
+  heroHeart: '#FF9DB6',
+  heroLink: '#9FE0BE',
+  heroWarn: '#FFC878',
+  heroAccent: '#D9C2FF',
+};
+
+const lavenderDark: Colors = {
+  background: '#17121F',
+  card: '#211A2E',
+  foreground: '#F0EAFB',
+  muted: '#2E2540',
+  mutedForeground: '#B2A6CC',
+  hairline: 'rgba(240,234,251,0.12)',
+  primary: '#B99BF0',
+  primaryForeground: '#1F0E3C',
+  destructive: '#FF9A92',
+  destructiveSoft: '#472A38',
+  warning: '#F0B060',
+  switchOff: '#463A60',
+  steps: '#B99BF0',
+  stepsSoft: '#3A2D55',
+  stepsText: '#B99BF0',
+  heart: '#FF86A6',
+  heartSoft: '#4A2A3C',
+  heartText: '#FF86A6',
+  sleep: '#8FA6F5',
+  sleepSoft: '#2D3558',
+  sleepText: '#8FA6F5',
+  workouts: '#F2B766',
+  workoutsSoft: '#463A2C',
+  workoutsText: '#F2B766',
+  link: '#7FD3AE',
+  linkSoft: '#27403A',
+  linkText: '#7FD3AE',
+  stageDeep: '#5560C8',
+  stageRem: '#B79BF0',
+  stageLight: '#8FA6F5',
+  stageAwake: '#F2B766',
+  hero: '#2A1D44',
+  heroEnd: '#2A1D44',
+  heroForeground: '#F8F4FF',
+  heroMuted: '#CDC0E6',
+  heroTrack: '#46356B',
+  heroDivider: 'rgba(248,244,255,0.14)',
+  heroSteps: '#C6A8FF',
+  heroHeart: '#FF9DB6',
+  heroLink: '#9FE0BE',
+  heroWarn: '#FFC878',
+  heroAccent: '#D9C2FF',
+};
+
+/** Peach: warm peach canvas and a coral primary. Always light. */
+const peachLight: Colors = {
+  background: '#FFF1E8',
+  card: '#FFFFFF',
+  foreground: '#3A2217',
+  muted: '#FCE2D2',
+  mutedForeground: '#7A5744',
+  hairline: 'rgba(58,34,23,0.1)',
+  primary: '#C8402A',
+  primaryForeground: '#FFFFFF',
+  destructive: '#AD2418',
+  destructiveSoft: '#FBE1DA',
+  warning: '#A85A08',
+  switchOff: '#E8D2C4',
+  steps: '#C8402A',
+  stepsSoft: '#FFE6DE',
+  stepsText: '#B83B27',
+  heart: '#D12F70',
+  heartSoft: '#FFE4EE',
+  heartText: '#BC2A65',
+  sleep: '#5E64C4',
+  sleepSoft: '#E8E9FB',
+  sleepText: '#585EB8',
+  workouts: '#B87400',
+  workoutsSoft: '#FFEFD0',
+  workoutsText: '#935D00',
+  link: '#2E8B63',
+  linkSoft: '#DFF3E8',
+  linkText: '#277553',
+  stageDeep: '#4F55B5',
+  stageRem: '#9A7ED8',
+  stageLight: '#BDB4EC',
+  stageAwake: '#E9A03A',
+  hero: '#4B2419',
+  heroEnd: '#4B2419',
+  heroForeground: '#FFF4EC',
+  heroMuted: '#E6C7B5',
+  heroTrack: '#6F3B2B',
+  heroDivider: 'rgba(255,244,236,0.14)',
+  heroSteps: '#FFA58F',
+  heroHeart: '#FF9DB8',
+  heroLink: '#9FE0B3',
+  heroWarn: '#FFCB7A',
+  heroAccent: '#FFC09A',
+};
+
+/** Rose Gold: warm near-black with blush text, a rose-gold primary and a metallic copper-to-rose hero panel. Always dark. */
+const roseGoldDark: Colors = {
+  background: '#1A1213',
+  card: '#271A1C',
+  foreground: '#FBEEE8',
+  muted: '#352529',
+  mutedForeground: '#C4A8A4',
+  hairline: 'rgba(251,238,232,0.12)',
+  primary: '#E8A598',
+  primaryForeground: '#2E120D',
+  destructive: '#FF9A8C',
+  destructiveSoft: '#4A2B2A',
+  warning: '#E7B567',
+  switchOff: '#4E3A3C',
+  steps: '#E8A598',
+  stepsSoft: '#47292A',
+  stepsText: '#E8A598',
+  heart: '#FF7C93',
+  heartSoft: '#4C2630',
+  heartText: '#FF7C93',
+  sleep: '#B3ADF0',
+  sleepSoft: '#3A3250',
+  sleepText: '#B3ADF0',
+  workouts: '#E7B567',
+  workoutsSoft: '#463620',
+  workoutsText: '#E7B567',
+  link: '#8DCFA0',
+  linkSoft: '#2D3F33',
+  linkText: '#8DCFA0',
+  stageDeep: '#6A62C0',
+  stageRem: '#C9B8F0',
+  stageLight: '#A39AE6',
+  stageAwake: '#E7B567',
+  hero: '#46282B',
+  heroEnd: '#6E4640',
+  heroForeground: '#FFF3EC',
+  heroMuted: '#EAC9BE',
+  heroTrack: '#A0706A',
+  heroDivider: 'rgba(255,243,236,0.14)',
+  heroSteps: '#F5B8AB',
+  heroHeart: '#FFB2BE',
+  heroLink: '#A5E2B4',
+  heroWarn: '#F7CF8A',
+  heroAccent: '#F7D2B5',
+};
+
+/** Strawberry Milk: milky pink canvas, cream cards and a strawberry-red primary. Always light. */
+const strawberryLight: Colors = {
+  background: '#FFEFEF',
+  card: '#FFFAF2',
+  foreground: '#4A2430',
+  muted: '#FDE0E2',
+  mutedForeground: '#85555F',
+  hairline: 'rgba(74,36,48,0.1)',
+  primary: '#C8283F',
+  primaryForeground: '#FFFFFF',
+  destructive: '#A82218',
+  destructiveSoft: '#FBE0DC',
+  warning: '#A85A08',
+  switchOff: '#EBCFCF',
+  steps: '#C8283F',
+  stepsSoft: '#FFE3E5',
+  stepsText: '#C0263C',
+  heart: '#D63384',
+  heartSoft: '#FFE4F0',
+  heartText: '#B82C72',
+  sleep: '#7061C8',
+  sleepSoft: '#EBE8FA',
+  sleepText: '#6759B8',
+  workouts: '#C27614',
+  workoutsSoft: '#FFEFD3',
+  workoutsText: '#975C10',
+  link: '#3C8D5C',
+  linkSoft: '#E1F3E7',
+  linkText: '#32764D',
+  stageDeep: '#5E52BC',
+  stageRem: '#A488DE',
+  stageLight: '#C7BAEF',
+  stageAwake: '#EDA24A',
+  hero: '#5A2230',
+  heroEnd: '#5A2230',
+  heroForeground: '#FFF6F2',
+  heroMuted: '#EBC6C8',
+  heroTrack: '#7E3A4A',
+  heroDivider: 'rgba(255,246,242,0.14)',
+  heroSteps: '#FF9DA8',
+  heroHeart: '#FFA3C6',
+  heroLink: '#A0E2B6',
+  heroWarn: '#FFCC7E',
+  heroAccent: '#FFC4A8',
+};
+
+/** Matcha Latte: cream-green canvas, cream cards and a matcha-green primary. Always light. */
+const matchaLight: Colors = {
+  background: '#F1F4E4',
+  card: '#FFFDF3',
+  foreground: '#26301F',
+  muted: '#E2E9CC',
+  mutedForeground: '#5B6648',
+  hairline: 'rgba(38,48,31,0.1)',
+  primary: '#4F7A2A',
+  primaryForeground: '#FFFFFF',
+  destructive: '#A82A1C',
+  destructiveSoft: '#F3E2D8',
+  warning: '#9E5A00',
+  switchOff: '#D0D8B8',
+  steps: '#4F7A2A',
+  stepsSoft: '#E6EED4',
+  stepsText: '#497027',
+  heart: '#D6455D',
+  heartSoft: '#FFE5E8',
+  heartText: '#B43A4E',
+  sleep: '#6670C4',
+  sleepSoft: '#E8EAFA',
+  sleepText: '#5860A9',
+  workouts: '#B97A1A',
+  workoutsSoft: '#FBEFD2',
+  workoutsText: '#905F14',
+  link: '#2E8B6B',
+  linkSoft: '#DBF2E8',
+  linkText: '#27755A',
+  stageDeep: '#4F5BB0',
+  stageRem: '#9C80D6',
+  stageLight: '#BDB6E8',
+  stageAwake: '#DDA23A',
+  hero: '#2F3D22',
+  heroEnd: '#2F3D22',
+  heroForeground: '#F6F8EA',
+  heroMuted: '#C5D0AA',
+  heroTrack: '#475B35',
+  heroDivider: 'rgba(246,248,234,0.14)',
+  heroSteps: '#B6E27A',
+  heroHeart: '#FF9DAB',
+  heroLink: '#8FE0B2',
+  heroWarn: '#F5CB70',
+  heroAccent: '#E3EB9A',
+};
+
 const JAKARTA_FONTS: FontFamilies = {
   regular: JAKARTA.w500,
   medium: JAKARTA.w600,
@@ -1179,6 +1577,113 @@ const monoType: Typography = {
   title: { size: 24, line: 32, tracking: -0.8 },
 };
 
+/** Quicksand text, Nunito numerals (Quicksand's digits are proportional, they would jitter in a timer) and a DM Serif Display title: a soft, editorial blossom. */
+const sakuraType: Typography = {
+  fonts: {
+    regular: QUICKSAND.w500,
+    medium: QUICKSAND.w600,
+    bold: QUICKSAND.w700,
+    heavy: QUICKSAND.w700,
+    numeral: NUNITO.w800,
+    headline: 'DMSerifDisplay_400Regular',
+  },
+  numeral: {
+    hero: { size: 56, line: 62, tracking: -1, unit: 15 },
+    lg: { size: 32, line: 38, tracking: -0.4, unit: 14 },
+    md: { size: 23, line: 30, tracking: -0.2, unit: 13 },
+    sm: { size: 18, line: 24, tracking: 0, unit: 12 },
+  },
+  title: { size: 30, line: 36, tracking: 0 },
+};
+
+/** Jakarta text and numerals with Quicksand titles: classic's build, rounder and lighter at the top. */
+const lavenderType: Typography = {
+  fonts: { ...JAKARTA_FONTS, headline: QUICKSAND.w700 },
+  numeral: {
+    hero: { size: 56, line: 60, tracking: -1.4, unit: 15 },
+    lg: { size: 32, line: 38, tracking: -0.5, unit: 14 },
+    md: { size: 24, line: 30, tracking: -0.3, unit: 13 },
+    sm: { size: 18, line: 24, tracking: 0, unit: 12 },
+  },
+  title: { size: 29, line: 35, tracking: -0.3 },
+};
+
+/** Nunito text, Archivo numerals (sturdy against the soft canvas) and DM Serif Display titles. */
+const peachType: Typography = {
+  fonts: {
+    regular: NUNITO.w500,
+    medium: NUNITO.w600,
+    bold: NUNITO.w700,
+    heavy: NUNITO.w800,
+    numeral: ARCHIVO.w800,
+    headline: 'DMSerifDisplay_400Regular',
+  },
+  numeral: {
+    hero: { size: 58, line: 62, tracking: -1.6, unit: 15 },
+    lg: { size: 33, line: 38, tracking: -0.8, unit: 14 },
+    md: { size: 24, line: 30, tracking: -0.5, unit: 13 },
+    sm: { size: 18, line: 24, tracking: -0.2, unit: 12 },
+  },
+  title: { size: 30, line: 36, tracking: 0 },
+};
+
+/** Manrope text and numerals with DM Serif Display titles: jewelry-case calm, big tightly tracked figures. */
+const roseGoldType: Typography = {
+  fonts: {
+    regular: MANROPE.w500,
+    medium: MANROPE.w600,
+    bold: MANROPE.w700,
+    heavy: MANROPE.w800,
+    numeral: MANROPE.w800,
+    headline: 'DMSerifDisplay_400Regular',
+  },
+  numeral: {
+    hero: { size: 60, line: 64, tracking: -2, unit: 15 },
+    lg: { size: 34, line: 40, tracking: -1, unit: 14 },
+    md: { size: 25, line: 31, tracking: -0.6, unit: 13 },
+    sm: { size: 18, line: 24, tracking: -0.2, unit: 12 },
+  },
+  title: { size: 31, line: 37, tracking: -0.2 },
+};
+
+/** Nunito throughout with Quicksand titles: the roundest, puffiest build. */
+const strawberryType: Typography = {
+  fonts: {
+    regular: NUNITO.w500,
+    medium: NUNITO.w600,
+    bold: NUNITO.w700,
+    heavy: NUNITO.w800,
+    numeral: NUNITO.w800,
+    headline: QUICKSAND.w700,
+  },
+  numeral: {
+    hero: { size: 56, line: 62, tracking: -0.6, unit: 15 },
+    lg: { size: 32, line: 38, tracking: -0.3, unit: 14 },
+    md: { size: 24, line: 30, tracking: -0.1, unit: 13 },
+    sm: { size: 18, line: 24, tracking: 0, unit: 12 },
+  },
+  title: { size: 28, line: 34, tracking: -0.2 },
+};
+
+/** Quicksand text and titles, Space Grotesk numerals: a gentle body with a crisp, modern figure. */
+const matchaType: Typography = {
+  fonts: {
+    regular: QUICKSAND.w500,
+    medium: QUICKSAND.w600,
+    bold: QUICKSAND.w700,
+    heavy: QUICKSAND.w700,
+    numeral: SPACE_GROTESK.w700,
+    headline: QUICKSAND.w700,
+  },
+  numeral: {
+    hero: { size: 56, line: 60, tracking: -2, unit: 15 },
+    lg: { size: 32, line: 38, tracking: -0.9, unit: 14 },
+    md: { size: 24, line: 30, tracking: -0.5, unit: 13 },
+    sm: { size: 18, line: 24, tracking: -0.2, unit: 12 },
+  },
+  title: { size: 28, line: 34, tracking: -0.4 },
+};
+
 export const THEMES: readonly Theme[] = [
   {
     id: 'classic',
@@ -1214,6 +1719,7 @@ export const THEMES: readonly Theme[] = [
     palettes: { light: neonDark, dark: neonDark },
     radius: { card: 10, tile: 8, input: 6, control: 6, bar: 12 },
     type: neonType,
+    decoration: 'lanes',
   },
   {
     id: 'sunset',
@@ -1228,6 +1734,7 @@ export const THEMES: readonly Theme[] = [
     palettes: { light: soganLight, dark: soganDark },
     radius: { card: 14, tile: 10, input: 8, control: 10, bar: 18 },
     type: soganType,
+    decoration: 'kawung',
   },
   {
     id: 'retro',
@@ -1242,6 +1749,7 @@ export const THEMES: readonly Theme[] = [
     palettes: { light: forestLight, dark: forestDark },
     radius: { card: 20, tile: 14, input: 10, control: 14, bar: 22 },
     type: forestType,
+    decoration: 'leaves',
   },
   {
     id: 'soft',
@@ -1256,6 +1764,49 @@ export const THEMES: readonly Theme[] = [
     palettes: { light: monoLight, dark: monoDark },
     radius: { card: 4, tile: 4, input: 2, control: 2, bar: 4 },
     type: monoType,
+  },
+  {
+    id: 'sakura',
+    appearance: 'system',
+    palettes: { light: sakuraLight, dark: sakuraDark },
+    radius: { card: 28, tile: 20, input: 16, control: 999, bar: 32 },
+    type: sakuraType,
+    decoration: 'petals',
+  },
+  {
+    id: 'lavender',
+    appearance: 'system',
+    palettes: { light: lavenderLight, dark: lavenderDark },
+    radius: { card: 22, tile: 16, input: 12, control: 14, bar: 26 },
+    type: lavenderType,
+  },
+  {
+    id: 'peach',
+    appearance: 'light',
+    palettes: { light: peachLight, dark: peachLight },
+    radius: { card: 24, tile: 18, input: 14, control: 999, bar: 30 },
+    type: peachType,
+  },
+  {
+    id: 'rosegold',
+    appearance: 'dark',
+    palettes: { light: roseGoldDark, dark: roseGoldDark },
+    radius: { card: 16, tile: 12, input: 10, control: 12, bar: 20 },
+    type: roseGoldType,
+  },
+  {
+    id: 'strawberry',
+    appearance: 'light',
+    palettes: { light: strawberryLight, dark: strawberryLight },
+    radius: { card: 32, tile: 24, input: 20, control: 999, bar: 36 },
+    type: strawberryType,
+  },
+  {
+    id: 'matcha',
+    appearance: 'light',
+    palettes: { light: matchaLight, dark: matchaLight },
+    radius: { card: 18, tile: 14, input: 10, control: 999, bar: 24 },
+    type: matchaType,
   },
 ];
 

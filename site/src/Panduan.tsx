@@ -224,6 +224,54 @@ const FAQ: readonly FaqItem[] = [
       en: "A watch remembers one phone. Once you pair it with the new phone, the old phone has to pair again to use it. Data already synced stays on the old phone (and in the cloud if you use it).",
     },
   },
+  {
+    q: {
+      id: "Jam bilang data GNSS kedaluwarsa saat mulai olahraga luar ruangan",
+      en: "The watch says GNSS data is expired when I start an outdoor workout",
+    },
+    a: {
+      id: "Itu wajar, jam tidak rusak. GPS tetap jalan, hanya butuh 30 sampai 60 detik di luar ruangan: tunggu ikon GPS di jam sebelum mulai. Pesannya dari firmware jam dan tidak bisa kami ubah, karena data bantuan GPS jam Huawei hanya bisa datang dari Huawei Health. JoyoFit mengirim lokasi dan waktu HP untuk membantu titik GPS pertama.",
+      en: "That is normal and the watch is not broken. GPS still works, it just needs 30 to 60 seconds outdoors: wait for the GPS icon on the watch before you start. The message comes from the watch firmware and we cannot change it, because a Huawei watch only gets its GPS assistance data from Huawei Health. JoyoFit sends the phone's location and time to help the first fix.",
+    },
+  },
+  {
+    q: { id: "Watch face apa yang bisa dipasang dari JoyoFit?", en: "Which watch faces can JoyoFit install?" },
+    a: {
+      id: (
+        <>
+          Photo face jalan: kamu memilih fotomu sendiri dan jam menggambar waktu serta datanya di atasnya. Face bawaan bisa
+          dikustomisasi. Face buatan sendiri atau dari luar (berkas .hwt) yang tidak ditandatangani Huawei ditolak oleh jam
+          (kode 100014) dan JoyoFit tidak bisa menandatanganinya; pasang lewat Huawei Health dengan HUAWEI ID yang punya izin
+          designer. Langkahnya ada di{" "}
+          <a className={link} href={`${GITHUB_URL}/blob/master/docs/watchfaces-signing.md#5-panduan-untuk-pengguna-bahasa-indonesia`} target="_blank" rel="noopener">
+            panduan di GitHub
+          </a>{" "}
+          (bagian 5, Bahasa Indonesia). Langkah itu belum dibuktikan pengguna di firmware terbaru, dan setelah itu jam mungkin
+          perlu disambungkan ulang ke JoyoFit.
+        </>
+      ),
+      en: (
+        <>
+          The photo face works: you pick your own photo and the watch draws the time and data on top. Built-in faces can be
+          customised. A custom or third-party face (.hwt file) that Huawei has not signed is rejected by the watch (code
+          100014) and JoyoFit cannot sign it; install it through Huawei Health with a HUAWEI ID that has designer permission.
+          The steps are in the{" "}
+          <a className={link} href={`${GITHUB_URL}/blob/master/docs/watchfaces-signing.md#5-panduan-untuk-pengguna-bahasa-indonesia`} target="_blank" rel="noopener">
+            guide on GitHub
+          </a>{" "}
+          (section 5, in Indonesian). No user has confirmed those steps on current firmware yet, and afterwards the watch may
+          need to be reconnected to JoyoFit.
+        </>
+      ),
+    },
+  },
+  {
+    q: { id: "Fitur baru di changelog belum ada di aplikasiku", en: "A new feature is missing from my app" },
+    a: {
+      id: "Ada dua jenis pembaruan. Perubahan layar dan tampilan (tab bar, layar rekam, ekspor FIT/GPX, tema) sampai lewat pembaruan langsung tanpa perlu update dari toko. Fitur yang menyentuh jam atau Android (bahasa jam, rute GPS ke Health Connect, mulai latihan beban dari HP di jam, balasan cepat dan balasan pintar) butuh build toko baru dan baru ada di tes internal. Daftar lengkapnya ada di bagian Baru dan Segera hadir di beranda.",
+      en: "There are two kinds of update. Screen and look changes (tab bar, record screen, FIT/GPX export, themes) arrive as live updates with no store update needed. Features that touch the watch or Android (watch language, GPS route to Health Connect, starting strength training on the watch from the phone, quick and smart replies) need a new store build and are in internal testing only. The full list is under New and Coming soon on the home page.",
+    },
+  },
 ];
 
 function Install({ lang }: { lang: Lang }) {

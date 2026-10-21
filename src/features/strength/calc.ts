@@ -350,11 +350,6 @@ export function localDay(ms: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** `YYYY-MM-DD` in Western Indonesia Time (UTC+7), the day JoyoRogo's diary is keyed by. */
-export function wibDay(ms: number): string {
-  return new Date(ms + 7 * 3600_000).toISOString().slice(0, 10);
-}
-
 export interface WeeklyMuscleLoad {
   /** Monday, `YYYY-MM-DD`. */
   week: string;

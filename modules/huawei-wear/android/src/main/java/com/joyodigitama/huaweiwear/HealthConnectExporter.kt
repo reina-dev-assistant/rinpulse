@@ -6,6 +6,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.ExerciseRoute
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.OxygenSaturationRecord
@@ -47,6 +48,9 @@ internal class HealthConnectCounts {
   var sleepRemoved = 0
   var workouts = 0
 
+  /** Of [workouts], the sessions written with a GPS route (not part of [total] or of `HealthConnectExportResult`). */
+  var workoutRoutes = 0
+
   val total get() = steps + distance + calories + heartRate + spo2 + restingHeartRate + sleep + workouts
 
   fun toJs(): Map<String, Any?> = mapOf(
@@ -61,7 +65,7 @@ internal class HealthConnectCounts {
   )
 
   override fun toString() =
-    "steps=$steps distance=$distance calories=$calories hr=$heartRate spo2=$spo2 restingHr=$restingHeartRate sleep=$sleep sleepRemoved=$sleepRemoved workouts=$workouts"
+    "steps=$steps distance=$distance calories=$calories hr=$heartRate spo2=$spo2 restingHr=$restingHeartRate sleep=$sleep sleepRemoved=$sleepRemoved workouts=$workouts routes=$workoutRoutes"
 }
 
 /** Health Connect switch and the last export's outcome; private preferences, readable without JS. */
@@ -153,8 +157,8 @@ internal class HealthConnectExporter(
     return HealthConnectClient.getOrCreate(appContext)
   }
 
-  /** Permissions the request dialog asks for. */
-  fun requiredPermissions(): Set<String> = TYPES.map { HealthPermission.getWritePermission(it.second) }.toSet()
+  /** Permissions the request dialog asks for: every record type and the exercise route (see [PERMISSIONS]). */
+  fun requiredPermissions(): Set<String> = PERMISSIONS.map { it.second }.toSet()
 
   suspend fun grantedPermissions(): Set<String> =
     if (availability() == "available") client().permissionController.getGrantedPermissions() else emptySet()
@@ -165,8 +169,8 @@ internal class HealthConnectExporter(
     return mapOf(
       "availability" to availability(),
       "enabled" to settings.enabled,
-      "granted" to TYPES.filter { HealthPermission.getWritePermission(it.second) in granted }.map { it.first },
-      "missing" to TYPES.filter { HealthPermission.getWritePermission(it.second) !in granted }.map { it.first },
+      "granted" to PERMISSIONS.filter { it.second in granted }.map { it.first },
+      "missing" to PERMISSIONS.filter { it.second !in granted }.map { it.first },
       "exporting" to exporting,
       "lastExportSec" to settings.lastExportSec.takeIf { it > 0 },
       "lastError" to settings.lastError,
@@ -505,8 +509,10 @@ internal class HealthConnectExporter(
 
   /**
    * Completed workouts not written yet (or changed since: the signature covers the end, energy and
-   * distance), as ExerciseSessionRecord keyed by the workout's start time. Skipped when the table
-   * does not exist (a build without workout sync).
+   * distance, and the number of GPS fixes once the route permission is granted), as ExerciseSessionRecord
+   * keyed by the workout's start time. A workout with GPS gets its route ([HealthConnectRoute]) when the
+   * user granted `WRITE_EXERCISE_ROUTE`; one written earlier without it is written again as an update of the
+   * same record when the permission arrives. Skipped when the table does not exist (a build without workout sync).
    */
   private suspend fun exportWorkouts(
     client: HealthConnectClient,
@@ -516,25 +522,62 @@ internal class HealthConnectExporter(
     counts: HealthConnectCounts,
   ) {
     if (HealthPermission.getWritePermission(ExerciseSessionRecord::class) !in granted) return
+    val routeAllowed = HealthPermission.PERMISSION_WRITE_EXERCISE_ROUTE in granted
     val written = settings.exportedWorkouts
-    val rows = withContext(Dispatchers.IO) { syncStore.read { loadWorkouts(it) } }.filter { it.signature() !in written }
+    val rows = withContext(Dispatchers.IO) { syncStore.read { loadWorkouts(it) } }.filter { it.signature(routeAllowed) !in written }
     if (rows.isEmpty()) return
     val zone = ZoneId.systemDefault()
     fun offset(sec: Long): ZoneOffset = zone.rules.getOffset(Instant.ofEpochSecond(sec))
-    val records = rows.map { w ->
-      ExerciseSessionRecord(
-        Instant.ofEpochSecond(w.start), offset(w.start), Instant.ofEpochSecond(w.end), offset(w.end),
-        Metadata.activelyRecorded(device, HealthConnectPlan.id("workout", w.start), version),
-        HealthConnectExercise.type(w.sportType),
-        w.name,
-        w.notes(),
-      )
+    // A route is up to MAX_POINTS locations: a few sessions per insert keep each call small.
+    for (chunk in rows.chunked(ROUTE_INSERT_CHUNK)) {
+      val records = chunk.map { w ->
+        val route = if (routeAllowed && w.gpsFixes >= HealthConnectRoute.MIN_POINTS) loadRoute(w) else null
+        if (route != null) counts.workoutRoutes++
+        ExerciseSessionRecord(
+          Instant.ofEpochSecond(w.start), offset(w.start), Instant.ofEpochSecond(w.end), offset(w.end),
+          Metadata.activelyRecorded(device, HealthConnectPlan.id("workout", w.start), version),
+          HealthConnectExercise.type(w.sportType),
+          w.name,
+          w.notes(),
+          exerciseRoute = route,
+        )
+      }
+      counts.workouts += insert(client, records)
     }
-    counts.workouts += insert(client, records)
-    settings.exportedWorkouts = written + rows.map { it.signature() }
+    settings.exportedWorkouts = written + rows.map { it.signature(routeAllowed) }
   }
 
+  /** The workout's stored GPS fixes as an [ExerciseRoute], or null when fewer than two usable ones fall inside the session. */
+  private suspend fun loadRoute(w: WorkoutRow): ExerciseRoute? {
+    val points = withContext(Dispatchers.IO) { syncStore.read { loadPoints(it, w.id) } }
+    val plan = HealthConnectRoute.plan(points, w.start, w.end)
+    if (plan.isEmpty()) return null
+    return ExerciseRoute(
+      plan.map {
+        ExerciseRoute.Location(
+          time = Instant.ofEpochSecond(it.timeSec),
+          latitude = it.lat,
+          longitude = it.lon,
+          altitude = it.altM?.let { m -> Length.meters(m) },
+        )
+      },
+    )
+  }
+
+  private fun loadPoints(db: WearDatabase, workoutId: Long): List<WorkoutPoint> =
+    db.rawQuery(
+      "SELECT ts, lat, lon, alt FROM workout_points WHERE workout_id = ? AND lat IS NOT NULL AND lon IS NOT NULL ORDER BY ts",
+      arrayOf(workoutId.toString()),
+    ).use { c ->
+      val out = ArrayList<WorkoutPoint>()
+      while (c.moveToNext()) {
+        out.add(WorkoutPoint(c.getLong(0), c.getDouble(1), c.getDouble(2), if (c.isNull(3)) null else c.getDouble(3), null))
+      }
+      out
+    }
+
   private class WorkoutRow(
+    val id: Long,
     val start: Long,
     val end: Long,
     val sportType: Int,
@@ -543,8 +586,11 @@ internal class HealthConnectExporter(
     val calories: Int?,
     val avgHr: Int?,
     val maxHr: Int?,
+    /** Stored `workout_points` with a latitude and a longitude. */
+    val gpsFixes: Int,
   ) {
-    fun signature() = "$start|$end|${calories ?: 0}|${distance ?: 0}"
+    fun signature(routeAllowed: Boolean) =
+      HealthConnectRoute.signature("$start|$end|${calories ?: 0}|${distance ?: 0}", gpsFixes, routeAllowed)
 
     fun notes(): String? {
       val parts = ArrayList<String>()
@@ -560,7 +606,8 @@ internal class HealthConnectExporter(
     val exists = db.rawQuery("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'workouts'", null).use { it.moveToFirst() }
     if (!exists) return emptyList()
     return db.rawQuery(
-      """SELECT start, end, duration, sport_type, sport_name, distance, calories, avg_hr, max_hr
+      """SELECT start, end, duration, sport_type, sport_name, distance, calories, avg_hr, max_hr, id,
+           (SELECT COUNT(*) FROM workout_points p WHERE p.workout_id = workouts.id AND p.lat IS NOT NULL AND p.lon IS NOT NULL)
          FROM workouts WHERE imported = 0 AND complete = 1 ORDER BY start""",
       null,
     ).use { c ->
@@ -570,7 +617,7 @@ internal class HealthConnectExporter(
         val start = c.getLong(0)
         val end = if (!c.isNull(1) && c.getLong(1) > start) c.getLong(1) else start + (int(2) ?: 0)
         if (end <= start) continue
-        out.add(WorkoutRow(start, end, int(3) ?: 255, c.getString(4), int(5), int(6), int(7), int(8)))
+        out.add(WorkoutRow(c.getLong(9), start, end, int(3) ?: 255, c.getString(4), int(5), int(6), int(7), int(8), c.getInt(10)))
       }
       out
     }
@@ -584,6 +631,9 @@ internal class HealthConnectExporter(
   companion object {
     /** Health Connect accepts at most 1000 records per insert. */
     private const val INSERT_CHUNK = 500
+
+    /** Sessions per insert while routes are attached. */
+    private const val ROUTE_INSERT_CHUNK = 10
 
     /** A sync window reaches this far back for sleep, so a night that straddles it is written whole. */
     private const val SLEEP_LOOKBACK_SEC = 36 * 3600L
@@ -599,6 +649,15 @@ internal class HealthConnectExporter(
       "SleepSession" to SleepSessionRecord::class,
       "ExerciseSession" to ExerciseSessionRecord::class,
     )
+
+    /**
+     * Name and permission string of everything the request dialog asks for: the write permission of each type in [TYPES] and
+     * `WRITE_EXERCISE_ROUTE`, which lets a workout's GPS route go along with its session. The route is optional: without it the
+     * session is written with no route, and it is not one of the types the export needs (`run` only checks [TYPES]).
+     */
+    val PERMISSIONS: List<Pair<String, String>> =
+      TYPES.map { it.first to HealthPermission.getWritePermission(it.second) } +
+        ("ExerciseRoute" to HealthPermission.PERMISSION_WRITE_EXERCISE_ROUTE)
 
     fun sleepStageType(kind: HealthConnectPlan.SleepStageKind): Int = when (kind) {
       HealthConnectPlan.SleepStageKind.SLEEPING -> SleepSessionRecord.STAGE_TYPE_SLEEPING

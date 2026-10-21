@@ -1,4 +1,6 @@
 import { useRouter, type Href } from 'expo-router';
+
+import { activeWatchName } from '@/features/device/watchName';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, StyleSheet, View } from 'react-native';
@@ -13,11 +15,13 @@ import { groupedRowStyle, NavRow } from '@/components/NavRow';
 import { PageHeader, useContentPadding } from '@/components/Screen';
 import { showsWatchUi } from '@/features/device/presence';
 import { useWatchPresence } from '@/features/device/useWatchPresence';
+import { linkLabel } from '@/features/device/linkState';
 import { useAccountDialogs } from '@/features/settings/useAccountDialogs';
 import { t as tOther } from '@/i18n';
 import { useCloud } from '@/state/CloudProvider';
 import { useOnboarding } from '@/state/OnboardingProvider';
 import { useStrava } from '@/state/StravaProvider';
+import { useWatch } from '@/state/WatchProvider';
 import { spacing, useTheme, type Tint } from '@/theme';
 
 interface HubRow {
@@ -49,6 +53,7 @@ export default function SettingsScreen() {
   const cloud = useCloud();
   const strava = useStrava();
   const presence = useWatchPresence();
+  const { device, linkState, watches } = useWatch();
   const user = authClient.useSession().data?.user;
   const { askSignOut, askDelete, dialogs } = useAccountDialogs();
 
@@ -56,8 +61,21 @@ export default function SettingsScreen() {
   const withWatch = presence === null || showsWatchUi(presence);
   const go = (href: Href) => () => router.push(href);
 
+  // One row into the Watch hub (connected card, faces, alarms, routes live there); its subtitle is the watch's name and link state.
   const watchGroup: HubGroup = {
-    title: t('hub.groups.watch'),
+    data: [
+      {
+        key: 'watch',
+        title: t('hub.groups.watch'),
+        subtitle: device ? `${activeWatchName(device, watches)} · ${linkLabel(linkState)}` : t('hub.watchRow.none'),
+        icon: 'watch',
+        onPress: go('/watch'),
+      },
+    ],
+  };
+
+  const watchSettingsGroup: HubGroup = {
+    title: t('hub.groups.watchSettings'),
     data: withWatch
       ? [
           { key: 'sync', title: t('screens.sync'), icon: 'sync', onPress: go('/settings/sync') },
@@ -66,15 +84,7 @@ export default function SettingsScreen() {
           { key: 'safety', title: t('screens.safety'), icon: 'shield-checkmark', tint: 'heart', onPress: go('/settings/safety') },
           { key: 'meals', title: t('screens.meals'), icon: 'restaurant', onPress: go('/settings/meals') },
         ]
-      : [
-          {
-            key: 'connect-watch',
-            title: t('hub.connectWatch.title'),
-            subtitle: t('hub.connectWatch.subtitle'),
-            icon: 'watch',
-            onPress: go('/watch'),
-          },
-        ],
+      : [],
   };
 
   const bodyGroup: HubGroup = {
@@ -136,8 +146,6 @@ export default function SettingsScreen() {
     ],
   };
 
-  const groups = [watchGroup, bodyGroup, connectionsGroup, appGroup, ...(cloud.signedIn ? [accountGroup] : [])];
-
   // Pro is known once a sync or the cloud status has answered; before that the line only says whose account it is.
   const { pro } = cloud;
   const accountLine = !cloud.signedIn
@@ -148,6 +156,34 @@ export default function SettingsScreen() {
         ? t('hub.account.pro')
         : t('hub.account.free');
 
+  const accountSummaryGroup: HubGroup = {
+    data: [
+      {
+        key: 'account',
+        title: cloud.signedIn ? (cloud.email ?? t('hub.account.signedIn')) : t('hub.account.signedOut'),
+        subtitle: accountLine,
+        value: pro ? t('hub.account.valuePro') : undefined,
+        leading: cloud.signedIn ? (
+          <Avatar name={user?.name?.trim() || cloud.email || ''} image={user?.image} size="xl" />
+        ) : (
+          <IconChip icon="person" size="lg" />
+        ),
+        onPress: go('/settings/akun'),
+      },
+    ],
+  };
+
+  // Account on top, then goals and body, then the one Watch row, then the settings.
+  const groups = [
+    accountSummaryGroup,
+    bodyGroup,
+    watchGroup,
+    watchSettingsGroup,
+    connectionsGroup,
+    appGroup,
+    ...(cloud.signedIn ? [accountGroup] : []),
+  ].filter((group) => group.data.length > 0);
+
   return (
     <SectionList
       sections={groups}
@@ -156,21 +192,7 @@ export default function SettingsScreen() {
       contentContainerStyle={padding}
       stickySectionHeadersEnabled={false}
       showsVerticalScrollIndicator={false}
-      ListHeaderComponent={
-        <>
-          <PageHeader title={t('index.title')} />
-          <NavRow
-            leading={
-              cloud.signedIn ? <Avatar name={user?.name?.trim() || cloud.email || ''} image={user?.image} size="xl" /> : <IconChip icon="person" size="lg" />
-            }
-            title={cloud.signedIn ? (cloud.email ?? t('hub.account.signedIn')) : t('hub.account.signedOut')}
-            subtitle={accountLine}
-            value={pro ? t('hub.account.valuePro') : undefined}
-            onPress={go('/settings/akun')}
-            style={{ ...groupedRowStyle(theme, 0, 1), ...styles.summary }}
-          />
-        </>
-      }
+      ListHeaderComponent={<PageHeader title={t('index.title')} />}
       ListFooterComponent={<>{dialogs}</>}
       renderSectionHeader={({ section }) =>
         section.title ? (
@@ -201,5 +223,4 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   groupTitle: { paddingTop: spacing.lg, paddingBottom: spacing.sm },
   groupGap: { height: spacing.lg },
-  summary: { marginTop: spacing.md },
 });

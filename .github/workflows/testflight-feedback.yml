@@ -1,0 +1,58 @@
+# Daily pull of TestFlight feedback into Atur (docs/testflight-feedback.md).
+# The seen-ids state lives on the `feedback-state` branch (not a cache, which can be evicted).
+name: TestFlight feedback
+
+on:
+  schedule:
+    - cron: "0 1 * * *" # 08:00 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: write # push state.json to feedback-state
+  actions: read # gh run list for the build -> commit map
+
+concurrency: testflight-feedback
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: feedback
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
+      ATUR_API_KEY: ${{ secrets.ATUR_API_KEY }}
+      PROJECT: b00a31c6-cf01-400d-a0a5-4d8349e5c0df
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: feedback-state
+          path: tf-feedback
+          persist-credentials: true
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: JoyoFit
+        run: bun scripts/testflight-feedback.ts --app 6823324343 --name joyofit --out tf-feedback/joyofit --repo "$GITHUB_REPOSITORY" --atur --project "$PROJECT"
+      - name: JoyoRogo
+        # No --repo: the job token cannot read the joyorogo repo's runs, so builds are not mapped to commits.
+        run: bun scripts/testflight-feedback.ts --app 6823222101 --name joyorogo --out tf-feedback/joyorogo --atur --project "$PROJECT"
+      - name: Save state
+        if: always()
+        working-directory: tf-feedback
+        run: |
+          git add joyofit/state.json joyorogo/state.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "testflight feedback state $(date -u +%F)"
+          git push origin HEAD:feedback-state
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: tf-feedback
+          path: tf-feedback
+          retention-days: 14

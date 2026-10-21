@@ -91,4 +91,4 @@ Reuses `ensureSensorPermissions` (`features/sensors/permissions.ts`): Android 12
 
 ## Checks
 
-`bunx tsc --noEmit`, `bun test ./src`, `bunx eslint src`, Android `./gradlew :ble-sensors:testDebugUnitTest :ble-sensors:lintDebug` and the Swift package `swift test` in `modules/ble-sensors/ios/SensorLogicTests` (all in CI). The Kotlin and Swift transport code (`ScaleRadio`, `ScaleLink`, `ScaleCentral`) has no unit test: it needs a radio, like `SensorLink`.
+`bunx tsrs --noEmit`, `bun test ./src`, `bunx eslint src`, Android `./gradlew :ble-sensors:testDebugUnitTest :ble-sensors:lintDebug` and the Swift package `swift test` in `modules/ble-sensors/ios/SensorLogicTests` (all in CI). The Kotlin and Swift transport code (`ScaleRadio`, `ScaleLink`, `ScaleCentral`) has no unit test: it needs a radio, like `SensorLink`.

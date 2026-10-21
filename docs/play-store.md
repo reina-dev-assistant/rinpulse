@@ -64,7 +64,7 @@ Other permissions in the Play build and why (the manifest of `dist/joyofit-play-
 | `ANSWER_PHONE_CALLS` | The watch's accept and reject buttons (optional switch) |
 | `ACCESS_COARSE_LOCATION`, `ACCESS_FINE_LOCATION` | Weather for the phone's position (coarse); phone GPS for outdoor workouts the watch records and for outdoor workouts recorded on the phone (precise). Used only while the app is open or while a recording's foreground service runs; no `ACCESS_BACKGROUND_LOCATION` |
 | `INTERNET`, `ACCESS_NETWORK_STATE` | Weather (Open-Meteo), optional JoyoFit cloud and JoyoRogo, satellite-assist downloads for the watch |
-| `android.permission.health.WRITE_*` (steps, distance, active calories, heart rate, resting heart rate, oxygen saturation, sleep, exercise) | Write watch data to Health Connect. No read permission |
+| `android.permission.health.WRITE_*` (steps, distance, active calories, heart rate, resting heart rate, oxygen saturation, sleep, exercise, exercise route) | Write watch data to Health Connect. No read permission |
 | `USE_BIOMETRIC`, `USE_FINGERPRINT` | Added by the `androidx.biometric` library inside `expo-secure-store`. Normal permissions; JoyoFit never asks for biometrics |
 | `com.joyodigitama.joyofit.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` | AndroidX internal, signature-level |
 | Notification access (`BIND_NOTIFICATION_LISTENER_SERVICE`, special access the user grants in Android settings) | Forward notifications to the watch (optional switch) |
@@ -336,7 +336,8 @@ them. It never reads Health Connect and does not send this data anywhere."
 | `WRITE_RESTING_HEART_RATE` | Writes the resting heart rate the watch reports. |
 | `WRITE_OXYGEN_SATURATION` | Writes SpO2 readings measured by the watch. |
 | `WRITE_SLEEP` | Writes sleep sessions with stages (light, deep, REM, awake) recorded by the watch. |
-| `WRITE_EXERCISE` | Writes workout sessions (type, start, end, summary) recorded by the watch. No GPS route is written. |
+| `WRITE_EXERCISE` | Writes workout sessions (type, start, end, summary) recorded by the watch. |
+| `WRITE_EXERCISE_ROUTE` | Attaches the GPS route of a workout recorded with GPS to its exercise session, so other fitness apps can draw the map. Optional: without it the session is written with no route. |
 
 Is the data shared with third parties, sold or used for ads? **No**. Used for anything beyond writing it to Health Connect? **No**.
 Health Connect data is not part of the cloud upload.

@@ -1,12 +1,51 @@
-import { describe, expect, it } from 'bun:test';
+import { beforeAll, describe, expect, it } from 'bun:test';
 
-import { jakartaDay, toRogoCheckIn } from './rogoMap';
+import { resolveRogoZone, rogoDay, rogoNoon, setRogoProfileZone } from '@/cloud/rogoZone';
 
-describe('jakartaDay', () => {
-  it('counts the day in UTC+7', () => {
-    expect(jakartaDay(Date.UTC(2026, 9, 19, 16, 59))).toBe('2026-10-19');
-    expect(jakartaDay(Date.UTC(2026, 9, 19, 17, 0))).toBe('2026-10-20');
-    expect(jakartaDay(Date.UTC(2026, 11, 31, 18, 0))).toBe('2027-01-01');
+import { toRogoCheckIn } from './rogoMap';
+
+beforeAll(() => setRogoProfileZone('Asia/Jakarta'));
+
+describe('rogoDay', () => {
+  it('counts the Indonesian day in UTC+7', () => {
+    expect(rogoDay(Date.UTC(2026, 9, 19, 16, 59), 'Asia/Jakarta')).toBe('2026-10-19');
+    expect(rogoDay(Date.UTC(2026, 9, 19, 17, 0), 'Asia/Jakarta')).toBe('2026-10-20');
+    expect(rogoDay(Date.UTC(2026, 11, 31, 18, 0), 'Asia/Jakarta')).toBe('2027-01-01');
+  });
+
+  it('counts the Malaysian and Singapore day in UTC+8', () => {
+    expect(rogoDay(Date.UTC(2026, 9, 19, 15, 59), 'Asia/Kuala_Lumpur')).toBe('2026-10-19');
+    expect(rogoDay(Date.UTC(2026, 9, 19, 16, 0), 'Asia/Kuala_Lumpur')).toBe('2026-10-20');
+    expect(rogoDay(Date.UTC(2026, 9, 19, 16, 0), 'Asia/Singapore')).toBe('2026-10-20');
+  });
+
+  it('a 23:30 MYT weigh-in is that MYT day for a MY user, and the same instant in WIB for an ID user', () => {
+    const at = Date.parse('2026-10-19T23:30:00+08:00');
+    setRogoProfileZone('Asia/Kuala_Lumpur');
+    expect(toRogoCheckIn({ weightKg: 70 }, at)!.date).toBe('2026-10-19');
+    setRogoProfileZone(null);
+    expect(toRogoCheckIn({ weightKg: 70 }, at)!.date).toBe(rogoDay(at, 'Asia/Jakarta'));
+    // 00:30 MYT on the 20th is still the 19th, 23:30, in WIB.
+    const after = Date.parse('2026-10-20T00:30:00+08:00');
+    setRogoProfileZone('Asia/Kuala_Lumpur');
+    expect(toRogoCheckIn({ weightKg: 70 }, after)!.date).toBe('2026-10-20');
+    setRogoProfileZone('Asia/Jakarta');
+    expect(toRogoCheckIn({ weightKg: 70 }, after)!.date).toBe('2026-10-19');
+  });
+
+  it('noon of a day is noon in that zone', () => {
+    expect(rogoNoon('2026-10-10', 'Asia/Jakarta')).toBe(Date.parse('2026-10-10T05:00:00.000Z'));
+    expect(rogoNoon('2026-10-10', 'Asia/Kuala_Lumpur')).toBe(Date.parse('2026-10-10T04:00:00.000Z'));
+  });
+});
+
+describe('resolveRogoZone', () => {
+  it('takes the profile zone, else the device zone when supported, else Jakarta', () => {
+    expect(resolveRogoZone('Asia/Singapore', 'Asia/Jakarta')).toBe('Asia/Singapore');
+    expect(resolveRogoZone(null, 'Asia/Kuala_Lumpur')).toBe('Asia/Kuala_Lumpur');
+    expect(resolveRogoZone(undefined, 'Europe/Paris')).toBe('Asia/Jakarta');
+    expect(resolveRogoZone(null, undefined)).toBe('Asia/Jakarta');
+    expect(resolveRogoZone('Europe/Paris', 'Asia/Singapore')).toBe('Asia/Jakarta');
   });
 });
 

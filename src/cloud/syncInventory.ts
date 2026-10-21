@@ -7,6 +7,7 @@ import { errorMessage } from '@/format';
 import { isLocale } from '@/i18n';
 import { getLocalePref, setLocalePref } from '@/i18n/native';
 import { defaultLayout } from '@/features/bikecomputer/fields/layout';
+import { applyPulledReplies, clearPulledReplies, getSavedReplies, QUICK_REPLIES_PREF } from '@/features/settings/quickReplies';
 import { getFtp, setFtp } from '@/features/cycling/settings';
 import { bikeSettingsStore, DEFAULT_BIKE_SETTINGS } from '@/features/bikecomputer/settings';
 import { getWheelMm, setWheelMm } from '@/features/sensors/settings';
@@ -28,6 +29,7 @@ import { HuaweiWear, type CycleSwitches, type UserSex } from '@/wear';
  *  - `weather`         temperature unit and the chosen city's name (`getWeatherStatus` / `setWeatherUnit`, `setWeatherCity`).
  *  - `sleepreport`     the morning sleep report switch (`getSafety().sleepReportEnabled` / `setSleepReportEnabled`).
  *  - `healthyliving`   the Healthy Living switch (`getHealthyLiving().enabled` / `setHealthyLivingEnabled`).
+ *  - `quickreplies`    the watch's quick replies list (kv `joyofit.quickReplies`); absent = the defaults of the app's language.
  *  - `sync.cycle`      kv `cloud.syncCycle`: whether the menstrual log goes to the cloud (`healthSync.ts` owns the switch).
  *
  * Never synced, each because it belongs to this phone or its watch:
@@ -236,6 +238,15 @@ registerSyncedPref({
     await HuaweiWear.setHealthyLivingEnabled(value);
   },
   clear: () => HuaweiWear.setHealthyLivingEnabled(true),
+});
+
+// The watch's quick replies (Android watches that set ExpandCapability 82). The list lives in kv `joyofit.quickReplies`, so it reads and writes with
+// no watch connected; a pulled list is also handed to the native side, which sends it at the next connect.
+registerSyncedPref({
+  key: QUICK_REPLIES_PREF,
+  read: async () => (await getSavedReplies()) ?? undefined,
+  write: applyPulledReplies,
+  clear: clearPulledReplies,
 });
 
 // Same key and encoding as `CYCLE_KEY` in healthSync.ts: '0' = off, anything else (absent) = on, the default.

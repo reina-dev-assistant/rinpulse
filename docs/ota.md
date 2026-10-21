@@ -77,7 +77,7 @@ scripts/ota.sh --platform ios "Copy fix"                         # one platform
 scripts/ota.sh --runtime                                         # runtimeVersion only
 ```
 
-It runs `bun scripts/i18n-check.ts` (translation key parity and hard-coded UI text, docs/i18n.md), `bunx tsc --noEmit` and `bun test ./src/`, then per platform a release `expo export` (fails when the bundle holds no app code), then `eas update --channel production --skip-bundler` with that bundle, and prints one line per platform:
+It runs `bun scripts/i18n-check.ts` (translation key parity and hard-coded UI text, docs/i18n.md), `bunx tsrs --noEmit` (the typecheck, a failure aborts the script) and `bun test ./src/`, then per platform a release `expo export` (fails when the bundle holds no app code), then `eas update --channel production --skip-bundler` with that bundle, and prints one line per platform:
 
 ```
 android  channel=production  runtimeVersion=<hash>  group=<update group id>

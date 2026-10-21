@@ -328,6 +328,7 @@ public final class HuaweiWearModule: Module {
         Function("getHealthSensors") { () -> [String: Any] in runtime.watchSettings.healthSensorsStatus() }
         Function("getStressStatus") { () -> [String: Any] in runtime.watchSettings.stress.status() }
         Function("getLiveWorkout") { () -> [String: Any]? in runtime.liveWorkout.snapshot() }
+        Function("getWatchWorkout") { () -> [String: Any] in runtime.watchWorkout.status() }
         Function("getPhoneFeatures") { () -> [String: Any] in runtime.features.status() }
         Function("getAlarms") { () -> [String: Any] in runtime.watchSettings.cachedAlarms() }
         Function("getSafety") { () -> [String: Any] in runtime.safety.status() }
@@ -338,6 +339,9 @@ public final class HuaweiWearModule: Module {
         Function("getActivityGoals") { () -> [String: Any] in runtime.activityGoals.status() }
         Function("getHealthyLiving") { () -> [String: Any] in runtime.p2p.healthLivingStatus() }
         Function("getCourses") { () -> [String: Any] in runtime.p2p.coursesStatus() }
+        // Quick replies are Android only (iOS cannot reply to another app's notification): nothing to show, nothing to send.
+        Function("getQuickReplies") { () -> [String: Any] in ["supported": false, "slots": 0, "maxLength": 0] }
+        AsyncFunction("setQuickReplies") { (_: [String]) async throws -> Bool in false }
         Function("getRoutes") { () -> [String: Any] in runtime.p2p.routesStatus() }
 
         AsyncFunction("getNotificationApps") { () async throws -> [[String: Any]] in [] }
@@ -411,6 +415,13 @@ public final class HuaweiWearModule: Module {
         AsyncFunction("findWatch") { (start: Bool) async throws -> Void in
             try await wearCall { try await runtime.features.findWatch(start) }
         }
+
+        // MARK: a workout started on the watch from the phone (the strength logger; WatchWorkoutControl.swift)
+
+        AsyncFunction("startWatchWorkout") { (sport: Int) async -> [String: Any] in await runtime.watchWorkout.start(sport: sport).toJS() }
+        AsyncFunction("pauseWatchWorkout") { () async -> [String: Any] in await runtime.watchWorkout.pause().toJS() }
+        AsyncFunction("resumeWatchWorkout") { () async -> [String: Any] in await runtime.watchWorkout.resume().toJS() }
+        AsyncFunction("stopWatchWorkout") { () async -> [String: Any] in await runtime.watchWorkout.stop().toJS() }
 
         // MARK: meals on the watch's calorie card
 

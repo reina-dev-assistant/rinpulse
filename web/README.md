@@ -31,7 +31,7 @@ bun run test           # vitest, runs in node with @napi-rs/canvas
 bunx playwright install chromium   # once
 bun run test:e2e       # Playwright: builds, then `vite preview` (the real Worker) on http://localhost:4173/studio/
 STUDIO_URL=https://app.fit.joyorogo.com/studio/ bun run test:e2e   # the same tests against a deployment (keep the trailing slash)
-bun run build          # tsc --noEmit && vite build, output in dist/
+bun run build          # tsrs --noEmit && vite build, output in dist/
 bunx wrangler deploy --dry-run
 bun run deploy         # build + wrangler deploy
 ```

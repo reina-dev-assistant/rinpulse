@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -7,12 +8,18 @@ import { Screen } from '@/components/Screen';
 import { NotificationsSection } from '@/features/settings/NotificationsSection';
 import { PhoneSection } from '@/features/settings/PhoneSection';
 import { isIos } from '@/components/IosUnavailable';
+import { quickRepliesSupport } from '@/features/settings/quickReplies';
+import { useWatch } from '@/state/WatchProvider';
 import { useTheme } from '@/theme';
 
 export default function NotificationsSettingsScreen() {
   const { t } = useTranslation('settings');
   const theme = useTheme();
   const router = useRouter();
+  const { linkState } = useWatch();
+  // Only a connected watch that takes quick replies; re-read when the link changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `linkState` is the trigger, the native read has no inputs
+  const quickReplies = useMemo(() => quickRepliesSupport().supported, [linkState]);
   return (
     <Screen>
       <NotificationsSection />
@@ -25,6 +32,17 @@ export default function NotificationsSettingsScreen() {
           style={groupedRowStyle(theme, 0, 1)}
         />
       </View>
+      {quickReplies ? (
+        <View>
+          <NavRow
+            icon="chatbubble-ellipses"
+            title={t('quickReplies.rowTitle')}
+            subtitle={t('quickReplies.rowSubtitle')}
+            onPress={() => router.push('/settings/quick-replies')}
+            style={groupedRowStyle(theme, 0, 1)}
+          />
+        </View>
+      ) : null}
       <PhoneSection />
     </Screen>
   );

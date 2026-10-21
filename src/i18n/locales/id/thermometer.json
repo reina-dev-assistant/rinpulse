@@ -50,7 +50,7 @@
   },
   "privacy": {
     "title": "Data kamarmu",
-    "body": "Pembacaan mentah tersimpan di HP ini saja dan dihapus setelah 120 hari. Yang bisa keluar dari HP hanya rata-rata suhu dan kelembapan per malam (rata-rata, terendah, tertinggi, dan jumlah pembacaan), dan hanya kalau Wawasan tidur menyala di Pengaturan, Koneksi, JoyoRogo. Malam dengan pembacaan terlalu sedikit tidak dikirim datanya."
+    "body": "Pembacaan mentah tersimpan di HP ini saja dan dihapus setelah 120 hari. Yang bisa keluar dari HP hanya rata-rata suhu dan kelembapan per malam (rata-rata, terendah, tertinggi, dan jumlah pembacaan), dan hanya kalau Wawasan tidur menyala di Lainnya, Koneksi, JoyoRogo. Malam dengan pembacaan terlalu sedikit tidak dikirim datanya."
   },
   "capture": {
     "notification": {

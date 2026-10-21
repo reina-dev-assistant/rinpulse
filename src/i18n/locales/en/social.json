@@ -188,6 +188,12 @@
     "button": "Share to JoyoRogo",
     "title": "Share to JoyoRogo",
     "posted": "Posted to JoyoRogo.",
+    "needsProfile": {
+      "title": "Complete your JoyoRogo profile first",
+      "body": "The feed is only for accounts with a profile, so it stays full of real people and free of spam. Enter your height, weight and goal once in JoyoRogo.",
+      "open": "Open JoyoRogo",
+      "later": "Later"
+    },
     "viewPost": "View post",
     "caption": "Caption",
     "captionHint": "Optional.",

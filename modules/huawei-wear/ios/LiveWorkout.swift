@@ -65,6 +65,22 @@ public final class LiveWorkout: DataSyncFeature, @unchecked Sendable {
     private var lastStatusAtMs: Int64 = 0
     private var idleAnswers = 0
 
+    /// True while a workout the phone started on the watch (`WatchWorkoutControl`) is owned by a screen of its own (the strength logger): the
+    /// watch's workout is then not mirrored as a live workout, which would open a second screen for the same session. A mirror that is already
+    /// running is left alone; only a new one is not opened.
+    public var phoneOwned: @Sendable () -> Bool {
+        get { lock.locked { _phoneOwned } }
+        set { lock.locked { _phoneOwned = newValue } }
+    }
+    private var _phoneOwned: @Sendable () -> Bool = { false }
+
+    /// Called at the top of the entry points, never with `lock` held (`NSLock` is not reentrant).
+    private func mirrorBlocked() -> Bool {
+        guard phoneOwned() else { return false }
+        let idle: Bool = lock.locked { session == nil || session?.status == .ended }
+        return idle
+    }
+
     public init(
         dataSync: DataSyncService, events: WearEvents, settings: WearSettings, setHeartRateActive: @escaping @Sendable (Bool) -> Void,
         nowMs: @escaping @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1000) }, watchdogEveryMs: Int = LiveWorkout.watchdogEveryMs
@@ -156,6 +172,7 @@ public final class LiveWorkout: DataSyncFeature, @unchecked Sendable {
     }
 
     private func onEvent(_ event: SampleEvent) async {
+        if mirrorBlocked() { return }
         switch event.eventId {
         case LiveWorkoutWire.eventControl: await onControl(LiveWorkoutWire.parseControl(event.data))
         case LiveWorkoutWire.eventStart: change(LiveWorkoutWire.parseWorkoutType(event.data), .running, "started")
@@ -222,6 +239,7 @@ public final class LiveWorkout: DataSyncFeature, @unchecked Sendable {
     }
 
     private func onPoint(_ point: SamplePointIn) {
+        if mirrorBlocked() { return }
         lock.locked {
             var current = watchSession()
             let metrics = current.metrics.applyPoint(point.values)
@@ -247,6 +265,7 @@ public final class LiveWorkout: DataSyncFeature, @unchecked Sendable {
     /// The watch's answer to the 30 s status poll (`17/03`): starts a heart-rate session for a running workout (indoor ones included), follows
     /// pause and resume, and ends a session it or the GPS requests started once the watch is idle.
     public func watchStatus(running: Bool, paused: Bool, workoutType: Int?) {
+        if mirrorBlocked() { return }
         var created = false
         var ended = false
         var changed = false
@@ -291,6 +310,7 @@ public final class LiveWorkout: DataSyncFeature, @unchecked Sendable {
 
     /// The watch asked for the phone's GPS: an outdoor workout is running (the request repeats about every 20 s).
     public func gpsPing() {
+        if mirrorBlocked() { return }
         let created: Bool = lock.locked {
             if var s = session, s.status != .ended {
                 s.lastGpsAtMs = nowMs()
@@ -329,6 +349,7 @@ public final class LiveWorkout: DataSyncFeature, @unchecked Sendable {
 
     /// A `17/11` realtime report (`WorkoutReport`); operator type 1 running, 2 paused, 3 resumed, 4 stopped.
     public func onReport(_ report: WorkoutReport) {
+        if mirrorBlocked() { return }
         lock.locked {
             var current = watchSession()
             let metrics = report.apply(to: current.metrics)

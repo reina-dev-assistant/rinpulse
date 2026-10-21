@@ -1,5 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { watchDisplayName } from './watchName';
+
 /**
  * The watches this phone has used: the `device` table, one row per watch, with what migration 14 added (`alias`, `is_primary`,
  * `added_at`, `tracks_health`, `bg_sync`; docs/multi-watch.md). The native module writes the row when a watch connects
@@ -59,7 +61,7 @@ export async function listWatches(db: SQLiteDatabase): Promise<WatchRow[]> {
 
 /** What the screens call a watch: the person's name for it, else the name it reports. */
 export function watchLabel(watch: Pick<WatchRow, 'alias' | 'name' | 'address'>): string {
-  return watch.alias?.trim() || watch.name.trim() || watch.address;
+  return watchDisplayName(watch) || watch.address;
 }
 
 /** The alias to store: trimmed and cut to [MAX_ALIAS_LENGTH]; an empty text clears the alias. */

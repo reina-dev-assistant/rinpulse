@@ -92,7 +92,7 @@
     "loading": "Loading Strava gear...",
     "empty": "There are no {{kind}} on your Strava account. Add them on strava.com, Settings, Gear first: Strava does not let apps create gear.",
     "error": "Strava gear could not be loaded: {{error}}",
-    "notConnected": "Connect Strava first in Settings, Strava.",
+    "notConnected": "Connect Strava first in More, Strava.",
     "otherNoLink": "Gear of type Other has no counterpart on Strava.",
     "note": "After a workout is sent, JoyoFit puts this gear on its Strava activity.",
     "gearAccess": {

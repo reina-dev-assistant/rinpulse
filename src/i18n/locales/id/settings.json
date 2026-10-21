@@ -1,5 +1,6 @@
 {
   "screens": {
+    "quickReplies": "Balasan cepat",
     "sync": "Sinkron & latar belakang",
     "notifications": "Notifikasi & panggilan",
     "notificationApps": "Aplikasi notifikasi",
@@ -30,7 +31,7 @@
     "homeCards": "Atur kartu Beranda"
   },
   "index": {
-    "title": "Pengaturan",
+    "title": "Lainnya",
     "rows": {
       "notificationApps": {
         "title": "Aplikasi notifikasi",
@@ -340,7 +341,7 @@
     "missing": "Tidak diizinkan, jadi dilewati: {{list}}.",
     "continue": "Lanjutkan",
     "writeAgain": "Tulis ulang semua",
-    "details": "Mengirim langkah, jarak, kalori, detak jantung, oksigen darah, tidur, dan latihan setiap selesai sinkron, supaya aplikasi lain seperti JoyoRogo bisa membacanya. Saat dinyalakan, data yang sudah tersimpan juga ikut ditulis."
+    "details": "Mengirim langkah, jarak, kalori, detak jantung, oksigen darah, tidur, dan latihan (di Android beserta rute GPS-nya) setiap selesai sinkron, supaya aplikasi lain seperti JoyoRogo bisa membacanya. Saat dinyalakan, data yang sudah tersimpan juga ikut ditulis."
   },
   "healthyLiving": {
     "notAsked": "Jam belum meminta tugas. Buka Healthy Living di jam sekali.",
@@ -632,7 +633,7 @@
   "joyorogo": {
     "title": "Kalori olahraga ke JoyoRogo",
     "intro": "Kalori latihan dari jam, rekaman ponsel, dan angkat beban dikirim ke buku harian JoyoRogo sebagai kalori terbakar. Latihan yang sama yang JoyoRogo baca dari Health Connect atau Apple Health tidak dihitung dua kali.",
-    "signedOut": "Masuk dengan akun JoyoRogo (Pengaturan, akun) agar kalori olahragamu terkirim ke JoyoRogo.",
+    "signedOut": "Masuk dengan akun JoyoRogo (Lainnya, akun) agar kalori olahragamu terkirim ke JoyoRogo.",
     "labels": {
       "lastSent": "Terakhir terkirim",
       "sent": "Sudah terkirim",
@@ -733,8 +734,12 @@
     "detailsAndroid": "Ponsel ini: memakai lokasi kasar yang terakhir diketahui. Di latar belakang Android mungkin tidak memberi yang baru, jadi posisi terakhir dipakai ulang."
   },
   "hub": {
+    "watchRow": {
+      "none": "Belum ada jam"
+    },
     "groups": {
       "watch": "Jam",
+      "watchSettings": "Pengaturan jam",
       "body": "Target & tubuh",
       "connections": "Koneksi",
       "app": "Aplikasi"
@@ -746,10 +751,6 @@
       "pro": "Pro aktif, sinkron cloud nyala",
       "free": "Gratis, sinkron cloud butuh Pro",
       "valuePro": "Pro"
-    },
-    "connectWatch": {
-      "title": "Sambungkan jam",
-      "subtitle": "Opsional. Pasang jam Huawei atau Honor untuk langkah, tidur, dan detak jantung."
     },
     "connected": "Terhubung"
   },
@@ -805,5 +806,27 @@
     "keep": "Simpan terpisah",
     "delete": "Hapus data lama dari HP ini",
     "signOut": "Keluar lagi"
+  },
+  "quickReplies": {
+    "title": "Balasan cepat",
+    "rowTitle": "Balasan cepat",
+    "rowSubtitle": "Jawaban singkat yang muncul di jam saat membalas notifikasi",
+    "intro": "Dipilih di jam saat kamu membalas pesan dari WhatsApp, Telegram, dan aplikasi lain. Urutan di sini sama dengan di jam.",
+    "count": "{{count}} dari {{max}} balasan",
+    "placeholder": "Tulis balasan",
+    "add": "Tambah balasan",
+    "save": "Simpan ke jam",
+    "reset": "Kembalikan bawaan",
+    "moveUp": "Naikkan balasan {{n}}",
+    "moveDown": "Turunkan balasan {{n}}",
+    "remove": "Hapus balasan {{n}}",
+    "empty": "Tulis minimal satu balasan.",
+    "tooLong": "Maksimal {{max}} karakter.",
+    "multiline": "Satu baris saja.",
+    "blank": "Balasan tidak boleh kosong.",
+    "tooMany": "Jam ini hanya menampung {{max}} balasan.",
+    "sent": "Terkirim ke jam.",
+    "stored": "Tersimpan. Dikirim ke jam saat tersambung.",
+    "needsWatch": "Jam yang tersambung belum mendukung balasan cepat."
   }
 }

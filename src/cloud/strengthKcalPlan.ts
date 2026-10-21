@@ -1,5 +1,5 @@
 import { isImported } from '@/features/strength/link';
-import { wibDay } from '@/features/strength/calc';
+import { rogoDay } from './rogoZone';
 import type { StrengthWorkout } from '@/features/strength/types';
 
 /**
@@ -19,7 +19,7 @@ export const MAX_NAME = 200;
 
 export interface KcalPayload {
   externalId: string;
-  /** WIB day, `YYYY-MM-DD`. */
+  /** JoyoRogo day (its profile zone), `YYYY-MM-DD`. */
   date: string;
   name: string;
   durationMin: number;
@@ -50,7 +50,7 @@ export function desiredKcal(workout: StrengthWorkout, ownRow: boolean, label: (n
   if (!(kcal > 0)) return null;
   return {
     externalId: externalIdFor(workout.id),
-    date: wibDay(workout.startedAt),
+    date: rogoDay(workout.startedAt),
     name: label(workout.name.trim()).slice(0, MAX_NAME),
     durationMin: Math.min(MAX_DURATION_MIN, Math.max(MIN_DURATION_MIN, Math.round(workout.durationSec / 60))),
     kcal,

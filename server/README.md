@@ -241,7 +241,7 @@ Local development: `bun run db:migrate:local && bun run dev`.
 
 ```bash
 bun run test         # vitest + @cloudflare/vitest-plugin (miniflare): auth, idempotency, user isolation, imports
-bunx tsc --noEmit
+bunx tsrs --noEmit
 bun run types        # regenerate worker-configuration.d.ts after editing wrangler.jsonc
 ```
 

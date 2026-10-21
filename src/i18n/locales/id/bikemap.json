@@ -5,6 +5,7 @@
     "unavailable": "Peta belum ada di versi aplikasi ini.",
     "loadFailed": "Peta gagal dimuat.",
     "recenter": "Ikuti posisi-mu lagi",
+    "attributionToggle": "Sumber data peta",
     "attributionLabel": "Sumber data peta, membuka openstreetmap.org",
     "online": "Peta online, butuh sinyal",
     "stream": "Peta streaming, butuh sinyal"

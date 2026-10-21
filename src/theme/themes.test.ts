@@ -115,10 +115,12 @@ describe('themes', () => {
     expect(sport.type.fonts.regular).not.toBe(classic.type.fonts.regular);
   });
 
-  test('dark themes pin dark, the cream one pins light, the rest follow the phone', () => {
-    for (const id of ['sport', 'amoled', 'neon', 'sunset'] as const) expect(getTheme(id).appearance).toBe('dark');
-    expect(getTheme('retro').appearance).toBe('light');
-    for (const id of ['classic', 'ocean', 'sogan', 'forest', 'soft', 'mono'] as const) expect(getTheme(id).appearance).toBe('system');
+  test('dark themes pin dark, the pastel and cream ones pin light, the rest follow the phone', () => {
+    for (const id of ['sport', 'amoled', 'neon', 'sunset', 'rosegold'] as const) expect(getTheme(id).appearance).toBe('dark');
+    for (const id of ['retro', 'peach', 'strawberry', 'matcha'] as const) expect(getTheme(id).appearance).toBe('light');
+    for (const id of ['classic', 'ocean', 'sogan', 'forest', 'soft', 'mono', 'sakura', 'lavender'] as const) {
+      expect(getTheme(id).appearance).toBe('system');
+    }
   });
 
   test('amoled is pure black', () => {

@@ -181,7 +181,7 @@ function WatchHub() {
 }
 
 /**
- * The Watch tab. A phone that never had a watch first sees a short intro (what a watch adds, which ones work, how to ask for yours)
+ * The Watch hub, opened from More (a hidden tab route; the bar keeps More marked). A phone that never had a watch first sees a short intro (what a watch adds, which ones work, how to ask for yours)
  * and only "Lanjut" opens the pairing screen, which is what asks for Bluetooth permission. Everyone else goes straight to it.
  */
 export default function WatchScreen() {

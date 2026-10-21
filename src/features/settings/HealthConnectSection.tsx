@@ -27,8 +27,8 @@ const AVAILABILITY_KEY = {
 
 type Busy = 'asking' | 'switchingOff' | 'writing' | 'opening';
 
-/** Types written to Health Connect; the count shown next to the permission state. */
-const RECORD_TYPE_COUNT = 8;
+/** Types written to Health Connect (Apple Health: 8); the count shown next to the permission state. Android adds the workout GPS route as a ninth permission. */
+const RECORD_TYPE_COUNT = isIos ? 8 : 9;
 
 /**
  * Write the watch data to Health Connect so other apps (JoyoRogo, for one) can read it. The export

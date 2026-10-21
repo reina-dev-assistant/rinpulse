@@ -30,10 +30,10 @@
     "covers3Ios": "Izin: notifikasi, Apple Health, cuaca.",
     "covers3Android": "Izin: notifikasi, Health Connect, cuaca, tetap terhubung.",
     "covers4": "Masuk dengan JoyoRogo, ini opsional.",
-    "reopen": "Kamu bisa membuka panduan ini lagi kapan saja dari Pengaturan, Panduan penyiapan.",
+    "reopen": "Kamu bisa membuka panduan ini lagi kapan saja dari Lainnya, Panduan penyiapan.",
     "noWatch": {
       "title": "Belum punya jam, atau jam-mu belum didukung?",
-      "body": "Tidak masalah. Latihan beban, Coach, dan perpustakaan gerakan jalan sepenuhnya tanpa jam. Jam bisa disambungkan nanti dari tab Jam.",
+      "body": "Tidak masalah. Latihan beban, Coach, dan perpustakaan gerakan jalan sepenuhnya tanpa jam. Jam bisa disambungkan nanti dari Lainnya, Jam.",
       "button": "Aku belum punya jam / jamku belum didukung",
       "supported": "Jam apa saja yang didukung?"
     }
@@ -46,7 +46,7 @@
     "step3": "Di Huawei Health, buka jam di bagian Perangkat lalu lepas (hapus) pasangannya. Kalau jam masih terhubung ke HP lain, putuskan di sana juga.",
     "hideImport": "Sembunyikan impor riwayat",
     "showImport": "Minta atau impor riwayat Huawei Health saya",
-    "note": "Tidak yakin pasangan sudah terlepas? Lanjut saja: saat dipasangkan akan ketahuan kalau jam masih menolak. Impor nanti tetap bisa dari Pengaturan, Impor dari Huawei Health."
+    "note": "Tidak yakin pasangan sudah terlepas? Lanjut saja: saat dipasangkan akan ketahuan kalau jam masih menolak. Impor nanti tetap bisa dari Lainnya, Impor dari Huawei Health."
   },
   "pair": {
     "title": "Pasangkan jam kamu",
@@ -67,7 +67,7 @@
   "sync": {
     "title": "Baca riwayat dari jam",
     "intro": "JoyoFit sekarang mengambil yang tersimpan di jam: langkah, detak jantung, tidur, dan latihan. Semuanya disimpan di HP ini.",
-    "notConnected": "Jam tidak terhubung. Kembali untuk menghubungkannya, atau pilih Nanti dan sinkron dari tab Jam kapan saja.",
+    "notConnected": "Jam tidak terhubung. Kembali untuk menghubungkannya, atau pilih Nanti dan sinkron dari Lainnya, Jam kapan saja.",
     "reading": "Membaca dari jam...",
     "readingHint": "Sinkron pertama mengumpulkan semua yang masih tersimpan di jam, jadi bisa butuh beberapa menit. Biarkan jam tetap dekat dan menyala.",
     "syncNow": "Sinkron sekarang",
@@ -111,7 +111,7 @@
     "gives1": "Skor Pemulihan, Strain, dan Tidur harianmu muncul di samping yang kamu makan di catatan JoyoRogo, lengkap dengan saran makan singkat untuk hari seperti itu.",
     "gives2": "Yang kamu catat di JoyoRogo bisa tampil di kartu kalori jam.",
     "gives3": "Pilihan mencadangkan data jam ke cloud, yang termasuk JoyoRogo Pro (langkah berikutnya).",
-    "note": "Selama kamu masuk, JoyoFit mengirim skor dan ukuran tubuh harianmu (tidur, detak istirahat, HRV, VO2max) ke JoyoRogo dan bertukar data makanan dan berat badan. Data jam-mu tetap di HP ini kecuali kamu menyalakan cadangan cloud Pro. Keluar kapan saja di Pengaturan, Kesehatan dan cloud.",
+    "note": "Selama kamu masuk, JoyoFit mengirim skor dan ukuran tubuh harianmu (tidur, detak istirahat, HRV, VO2max) ke JoyoRogo dan bertukar data makanan dan berat badan. Data jam-mu tetap di HP ini kecuali kamu menyalakan cadangan cloud Pro. Keluar kapan saja di Lainnya, Kesehatan dan cloud.",
     "signedIn": "Sudah masuk.",
     "signedInAs": "Sudah masuk sebagai {{email}}."
   },
@@ -156,7 +156,7 @@
     "wifiOnlyHint": "Unggahan menunggu Wi-Fi supaya tidak memakai kuota.",
     "uploading": "Mengunggah {{done}} dari {{total}} latihan",
     "backupOn": "Cadangan menyala. Latihan yang sudah ada di HP ini ikut diunggah di latar belakang; kamu tidak perlu menunggu di sini.",
-    "backupOff": "Cadangan mati. Latihan tetap di HP ini. Kamu bisa menyalakannya lagi di Pengaturan, Sinkron cloud.",
+    "backupOff": "Cadangan mati. Latihan tetap di HP ini. Kamu bisa menyalakannya lagi di Lainnya, Sinkron cloud.",
     "checking": "Memeriksa akun JoyoRogo kamu...",
     "free": "Cloud latihan adalah fitur JoyoRogo Pro. Akunmu belum Pro, jadi latihan tetap hanya di HP ini dan semuanya tetap jalan seperti biasa. Kalau nanti Pro, latihan yang sudah ada ikut diunggah.",
     "managedIos": "JoyoRogo Pro diatur di dalam JoyoRogo.",
@@ -172,7 +172,7 @@
     "intro": "JoyoFit sinkron sendiri mulai sekarang. Beberapa tempat yang perlu kamu tahu:",
     "open": "Masih terbuka: {{list}}.",
     "openItem": "{{name}} ({{where}})",
-    "reopen": "Buka panduan ini lagi dari Pengaturan, Panduan penyiapan.",
+    "reopen": "Buka panduan ini lagi dari Lainnya, Panduan penyiapan.",
     "healthSettings": "{{store}} dan cloud",
     "tip": {
       "today": {
@@ -185,11 +185,11 @@
       },
       "strava": {
         "title": "Strava",
-        "text": "Pengaturan, Strava: kirim latihan jam ke Strava, gratis."
+        "text": "Lainnya, Strava: kirim latihan jam ke Strava, gratis."
       },
       "findWatch": {
         "title": "Cari jam",
-        "text": "Tab Jam: buat jam berbunyi saat hilang di dalam rumah."
+        "text": "Lainnya, Jam: buat jam berbunyi saat hilang di dalam rumah."
       },
       "strength": {
         "title": "Latihan",
@@ -205,19 +205,19 @@
       },
       "watchLater": {
         "title": "Jam, kapan pun",
-        "text": "Tab Jam: pasangkan jam Huawei atau Honor, atau minta dukungan untuk jam-mu."
+        "text": "Lainnya, Jam: pasangkan jam Huawei atau Honor, atau minta dukungan untuk jam-mu."
       }
     },
     "where": {
-      "unbind": "Pengaturan, Impor dari Huawei Health",
-      "pair": "tab Jam",
-      "sync": "tab Jam, atau tarik ke bawah di Hari ini",
-      "notifications": "Pengaturan, Notifikasi dan panggilan",
-      "health": "Pengaturan, {{place}}",
-      "weather": "Pengaturan, Cuaca",
-      "background": "Pengaturan, Latar belakang dan sinkron",
-      "account": "Pengaturan, {{place}}",
-      "cloud": "Pengaturan, Sinkron cloud"
+      "unbind": "Lainnya, Impor dari Huawei Health",
+      "pair": "Lainnya, Jam",
+      "sync": "Lainnya, Jam, atau tarik ke bawah di Hari ini",
+      "notifications": "Lainnya, Notifikasi dan panggilan",
+      "health": "Lainnya, {{place}}",
+      "weather": "Lainnya, Cuaca",
+      "background": "Lainnya, Latar belakang dan sinkron",
+      "account": "Lainnya, {{place}}",
+      "cloud": "Lainnya, Sinkron cloud"
     },
     "name": {
       "unbind": "Riwayat Huawei Health",
@@ -241,8 +241,8 @@
     "weightIntro": "Berat badanmu dipakai untuk memperkirakan kalori latihan. Boleh dilewati, perkiraan memakai 70 kg.",
     "weightLabel": "Berat badan (kg)",
     "weightSave": "Simpan berat",
-    "weightSaved": "Tersimpan: {{kg}} kg. Tinggi dan tahun lahir bisa diisi di Pengaturan, Profil.",
+    "weightSaved": "Tersimpan: {{kg}} kg. Tinggi dan tahun lahir bisa diisi di Lainnya, Profil.",
     "weightInvalid": "Isi berat antara 20 dan 300 kg.",
-    "later": "Punya jam Huawei atau Honor nanti? Pasangkan dari tab Jam kapan saja, tanpa mengulang panduan ini."
+    "later": "Punya jam Huawei atau Honor nanti? Pasangkan dari Lainnya, Jam kapan saja, tanpa mengulang panduan ini."
   }
 }

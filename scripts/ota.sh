@@ -65,7 +65,7 @@ fi
 
 step "1. checks"
 bun scripts/i18n-check.ts
-bunx tsc --noEmit
+bunx tsrs --noEmit
 bun test ./src/
 
 # The store builds bake nothing in from the environment (cloud and API URLs live in app.json extra). A stray
@@ -79,7 +79,7 @@ publish() {
 
   step "2. $p: export"
   rm -rf "$out"
-  bunx expo export --platform "$p" --output-dir "$out" > /dev/null
+  bunx expo export --clear --platform "$p" --output-dir "$out" > /dev/null
   local bundle
   bundle=$(find "$out/_expo/static/js/$p" \( -name '*.hbc' -o -name '*.js' \) | head -n 1)
   [ -f "$bundle" ] || fail "$p: no JS bundle in $out"

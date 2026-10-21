@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import { wibDay } from './calc';
+import { rogoDay, rogoNoon } from '@/cloud/rogoZone';
 import { getRecord, putRecord, setStrengthMeta } from './store';
 import type { CustomExercise, Equipment, Muscle, Routine, RoutineExercise, SetType, StrengthExercise, StrengthSet, StrengthWorkout } from './types';
 
@@ -208,11 +208,11 @@ export function roundRpe(rpe: number | null): number | null {
   return Math.min(10, Math.max(1, Math.round(rpe * 2) / 2));
 }
 
-/** A JoyoRogo session, `startedAt` falls back to noon WIB of its day when missing or when the person backdated it. */
+/** A JoyoRogo session, `startedAt` falls back to noon of its day (in the JoyoRogo zone) when missing or when the person backdated it. */
 export function sessionStart(session: Pick<RogoSession, 'date' | 'startedAt'>): number {
   const started = toMs(session.startedAt);
-  if (started !== null && wibDay(started) === session.date) return started;
-  return Date.parse(`${session.date}T12:00:00+07:00`);
+  if (started !== null && rogoDay(started) === session.date) return started;
+  return rogoNoon(session.date);
 }
 
 export function mapSession(session: RogoSession): StrengthWorkout {

@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { setCloudState } from '@/db/cloud';
+import { duplicateOf, plainStravaError } from '@/features/strava/activityFile';
 
 /**
  * Local Strava bookkeeping. The connection itself (tokens) lives on the Worker; the phone keeps only what it needs to
@@ -95,8 +96,17 @@ export async function applyStravaConnection(
 const UPLOAD_COLUMNS = `workout_start AS workoutStart, status, upload_id AS uploadId, activity_id AS activityId, error,
   attempts, updated_at AS updatedAt`;
 
-export function getStravaUpload(db: SQLiteDatabase, workoutStart: number): Promise<StravaUploadRow | null> {
-  return db.getFirstAsync<StravaUploadRow>(`SELECT ${UPLOAD_COLUMNS} FROM strava_upload WHERE workout_start = ?`, workoutStart);
+/**
+ * The stored row, as the screens should show it. Builds before 2026-10-21 saved Strava's "duplicate of <a href=...>"
+ * answer as a refusal (the link form was not recognised): that row is the activity Strava already has, so it reads as
+ * `done`, and any other stored refusal is shown without the HTML Strava embeds.
+ */
+export async function getStravaUpload(db: SQLiteDatabase, workoutStart: number): Promise<StravaUploadRow | null> {
+  const row = await db.getFirstAsync<StravaUploadRow>(`SELECT ${UPLOAD_COLUMNS} FROM strava_upload WHERE workout_start = ?`, workoutStart);
+  if (!row || row.status === 'done' || row.error === null) return row;
+  const existing = duplicateOf(row.error);
+  if (existing !== null) return { ...row, status: 'done', activityId: existing, error: null };
+  return { ...row, error: plainStravaError(row.error) };
 }
 
 export async function saveStravaUpload(

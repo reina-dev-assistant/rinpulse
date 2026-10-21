@@ -163,10 +163,10 @@ interface PermissionCardsProps {
   plan: PermissionPlan;
 }
 
-/** The cards and notices of the permissions the recording still needs: an explanation first, a way to the settings after a refusal. */
+/** The cards and notices of the permissions an outdoor or sensor recording cannot go without: an explanation first, a way to the settings after a refusal. */
 export function PermissionCards({ permissions, plan }: PermissionCardsProps) {
   const { t } = useTranslation('workouts');
-  const { location, bluetooth, steps, asking } = permissions;
+  const { location, bluetooth, asking } = permissions;
   const settings = { label: t('record.permission.openSettings'), onPress: () => void Linking.openSettings() };
   return (
     <>
@@ -206,26 +206,35 @@ export function PermissionCards({ permissions, plan }: PermissionCardsProps) {
           ) : null}
         </>
       ) : null}
-      {plan.steps && steps !== 'granted' ? (
-        <>
-          {steps === 'denied' || steps === 'blocked' ? (
-            <Notice tone="info" icon="footsteps-outline" action={settings}>
-              {t('record.permission.steps.denied')}
-            </Notice>
-          ) : null}
-          {steps === 'unknown' ? (
-            <ExplainCard
-              icon="footsteps-outline"
-              title={t('record.permission.steps.title')}
-              body={t('record.permission.steps.body')}
-              collapsed
-              busy={asking === 'steps'}
-              onContinue={() => void permissions.askSteps()}
-            />
-          ) : null}
-        </>
-      ) : null}
     </>
+  );
+}
+
+/**
+ * What the phone's step counter question says in its current state, opened from the "Langkah" segment of the status pill: the
+ * explanation and "Lanjut" while it is not asked, the way to the settings after a refusal, and what the counter does once it is on.
+ * Optional: `canPrepare` never waits for it, so unlike `PermissionCards` it only shows when the person asks to see it.
+ */
+export function StepsPanel({ permissions }: { permissions: RecordPermissions }) {
+  const { t } = useTranslation('workouts');
+  const { steps, asking } = permissions;
+  if (steps === 'granted') return <Notice icon="footsteps-outline">{t('record.setup.stepsOn')}</Notice>;
+  if (steps === 'unknown') {
+    return (
+      <ExplainCard
+        icon="footsteps-outline"
+        title={t('record.permission.steps.title')}
+        body={t('record.permission.steps.body')}
+        collapsed
+        busy={asking === 'steps'}
+        onContinue={() => void permissions.askSteps()}
+      />
+    );
+  }
+  return (
+    <Notice icon="footsteps-outline" action={{ label: t('record.permission.openSettings'), onPress: () => void Linking.openSettings() }}>
+      {t('record.permission.steps.denied')}
+    </Notice>
   );
 }
 

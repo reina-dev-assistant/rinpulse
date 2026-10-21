@@ -40,6 +40,10 @@ const FONT_ASSETS: Record<FontFamilyName, FontSource> = {
   SpaceGrotesk_700Bold: require('../../assets/fonts/SpaceGrotesk_700Bold.ttf'),
   JetBrainsMono_800ExtraBold: require('../../assets/fonts/JetBrainsMono_800ExtraBold.ttf'),
   Fraunces_800ExtraBold: require('../../assets/fonts/Fraunces_800ExtraBold.ttf'),
+  Quicksand_500Medium: require('../../assets/fonts/Quicksand_500Medium.ttf'),
+  Quicksand_600SemiBold: require('../../assets/fonts/Quicksand_600SemiBold.ttf'),
+  Quicksand_700Bold: require('../../assets/fonts/Quicksand_700Bold.ttf'),
+  DMSerifDisplay_400Regular: require('../../assets/fonts/DMSerifDisplay_400Regular.ttf'),
 };
 
 /** The `useFonts` / `loadAsync` map of one theme: only its own families, so a launch registers 4 to 6 files, not all of them. */

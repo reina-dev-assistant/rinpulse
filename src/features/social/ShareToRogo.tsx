@@ -15,6 +15,8 @@ import { Segmented } from '@/components/Segmented';
 import { Notice } from '@/components/States';
 import { SwitchRow } from '@/components/SwitchRow';
 import type { WorkoutPointRow, WorkoutRow } from '@/db/queries';
+import { NeedsProfileSheet } from '@/features/social/NeedsProfileSheet';
+import { needsRogoProfile } from '@/features/social/shareError';
 import { SignInGate } from '@/features/social/SignInGate';
 import { buildWatchPost, canShareToRogo, hrSeries, routePairs } from '@/features/social/watchPost';
 import type { WorkoutAnalysis } from '@/features/workouts/analysis/types';
@@ -55,6 +57,7 @@ export function ShareToRogoButton({ workout, points, analysis, analysisPending, 
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [postedId, setPostedId] = useState<string | null>(null);
+  const [needsProfile, setNeedsProfile] = useState(false);
   const hasHr = useMemo(() => hrSeries(points, workout.start, workout.end) !== null, [points, workout.start, workout.end]);
   const hasRoute = useMemo(() => routePairs(points) !== null, [points]);
   const hasComparison = analysis?.comparison != null;
@@ -80,7 +83,8 @@ export function ShareToRogoButton({ workout, points, analysis, analysisPending, 
       setCaption('');
       setPostedId(created.id);
     } catch (e) {
-      setError(errorMessage(e));
+      if (needsRogoProfile(e)) setNeedsProfile(true);
+      else setError(errorMessage(e));
     } finally {
       setPosting(false);
     }
@@ -157,6 +161,7 @@ export function ShareToRogoButton({ workout, points, analysis, analysisPending, 
           </ScrollView>
         </View>
       </Modal>
+      <NeedsProfileSheet visible={needsProfile} onClose={() => setNeedsProfile(false)} />
     </>
   );
 }

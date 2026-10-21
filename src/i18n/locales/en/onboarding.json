@@ -30,10 +30,10 @@
     "covers3Ios": "Permissions: notifications, Apple Health, weather.",
     "covers3Android": "Permissions: notifications, Health Connect, weather, staying connected.",
     "covers4": "Signing in with JoyoRogo, which is optional.",
-    "reopen": "You can open this guide again any time from Settings, Setup guide.",
+    "reopen": "You can open this guide again any time from More, Setup guide.",
     "noWatch": {
       "title": "No watch yet, or your watch isn't supported?",
-      "body": "That is fine. Strength logging, Coach and the exercise library work fully without a watch. You can connect one later from the Watch tab.",
+      "body": "That is fine. Strength logging, Coach and the exercise library work fully without a watch. You can connect one later from More, Watch.",
       "button": "I don't have a watch / my watch isn't supported yet",
       "supported": "Which watches are supported?"
     }
@@ -46,7 +46,7 @@
     "step3": "In Huawei Health, open the watch under Devices and unbind (remove) it. If it is still connected to another phone, disconnect it there too.",
     "hideImport": "Hide the history import",
     "showImport": "Request or import my Huawei Health history",
-    "note": "Not sure the unbind worked? Go on: pairing tells you if the watch still refuses. Importing later is always possible from Settings, Import from Huawei Health."
+    "note": "Not sure the unbind worked? Go on: pairing tells you if the watch still refuses. Importing later is always possible from More, Import from Huawei Health."
   },
   "pair": {
     "title": "Pair your watch",
@@ -67,7 +67,7 @@
   "sync": {
     "title": "Read your history from the watch",
     "intro": "JoyoFit now pulls what the watch has stored: steps, heart rate, sleep and workouts. It is saved on this phone.",
-    "notConnected": "The watch is not connected. Go back to connect it, or choose Later and sync from the Watch tab any time.",
+    "notConnected": "The watch is not connected. Go back to connect it, or choose Later and sync from More, Watch any time.",
     "reading": "Reading from the watch...",
     "readingHint": "The first sync collects everything the watch still holds, so it can take a few minutes. Keep the watch close and awake.",
     "syncNow": "Sync now",
@@ -111,7 +111,7 @@
     "gives1": "Your daily Recovery, Strain and Sleep scores appear next to what you ate in the JoyoRogo diary, with a short food tip for a day like this.",
     "gives2": "What you log in JoyoRogo can show on the watch's calorie card.",
     "gives3": "The option of a cloud backup of your watch data, which is part of JoyoRogo Pro (the next step).",
-    "note": "While you are signed in, JoyoFit sends your daily scores and body metrics (sleep, resting heart rate, HRV, VO2max) to JoyoRogo and exchanges meals and weight with it. Your watch data stays on this phone unless you turn on the Pro cloud backup. Sign out any time in Settings, Health and cloud.",
+    "note": "While you are signed in, JoyoFit sends your daily scores and body metrics (sleep, resting heart rate, HRV, VO2max) to JoyoRogo and exchanges meals and weight with it. Your watch data stays on this phone unless you turn on the Pro cloud backup. Sign out any time in More, Health and cloud.",
     "signedIn": "Signed in.",
     "signedInAs": "Signed in as {{email}}."
   },
@@ -156,7 +156,7 @@
     "wifiOnlyHint": "Uploads wait for Wi-Fi so they do not use mobile data.",
     "uploading": "Uploading {{done}} of {{total}} workouts",
     "backupOn": "Backup is on. Workouts already on this phone are uploaded in the background; you do not need to wait here.",
-    "backupOff": "Backup is off. Workouts stay on this phone. You can turn it back on in Settings, Cloud sync.",
+    "backupOff": "Backup is off. Workouts stay on this phone. You can turn it back on in More, Cloud sync.",
     "checking": "Checking your JoyoRogo account...",
     "free": "Workout cloud is a JoyoRogo Pro feature. Your account is not on Pro, so workouts stay on this phone only and everything keeps working as usual. If you get Pro later, existing workouts are uploaded too.",
     "managedIos": "JoyoRogo Pro is managed inside JoyoRogo.",
@@ -172,7 +172,7 @@
     "intro": "JoyoFit keeps syncing on its own from here. A few places worth knowing:",
     "open": "Still open: {{list}}.",
     "openItem": "{{name}} ({{where}})",
-    "reopen": "Open this guide again from Settings, Setup guide.",
+    "reopen": "Open this guide again from More, Setup guide.",
     "healthSettings": "{{store}} and cloud",
     "tip": {
       "today": {
@@ -185,11 +185,11 @@
       },
       "strava": {
         "title": "Strava",
-        "text": "Settings, Strava: send watch workouts to Strava, free."
+        "text": "More, Strava: send watch workouts to Strava, free."
       },
       "findWatch": {
         "title": "Find my watch",
-        "text": "Watch tab: make the watch ring when it is lost in the house."
+        "text": "More, Watch: make the watch ring when it is lost in the house."
       },
       "strength": {
         "title": "Training",
@@ -205,19 +205,19 @@
       },
       "watchLater": {
         "title": "A watch, any time",
-        "text": "Watch tab: pair a Huawei or Honor watch, or request support for yours."
+        "text": "More, Watch: pair a Huawei or Honor watch, or request support for yours."
       }
     },
     "where": {
-      "unbind": "Settings, Import from Huawei Health",
-      "pair": "the Watch tab",
-      "sync": "the Watch tab, or pull down on Today",
-      "notifications": "Settings, Notifications and calls",
-      "health": "Settings, {{place}}",
-      "weather": "Settings, Weather",
-      "background": "Settings, Background and sync",
-      "account": "Settings, {{place}}",
-      "cloud": "Settings, Cloud sync"
+      "unbind": "More, Import from Huawei Health",
+      "pair": "More, Watch",
+      "sync": "More, Watch, or pull down on Today",
+      "notifications": "More, Notifications and calls",
+      "health": "More, {{place}}",
+      "weather": "More, Weather",
+      "background": "More, Background and sync",
+      "account": "More, {{place}}",
+      "cloud": "More, Cloud sync"
     },
     "name": {
       "unbind": "Huawei Health history",
@@ -241,8 +241,8 @@
     "weightIntro": "Your body weight is used to estimate workout calories. You can skip it; the estimate then uses 70 kg.",
     "weightLabel": "Body weight (kg)",
     "weightSave": "Save weight",
-    "weightSaved": "Saved: {{kg}} kg. Height and birth year can be added in Settings, Profile.",
+    "weightSaved": "Saved: {{kg}} kg. Height and birth year can be added in More, Profile.",
     "weightInvalid": "Enter a weight between 20 and 300 kg.",
-    "later": "Got a Huawei or Honor watch later? Pair it from the Watch tab any time, without repeating this guide."
+    "later": "Got a Huawei or Honor watch later? Pair it from More, Watch any time, without repeating this guide."
   }
 }

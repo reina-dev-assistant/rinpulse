@@ -852,10 +852,19 @@ export function buildFit(
   return { bytes: fit.finish(), samples: samples.length };
 }
 
-/** The activity a Strava "duplicate of activity N" message points at (a repeated `external_id`), or null. */
+/**
+ * The activity a Strava duplicate message points at (a repeated `external_id`), or null. Strava words it two ways:
+ * "duplicate of activity N" and, in the upload status the app polls, "duplicate of <a href='/activities/N' target='_blank'>Name</a>".
+ */
 export function duplicateOf(message: string | null): number | null {
-  const match = message ? /duplicate of activity (\d+)/i.exec(message) : null;
-  return match ? Number(match[1]) : null;
+  const match = message ? /duplicate of (?:activity (\d+)|<a\s[^>]*href=['"]\/activities\/(\d+))/i.exec(message) : null;
+  const id = match?.[1] ?? match?.[2];
+  return id ? Number(id) : null;
+}
+
+/** Strava's error text without the HTML it embeds (links in "duplicate of ..."), for showing to a person. */
+export function plainStravaError(message: string): string {
+  return message.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
 
 /** The activity description when the user opted in; plain text, never part of the title. */

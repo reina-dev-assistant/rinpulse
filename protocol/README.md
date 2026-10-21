@@ -67,6 +67,7 @@ ProductInfo with their own tag sets. None of this has been tried on a real band 
 | `02` | `04` | NotificationState | the watch-side notification switch (`0x81{02:on,03:on}`); sent in init and when forwarding is toggled, if `02/04` is supported |
 | `02` | `01` | NotificationAction | one notification: id, type (`7F` generic, `0F` email), title/sender/text elements, source package, optional key/channel/category/timestamp tags by ExpandCapability |
 | `02` | `06` | NotificationRemoveAction | dismisses one notification on the watch; only when ExpandCapability 94 or 120 is set |
+| `02` | `10` (watch → phone) | NotificationReply | watch replies to a notification; tags: `01` type (1 = SMS, 2 = app notification), `02` encoding (3 = UTF-16, otherwise UTF-8), `03` subId, `04` key, `05` addData, `06` text. JoyoFit handles type 2 only (dispatched via RemoteInput); a ReplyAck (`07`: `FF` success, `7F` failure) is returned |
 | `0B` FindPhone | `01` (watch → phone) | start / stop find phone | tag `01` bool: true = start; a missing tag means stop |
 | `0B` | `02` | StopFindPhone | `01` = 2, sent whenever the phone's alert ends |
 | `37` DataSync | `01` | ConfigCommand | find my watch: `01` = `hw.unitedevice.finddevice`, `02` = `findDevice`, `83{84{05 = 900100002, 06 = 2 start / 1 stop}}`; gated by ExpandCapability 79 (find device) and 83 (config commands) |
@@ -94,6 +95,31 @@ watch's content length is cut to `length - 13` characters plus `...`. ExpandCapa
 73 reply actions, 77 timestamp (`0x15`), 89 reply key (`0x18`), 94 repeated notify and 120 remove single
 (`0x19` key, `0x1A` id, `0x1B` channel), 256 pictures (not used). Notifications are not acknowledged
 by anything we parse; a missing ack is only logged.
+
+Watch quick replies arrive as `02/10` (NotificationReply): tags `01` type (1 = SMS, 2 = app notification), `02` encoding (3 = UTF-16, otherwise UTF-8), `03` subId, `04` key, `05` addData, `06` text. JoyoFit handles type 2 only: the key or subId integer is matched against cached Android notification actions, the reply text is dispatched via RemoteInput with PendingIntent, and a ReplyAck (`07`: `FF` on success, `7F` on failure) is returned to the watch.
+
+### Quick replies (the list the watch offers; P2P module `hw.unitedevice.smsquick`)
+
+Source: Gadgetbridge master (codeberg.org/Freeyourgadget/Gadgetbridge, checked at `73035e7`):
+`service/devices/huawei/p2p/HuaweiP2PCannedRepliesService.java`, `HuaweiSupportProvider.onSetCannedMessages` and
+`registerP2P...` (registers the service when `supportsCannedReplies`), `devices/huawei/HuaweiDeviceStateManager.java`
+(`supportsCannedReplies` = ExpandCapability **82**; `getCannedRepliesSlotCount` = 10 with the comment "TODO: find proper count").
+Huawei Health exposes it as device details, "Quick replies" (Add reply, tap to edit, delete).
+It is **global**, not per app: one list on the watch for SMS and app notifications. No limit on the text length is in GB; no packet carries one.
+
+P2P data (`34/01`, `sendCommand`: source module `hw.unitedevice.smsquick`, destination package `com.huawei.watch.home`, fingerprint
+`603AC6A57E2023E00C9C93BB539CA653DF3003EBA4E92EA1904BA4AAA5D938F0`), body TLV:
+
+| Command (`01`, int32) | Body | Meaning |
+|---|---|---|
+| 7001 query | none | the watch answers `01 = 7001, 82 { 83 { 04 text } ... }` |
+| 7002 update | `82 { 83 { 04 text } ... }`, one `83` per reply, in order | replaces the list; GB: "replies cannot be empty" |
+| 7003 connect | none | the watch answers by asking for defaults; GB left it unused ("can clean saved canned messages") and so do we |
+
+JoyoFit (`QuickReplies.kt`, Android only; iOS cannot answer another app's notification): gate ExpandCapability 82 + `34/01`; on registration it
+queries, and sends the stored list when it differs from what this watch address last got; `setQuickReplies` sends at once. Limits applied by the
+phone: 1 to 10 replies, 1 to 30 characters, one line each (the 30 is ours, **not read from any watch**). **Not tested on a watch**: the layout
+is GB's, which runs it on Huawei watches; whether a watch rejects a longer text is unknown. Unit tests: `QuickRepliesTest`.
 
 Init appends, after `ConnectStatus` and in GB order: UserInfo `07/02` and MotionGoal `07/01` (only if
 the user saved a profile; each only if the watch lists the command), NotificationCapabilities,
@@ -249,7 +275,10 @@ the update has to be started on the watch (Settings > Workout settings > Locatio
 names are kept (`getAgps().lastAskVersion`, `lastAskTags`: tag names only); the full tag and URLs go to the platform console only (Android logcat
 tag `JoyoFit`, iOS unified log category `JoyoFit`; line `AGPS: consult tag=...`). The two platforms send the same bytes (the iOS `1C/05` frames are
 `HuaweiPacket.serializeFileChunk1c`, GB `serializeFileChunk1c`); on iOS the stored file name uses the peripheral identifier in place of the watch's
-Bluetooth address. Policy, safety rules, sources and why Huawei's servers are not used: [docs/agps.md](../docs/agps.md).
+Bluetooth address. Observed consult answers (both download version 3, one tag each): Band 11 Pro `higeo/v1/gnssinfo?type=0x0004/HW_AGNSS`, asked on its own; Fit 4 Pro
+`com.huawei.higeo_dataModule_PGNSSConfig?type=HW_EEV2/HW_PGNSS_PRED;`, asked when started on the watch. The `1F/03` state 4 in a support log is JoyoFit's own "failed" answer, not a
+refusal by the watch. `scripts/agps-rtcm.ts` builds the content the community reads out of `HW_AGNSS_RTCM_33` (RTCM 3 frames 1019/1020/1042/1046) from BKG's open broadcast ephemeris; it is a
+lab tool and nothing sends it. Policy, safety rules, sources, chips and why Huawei's servers are not used: [docs/agps.md](../docs/agps.md).
 
 ### Live workout (`LiveWorkout.kt`, `LiveWorkoutCodec.kt`; as Huawei Health 17.0.8.300 behaves, UNVERIFIED on the Fit 4 Pro)
 
@@ -269,6 +298,45 @@ also announces reverse-capability bits 47..59 (55 = service `37`) that GB and Jo
 watch never sends the start event. The watch sends no fat or carbohydrate figure and Huawei Health computes none; the fat
 and carbs on the live screen are JoyoFit's estimate (`SubstrateEstimator`: %HRmax to %VO2max after Swain, RER curve,
 fat share `(1 - RER) / 0.3`, 9 and 4 kcal per gram).
+
+### Workout started from the phone (`WatchWorkout.kt`, `WatchWorkoutModuleApi.kt`; iOS `WatchWorkoutCodec.swift`, `WatchWorkoutControl.swift`; as Huawei Health 17.0.8.300 behaves, UNVERIFIED on any watch)
+
+Huawei Health's "phone-started linkage": the phone starts a workout, the watch follows. It is the legacy workout service, not DataSync
+(`HwLinkageServiceManager.setOperator` -> `HwExerciseCommandUtil.notifyOperatorStatus`; the caller is `fjq.a(int, int)`). Gadgetbridge has
+nothing for it. Reverse linkage above (`37/02`) is the opposite direction (watch starts, phone mirrors) and cannot start the watch.
+
+| Step | Wire |
+|---|---|
+| support | `17/01` listed in SupportedCommands (Huawei: DeviceCapability `23.1`). Optional tags: `17/12` listed (`23.18`) adds version and run course, `17/15` listed (`23.21`) adds forbid pause. The Fit 4 Pro answers `17/03` without listing it, so a missing listing is not proof of absence [INFERENCE for `17/01`] |
+| start / pause / resume / stop | `17/01 81{02 operator, 03 kind, 05 workout type, 06 operation time s i32, 87{08 distance dm i32, 09 calories i32, 0A duration i32}, [0B version], 0C start time s i32, [0D run course version], [0E forbid pause]}`. Operator 1 start, 2 pause, 3 resume, 4 stop. Kind 1 = single track (2 = run plan, never sent). Integers 02/03/05/0B/0D/0E are minimal-length big-endian (`ego.e`): 140 is one byte `8c`. Tag order and lengths match Huawei's hand-built hex (`81 29 ...` for the base shape, checked by `WatchWorkoutTest`) |
+| the watch answers | `17/01` `7F 04 <i32>`: 100000 accepts; **123002** (`0001E07A`) is "the watch could not do it" with no reason in the answer (observed, below). Huawei Health uses 123002 the other way round too: its `17/02` answer when pausing, resuming or stopping its own workout failed (`fjt.y/w/u/v/p/x`) |
+| the watch reports its own pause, resume or stop | `17/02 81{02 operator, 03 kind, 05 workout type, 06 time}`; the phone answers `17/02 7F 04 <100000>` |
+| is it running | `17/03` `81 00`; the answer's `81{03 operator, 04 sport, 06 workout type}` (operator 1 or 3 = running); JoyoFit asks once 1.5 s after a start |
+
+Sport codes: the workout type of tag 05 is in the watch's own sport space (the table in `WorkoutSportTypes.kt`, the same byte as
+`17/08` tag `14`), strength training is **140**. Huawei Health only maps 1 run, 2 walk, 3 ride, 5 indoor run, 7 indoor ride, 134 elliptical,
+135 rower, 137 yoga and 255 other onto the wire (`transSportType`), and sends a phone workout type that is not in that list as 1 (run): 140 is
+a value no Huawei Health code path was seen to send, so whether a watch starts "Strength training" for it is the open question the first
+test on a watch has to answer (log lines `Watch workout: ... answered`, `status after the start`).
+
+**Observed on the Fit 4 Pro (6.1.0.117), 2026-10-21, `adb` probe, plaintext of the encrypted frames.** The watch lists `17/01 04 06 07 0B 0C 12 15 17`
+and `16/01 03` (so Huawei Health's `isSupportExerciseAdvice` 22.1, `isSupportWorkoutExerciseDisplayLink` 23.11, 23.18 and 23.21 are all true, and the
+captured HH log on this watch says `setNewLinkStrategy is true`); ExpandCapability 0, 83, 84, 85, 175, 234 set. JoyoFit's start for strength (`81 32 02 01 01 03 01 01
+05 01 8C 06 04 <t> 87 12 08 04 0 09 04 0 0A 04 0 0B 01 00 0C 04 <t> 0D 01 00 0E 01 00`) has the same length (0x32) and tag order as Huawei's builder. The
+answer was `7F 04 0001E07A` (123002) to **every** `17/01`: start for sport 140, 1 (run), 137, 255, with or without `17/12` open first, with or without
+`22/01` first, kind tag 0/1/2/4, without tags 05, 87 or the optional ones, and stop, pause and resume with no workout. So the refusal does not depend
+on the payload or the sport; the sport-type question above is moot until a start is accepted. `17/03` answered `81 06 02 01 00 03 01 00` (nothing running) before
+and after. At the same time `01/3D` WearStatus answered `01 01 02`, which Huawei Health reads as **not worn** (`etj`: value 2 is false), and Huawei's own
+instructions for starting a workout from Huawei Health say to wear the watch snugly. **Not verified**: whether a worn watch accepts the start (the watch
+was off the wrist for the whole probe and nobody was available to put it on). JoyoFit therefore reads `01/3D` after a refusal, logs it and hands it to JS
+(`worn`), which says "not on your wrist" only when the watch said so.
+
+Huawei's own text also says a workout started from Huawei Health and synced to the watch is stored **only in Huawei Health**: the watch displays and supplies heart
+rate, it may not keep a workout of its own. So even an accepted start may give no watch workout to join with `link.ts`; check after the first accepted start.
+
+While a workout the phone started is open, `LiveWorkout` does not open a mirror of the watch's workout (`phoneOwned`), because the
+strength logger is that workout's screen; the watch's heart rate and calories arrive with the normal workout sync (`link.ts` joins them to
+the logged workout by overlap). Details and settings: `docs/strength.md`.
 
 ## Weather
 

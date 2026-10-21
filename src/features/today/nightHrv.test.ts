@@ -71,7 +71,7 @@ describe('nightHrvAvailability', () => {
       expect(a.state).toBe('off');
       if (a.state === 'available') throw new Error('unreachable');
       expect(a.message).toBe('HRV malam mati');
-      expect(a.detail).toContain('Pengaturan > Detak jantung dan sensor');
+      expect(a.detail).toContain('Lainnya > Detak jantung dan sensor');
     }
   });
 

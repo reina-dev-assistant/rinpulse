@@ -308,9 +308,19 @@ export interface StrengthSettings {
   autoStrava: boolean;
   /** The stopwatch of a timed set counts down from the planned seconds when the set has some (it counts up otherwise, and always when off). */
   countdownTimed: boolean;
+  /** A connected watch that can be started from the phone starts Strength training with the logger, and is paused and stopped with it (`watchWorkout.ts`). */
+  startOnWatch: boolean;
 }
 
-export const DEFAULT_SETTINGS: StrengthSettings = { defaultRestSec: 90, autoRest: true, keepAwake: true, showRpe: false, autoStrava: false, countdownTimed: true };
+export const DEFAULT_SETTINGS: StrengthSettings = {
+  defaultRestSec: 90,
+  autoRest: true,
+  keepAwake: true,
+  showRpe: false,
+  autoStrava: false,
+  countdownTimed: true,
+  startOnWatch: true,
+};
 
 export async function loadSettings(db: SQLiteDatabase): Promise<StrengthSettings> {
   const json = await getMeta(db, 'settings');

@@ -61,9 +61,9 @@ writeFileSync(
     files: ['shapes.check.ts'],
   }),
 );
-const tsc = join(root, 'node_modules', '.bin', 'tsc');
+const tsrs = join(root, 'node_modules', '.bin', 'tsrs');
 try {
-  execFileSync(tsc, ['-p', join(out, 'tsconfig.json')], { stdio: 'inherit' });
+  execFileSync(tsrs, ['-p', join(out, 'tsconfig.json')], { stdio: 'inherit' });
   console.log(`OK: ${Object.keys(shapes).length} shapes match their TypeScript types (${Object.keys(shapes).join(', ')})`);
 } catch {
   process.exit(1);

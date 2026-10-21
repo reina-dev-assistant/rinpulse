@@ -72,6 +72,16 @@ internal class LiveWorkout(
 
   private var watchdog: Job? = null
 
+  /**
+   * True while a workout the phone started on the watch ([WatchWorkoutControl]) is owned by a screen of its own (the strength logger): the
+   * watch's workout is then not mirrored as a live workout, which would open a second screen for the same session. A mirror that is already
+   * running is left alone; only a new one is not opened.
+   */
+  @Volatile
+  var phoneOwned: () -> Boolean = { false }
+
+  private fun mirrorBlocked(): Boolean = phoneOwned() && synchronized(lock) { session?.status.let { it == null || it == Status.ENDED } }
+
   /** Last answer of the 17/03 status poll, and how many answers in a row said "no workout". */
   private var lastStatusAtMs = 0L
   private var idleAnswers = 0
@@ -162,6 +172,7 @@ internal class LiveWorkout(
   }
 
   private suspend fun onEvent(event: SampleEvent) {
+    if (mirrorBlocked()) return
     when (event.eventId) {
       LiveWorkoutWire.EVENT_CONTROL -> onControl(LiveWorkoutWire.parseControl(event.data))
       LiveWorkoutWire.EVENT_START -> change(LiveWorkoutWire.parseWorkoutType(event.data), Status.RUNNING, "started", opens = true)
@@ -232,6 +243,7 @@ internal class LiveWorkout(
   }
 
   private fun onPoint(point: SamplePointIn) {
+    if (mirrorBlocked()) return
     synchronized(lock) {
       val now = System.currentTimeMillis()
       val frame = LiveMetrics().applyPoint(point.values)
@@ -260,6 +272,7 @@ internal class LiveWorkout(
    * the watch is idle ([LiveWorkoutPolicy.idleVerdict]).
    */
   fun watchStatus(running: Boolean, paused: Boolean, workoutType: Int?) {
+    if (mirrorBlocked()) return
     var created = false
     var ended = false
     var changed = false
@@ -325,6 +338,7 @@ internal class LiveWorkout(
    * session was just opened, or still prepares).
    */
   fun gpsPing(): Boolean {
+    if (mirrorBlocked()) return false
     var created = false
     var changed = false
     var askStatus = false
@@ -386,6 +400,7 @@ internal class LiveWorkout(
 
   /** A `17/11` realtime report ([WorkoutReport]); operator type 1 running, 2 paused, 3 resumed, 4 stopped. */
   fun onReport(report: WorkoutReport.Parsed) {
+    if (mirrorBlocked()) return
     synchronized(lock) {
       val now = System.currentTimeMillis()
       val operator = report.operatorType

@@ -18,6 +18,8 @@ import type {
   SupportReport,
   SyncSummary,
   UserProfile,
+  WatchWorkoutResult,
+  WatchWorkoutStatus,
   WeatherLocationMode,
   WeatherPlace,
   WeatherStatus,
@@ -43,6 +45,7 @@ import type { ParsedWatchfacePackage, WatchfaceInstallResult, WatchfaceList } fr
 import type { FaceApplyResult, FaceCustomization } from './HuaweiWearFaceCustom.types';
 import type { PhotoFace } from './HuaweiWearPhotoFace.types';
 import type { CoursesStatus, HealthyLivingStatus, RunningCourse, RunningCoursePushResult } from './HuaweiWearP2p.types';
+import type { QuickRepliesStatus } from './HuaweiWearQuickReplies.types';
 import type { RoutePushResult, RoutesStatus, WatchRoute } from './HuaweiWearRoutes.types';
 import type { HuaweiImportSummary } from './HuaweiWearImport.types';
 import type { FamilyConfig, FamilyUploadResult, FamilyUploadStatus } from './HuaweiWearFamily.types';
@@ -253,6 +256,19 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
   startLiveWorkout(): void;
   /** Ends the live session now. */
   finishLiveWorkout(): void;
+
+  /** Whether the connected watch can be told to start a workout, and the workout the phone started on it (strength logger). */
+  getWatchWorkout(): WatchWorkoutStatus;
+  /**
+   * Starts workout `sport` (a Huawei sport code, `WATCH_SPORT_STRENGTH_TRAINING`) on the watch (`17/01`, operator 1). While it is open the
+   * watch's workout is not mirrored as a live workout. Resolves with what the watch answered; never rejects for a watch that cannot or
+   * does not answer (`unsupported`, `not_connected`, `sent`, `refused`). UNVERIFIED on a watch: needs a store build.
+   */
+  startWatchWorkout(sport: number): Promise<WatchWorkoutResult>;
+  pauseWatchWorkout(): Promise<WatchWorkoutResult>;
+  resumeWatchWorkout(): Promise<WatchWorkoutResult>;
+  /** Stops the workout on the watch and releases it (the live mirror works again), whatever the watch answers. */
+  stopWatchWorkout(): Promise<WatchWorkoutResult>;
 
   /**
    * Makes the watch ring and vibrate (`start` true) or stops it. Needs a connected watch that
@@ -480,6 +496,19 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
    * course, ERR_UPLOAD_REJECTED with the watch's code when it refuses the file.
    */
   pushRunningCourse(course: RunningCourse): Promise<RunningCoursePushResult>;
+
+  /**
+   * Whether the connected watch takes quick replies (ExpandCapability 82) and the limits to validate against. Synchronous. Builds from
+   * before quick replies lack it: check `typeof HuaweiWear.getQuickReplies === 'function'` first.
+   */
+  getQuickReplies(): QuickRepliesStatus;
+  /**
+   * Stores the quick replies and sends them to the watch when it takes them: now when connected, otherwise at the next connect, and
+   * only when the list changed since the watch last got it. Resolves true when sent now, false when stored only. Rejects with
+   * ERR_INVALID_ARGUMENT for an empty list, more than `slots` replies, a blank or multi-line reply or one over `maxLength`.
+   * Android only: iOS resolves false. Check `typeof HuaweiWear.setQuickReplies === 'function'` first.
+   */
+  setQuickReplies(replies: string[]): Promise<boolean>;
 
   /** Whether the watch takes routes, from its ExpandCapability bits. Synchronous; all false while no watch is connected. */
   getRoutes(): RoutesStatus;

@@ -217,6 +217,17 @@ describe('GPS warm-up', () => {
     expect(controller.getSnapshot().fix).toEqual({ accuracyM: 60, ageSec: 0, usableSec: null });
   });
 
+  it('reports where the latest fix is for the map, and forgets it when the warm-up ends', async () => {
+    const { controller, hub } = await setup();
+    live = controller;
+    await controller.warmUp('run', 'Lari');
+    expect(controller.getSnapshot().position).toBeNull();
+    hub.emitFix(T0, 0);
+    expect(controller.getSnapshot().position).toEqual({ lat: 10, lon: 20, headingDeg: null });
+    await controller.stopWarmUp();
+    expect(controller.getSnapshot().position).toBeNull();
+  });
+
   it('restarts the run of good fixes after the signal was gone for a while', async () => {
     const { controller, hub, run } = await setup();
     live = controller;

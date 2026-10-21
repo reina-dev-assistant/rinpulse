@@ -127,6 +127,16 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      # Symbols for the crash logs TestFlight collects (uploadSymbols is on in the export, so App Store Connect has them
+      # too): kept to symbolicate by hand a crash report that came back with bare addresses.
+      - name: Upload dSYMs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: joyofit-ios-dsyms-${{ github.run_number }}
+          path: build/ios-mac/JoyoFit.xcarchive/dSYMs
+          if-no-files-found: warn
+          retention-days: 30
+
       # The logs hold signing and Pods output but no secrets (the key is only passed as a path).
       - name: Upload build logs
         if: always()

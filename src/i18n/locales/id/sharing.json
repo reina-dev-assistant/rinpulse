@@ -49,7 +49,8 @@
     "downloading": "Masih mengunduh dari jam. Kirim setelah sinkronisasi berikutnya.",
     "check": "Cek Strava",
     "send": "Kirim ke Strava",
-    "signIn": "Masuk dengan JoyoRogo (Pengaturan, Kesehatan dan cloud) untuk mengirim."
+    "signIn": "Masuk dengan JoyoRogo (Lainnya, Kesehatan dan cloud) untuk mengirim.",
+    "fileHint": "Bisa juga: simpan file .fit dari kartu Ekspor di atas, lalu upload di strava.com → Upload activity."
   },
   "fitImport": {
     "sports": {

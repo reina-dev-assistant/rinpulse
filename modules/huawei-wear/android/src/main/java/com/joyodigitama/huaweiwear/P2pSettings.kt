@@ -51,7 +51,19 @@ internal class P2pSettings(context: Context) : HealthLivingState {
     get() = prefs.getBoolean(KEY_COURSES, false)
     set(value) = prefs.edit().putBoolean(KEY_COURSES, value).apply()
 
+  /** The quick replies the user chose (one per line); null until the app sent a list. Never contains a newline inside a reply. */
+  var quickReplies: List<String>?
+    get() = prefs.getString(KEY_QUICK, null)?.split('\n')
+    set(value) = prefs.edit().apply { if (value == null) remove(KEY_QUICK) else putString(KEY_QUICK, value.joinToString("\n")) }.apply()
+
+  /** `<watch address>|<fingerprint>` of the list the watch last got, so a reconnect sends only a changed list. */
+  var quickRepliesSent: String?
+    get() = prefs.getString(KEY_QUICK_SENT, null)
+    set(value) = prefs.edit().apply { if (value == null) remove(KEY_QUICK_SENT) else putString(KEY_QUICK_SENT, value) }.apply()
+
   private companion object {
+    const val KEY_QUICK = "quick_replies"
+    const val KEY_QUICK_SENT = "quick_replies_sent"
     const val PREFS_NAME = "joyofit_p2p"
     const val KEY_HEALTH_LIVING = "health_living"
     const val KEY_HL_VER = "hl_ver"

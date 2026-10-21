@@ -1,4 +1,4 @@
-import { wibDay } from '@/features/strength/calc';
+import { rogoDay } from './rogoZone';
 
 import { MAX_DURATION_MIN, MAX_EXTERNAL_ID, MAX_KCAL, MAX_NAME, MIN_DURATION_MIN } from './strengthKcalPlan';
 
@@ -45,7 +45,7 @@ export function phoneKcalPayload(w: PhoneKcalWorkout): PhoneKcalPayload | null {
   if (!(kcal > 0)) return null;
   return {
     externalId: externalIdForPhone(w.start),
-    date: wibDay(w.start * 1000),
+    date: rogoDay(w.start * 1000),
     name: w.name.slice(0, MAX_NAME),
     durationMin: Math.min(MAX_DURATION_MIN, Math.max(MIN_DURATION_MIN, Math.round(w.duration / 60))),
     kcal,
