@@ -29,7 +29,13 @@ internal interface WorkoutSink {
  *  2. Per workout, in workout number order: Totals (17/08), Data (17/0A), Pace (17/0C), SwimSegments (17/0E),
  *     SpO2 (17/14), Sections (17/16), then the GPS file (`<n>_gps.bin`, service 2C or 0A).
  *  3. Every request that can answer with an error is repeated up to [MAX_RETRIES] times, then skipped and the
- *     workout is flagged `missingData` (GB shows a toast). A timeout aborts the sync, as in GB.
+ *     workout is flagged `missingData` (GB shows a toast).
+ *  4. A part request (data, pace, swim, SpO2, sections, GPS file) that gets no answer at all is a lost frame, not a dead link:
+ *     over LE on Android 14+ the stack discards a 514-byte notification, so a reply longer than 512 bytes (the Band 11 Pro's
+ *     first WorkoutData frame, JRG-337) never arrives. The frame is skipped without a retry (the watch would send the same
+ *     length again), the workout is flagged `missingData`, and [MAX_LOST_FRAMES] lost frames in a row end that part. When
+ *     any frame was lost a cheap request (the totals again) tells a dead link from a lost frame: no answer means the link is
+ *     gone and the timeout aborts the sync as in GB, the workout kept as incomplete.
  *
  * Unlike GB the workout is not written to the database until its parts are downloaded, and the sync keeps going
  * after a workout whose totals could not be read. A workout cut short by a timeout is stored as incomplete and
@@ -38,6 +44,7 @@ internal interface WorkoutSink {
 internal class WorkoutSync(
   private val session: HuaweiSession,
   private val events: WearEvents,
+  private val requestTimeoutMs: Long = WORKOUT_MS,
 ) {
   private val params get() = session.params
   private val downloader = FileDownloader(session, events)
@@ -187,101 +194,153 @@ internal class WorkoutSync(
     }
   }
 
+  /** Frames of one workout the watch left unanswered, and how many in a row within the part being downloaded. */
+  private class FrameLoss {
+    var lost = 0
+    var inRow = 0
+    val stalled get() = inRow >= MAX_LOST_FRAMES
+
+    fun nextPart() { inRow = 0 }
+  }
+
+  /**
+   * Runs one part request; a timeout is a lost frame ([FrameLoss]) and gives null, which callers treat like a refused part.
+   * Any other failure (a lost link) still throws.
+   */
+  private suspend fun <T> tolerant(label: String, loss: FrameLoss, parts: WorkoutParts, block: suspend () -> T?): T? =
+    try {
+      block().also { loss.inRow = 0 }
+    } catch (e: WearException) {
+      if (e.errorCode != ErrorCodes.TIMEOUT) throw e
+      loss.lost++
+      loss.inRow++
+      parts.missingData = true
+      log("$label: ${e.message}; skipping this frame")
+      null
+    }
+
+  private fun stalled(loss: FrameLoss, kind: String): Boolean {
+    if (!loss.stalled) return false
+    log("$kind: $MAX_LOST_FRAMES frames in a row got no answer; leaving out the rest of it")
+    return true
+  }
+
   private suspend fun downloadParts(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, parts: WorkoutParts) {
     val wn = numbers.workoutNumber
     val label = "workout ${wn.toInt()}"
+    val loss = FrameLoss()
 
     for (i in 0 until numbers.dataCount) {
+      if (stalled(loss, "$label data")) break
       val l = "WorkoutData ${wn.toInt()}/$i"
-      val r = retrying(l) { attempt ->
-        val r = requestOrNull<Workout.WorkoutData.Response>(Workout.WorkoutData.Request(params, wn, i.toShort(), parts.newSteps), l)
-        when {
-          r == null -> null
-          r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
-          r.workoutNumber != wn -> { log("$l: incorrect workout number ${r.workoutNumber}"); null }
-          r.dataNumber.toInt() != i -> { log("$l: incorrect data number ${r.dataNumber}"); null }
-          else -> r
+      val r = tolerant(l, loss, parts) {
+        retrying(l) { attempt ->
+          val r = requestOrNull<Workout.WorkoutData.Response>(Workout.WorkoutData.Request(params, wn, i.toShort(), parts.newSteps), l)
+          when {
+            r == null -> null
+            r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
+            r.workoutNumber != wn -> { log("$l: incorrect workout number ${r.workoutNumber}"); null }
+            r.dataNumber.toInt() != i -> { log("$l: incorrect data number ${r.dataNumber}"); null }
+            else -> r
+          }
         }
       }
-      if (r == null) { skipped(parts, l); continue }
+      if (r == null) { if (loss.inRow == 0) skipped(parts, l); continue }
       log("$l: ${r.dataList.size} samples, interval ${r.header.interval}s, bitmap ${r.header.bitmap}, inner bitmap ${r.innerBitmap}")
       parts.samples.addAll(r.dataList)
     }
+    loss.nextPart()
 
     for (i in 0 until numbers.paceCount) {
+      if (stalled(loss, "$label pace")) break
       val l = "WorkoutPace ${wn.toInt()}/$i"
-      val r = retrying(l) { attempt ->
-        val r = requestOrNull<Workout.WorkoutPace.Response>(Workout.WorkoutPace.Request(params, wn, i.toShort()), l)
-        when {
-          r == null -> null
-          r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
-          r.workoutNumber != wn -> { log("$l: incorrect workout number ${r.workoutNumber}"); null }
-          r.paceNumber.toInt() != i -> { log("$l: incorrect pace number ${r.paceNumber}"); null }
-          else -> r
+      val r = tolerant(l, loss, parts) {
+        retrying(l) { attempt ->
+          val r = requestOrNull<Workout.WorkoutPace.Response>(Workout.WorkoutPace.Request(params, wn, i.toShort()), l)
+          when {
+            r == null -> null
+            r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
+            r.workoutNumber != wn -> { log("$l: incorrect workout number ${r.workoutNumber}"); null }
+            r.paceNumber.toInt() != i -> { log("$l: incorrect pace number ${r.paceNumber}"); null }
+            else -> r
+          }
         }
       }
-      if (r == null) { skipped(parts, l); continue }
+      if (r == null) { if (loss.inRow == 0) skipped(parts, l); continue }
       log("$l: ${r.blocks.size} blocks")
       parts.paceBlocks.addAll(r.blocks)
     }
 
+    loss.nextPart()
     for (i in 0 until numbers.segmentsCount) {
+      if (stalled(loss, "$label swim segments")) break
       val l = "WorkoutSwimSegments ${wn.toInt()}/$i"
-      val r = retrying(l) { attempt ->
-        val r = requestOrNull<Workout.WorkoutSwimSegments.Response>(Workout.WorkoutSwimSegments.Request(params, wn, i.toShort()), l)
-        when {
-          r == null -> null
-          r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
-          r.workoutNumber != wn -> { log("$l: incorrect workout number ${r.workoutNumber}"); null }
-          r.segmentNumber.toInt() != i -> { log("$l: incorrect swim segment number ${r.segmentNumber}"); null }
-          else -> r
+      val r = tolerant(l, loss, parts) {
+        retrying(l) { attempt ->
+          val r = requestOrNull<Workout.WorkoutSwimSegments.Response>(Workout.WorkoutSwimSegments.Request(params, wn, i.toShort()), l)
+          when {
+            r == null -> null
+            r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
+            r.workoutNumber != wn -> { log("$l: incorrect workout number ${r.workoutNumber}"); null }
+            r.segmentNumber.toInt() != i -> { log("$l: incorrect swim segment number ${r.segmentNumber}"); null }
+            else -> r
+          }
         }
       }
-      if (r == null) { skipped(parts, l); continue }
+      if (r == null) { if (loss.inRow == 0) skipped(parts, l); continue }
       log("$l: ${r.blocks.size} blocks")
       parts.swimBlocks.addAll(r.blocks)
     }
 
+    loss.nextPart()
     for (i in 0 until numbers.spO2Count) {
+      if (stalled(loss, "$label SpO2")) break
       val l = "WorkoutSpO2 ${wn.toInt()}/$i"
-      val r = retrying(l) { attempt ->
-        val r = requestOrNull<Workout.WorkoutSpO2.Response>(Workout.WorkoutSpO2.Request(params, wn, i.toShort()), l)
-        when {
-          r == null -> null
-          r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
-          else -> r
+      val r = tolerant(l, loss, parts) {
+        retrying(l) { attempt ->
+          val r = requestOrNull<Workout.WorkoutSpO2.Response>(Workout.WorkoutSpO2.Request(params, wn, i.toShort()), l)
+          when {
+            r == null -> null
+            r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
+            else -> r
+          }
         }
       }
-      if (r == null) { skipped(parts, l); continue }
+      if (r == null) { if (loss.inRow == 0) skipped(parts, l); continue }
       log("$l: ${r.blocks.size} blocks")
       parts.spo2Blocks.addAll(r.blocks)
     }
 
+    loss.nextPart()
     for (i in 0 until numbers.sectionsCount) {
+      if (stalled(loss, "$label sections")) break
       val l = "WorkoutSections ${wn.toInt()}/$i"
       var normalError = false
-      val r = retrying(l) { attempt ->
-        val r = requestOrNull<Workout.WorkoutSections.Response>(Workout.WorkoutSections.Request(params, wn, i.toShort()), l)
-        when {
-          r == null -> null
-          // GB: 0x0001E079 "seems to be normal", ignored without retries and without flagging missing data.
-          r.error == SECTIONS_NORMAL_ERROR -> { normalError = true; log("$l: error 0001E079, ignored (normal)"); r }
-          r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
-          else -> r
+      val r = tolerant(l, loss, parts) {
+        retrying(l) { attempt ->
+          val r = requestOrNull<Workout.WorkoutSections.Response>(Workout.WorkoutSections.Request(params, wn, i.toShort()), l)
+          when {
+            r == null -> null
+            // GB: 0x0001E079 "seems to be normal", ignored without retries and without flagging missing data.
+            r.error == SECTIONS_NORMAL_ERROR -> { normalError = true; log("$l: error 0001E079, ignored (normal)"); r }
+            r.error != null -> { log("$l: error ${r.error} (attempt $attempt)"); null }
+            else -> r
+          }
         }
       }
-      if (r == null) { skipped(parts, l); continue }
+      if (r == null) { if (loss.inRow == 0) skipped(parts, l); continue }
       if (normalError) continue
       log("$l: ${r.blocks.size} blocks")
       parts.sectionBlocks.addAll(r.blocks)
     }
 
-    downloadGps(numbers, parts)
+    downloadGps(numbers, parts, loss)
+    if (loss.lost > 0) confirmLinkAlive(wn)
     log("$label: downloaded, missingData=${parts.missingData}")
   }
 
   /** GB finishSingleWorkoutSync -> downloadWorkoutGpsFiles. */
-  private suspend fun downloadGps(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, parts: WorkoutParts) {
+  private suspend fun downloadGps(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, parts: WorkoutParts, loss: FrameLoss) {
     val wn = numbers.workoutNumber
     val label = "workout ${wn.toInt()} GPS"
     // WorkoutCount tag 0x0e: 1 when the watch has a _gps.bin/_pdr.bin for the workout. GB ignores it (older
@@ -302,6 +361,14 @@ internal class WorkoutSync(
     } catch (e: CancellationException) {
       throw e
     } catch (e: WearException) {
+      if (e.errorCode == ErrorCodes.TIMEOUT) {
+        // A file block longer than 512 bytes never arrives over LE on Android 14+; the rest of the workout stays.
+        loss.lost++
+        parts.missingData = true
+        parts.gpsStatus = "failed"
+        log("$label: ${e.message}; GPS file left out")
+        return
+      }
       // A watch without a GPS file for an indoor workout answers the init with an error; that is not a failure.
       if (e.errorCode != ErrorCodes.PROTOCOL) throw e
       log("$label: no GPS file (${e.message})")
@@ -348,13 +415,24 @@ internal class WorkoutSync(
   }
 
   /**
+   * After lost frames: the watch must still answer a request whose reply is short (the totals of the same workout). If it does,
+   * the frames were lost one by one and the workout is stored with what arrived; if it does not, the timeout is thrown so the
+   * workout is stored as incomplete and the next sync tries again.
+   */
+  private suspend fun confirmLinkAlive(wn: Short) {
+    val l = "WorkoutTotals ${wn.toInt()} (link check)"
+    requestOrNull<Workout.WorkoutTotals.Response>(Workout.WorkoutTotals.Request(params, wn), l)
+    log("$l: answered, the lost frames were single replies")
+  }
+
+  /**
    * Sends [packet] and returns the typed answer, or null when the answer cannot be used (it did not parse or is
    * of another type: the watch answers some workout requests without the expected container). A timeout or a
    * lost link still throws.
    */
   private suspend inline fun <reified T : HuaweiPacket> requestOrNull(packet: HuaweiPacket, label: String): T? =
     try {
-      session.request(packet, WORKOUT_MS, label).expect<T>(label)
+      session.request(packet, requestTimeoutMs, label).expect<T>(label)
     } catch (e: WearException) {
       if (e.errorCode != ErrorCodes.PROTOCOL) throw e
       log("$label: unusable answer (${e.message})")
@@ -375,5 +453,8 @@ internal class WorkoutSync(
 
     /** GB uses 5 s for every workout request; the Fit 4 answers the data requests slowly, so more room here. */
     const val WORKOUT_MS = 10_000L
+
+    /** Lost frames in a row after which the rest of that part of a workout is left out. */
+    const val MAX_LOST_FRAMES = 3
   }
 }

@@ -114,17 +114,18 @@ class WorkoutSyncTest {
       .put(0x14, 1.toByte()), // running
   )
 
-  private fun countTlv(trajectories: Int?): HuaweiTLV {
-    val entry = HuaweiTLV().put(0x06, 5.toShort()).put(0x07, 1.toShort()).put(0x08, 1.toShort())
+  private fun countTlv(trajectories: Int?, dataFrames: Int = 1): HuaweiTLV {
+    val entry = HuaweiTLV().put(0x06, 5.toShort()).put(0x07, dataFrames.toShort()).put(0x08, 1.toShort())
     if (trajectories != null) entry.put(0x0e, trajectories.toByte())
     return HuaweiTLV().put(0x81, HuaweiTLV().put(0x02, 1.toShort()).put(0x85, entry))
   }
 
-  private fun dataTlv(): HuaweiTLV {
-    val header = ByteBuffer.allocate(14).putShort(5).putShort(0).putInt(start).put(5).putShort(3).put(1).putShort(0x0001).array()
+  /** Frame [number] holds three 5 s samples; frame 0 is 120, 0 and 150 bpm, later frames start 15 s per frame later. */
+  private fun dataTlv(number: Int = 0): HuaweiTLV {
+    val header = ByteBuffer.allocate(14).putShort(5).putShort(number.toShort()).putInt(start + 15 * number).put(5).putShort(3).put(1).putShort(0x0001).array()
     return HuaweiTLV().put(
       0x81,
-      HuaweiTLV().put(0x02, 5.toShort()).put(0x03, 0.toShort()).put(0x04, header).put(0x05, byteArrayOf(120, 0, 150.toByte())),
+      HuaweiTLV().put(0x02, 5.toShort()).put(0x03, number.toShort()).put(0x04, header).put(0x05, byteArrayOf(120, 0, 150.toByte())),
     )
   }
 
@@ -136,11 +137,20 @@ class WorkoutSyncTest {
       .put(0x83, HuaweiTLV().put(0x04, 1.toShort()).put(0x05, 0.toByte()).put(0x06, 330)),
   )
 
-  private fun respondTo(r: Request, trajectories: Int?, gps: ByteArray?): List<ByteArray> = when (r.service) {
+  private fun respondTo(
+    r: Request,
+    trajectories: Int?,
+    gps: ByteArray?,
+    dataFrames: Int = 1,
+    lostData: (Int) -> Boolean = { false },
+  ): List<ByteArray> = when (r.service) {
     0x17 -> when (r.command) {
-      0x07 -> listOf(tlvFrame(0x17, 0x07, countTlv(trajectories)))
+      0x07 -> listOf(tlvFrame(0x17, 0x07, countTlv(trajectories, dataFrames)))
       0x08 -> listOf(tlvFrame(0x17, 0x08, totalsTlv()))
-      0x0a -> listOf(tlvFrame(0x17, 0x0a, dataTlv()))
+      0x0a -> {
+        val frame = r.tlv.getObject(0x81).getShort(0x03).toInt()
+        if (lostData(frame)) emptyList() else listOf(tlvFrame(0x17, 0x0a, dataTlv(frame)))
+      }
       0x0c -> listOf(tlvFrame(0x17, 0x0c, paceTlv()))
       else -> emptyList()
     }
@@ -302,5 +312,57 @@ class WorkoutSyncTest {
     assertEquals(2, parameters.getByte(0x06).toInt())
     assertEquals(3, parameters.getByte(0x07).toInt())
     assertEquals("5_gps.bin", watch.requests.first { it.service == 0x0a && it.command == 0x03 }.tlv.getString(0x01))
+  }
+
+  /** Frames the stack dropped (a reply over 512 bytes on Android 14+) are never answered: the rest of the workout must still come. */
+  @Test
+  fun lostDataFramesAreSkippedAndPaceAndTheRestStillSync() = runBlocking {
+    val (watch, session, events) = setup { respondTo(it, trajectories = 0, gps = null, dataFrames = 5, lostData = { true }) }
+    val sink = MemorySink()
+    val sync = WorkoutSync(session, events, requestTimeoutMs = 150)
+
+    sync.sync(start - 1000, end + 1000, sink)
+
+    val record = sink.saved.single()
+    assertTrue(record.complete)
+    assertEquals(1, sync.saved)
+    // Three lost frames in a row end the data part; frames 3 and 4 are never asked for.
+    assertEquals(listOf(0, 1, 2), watch.requests.filter { it.command == 0x0a }.map { it.tlv.getObject(0x81).getShort(0x03).toInt() })
+    assertTrue(record.points.none { it.hr != null })
+    val summary = JSONObject(record.summaryJson)
+    assertTrue(summary.getBoolean("missingData"))
+    assertEquals(330, summary.getJSONArray("paceBlocks").getJSONObject(0).getInt("pace"))
+    // The watch answered the check after the losses, so the link is alive.
+    assertEquals(2, watch.requests.count { it.command == 0x08 })
+    assertNotNull(events.logs.firstOrNull { it.contains("3 frames in a row got no answer") })
+  }
+
+  @Test
+  fun answeredFramesAroundALostOneAreKept() = runBlocking {
+    val (_, session, events) = setup { respondTo(it, trajectories = 0, gps = null, dataFrames = 3, lostData = { n -> n == 0 }) }
+    val sink = MemorySink()
+
+    WorkoutSync(session, events, requestTimeoutMs = 150).sync(start - 1000, end + 1000, sink)
+
+    val record = sink.saved.single()
+    assertTrue(record.complete)
+    // Frames 1 and 2 arrived (the 0 bpm sample of each is no reading); frame 0 is the gap.
+    assertEquals(listOf(start + 15L, start + 25L, start + 30L, start + 40L), record.points.filter { it.hr != null }.map { it.ts })
+    assertTrue(JSONObject(record.summaryJson).getBoolean("missingData"))
+  }
+
+  @Test
+  fun noAnswerToTheLinkCheckMeansTheLinkIsGoneAndTheWorkoutStaysIncomplete() = runBlocking {
+    var totals = 0
+    val (_, session, events) = setup { r ->
+      if (r.service == 0x17 && r.command == 0x08 && ++totals > 1) emptyList()
+      else respondTo(r, trajectories = 0, gps = null, dataFrames = 2, lostData = { true })
+    }
+    val sink = MemorySink()
+
+    val error = runCatching { WorkoutSync(session, events, requestTimeoutMs = 150).sync(start - 1000, end + 1000, sink) }.exceptionOrNull()
+
+    assertTrue(error is WearException && error.errorCode == ErrorCodes.TIMEOUT)
+    assertFalse(sink.saved.single().complete)
   }
 }

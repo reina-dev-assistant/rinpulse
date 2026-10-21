@@ -366,7 +366,7 @@
       "healthIos": "Apple Health",
       "healthAndroid": "Health Connect",
       "partial": "Partly downloaded; the next sync fetches the rest.",
-      "missing": "The watch refused to return some data for this workout, so parts may be missing.",
+      "missing": "Some data for this workout never arrived from the watch, so parts may be missing.",
       "recordedBy": "Recorded by",
       "removedWatch": "A removed watch",
       "phone": "Phone",

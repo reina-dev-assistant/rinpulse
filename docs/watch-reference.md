@@ -228,8 +228,13 @@ Over Bluetooth LE on Android 14 and newer the phone discards any 514-byte notifi
 `... skipping this frame`; three unanswered frames in a row end the pull of that data type with what arrived (a Band 11 Pro, 2026-10-20
 report: StepData 37/40 and 38/40 got only the tail of their reply ("Magic mismatch") on every sync while frames 1 to 36 were answered; that
 the newest frames, a workout's minutes, are the long ones is [INFERENCE]). The sync then goes on with workouts. If the activity
-pull itself fails (an unanswered count request, a storage error), the workouts are still synced before the error is reported. Classic
-(RFCOMM) watches are not affected; the developer LE switch only applies in debug builds.
+pull itself fails (an unanswered count request, a storage error), the workouts are still synced before the error is reported.
+The same holds inside a workout: a WorkoutData, pace, swim, SpO2, sections or GPS-file request with no answer is a lost frame, skipped
+without a retry (the watch would send the same length again), three in a row end that part, and the workout is stored as complete with
+`missingData` (the detail screen says some data never arrived) instead of staying "partly downloaded" for ever; a request after the
+losses (the totals again) tells that apart from a dead link, which keeps the workout incomplete (Band 11 Pro, 2026-10-21 report: the
+first of 18 WorkoutData frames of a 50-minute run got only its tail on every sync, which used to stop the whole workout, so no heart
+rate, pace or route came). Classic (RFCOMM) watches are not affected; the developer LE switch only applies in debug builds.
 
 To read how far back the watch actually reaches, run a sync and read the `History:` lines (logcat tag `JoyoFit`):
 

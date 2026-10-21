@@ -303,7 +303,7 @@ export default function WorkoutsScreen() {
             />
             <ActiveWorkoutBanner />
             <Button label={t('list.start.button')} variant="primary" icon="add" onPress={() => setStartOpen(true)} />
-            <LoopShortcut />
+            <LoopShortcut dismissible />
             {pickError ? <Notice tone="danger">{t('list.pickError', { error: pickError })}</Notice> : null}
             {error ? <Notice tone="danger">{t('list.readError', { error })}</Notice> : null}
             {strengthOnlyCount > 0 ? (
@@ -366,6 +366,7 @@ export default function WorkoutsScreen() {
         onStrength={() => router.push('/strength')}
         onManual={() => router.push('/workouts/manual')}
         onImportFit={() => void importFit()}
+        onLoop={() => router.push('/routes/loop')}
       />
     </View>
   );

@@ -14,14 +14,16 @@ interface StartWorkoutSheetProps {
   onStrength: () => void;
   onManual: () => void;
   onImportFit: () => void;
+  onLoop: () => void;
 }
 
 /**
  * The one place Workouts starts anything: record on the phone, the strength logger, a workout by hand, a FIT file. Choosing a row closes
  * the sheet first and runs the action once it is gone, so the file picker never opens over a sheet that is still leaving.
  */
-export function StartWorkoutSheet({ visible, onClose, recording, onRecord, onStrength, onManual, onImportFit }: StartWorkoutSheetProps) {
+export function StartWorkoutSheet({ visible, onClose, recording, onRecord, onStrength, onManual, onImportFit, onLoop }: StartWorkoutSheetProps) {
   const { t } = useTranslation('workouts');
+  const { t: tl } = useTranslation('loops');
   const pending = useRef<(() => void) | null>(null);
 
   const flush = () => {
@@ -70,6 +72,7 @@ export function StartWorkoutSheet({ visible, onClose, recording, onRecord, onStr
         onPress={choose(onImportFit)}
         style={styles.row}
       />
+      <NavRow icon="repeat" tint="steps" title={tl('shortcut.title')} subtitle={tl('shortcut.subtitle')} onPress={choose(onLoop)} style={styles.row} />
     </BottomSheet>
   );
 }

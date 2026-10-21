@@ -243,7 +243,7 @@ function WatchToday() {
         {t(view?.totalsFromWatch ? 'home.aboutWatch' : view?.hasSamples ? 'home.aboutSamples' : 'home.aboutNone')}
       </Details>
       <Card>
-        <NavRow icon="albums" tint="neutral" title={t('cards.entry')} subtitle={t('cards.entrySubtitle')} onPress={() => router.push('/settings/home-cards')} />
+        <NavRow icon="albums" tint="neutral" title={t('cards.entry')} subtitle={t('cards.entrySubtitle')} onPress={() => router.push('/home-cards')} />
       </Card>
     </Screen>
   );
