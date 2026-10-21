@@ -406,7 +406,10 @@ export interface HealthSensorsStatus extends HealthSensorsUpdate {
   supported: HealthSensorSupport | null;
 }
 
-/** Where a watch-started workout is: counting down on the watch, recording, paused, or finished. */
+/**
+ * Where a watch-started workout is: `preparing` (the watch is still searching for GPS or counting down; the phone's timer
+ * waits), recording, paused, or finished.
+ */
 export type LiveWorkoutStatus = 'preparing' | 'running' | 'paused' | 'ended';
 
 /**
@@ -418,8 +421,9 @@ export interface LiveWorkout {
   id: number;
   status: LiveWorkoutStatus;
   /**
-   * `watch`: the watch's own numbers. `gps` / `manual`: JoyoFit's session on the watch's realtime heart rate, started
-   * because the watch asked for the phone's GPS or by hand; time is counted by the phone and calories are estimated.
+   * `watch`: the watch's own numbers. `gps` / `status` / `manual`: JoyoFit's session on the watch's realtime heart rate,
+   * started because the watch asked for the phone's GPS, because its status said a workout runs, or by hand; the phone
+   * counts the time (from the moment the watch says the workout runs) and estimates the calories.
    */
   source: 'watch' | 'gps' | 'status' | 'manual';
   /** Huawei sport type (1 running, 2 walking, 3 cycling, 5 indoor running, 7 indoor cycling, 13 indoor walking ...). */
@@ -456,6 +460,11 @@ export interface LiveWorkout {
   carbGrams: number;
   /** Share of energy from fat at the current heart rate, 0 to 1, same estimate. */
   fatShare: number | null;
+  /**
+   * The watch looks to have stopped without saying so (it still asks for GPS but reports no workout, or went quiet): the
+   * screen asks the user to finish or keep going. Absent from builds before the watch-status timer.
+   */
+  endSuspected?: boolean;
 }
 
 export type HuaweiWearModuleEvents = {

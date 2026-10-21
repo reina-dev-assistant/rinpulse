@@ -5,6 +5,8 @@ import { Appearance, useColorScheme } from 'react-native';
 
 import { notePrefChanged, subscribePrefApplied } from '@/cloud/prefsSync';
 
+import { loadThemeFonts } from './fonts';
+import { restartApp } from './restart';
 import { DEFAULT_THEME_ID, getTheme, parseThemeId, resolveScheme, type Colors, type Scheme, type Theme, type ThemeId } from './themes';
 
 /** The kv-store key of the choice; also the synced preference `theme` (`src/cloud/syncInventory.ts`). */
@@ -21,7 +23,12 @@ interface ThemeContextValue {
   fonts: Theme['type']['fonts'];
   numeral: Theme['type']['numeral'];
   title: Theme['type']['title'];
-  setThemeId: (id: ThemeId) => void;
+  /**
+   * Saves the choice and restarts the app in it. A theme is not swapped live: the navigators, the native bars and every
+   * `StyleSheet` made from the old theme would each have to be told, and one that is missed keeps the old colors. A restart
+   * starts everything from the saved theme, which `ThemeProvider` reads synchronously, so the first frame is already right.
+   */
+  applyThemeAndRestart: (id: ThemeId) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -43,11 +50,18 @@ function readStoredThemeId(): ThemeId {
 }
 
 /**
- * Holds the chosen theme. The choice is read synchronously from the kv store on first render, so
- * the first frame is already in the right theme, and written back on every change.
+ * Holds the chosen theme. The choice is read synchronously from the kv store before the first render, and the phone's scheme is
+ * pinned (or released) to match in the same step, so the first frame is already in the right theme and the system bars and
+ * dialogs agree with it. A change is saved and the app restarts (`applyThemeAndRestart`).
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [themeId, setId] = useState<ThemeId>(readStoredThemeId);
+  const [themeId, setId] = useState<ThemeId>(() => {
+    const id = readStoredThemeId();
+    // Before `useColorScheme` below reads the scheme: a pinned scheme left over from the theme before a restart must not
+    // be reported as the phone's. Setting the same value again is harmless, so a double render does not matter.
+    applyNativeScheme(getTheme(id));
+    return id;
+  });
   // While a pinned theme is active React Native reports the pinned value, so remember what the
   // phone last said while a system theme was showing.
   const reported = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -59,34 +73,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const colors = theme.palettes[scheme];
 
   useEffect(() => {
-    applyNativeScheme(theme);
-  }, [theme]);
-
-  useEffect(() => {
     // Root view color: shows behind the navigation bar and during overscroll and screen transitions.
     SystemUI.setBackgroundColorAsync(colors.background).catch(() => undefined);
   }, [colors.background]);
 
-  const setThemeId = useCallback((id: ThemeId) => {
+  const applyThemeAndRestart = useCallback(async (id: ThemeId) => {
     const next = getTheme(id);
-    // Before the render, so a switch back to a system theme reads the phone's scheme, not the pinned one.
+    // Released or pinned now, so the restarted app's first `useColorScheme` already reports the phone's scheme (leaving a
+    // pinned theme) instead of the old theme's.
     applyNativeScheme(next);
-    setId(next.id);
     try {
       Storage.setItemSync(THEME_KEY, next.id);
     } catch {
-      // The choice still applies for this session.
+      // Not saved: the restart comes back in the old theme and the picker shows it.
     }
-    void notePrefChanged('theme');
+    // The edit is stamped in the sync table before the JS context goes away.
+    await notePrefChanged('theme');
+    await restartApp();
   }, []);
 
-  // A theme pulled from the account was just written to the kv store: show it without a restart.
+  // A theme pulled from the account was just written to the kv store. Not an interruption to restart for: it is shown live,
+  // once its fonts are registered, and the next launch starts clean in it.
   useEffect(
     () =>
       subscribePrefApplied('theme', () => {
         const next = getTheme(readStoredThemeId());
-        applyNativeScheme(next);
-        setId(next.id);
+        void loadThemeFonts(next)
+          .catch(() => undefined)
+          .then(() => {
+            applyNativeScheme(next);
+            setId(next.id);
+          });
       }),
     [],
   );
@@ -101,9 +118,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       fonts: theme.type.fonts,
       numeral: theme.type.numeral,
       title: theme.type.title,
-      setThemeId,
+      applyThemeAndRestart,
     }),
-    [theme, scheme, system, colors, setThemeId],
+    [theme, scheme, system, colors, applyThemeAndRestart],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

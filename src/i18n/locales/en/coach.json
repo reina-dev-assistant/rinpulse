@@ -2,13 +2,6 @@
   "title": "Coach",
   "disclaimer": "Coach suggestions are worked out from your watch data and general training rules. This is not medical advice. If you feel pain, dizziness or anything else wrong, stop and see a doctor.",
   "access": {
-    "upsell": {
-      "title": "Coach is a Pro feature",
-      "description": "A daily training suggestion, running and strength plans, and the Ask coach chat. Your plan is kept in your JoyoRogo account.",
-      "see": "See Pro",
-      "open": "Open JoyoRogo on Google Play",
-      "mention": "Coach is available to JoyoRogo Pro accounts. The plan is kept in your JoyoRogo account."
-    },
     "signIn": {
       "title": "Sign in first",
       "body": "Coach keeps your plan in your JoyoRogo account, so you need to sign in.",

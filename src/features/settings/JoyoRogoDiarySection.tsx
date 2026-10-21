@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { Button } from '@/components/Button';
 import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -22,9 +23,6 @@ export function JoyoRogoDiarySection() {
 
   return (
     <Section title={t('joyorogo.title')} icon="restaurant">
-      <AppText variant="caption" muted>
-        {t('joyorogo.intro')}
-      </AppText>
       {cloud.signedIn ? (
         <>
           {cloud.autoSync ? null : <Notice icon="sync">{t('joyorogo.autoSyncOff')}</Notice>}
@@ -54,6 +52,7 @@ export function JoyoRogoDiarySection() {
           <SignInButtons />
         </>
       )}
+      <Details>{t('joyorogo.intro')}</Details>
     </Section>
   );
 }

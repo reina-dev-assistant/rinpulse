@@ -150,11 +150,47 @@
     "ocean": {
       "name": "Ocean",
       "tagline": "Clean blue and white. Follows the phone."
+    },
+    "amoled": {
+      "name": "AMOLED",
+      "tagline": "True black with white accents. Always dark."
+    },
+    "neon": {
+      "name": "Neon",
+      "tagline": "Night run: hot pink and cyan on near-black, digital numbers. Always dark."
+    },
+    "sunset": {
+      "name": "Sunset",
+      "tagline": "Dusk plum and ember orange, with a gradient watch panel. Always dark."
+    },
+    "sogan": {
+      "name": "Sogan",
+      "tagline": "Batik sogan browns, indigo and gold, serif titles. Follows the phone."
+    },
+    "retro": {
+      "name": "Retro",
+      "tagline": "Cream paper, orange and chunky race numbers. Always light."
+    },
+    "forest": {
+      "name": "Forest",
+      "tagline": "Moss green and bark, trail-sign numbers. Follows the phone."
+    },
+    "soft": {
+      "name": "Soft",
+      "tagline": "Pastel blush and very round shapes. Follows the phone."
+    },
+    "mono": {
+      "name": "Mono",
+      "tagline": "Black and white, square corners, mono numbers. Follows the phone."
     }
   },
   "notFound": {
     "title": "Page not found",
     "description": "This link doesn't lead to any page in JoyoFit. If an update just came out, close the app and open it again.",
     "home": "Go home"
+  },
+  "chart": {
+    "hint": "Tap a bar to see its value",
+    "noValue": "No value"
   }
 }

@@ -369,6 +369,11 @@ public final class HuaweiWearModule: Module {
             try await wearCall { try await runtime.watchSettings.setHealthSensors(try HealthSensorConfig.fromJS(sensors)) }
         }
 
+        // The language the watch is told (service 0C): the app's pinned language, or nil for the phone's (WatchLocale.swift).
+        AsyncFunction("setWatchLanguage") { (language: String?) async throws -> Bool in
+            try await wearCall { try await runtime.watchSettings.setWatchLanguage(language) }
+        }
+
         AsyncFunction("measureHrv") { () async throws -> [String: Any] in
             try await wearCall { try await runtime.watchSettings.hrv.measure().toJS() }
         }

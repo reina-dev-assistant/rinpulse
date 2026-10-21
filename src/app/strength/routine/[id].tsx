@@ -14,7 +14,7 @@ import { Card, Screen } from '@/components/Screen';
 import { EmptyState, Notice, Skeleton } from '@/components/States';
 import { errorMessage } from '@/format';
 import { buildCatalog, type Catalog } from '@/features/strength/catalog';
-import { MAX_EXERCISES, routineExercisesOf, type ExerciseInfo } from '@/features/strength/draft';
+import { MAX_EXERCISES, resolveTimed, routineExercisesOf, type ExerciseInfo } from '@/features/strength/draft';
 import {
   addExercises,
   addSet,
@@ -23,6 +23,7 @@ import {
   editSnapshot,
   emptyEdit,
   linkedWithNext,
+  hasCustomAmounts,
   MAX_NAME_LENGTH,
   MAX_NOTE_LENGTH,
   moveExercise,
@@ -33,6 +34,7 @@ import {
   routineFromEdit,
   setExerciseNote,
   setExerciseRest,
+  setExerciseTimed,
   toggleSupersetWithNext,
   updateSet,
   validateEdit,
@@ -44,12 +46,14 @@ import { getStarterRoutine, isStarterId } from '@/features/strength/starterRouti
 import {
   customExerciseIndex,
   DEFAULT_SETTINGS,
+  listTimedPrefs,
   deleteRoutine,
   getRoutine,
   getStrengthWorkout,
   listFolders,
   listRoutines,
   loadSettings,
+  setTimedPref,
   saveRoutine,
 } from '@/features/strength/store';
 import { SET_TYPES, type Routine, type RoutineFolder, type SetType } from '@/features/strength/types';
@@ -80,6 +84,8 @@ export default function RoutineEditor() {
   const [folders, setFolders] = useState<RoutineFolder[]>([]);
   const [catalog, setCatalog] = useState<Catalog>(() => buildCatalog([]));
   const [defaultRestSec, setDefaultRestSec] = useState(DEFAULT_SETTINGS.defaultRestSec);
+  const [timedPrefs, setTimedPrefs] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const [measureAsk, setMeasureAsk] = useState<{ key: string; timed: boolean } | null>(null);
   const [problem, setProblem] = useState<EditProblem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -118,11 +124,12 @@ export default function RoutineEditor() {
     let cancelled = false;
     (async () => {
       try {
-        const [custom, allFolders, settings] = await Promise.all([customExerciseIndex(db), listFolders(db), loadSettings(db)]);
+        const [custom, allFolders, settings, timedSaved] = await Promise.all([customExerciseIndex(db), listFolders(db), loadSettings(db), listTimedPrefs(db)]);
         if (cancelled) return;
         setCatalog(buildCatalog([...custom.values()]));
         setFolders(allFolders);
         setDefaultRestSec(settings.defaultRestSec);
+        setTimedPrefs(timedSaved);
         const folderOk = (folderId: string | null | undefined): string | null => (folderId && allFolders.some((f) => f.id === folderId) ? folderId : null);
 
         if (!isNew) {
@@ -173,10 +180,23 @@ export default function RoutineEditor() {
     setCatalog(buildCatalog([...(await customExerciseIndex(db)).values()]));
   }, [db]);
 
-  const infoOf = (exerciseId: string): ExerciseInfo => ({ exerciseId, timed: catalog.get(exerciseId)?.timed ?? false });
+  // A new exercise starts the way the person measured it last time (saved by the switch of the logger or this editor), else the library's way.
+  const infoOf = (exerciseId: string): ExerciseInfo => ({ exerciseId, timed: timedPrefs.get(exerciseId) ?? catalog.get(exerciseId)?.timed ?? false });
   const nameOf = (exerciseId: string): string => catalog.name(exerciseId, locale) ?? t('routines:row.removedExercise');
-  const isTimed = (exerciseId: string, sets: readonly { reps: number | null; seconds: number | null }[]): boolean =>
-    catalog.get(exerciseId)?.timed ?? sets.some((s) => s.seconds !== null && s.reps === null);
+  const catalogTimedOf = (exerciseId: string): boolean | null => catalog.get(exerciseId)?.timed ?? null;
+
+  const applyMeasure = (key: string, timed: boolean) => {
+    const target = edit.exercises.find((e) => e.key === key);
+    if (!target) return;
+    change(setExerciseTimed(edit, key, timed, catalogTimedOf(target.exerciseId)));
+    void setTimedPref(db, target.exerciseId, timed).then(() => listTimedPrefs(db)).then(setTimedPrefs);
+  };
+  const askMeasure = (key: string, timed: boolean) => {
+    const target = edit.exercises.find((e) => e.key === key);
+    if (!target || resolveTimed(target, catalogTimedOf(target.exerciseId)) === timed) return;
+    if (hasCustomAmounts(target)) setMeasureAsk({ key, timed });
+    else applyMeasure(key, timed);
+  };
 
   const change = (next: EditRoutine) => {
     setEdit(next);
@@ -349,7 +369,8 @@ export default function RoutineEditor() {
             key={exercise.key}
             exercise={exercise}
             name={nameOf(exercise.exerciseId)}
-            timed={isTimed(exercise.exerciseId, exercise.sets)}
+            timed={resolveTimed(exercise, catalogTimedOf(exercise.exerciseId))}
+            onMeasure={(timed) => askMeasure(exercise.key, timed)}
             defaultRestSec={defaultRestSec}
             onMenu={() => setExerciseMenu(exercise.key)}
             onNote={(note) => change(setExerciseNote(edit, exercise.key, note))}
@@ -410,6 +431,19 @@ export default function RoutineEditor() {
         confirmLabel={t('routines:confirmDelete.confirm')}
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => void remove()}
+      />
+      <ConfirmDialog
+        visible={measureAsk !== null}
+        title={t('strength:measure.confirmTitle', { measure: measureAsk?.timed ? t('strength:table.time') : t('strength:table.reps') })}
+        message={t('strength:measure.confirmMessageRoutine')}
+        confirmLabel={t('strength:measure.confirm')}
+        cancelLabel={t('strength:measure.cancel')}
+        onCancel={() => setMeasureAsk(null)}
+        onConfirm={() => {
+          const ask = measureAsk;
+          setMeasureAsk(null);
+          if (ask) applyMeasure(ask.key, ask.timed);
+        }}
       />
       <ConfirmDialog
         visible={confirmLeave}

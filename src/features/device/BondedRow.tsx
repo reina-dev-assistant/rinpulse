@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/AppText';
@@ -93,7 +93,7 @@ export function BondedRow({
       <ConfirmDialog
         visible={confirmingForget}
         title={t('watch:device.bonded.forgetTitle')}
-        message={t('watch:device.bonded.forgetMessage')}
+        message={t(Platform.OS === 'ios' ? 'watch:device.bonded.forgetMessageIos' : 'watch:device.bonded.forgetMessage')}
         confirmLabel={t('watch:device.bonded.forget')}
         onConfirm={() => {
           setConfirmingForget(false);

@@ -94,7 +94,7 @@ export function FieldPicker({ visible, current, onPick, onClose }: FieldPickerPr
                   </AppText>
                 </View>
                 <View style={styles.example}>
-                  <AppText numberOfLines={1} style={{ fontFamily: fonts.heavy, fontSize: 18, fontVariant: ['tabular-nums'] }}>
+                  <AppText numberOfLines={1} style={{ fontFamily: fonts.numeral, fontSize: 18, fontVariant: ['tabular-nums'] }}>
                     {item.example}
                   </AppText>
                   {selected ? <Ionicons name="checkmark-circle" size={20} color={colors.primary} /> : null}

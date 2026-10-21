@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { HiddenTabHeader } from '@/components/HiddenTabHeader';
 import { Card, Screen } from '@/components/Screen';
 import { HOME_CARD_IDS, isDefaultHomeCards, type HomeCardId } from '@/features/today/homeCards';
@@ -38,9 +39,6 @@ export function HomeCardsScreen() {
   return (
     <Screen>
       <HiddenTabHeader title={t('screens.homeCards', { ns: 'settings' })} />
-      <AppText variant="caption" muted>
-        {t('cards.lead')}
-      </AppText>
       <Card style={styles.list}>
         {prefs.order.map((id, i) => {
           const shown = !prefs.hidden.includes(id);
@@ -70,6 +68,7 @@ export function HomeCardsScreen() {
           );
         })}
       </Card>
+      <Details>{t('cards.lead')}</Details>
       {isDefaultHomeCards(prefs) ? null : <Button label={t('cards.reset')} icon="refresh" variant="secondary" onPress={reset} />}
     </Screen>
   );

@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
 import { fmtDate } from '@/i18n';
@@ -47,7 +48,6 @@ export function WebFacesSection({
 
   return (
     <Section title={t('faces.web.title')} icon="cloud-download-outline">
-      <AppText variant="caption">{t('faces.web.hint')}</AppText>
       {state === 'notConfigured' ? (
         <Notice icon="cloud-offline-outline">{t('faces.web.notConfigured')}</Notice>
       ) : state === 'signedOut' ? (
@@ -101,6 +101,7 @@ export function WebFacesSection({
         </View>
       )}
       {downloadError ? <Notice tone="danger">{t('faces.web.downloadFailed', { error: downloadError })}</Notice> : null}
+      <Details>{t('faces.web.hint')}</Details>
     </Section>
   );
 }

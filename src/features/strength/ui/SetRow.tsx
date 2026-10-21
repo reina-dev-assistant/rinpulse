@@ -1,19 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/AppText';
 import { PressableScale } from '@/components/PressableScale';
-import { fontSize, spacing, tintColors, useColors } from '@/theme';
+import { fontSize, spacing, tintColors, useColors, useTheme } from '@/theme';
 
 import type { SetPatch } from '../draft';
-import { inputText, previousLabel, rpeText, SET_BADGE, type PreviousSet } from '../logFormat';
+import { inputText, previousForMeasure, previousLabel, rpeText, SET_BADGE, timerText, type PreviousSet } from '../logFormat';
+import { timerShownSec, type SetTimer } from '../setTimer';
 import type { SetType, StrengthSet } from '../types';
 import { NumberField } from './NumberField';
+import { useTicker } from './useStrengthDraft';
 
 /** Column widths shared by the header and the rows of a set table. */
-export const COLUMN = { set: 44, rpe: 56, check: 44 } as const;
+export const COLUMN = { set: 44, rpe: 56, check: 44, timer: 40 } as const;
 
 export interface SetRowActions {
   onChange: (exerciseKey: string, setId: string, patch: SetPatch) => void;
@@ -21,6 +23,8 @@ export interface SetRowActions {
   onMenu: (exerciseKey: string, setId: string) => void;
   onFillPrevious: (exerciseKey: string, setId: string) => void;
   onPickRpe: (exerciseKey: string, setId: string) => void;
+  /** Starts the stopwatch / countdown of a timed set, or stops it and stores the seconds. */
+  onTimer: (exerciseKey: string, setId: string) => void;
 }
 
 interface SetRowProps {
@@ -29,6 +33,8 @@ interface SetRowProps {
   label: string;
   previous: PreviousSet | null;
   timed: boolean;
+  /** The stopwatch running on this set, else null. */
+  timer: SetTimer | null;
   showRpe: boolean;
   /** Bumps when this row's tick was refused. */
   flash: number;
@@ -50,13 +56,34 @@ export function useTypeColor(type: SetType): string {
   }
 }
 
-function SetRowView({ exerciseKey, set, label, previous, timed, showRpe, flash, actions }: SetRowProps) {
+/** The seconds box of a set while its stopwatch runs: the live clock (counting down from the plan, or up), a tap stops and stores it. Redraws on its own; the list does not. */
+function RunningClock({ timer, label, onPress, style }: { timer: SetTimer; label: string; onPress: () => void; style: StyleProp<ViewStyle> }) {
+  const { colors, fonts, radius } = useTheme();
+  const now = useTicker(true, 250);
+  const shown = timerText(timerShownSec(timer, now));
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityValue={{ text: shown }}
+      onPress={onPress}
+      scaleTo={0.96}
+      style={[styles.clock, { backgroundColor: colors.primary, borderRadius: radius.input }, style]}>
+      <AppText variant="bodyStrong" color={colors.primaryForeground} style={{ fontFamily: fonts.bold, fontVariant: ['tabular-nums'] }}>
+        {shown}
+      </AppText>
+    </PressableScale>
+  );
+}
+
+function SetRowView({ exerciseKey, set, label, previous, timed, timer, showRpe, flash, actions }: SetRowProps) {
   const { t } = useTranslation('strength');
   const colors = useColors();
   const typeColor = useTypeColor(set.type);
   const badge = SET_BADGE[set.type];
-  const prev = previous ? previousLabel(previous, timed) : null;
+  const prev = previous ? previousLabel(previousForMeasure(previous, timed), timed) : null;
   const hintOf = (n: number | null): string | undefined => (set.done || n === null ? undefined : inputText(n));
+  const hintTime = (n: number | null): string | undefined => (set.done || n === null ? undefined : timerText(n));
 
   const typeName = t(`setType.${set.type}`);
   return (
@@ -83,7 +110,7 @@ function SetRowView({ exerciseKey, set, label, previous, timed, showRpe, flash, 
         disabled={!prev}
         onPress={() => actions.onFillPrevious(exerciseKey, set.id)}
         scaleTo={0.96}
-        style={styles.previous}>
+        style={[styles.previous, timed && styles.previousTimed]}>
         <AppText variant="caption" muted numberOfLines={1}>
           {prev ?? t('table.dash')}
         </AppText>
@@ -99,11 +126,13 @@ function SetRowView({ exerciseKey, set, label, previous, timed, showRpe, flash, 
         onChange={(weightKg) => actions.onChange(exerciseKey, set.id, { weightKg })}
         style={styles.field}
       />
-      {timed ? (
+      {timed && timer ? (
+        <RunningClock timer={timer} label={t('table.timerStop', { label })} onPress={() => actions.onTimer(exerciseKey, set.id)} style={styles.field} />
+      ) : timed ? (
         <NumberField
           kind="seconds"
           value={set.seconds}
-          hint={hintOf(previous?.seconds ?? null)}
+          hint={hintTime(previous?.seconds ?? null)}
           label={t('table.secondsField', { label })}
           done={set.done}
           flash={flash}
@@ -122,6 +151,18 @@ function SetRowView({ exerciseKey, set, label, previous, timed, showRpe, flash, 
           style={styles.field}
         />
       )}
+      {timed ? (
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={timer ? t('table.timerStop', { label }) : t('table.timerStart', { label })}
+          accessibilityState={{ disabled: set.done }}
+          disabled={set.done}
+          onPress={() => actions.onTimer(exerciseKey, set.id)}
+          scaleTo={0.9}
+          style={[styles.timer, { width: COLUMN.timer, backgroundColor: timer ? colors.destructive : colors.muted }]}>
+          <Ionicons name={timer ? 'stop' : 'stopwatch-outline'} size={20} color={timer ? colors.primaryForeground : colors.mutedForeground} />
+        </PressableScale>
+      ) : null}
 
       {showRpe ? (
         <PressableScale
@@ -156,7 +197,10 @@ const styles = StyleSheet.create({
   setCell: { height: 44, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 1 },
   badge: { fontSize: fontSize.xs, lineHeight: 14 },
   previous: { flex: 1.3, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  previousTimed: { flex: 0.9 },
   field: { flex: 1, minWidth: 0 },
+  clock: { height: 40, alignItems: 'center', justifyContent: 'center' },
+  timer: { height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   rpe: { height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   check: { height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });

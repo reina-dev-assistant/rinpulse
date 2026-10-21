@@ -78,3 +78,6 @@ change theirs.
 In-app credit line (coach:library.credits): "Gambar latihan dari wger.de, lisensi Creative Commons (CC BY-SA); pembuat dan
 lisensi tiap gambar ada di fit.joyorogo.com/exercises/ATTRIBUTION.txt. Data otot dan tingkat dari free-exercise-db (domain
 publik)."
+
+The fonts in assets/fonts (Manrope, Nunito, Archivo, Bebas Neue, Space Grotesk, JetBrains Mono, Fraunces) are licensed under the SIL Open Font
+License 1.1; the license text of each is in assets/fonts/licenses. They come from the Expo Google Fonts packages (@expo-google-fonts/*).

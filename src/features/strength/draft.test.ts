@@ -183,6 +183,8 @@ describe('starting from a routine or a plan', () => {
     expect(d.exercises[0]!.sets[0]).toMatchObject({ reps: 10, seconds: null });
     expect(d.exercises[0]!.restSec).toBe(75);
     expect(d.exercises[1]!.sets[0]).toMatchObject({ reps: null, seconds: 30 });
+    // A planned hold opens as a Waktu exercise, a planned rep exercise as Repetisi.
+    expect(d.exercises.map((e) => e.timed)).toEqual([false, true]);
   });
 });
 

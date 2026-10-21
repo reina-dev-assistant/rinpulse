@@ -4,6 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Screen, Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -97,15 +98,11 @@ export function ThermometerScreen() {
       {sensor ? <NightSection ids={[sensor.id]} onProblem={setNightProblem} /> : null}
 
       <Section title={t('firmware.title')} icon="information-circle">
-        <AppText variant="caption" muted>
-          {t('firmware.body')}
-        </AppText>
+        <Details>{t('firmware.body')}</Details>
       </Section>
 
       <Section title={t('privacy.title')} icon="lock-closed">
-        <AppText variant="caption" muted>
-          {t('privacy.body')}
-        </AppText>
+        <Details>{t('privacy.body')}</Details>
       </Section>
 
       <ConfirmDialog

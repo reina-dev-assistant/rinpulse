@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Divider, Section } from '@/components/Screen';
 import { fmtDateTime, fmtDecimal } from '@/i18n/format';
 import type { WeighIn } from '@/features/scale/store';
@@ -54,7 +55,7 @@ export function HistorySection({ weighIns, rogoWaiting, needsProfile, onRetry, o
               <View style={styles.text}>
                 <AppText variant="bodyStrong">{t('live.weight', { value: fmtDecimal(w.weightKg, 1) })}</AppText>
                 <AppText variant="caption" muted>
-                  {`${fmtDateTime(w.takenAt)} · ${t(`history.${w.rogoState}`)}`}
+                  {`${fmtDateTime(new Date(w.takenAt))} · ${t(`history.${w.rogoState}`)}`}
                 </AppText>
                 <BodyLine values={bodyValues(w.reported)} label={t('body.measured')} />
                 <BodyLine values={bodyValues(w.estimate)} label={t('body.estimate')} />
@@ -69,11 +70,7 @@ export function HistorySection({ weighIns, rogoWaiting, needsProfile, onRetry, o
           {t('body.needProfile')}
         </AppText>
       ) : null}
-      {weighIns.some((w) => w.estimate !== null) ? (
-        <AppText variant="caption" muted>
-          {t('body.estimateNote')}
-        </AppText>
-      ) : null}
+      {weighIns.some((w) => w.estimate !== null) ? <Details>{t('body.estimateNote')}</Details> : null}
     </Section>
   );
 }

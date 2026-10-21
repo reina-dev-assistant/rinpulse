@@ -100,6 +100,7 @@ describe('strengthShareStats', () => {
   it('shows total reps instead of volume for a bodyweight-only workout', () => {
     const s = strengthShareStats(workout([pushUps, plank]), catalog, 'en', []);
     expect(s.stats[0]).toMatchObject({ key: 'reps', value: '20' });
+    expect(s.stats.find((x) => x.key === 'hold')).toMatchObject({ value: '0:45' });
     expect(s.stats.some((x) => x.key === 'volume')).toBe(false);
     expect(s.prLabel).toBeNull();
     expect(s.topSets.map((r) => r.load)).toEqual(['20 reps', '45 s']);
@@ -107,7 +108,8 @@ describe('strengthShareStats', () => {
 
   it('falls back to time when only timed sets were done, and omits energy when unknown', () => {
     const s = strengthShareStats(workout([plank], { kcal: null, kcalSource: null }), catalog, 'id', []);
-    expect(s.stats.map((x) => x.key)).toEqual(['time', 'sets']);
+    expect(s.stats.map((x) => x.key)).toEqual(['hold', 'time', 'sets']);
+    expect(s.stats[0]).toMatchObject({ key: 'hold', value: '0:45' });
     expect(s.topSets[0]!.load).toBe('45 dtk');
   });
 
@@ -132,5 +134,12 @@ describe('strengthDescription', () => {
   it('describes a bodyweight workout by reps and is empty with no sets', () => {
     expect(strengthDescription(workout([pushUps]), catalog, 'id')).toStartWith('1 set, 20 repetisi.');
     expect(strengthDescription(workout([]), catalog, 'en')).toBe('');
+  });
+
+  it('describes a timed-only workout by the time held, not by 0 reps', () => {
+    const two = exercise('plank', [set('g', { seconds: 45 }), set('h', { seconds: 75 })]);
+    expect(strengthDescription(workout([two]), catalog, 'en').split('\n')[0]).toBe('2 sets, 2:00 held.');
+    expect(strengthDescription(workout([two]), catalog, 'id').split('\n')[0]).toBe('2 set, tahan 2:00.');
+    expect(strengthDescription(workout([pushUps, plank]), catalog, 'en')).toContain('Total hold time 0:45.');
   });
 });

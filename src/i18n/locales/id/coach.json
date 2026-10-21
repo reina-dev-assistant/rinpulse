@@ -2,13 +2,6 @@
   "title": "Coach",
   "disclaimer": "Saran Coach dihitung dari data jam dan aturan umum latihan. Ini bukan saran medis. Kalau ada nyeri, pusing, atau keluhan lain, berhenti dan periksakan ke dokter.",
   "access": {
-    "upsell": {
-      "title": "Coach adalah fitur Pro",
-      "description": "Saran latihan harian, rencana lari dan latihan kekuatan, dan chat Tanya coach. Rencanamu tersimpan di akun JoyoRogo.",
-      "see": "Lihat Pro",
-      "open": "Buka JoyoRogo di Google Play",
-      "mention": "Coach tersedia untuk akun JoyoRogo Pro. Rencananya tersimpan di akun JoyoRogo-mu."
-    },
     "signIn": {
       "title": "Masuk dulu",
       "body": "Coach menyimpan rencanamu di akun JoyoRogo, jadi kamu perlu masuk dulu.",

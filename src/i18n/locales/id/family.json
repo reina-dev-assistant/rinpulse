@@ -94,13 +94,6 @@
     "none": "Belum ada data yang terkirim.",
     "sentAt": "Terkirim {{at}}. Persis seperti ini yang disimpan server:"
   },
-  "upsell": {
-    "title": "Ini untuk JoyoRogo Pro",
-    "description": "Memantau sampai 5 orang, semua pemberitahuan (detak jantung, langkah, tidur, kadar oksigen), email, dan riwayat sampai 90 hari ada di JoyoRogo Pro. Yang memantau yang berlangganan: orang yang kamu pantau tidak pernah dikenai biaya. Pemberitahuan \"Belum sinkron\" tetap gratis.",
-    "see": "Lihat JoyoRogo Pro",
-    "open": "Buka JoyoRogo",
-    "mention": "JoyoRogo Pro diatur di dalam aplikasi JoyoRogo."
-  },
   "home": {
     "emptyTitle": "Belum ada yang kamu pantau",
     "emptyDescription": "Undang orang tuamu. Kamu akan melihat kabar ringkas dari jam Huawei mereka, dan dapat pemberitahuan kalau ada yang tidak biasa. Mereka yang memutuskan apa yang dibagikan.",
@@ -166,7 +159,10 @@
     "latest": "Terbaru",
     "a11y": "Grafik {{metric}} {{count}} hari terakhir",
     "baseline": "Garis putus-putus: biasanya {{bpm}} bpm.",
-    "sleepBars": "Tinggi batang dalam jam."
+    "sleepBars": "Tinggi batang dalam jam.",
+    "valueSteps": "{{value}} langkah",
+    "valueRestingHr": "{{value}} bpm",
+    "valueSleep": "{{value}} j"
   },
   "me": {
     "emptyTitle": "Belum ada yang memantau kabarmu",

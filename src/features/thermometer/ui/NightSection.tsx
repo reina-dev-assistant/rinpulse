@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Divider, Section } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
 import { SwitchRow } from '@/components/SwitchRow';
@@ -85,9 +86,6 @@ export function NightSection({ ids, onProblem }: NightSectionProps) {
 
   return (
     <Section title={t('night.title')} icon="moon">
-      <AppText variant="caption" muted>
-        {t('night.explain')}
-      </AppText>
       {native ? (
         <>
           <AppText variant="bodyStrong" accessibilityLiveRegion="polite">
@@ -122,6 +120,7 @@ export function NightSection({ ids, onProblem }: NightSectionProps) {
       ) : (
         <AppText variant="caption">{t(Platform.OS === 'android' ? 'night.oldBuild' : 'night.ios')}</AppText>
       )}
+      <Details>{t('night.explain')}</Details>
     </Section>
   );
 }

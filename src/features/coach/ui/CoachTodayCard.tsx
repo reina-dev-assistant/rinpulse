@@ -11,7 +11,8 @@ import type { NightHrvAvailability } from '@/features/today/nightHrv';
 import { spacing } from '@/theme';
 import { useCoach } from '../useCoach';
 import { useCoachAccess } from '../useCoachAccess';
-import { CoachSignIn, CoachUpsell } from './CoachGate';
+import { UpgradeCard } from '@/features/pro/UpgradeCard';
+import { CoachSignIn } from './CoachGate';
 import { FeelPicker } from './FeelPicker';
 import { SuggestionBlock } from './SuggestionBlock';
 
@@ -46,7 +47,7 @@ export function CoachTodayCard({ dataVersion, availability }: { dataVersion: num
   const access = useCoachAccess();
   if (access === 'checking') return null;
   if (access === 'signedOut') return <CoachSignIn />;
-  if (access === 'free') return <CoachUpsell campaign="evergreen-coach-today" />;
+  if (access === 'free') return <UpgradeCard moment="coach-today" dismissible />;
   return <ProCard dataVersion={dataVersion} availability={availability} />;
 }
 

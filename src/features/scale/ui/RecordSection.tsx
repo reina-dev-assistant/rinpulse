@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Divider, Section } from '@/components/Screen';
 import { SwitchRow } from '@/components/SwitchRow';
 import { pushLog, useLogBuffer } from '@/state/logStore';
@@ -92,9 +93,6 @@ export function RecordSection({ devices }: RecordSectionProps) {
 
   return (
     <Section title={t('record.title')} icon="radio-outline">
-      <AppText variant="caption" muted>
-        {t('record.body')}
-      </AppText>
       {devices.length === 0 ? (
         <AppText variant="caption" muted>
           {t('record.none')}
@@ -146,6 +144,7 @@ export function RecordSection({ devices }: RecordSectionProps) {
           <Button label={t('record.share')} icon="share-outline" onPress={() => void share()} />
         </>
       ) : null}
+      <Details>{t('record.body')}</Details>
     </Section>
   );
 }

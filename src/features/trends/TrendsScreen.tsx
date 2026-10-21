@@ -8,8 +8,7 @@ import { HiddenTabHeader } from '@/components/HiddenTabHeader';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
 import { Notice, Skeleton } from '@/components/States';
-import { ShareBadgesButton } from '@/features/stickers/ui/ShareBadgesButton';
-import { ShareWeekButton } from '@/features/stickers/ui/ShareWeekButton';
+import { ShareMenuButton } from '@/features/stickers/ui/ShareMenuButton';
 import { buildNights } from '@/features/sleep/nights';
 import { nightHrvTrendEmpty, recoveryTrendEmpty } from '@/features/today/nightHrv';
 import { useNightHrvAvailability } from '@/features/today/useNightHrvAvailability';
@@ -58,10 +57,8 @@ export function TrendsScreen() {
 
   return (
     <Screen refresh={{ refreshing: linkState === 'syncing', onRefresh: () => void sync(), enabled: canSync }}>
-      <HiddenTabHeader title={t('trends.title')} />
+      <HiddenTabHeader title={t('trends.title')} right={<ShareMenuButton dataVersion={dataVersion} />} />
       <Segmented options={rangeOptions} value={range} onChange={setRange} />
-      <ShareWeekButton dataVersion={dataVersion} />
-      <ShareBadgesButton dataVersion={dataVersion} />
       {error ? <Notice tone="danger">{t('trends.loadError', { error })}</Notice> : null}
       {trends ? (
         <View style={styles.cards}>

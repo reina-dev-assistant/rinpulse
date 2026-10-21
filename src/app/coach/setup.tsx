@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Screen, Section } from '@/components/Screen';
@@ -122,9 +123,7 @@ function SetupForm() {
       <AppText variant="caption" muted>
         {t('setup.summary', { weeks: fmtInt(planWeeks(choice)), days: fmtInt(days) })}
       </AppText>
-      <AppText variant="caption" muted>
-        {t('disclaimer')}
-      </AppText>
+      <Details>{t('disclaimer')}</Details>
       {error ? <Notice tone="danger">{error}</Notice> : null}
       <Button label={saving ? t('setup.starting') : t('setup.start')} variant="primary" icon="play" onPress={() => void start()} disabled={!ready} loading={saving} />
     </>
@@ -134,7 +133,7 @@ function SetupForm() {
 export default function CoachSetupScreen() {
   return (
     <Screen>
-      <CoachGate campaign="evergreen-coach-setup">
+      <CoachGate>
         <SetupForm />
       </CoachGate>
     </Screen>

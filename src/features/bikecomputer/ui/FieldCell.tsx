@@ -76,7 +76,7 @@ function FieldCellView({ name, label, shortLabel, value, width, height, palette 
           allowFontScaling={false}
           style={[
             styles.value,
-            { color, fontFamily: fonts.heavy, fontSize: size, lineHeight: Math.round(size * 1.05), letterSpacing: -size * 0.02 },
+            { color, fontFamily: fonts.numeral, fontSize: size, lineHeight: Math.round(size * 1.05), letterSpacing: -size * 0.02 },
           ]}>
           {value.value}
         </Text>

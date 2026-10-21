@@ -7,6 +7,7 @@ import { AppText } from '@/components/AppText';
 import { Chip } from '@/components/Chip';
 import { dateToLocalMidnightSec, daySeries } from '@/features/family/format';
 import { TrendChart } from '@/features/trends/TrendChart';
+import { fmtDecimal, fmtInt } from '@/i18n';
 import { spacing, tintColors, useColors, type Tint } from '@/theme';
 
 type Metric = 'steps' | 'restingHr' | 'sleep';
@@ -68,6 +69,13 @@ export function FamilyTrend({ days, range, scopes, baseline }: FamilyTrendProps)
         <TrendChart
           values={series.values}
           kind={metric.kind}
+          format={(v) =>
+            metric.key === 'steps'
+              ? t('trendChart.valueSteps', { value: fmtInt(v) })
+              : metric.key === 'sleep'
+                ? t('trendChart.valueSleep', { value: fmtDecimal(v, 1) })
+                : t('trendChart.valueRestingHr', { value: fmtInt(v) })
+          }
           color={tintColors(colors, metric.tint).base}
           firstDay={dateToLocalMidnightSec(series.firstDate)}
           average={metric.key === 'restingHr' ? baseline : null}

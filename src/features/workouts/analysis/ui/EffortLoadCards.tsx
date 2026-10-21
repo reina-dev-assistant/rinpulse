@@ -3,6 +3,7 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
+import { Details } from '@/components/Details';
 import { fmtDecimal, fmtInt } from '@/i18n';
 
 import type { EffortBand, WorkoutAnalysis } from '../types';
@@ -79,9 +80,7 @@ function EffortCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
               {t('effort.addedToDay', { value: fmtDecimal(effort.addedToDay, 1) })}
             </Txt>
           ) : null}
-          <Txt size={12} muted style={styles.added}>
-            {t('effort.explain', { trimp: fmtInt(effort.trimp) })}
-          </Txt>
+          <Details>{t('effort.explain', { trimp: fmtInt(effort.trimp) })}</Details>
         </View>
       </View>
       <Note>{t('note.effort')}</Note>

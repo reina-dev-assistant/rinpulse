@@ -78,7 +78,11 @@
   "list": {
     "history": "History and calendar",
     "strengthLine_one": "{{count}} set, {{volume}}",
-    "strengthLine_other": "{{count}} sets, {{volume}}"
+    "strengthLine_other": "{{count}} sets, {{volume}}",
+    "strengthLineTime_one": "{{count}} set, {{time}}",
+    "strengthLineTime_other": "{{count}} sets, {{time}}",
+    "strengthLineSets_one": "{{count}} set",
+    "strengthLineSets_other": "{{count}} sets"
   },
   "exercises": {
     "title": "Exercises",
@@ -195,6 +199,7 @@
     "volume": "Volume",
     "sets": "Sets",
     "reps": "Reps",
+    "time": "Time",
     "setsCount_one": "{{count}} set",
     "setsCount_other": "{{count}} sets",
     "rowA11y_one": "{{name}}, {{count}} set, best {{best}}",

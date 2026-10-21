@@ -170,9 +170,6 @@
     },
     "title": "Sinkron cloud",
     "notConfigured": "Build ini tidak punya URL server cloud. Deploy server/, atur EXPO_PUBLIC_JOYOFIT_CLOUD_URL, lalu build ulang.",
-    "getPro": "Dapatkan Pro",
-    "lockedLink": "Latihanmu tetap di ponsel ini. Sinkron cloud adalah keuntungan JoyoRogo Pro. Yang sudah ada di cloud tetap bisa dibaca dan dipulihkan ke ponsel baru.",
-    "locked": "Latihanmu tetap di ponsel ini. Sinkron cloud adalah keuntungan JoyoRogo Pro (dapatkan Pro di JoyoRogo). Yang sudah ada di cloud tetap bisa dibaca dan dipulihkan ke ponsel baru.",
     "uploading": "Mengunggah {{done}} dari {{total}}",
     "refused_other": "{{n}} latihan tidak bisa diunggah. Akan dicoba lagi besok, atau lebih cepat setelah update aplikasi.",
     "refusedError": "Kesalahan terakhir: {{error}}",
@@ -520,7 +517,12 @@
   "appearance": {
     "title": "Tema",
     "aboutTitle": "Tentang tema",
-    "details": "Tema mengubah warna, bentuk sudut, dan ukuran angka besar. Classic dan Ocean mengikuti pengaturan terang atau gelap di ponselmu; Sport selalu gelap."
+    "details": "Tema mengubah warna, bentuk sudut, font, dan ukuran angka besar. Tema yang mengikuti HP memakai pengaturan terang atau gelap di ponselmu; yang lain tetap. Menerapkan tema memuat ulang aplikasi supaya semua layar dan bilah sistem mulai bersih di tema itu; kalau tidak dimuat ulang sendiri, tutup aplikasi lalu buka lagi.",
+    "confirm": {
+      "title": "Terapkan tema {{name}}?",
+      "message": "Aplikasi akan dimuat ulang supaya warna, font, dan bilah navigasi bersih di tema baru.",
+      "apply": "Terapkan"
+    }
   },
   "meals": {
     "support": {

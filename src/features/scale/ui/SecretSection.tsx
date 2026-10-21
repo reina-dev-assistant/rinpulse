@@ -6,6 +6,7 @@ import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Field } from '@/components/Input';
 import { Section } from '@/components/Screen';
+import { Details } from '@/components/Details';
 import { Notice } from '@/components/States';
 import type { ProtocolSecret } from '@/features/scale/types';
 import type { ScaleSecretState } from '@/state/ScaleProvider';
@@ -37,9 +38,6 @@ export function SecretSection({ kind, state, onSave, onClear }: SecretSectionPro
 
   return (
     <Section title={t('secret.title')} icon="key-outline">
-      <AppText variant="caption" muted>
-        {t(`secret.${kind}.explain`)}
-      </AppText>
       {state === 'saved' ? (
         <>
           <AppText variant="bodyStrong">{t('secret.saved')}</AppText>
@@ -70,6 +68,7 @@ export function SecretSection({ kind, state, onSave, onClear }: SecretSectionPro
           </View>
         </>
       )}
+      <Details>{t(`secret.${kind}.explain`)}</Details>
     </Section>
   );
 }

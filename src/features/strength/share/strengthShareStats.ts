@@ -4,13 +4,14 @@
  */
 import { epley1rm, isCounted, roundKg, workoutTotals, type PersonalRecord } from '../calc';
 import type { Catalog } from '../catalog';
+import { timerText } from '../logFormat';
 import type { StrengthSet, StrengthWorkout } from '../types';
 import { fmtClock, fmtDate, fmtDuration, fmtInt, fmtNumber, getT } from '@/i18n';
 
 type Locale = 'id' | 'en';
 
 export interface StrengthShareStat {
-  key: 'volume' | 'reps' | 'time' | 'sets' | 'kcal';
+  key: 'volume' | 'reps' | 'hold' | 'time' | 'sets' | 'kcal';
   label: string;
   value: string;
   unit?: string;
@@ -26,7 +27,7 @@ export interface StrengthShareStats {
   name: string;
   /** "12 Okt 2026 · 07.30". */
   subtitle: string;
-  /** The first is the headline: volume, or total reps for a bodyweight-only workout, or time. */
+  /** The first is the headline: volume, or total reps for a bodyweight-only workout, or the time held (plank), or the workout's duration. */
   stats: StrengthShareStat[];
   topSets: StrengthShareSet[];
   /** Records the workout set; 0 = no badge. */
@@ -102,10 +103,12 @@ export function strengthShareStats(workout: StrengthWorkout, catalog: Catalog, l
   const stats: StrengthShareStat[] = [];
   if (totals.volume > 0) stats.push(stat('volume', fmtInt(totals.volume, locale), 'kg'));
   else if (totals.reps > 0) stats.push(stat('reps', fmtInt(totals.reps, locale)));
+  else if (totals.seconds > 0) stats.push(stat('hold', timerText(totals.seconds)));
   else if (time) stats.push(time);
   if (time && stats[0] !== time) stats.push(time);
   if (totals.sets > 0) stats.push(stat('sets', fmtInt(totals.sets, locale)));
   if (totals.volume > 0 && totals.reps > 0) stats.push(stat('reps', fmtInt(totals.reps, locale)));
+  if (totals.seconds > 0 && stats[0]?.key !== 'hold') stats.push(stat('hold', timerText(totals.seconds)));
   if (workout.kcal !== null && workout.kcal > 0) stats.push(stat('kcal', fmtInt(workout.kcal, locale), 'kcal'));
 
   const at = new Date(workout.startedAt);
@@ -131,8 +134,11 @@ export function strengthDescription(workout: StrengthWorkout, catalog: Catalog, 
     lines.push(
       totals.volume > 0
         ? t('description.totalsVolume', { volume: fmtInt(totals.volume, locale), count: totals.sets, reps: fmtInt(totals.reps, locale) })
-        : t('description.totalsReps', { count: totals.sets, reps: fmtInt(totals.reps, locale) }),
+        : totals.reps === 0 && totals.seconds > 0
+          ? t('description.totalsTime', { count: totals.sets, time: timerText(totals.seconds) })
+          : t('description.totalsReps', { count: totals.sets, reps: fmtInt(totals.reps, locale) }),
     );
+    if (totals.reps > 0 && totals.seconds > 0) lines.push(t('description.hold', { time: timerText(totals.seconds) }));
   }
   const best = topSets(workout, catalog, locale);
   if (best.length > 0) lines.push(t('description.topSets', { sets: best.map((s) => `${s.exercise} ${s.load}`).join(', ') }));

@@ -5,6 +5,7 @@ import { FlatList, Platform, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { IconChip } from '@/components/IconChip';
 import { Card, Section, useContentPadding, useRefreshControl } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
@@ -188,9 +189,6 @@ export function WatchfacesScreen() {
         ) : null
       ) : (
         <Section title={t('watch:faces.personalLibrary')} icon="folder-open-outline">
-          <AppText variant="caption">
-            {t('watch:faces.personalLibraryHint')}
-          </AppText>
           {canImport ? (
             <View style={styles.actionRow}>
               <Button
@@ -204,6 +202,7 @@ export function WatchfacesScreen() {
           ) : Platform.OS !== 'ios' ? (
             <AppText variant="caption">{t('watch:faces.updateApp')}</AppText>
           ) : null}
+          <Details>{t('watch:faces.personalLibraryHint')}</Details>
         </Section>
       )}
 

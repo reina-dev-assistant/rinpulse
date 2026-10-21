@@ -22,6 +22,8 @@
     "connectWatch": "Connect watch",
     "workoutInProgress": "{{sport}} in progress",
     "workoutPaused": "{{sport}} paused",
+    "workoutSearching": "{{sport}}: searching for GPS on the watch",
+    "workoutSearchingSubtitle": "The timer starts once the workout runs on the watch",
     "workoutDefault": "Workout",
     "workoutSubtitle": "{{elapsed}} · fat {{fat}} g, carbs {{carbs}} g",
     "workoutSubtitleHr": "{{elapsed}} · {{bpm}} bpm · fat {{fat}} g, carbs {{carbs}} g",
@@ -44,12 +46,11 @@
     "aboutNone": "Nothing stored for today yet. Sync to pull today from the watch. Pull down to sync."
   },
   "hourly": {
-    "a11yPeak_one": "Steps per hour. Busiest hour {{hour}} with {{steps}} step.",
-    "a11yPeak_other": "Steps per hour. Busiest hour {{hour}} with {{steps}} steps.",
-    "a11yEmpty": "Steps per hour. No steps recorded today.",
     "peak_one": "Busiest hour {{hour}}, {{steps}} step",
     "peak_other": "Busiest hour {{hour}}, {{steps}} steps",
-    "empty": "No steps recorded yet today."
+    "empty": "No steps recorded yet today.",
+    "bar_one": "{{steps}} step",
+    "bar_other": "{{steps}} steps"
   },
   "sleep": {
     "emptyTitle": "No sleep stored",
@@ -185,8 +186,9 @@
     "ringNoneA11y": "No strain yet today",
     "none": "No heart rate yet today",
     "zones": "{{hard}} min above 70 % of max heart rate, {{easy}} min at 50 to 70 %.",
-    "weekA11y": "Strain over the last seven days",
-    "details": "From the heart rate the watch stored (max {{maxHr}} bpm). Sync to update."
+    "details": "From the heart rate the watch stored (max {{maxHr}} bpm). Sync to update.",
+    "barValue": "{{value}} of {{max}}",
+    "noneDay": "No heart rate that day"
   },
   "checkin": {
     "title": "Morning check-in",

@@ -32,7 +32,7 @@ export function MapPage({ ctx, nav, route, position, palette }: MapPageProps) {
   const [follow, setFollow] = useState(true);
   const { style, covered } = useBikeMapStyle({ variant: palette.theme, position: position ? { lat: position.lat, lon: position.lon } : null });
 
-  const figure = { color: palette.foreground, fontFamily: fonts.heavy };
+  const figure = { color: palette.foreground, fontFamily: fonts.numeral };
   const small = { color: palette.muted, fontFamily: fonts.bold };
   const speed = ctx ? fieldValue('speed', ctx) : null;
   const distance = ctx ? fieldValue('distance', ctx) : null;

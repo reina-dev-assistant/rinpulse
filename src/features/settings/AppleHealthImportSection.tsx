@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { BrandMark } from '@/components/BrandMark';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { KeyValue } from '@/components/KeyValue';
 import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -24,9 +25,6 @@ export function AppleHealthImportSection() {
   return (
     <>
       <Section title={t('appleImport.title')} leading={<BrandMark brand="apple-health" size={32} />}>
-        <AppText variant="caption" muted>
-          {t('appleImport.intro')}
-        </AppText>
         {error ? <Notice tone="danger">{error}</Notice> : null}
         {running ? (
           <>
@@ -42,9 +40,14 @@ export function AppleHealthImportSection() {
         ) : (
           <Button label={t('appleImport.title')} variant="primary" icon="heart" onPress={() => void start()} />
         )}
-        <AppText variant="caption" muted>
-          {t('appleImport.footer')}
-        </AppText>
+        <Details>
+          <AppText variant="caption" muted>
+            {t('appleImport.intro')}
+          </AppText>
+          <AppText variant="caption" muted>
+            {t('appleImport.footer')}
+          </AppText>
+        </Details>
       </Section>
 
       {summary ? <Summary summary={summary} /> : null}

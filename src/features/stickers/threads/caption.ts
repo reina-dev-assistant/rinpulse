@@ -84,6 +84,7 @@ function liftLines(subject: Pick<StickerSubject, 'data'>, locale: Locale): { hea
   if (pos(s.volumeKg)) lead.push(t('threads.caption.part.volume', { value: fmtInt(s.volumeKg, locale) }));
   if (pos(s.sets)) lead.push(t('threads.caption.part.sets', { count: s.sets }));
   if (pos(s.reps)) lead.push(t('threads.caption.part.reps', { count: s.reps }));
+  else if (pos(s.seconds)) lead.push(t('threads.caption.part.hold', { value: formatDuration(s.seconds) }));
   if (pos(s.durationSec)) lead.push(formatDuration(s.durationSec));
   const head = [str(s.name) ?? '', lead.join(' \u00b7 ')].filter((x) => x !== '').join(': ');
 

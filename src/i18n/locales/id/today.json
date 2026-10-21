@@ -22,6 +22,8 @@
     "connectWatch": "Hubungkan jam",
     "workoutInProgress": "{{sport}} sedang berjalan",
     "workoutPaused": "{{sport}} dijeda",
+    "workoutSearching": "{{sport}}: mencari GPS di jam",
+    "workoutSearchingSubtitle": "Waktu mulai berjalan setelah latihan berjalan di jam",
     "workoutDefault": "Latihan",
     "workoutSubtitle": "{{elapsed}} · lemak {{fat}} g, karbo {{carbs}} g",
     "workoutSubtitleHr": "{{elapsed}} · {{bpm}} bpm · lemak {{fat}} g, karbo {{carbs}} g",
@@ -44,10 +46,9 @@
     "aboutNone": "Belum ada data tersimpan untuk hari ini. Sinkron untuk mengambil data hari ini dari jam. Tarik ke bawah untuk sinkron."
   },
   "hourly": {
-    "a11yPeak_other": "Langkah per jam. Jam tersibuk {{hour}} dengan {{steps}} langkah.",
-    "a11yEmpty": "Langkah per jam. Belum ada langkah tercatat hari ini.",
     "peak_other": "Jam tersibuk {{hour}}, {{steps}} langkah",
-    "empty": "Belum ada langkah tercatat hari ini."
+    "empty": "Belum ada langkah tercatat hari ini.",
+    "bar_other": "{{steps}} langkah"
   },
   "sleep": {
     "emptyTitle": "Tidak ada tidur tersimpan",
@@ -176,8 +177,9 @@
     "ringNoneA11y": "Belum ada strain hari ini",
     "none": "Belum ada detak jantung hari ini",
     "zones": "{{hard}} mnt di atas 70 % detak jantung maksimal, {{easy}} mnt di 50 sampai 70 %.",
-    "weekA11y": "Strain tujuh hari terakhir",
-    "details": "Dari detak jantung yang tersimpan di jam (maks {{maxHr}} bpm). Sinkron untuk memperbarui."
+    "details": "Dari detak jantung yang tersimpan di jam (maks {{maxHr}} bpm). Sinkron untuk memperbarui.",
+    "barValue": "{{value}} dari {{max}}",
+    "noneDay": "Tidak ada detak jantung hari itu"
   },
   "checkin": {
     "title": "Check-in pagi",

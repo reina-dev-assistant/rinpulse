@@ -1,4 +1,3 @@
-import * as Linking from 'expo-linking';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,18 +17,10 @@ import { errorMessage, formatCount, formatDateTime } from '@/format';
 import { useWatchPresence } from '@/features/device/useWatchPresence';
 import { Pair, PairGrid } from '@/features/settings/PairGrid';
 import { SignInButtons } from '@/features/settings/SignInButtons';
+import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { useCloud } from '@/state/CloudProvider';
 import { useTheme } from '@/theme';
 import type { TFunction } from '@/i18n';
-import { HuaweiWear } from '@/wear';
-
-/** Where a sideloaded build sends someone to become Founder. */
-const FOUNDER_URL = 'https://joyorogo.com/pro?from=joyofit&utm_source=joyofit&utm_medium=app&utm_campaign=evergreen-cloud-settings';
-/**
- * The Play build shows no purchase link: Google Play's payments policy does not allow pointing to an external
- * checkout from inside the app. JoyoRogo's own Play build does the same (billing off, no checkout, no price).
- */
-const CAN_LINK_TO_FOUNDER = HuaweiWear.distribution !== 'play';
 
 type T = TFunction<'settings'>;
 
@@ -86,23 +77,11 @@ export function CloudSection() {
 
   return (
     <>
+      {cloud.signedIn && cloud.pro === false ? <UpgradeCard moment="cloud" dismissible /> : null}
       <Section title={t('cloud.title')} icon="cloud-upload">
         {!cloud.configured ? (
           <Notice tone="danger">
             {t('cloud.notConfigured')}
-          </Notice>
-        ) : null}
-        {cloud.signedIn && cloud.locked ? (
-          <Notice
-            icon="lock-closed"
-            action={
-              CAN_LINK_TO_FOUNDER
-                ? { label: t('cloud.getPro'), onPress: () => void Linking.openURL(FOUNDER_URL) }
-                : undefined
-            }>
-            {CAN_LINK_TO_FOUNDER
-              ? t('cloud.lockedLink')
-              : t('cloud.locked')}
           </Notice>
         ) : null}
         {cloud.error ? <Notice tone="danger">{cloud.error}</Notice> : null}

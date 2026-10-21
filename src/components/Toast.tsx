@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AccessibilityInfo, Animated, Easing, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { useFloatingTabBarFootprint } from '@/components/useFloatingTabBarFootprint';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { spacing, useTheme } from '@/theme';
 
@@ -14,6 +15,7 @@ const VISIBLE_MS = 2200;
  */
 export function useToast(): { toast: ReactNode; show: (text: string) => void } {
   const { colors, radius } = useTheme();
+  const footprint = useFloatingTabBarFootprint();
   const reduced = useReducedMotion();
   const [text, setText] = useState<string | null>(null);
   const [opacity] = useState(() => new Animated.Value(0));
@@ -42,7 +44,7 @@ export function useToast(): { toast: ReactNode; show: (text: string) => void } {
 
   const toast =
     text === null ? null : (
-      <View pointerEvents="none" style={styles.anchor}>
+      <View pointerEvents="none" style={[styles.anchor, { paddingBottom: footprint + spacing.lg }]}>
         <Animated.View
           accessibilityLiveRegion="polite"
           style={[
@@ -61,6 +63,6 @@ export function useToast(): { toast: ReactNode; show: (text: string) => void } {
 }
 
 const styles = StyleSheet.create({
-  anchor: { ...StyleSheet.absoluteFill, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 168 },
+  anchor: { ...StyleSheet.absoluteFill, justifyContent: 'flex-end', alignItems: 'center' },
   pill: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.lg },
 });

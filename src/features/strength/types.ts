@@ -40,6 +40,11 @@ export interface StrengthExercise {
   note: string;
   /** Rest after a completed set of this exercise, seconds; null = the exercise's saved rest, else the default. */
   restSec: number | null;
+  /**
+   * How this exercise is measured here: true = seconds, false = repetitions. Absent = the library's / custom exercise's `timed`
+   * (workouts saved before this field, imported ones). Set by the Repetisi / Waktu switch of the logger and the routine editor.
+   */
+  timed?: boolean;
   /** Exercises with the same number are a superset (alternate their sets); null = alone. */
   supersetGroup: number | null;
   sets: StrengthSet[];
@@ -78,6 +83,8 @@ export interface RoutineSet {
 
 export interface RoutineExercise {
   exerciseId: string;
+  /** Same as `StrengthExercise.timed`. */
+  timed?: boolean;
   restSec: number | null;
   note: string;
   supersetGroup: number | null;
@@ -117,11 +124,16 @@ export interface CustomExercise {
   deletedAt: number | null;
 }
 
-/** Saved choices per exercise, keyed by exercise id (record kind `pref`): the rest timer length. */
+/**
+ * Saved choices per exercise, keyed by exercise id (record kind `pref`): the rest timer length and how the person measures it
+ * (the last Repetisi / Waktu choice, used when the exercise is added next time). A record with neither is a tombstone.
+ */
 export interface ExercisePref {
   /** The exercise id. */
   id: string;
   restSec: number | null;
+  /** Last measure chosen for the exercise: true = seconds, false = repetitions; null/absent = the exercise's default. */
+  timed?: boolean | null;
   updatedAt: number;
   deletedAt: number | null;
 }

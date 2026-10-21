@@ -53,15 +53,17 @@ export function WatchesSection({ onAdd }: WatchesSectionProps) {
           />
         </View>
       ))}
-      {several ? (
-        <AppText variant="caption" muted>
-          {t('multi.primaryHint')}
-        </AppText>
-      ) : null}
       <Button label={t('multi.add')} icon="add" onPress={onAdd} />
-      <AppText variant="caption" muted>
-        {t('multi.addHint')}
-      </AppText>
+      <Details>
+        {several ? (
+          <AppText variant="caption" muted>
+            {t('multi.primaryHint')}
+          </AppText>
+        ) : null}
+        <AppText variant="caption" muted>
+          {t('multi.addHint')}
+        </AppText>
+      </Details>
 
       <RoutineNameDialog
         visible={renaming !== null}

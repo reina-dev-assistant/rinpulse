@@ -144,11 +144,47 @@
     "ocean": {
       "name": "Ocean",
       "tagline": "Biru dan putih yang bersih. Mengikuti HP."
+    },
+    "amoled": {
+      "name": "AMOLED",
+      "tagline": "Hitam pekat dengan aksen putih. Selalu gelap."
+    },
+    "neon": {
+      "name": "Neon",
+      "tagline": "Lari malam: pink dan cyan di atas gelap, angka digital. Selalu gelap."
+    },
+    "sunset": {
+      "name": "Senja",
+      "tagline": "Ungu senja dan oranye bara, panel jam bergradasi. Selalu gelap."
+    },
+    "sogan": {
+      "name": "Sogan",
+      "tagline": "Cokelat sogan batik, indigo, dan emas, judul berkait. Mengikuti HP."
+    },
+    "retro": {
+      "name": "Retro",
+      "tagline": "Kertas krem, oranye, dan angka tebal ala nomor lomba. Selalu terang."
+    },
+    "forest": {
+      "name": "Hutan",
+      "tagline": "Hijau lumut dan kulit kayu, angka ala papan jalur. Mengikuti HP."
+    },
+    "soft": {
+      "name": "Lembut",
+      "tagline": "Pastel blush dan bentuk yang sangat membulat. Mengikuti HP."
+    },
+    "mono": {
+      "name": "Mono",
+      "tagline": "Hitam putih, sudut tajam, angka monospasi. Mengikuti HP."
     }
   },
   "notFound": {
     "title": "Halaman tidak ditemukan",
     "description": "Tautan ini tidak mengarah ke halaman mana pun di JoyoFit. Kalau baru ada pembaruan, tutup aplikasi lalu buka lagi.",
     "home": "Ke beranda"
+  },
+  "chart": {
+    "hint": "Ketuk batang untuk melihat nilainya",
+    "noValue": "Tidak ada nilai"
   }
 }

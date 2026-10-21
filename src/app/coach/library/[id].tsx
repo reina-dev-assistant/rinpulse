@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Image, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { IconChip } from '@/components/IconChip';
 import { Card, Screen, Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -91,12 +92,14 @@ export default function ExerciseScreen() {
         ))}
       </Section>
 
-      <AppText variant="caption" muted>
-        {t('library.credits')}
-      </AppText>
-      <AppText variant="caption" muted>
-        {t('disclaimer')}
-      </AppText>
+      <Details>
+        <AppText variant="caption" muted>
+          {t('library.credits')}
+        </AppText>
+        <AppText variant="caption" muted>
+          {t('disclaimer')}
+        </AppText>
+      </Details>
     </Screen>
   );
 }

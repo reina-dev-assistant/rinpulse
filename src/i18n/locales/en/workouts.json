@@ -257,10 +257,6 @@
       "week": "Distance per week",
       "month": "Distance per month"
     },
-    "chartA11y": {
-      "week": "Distance per week, last 12 weeks. Longest {{value}}.",
-      "month": "Distance per month, last 12 months. Longest {{value}}."
-    },
     "stat": {
       "time": "Time",
       "elevation": "Elevation",
@@ -293,7 +289,8 @@
     "empty": {
       "week": "No {{sport}} activity in the last 12 weeks.",
       "month": "No {{sport}} activity in the last 12 months."
-    }
+    },
+    "weekOf": "Week of {{date}}"
   },
   "detail": {
     "title": "Workout",

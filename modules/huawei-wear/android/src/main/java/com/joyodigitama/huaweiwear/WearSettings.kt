@@ -112,6 +112,14 @@ internal class WearSettings(context: Context) {
       .putInt(KEY_LOW_HR_ALERT, value.lowHeartRateAlert)
       .apply()
 
+  /**
+   * The language JoyoFit's "Bahasa" setting pinned (`id`, `en`), sent to the watch as its language; null follows the phone
+   * ([WatchLocale.resolve]).
+   */
+  var watchLanguage: String?
+    get() = prefs.getString(KEY_WATCH_LANGUAGE, null)
+    set(value) = prefs.edit().apply { if (value == null) remove(KEY_WATCH_LANGUAGE) else putString(KEY_WATCH_LANGUAGE, value) }.apply()
+
   /** The watch's automatic stress switch as the user last set it here (GB PREF_HUAWEI_STRESS_SWITCH). */
   var stressEnabled: Boolean
     get() = prefs.getBoolean(KEY_STRESS_ENABLED, false)
@@ -192,6 +200,7 @@ internal class WearSettings(context: Context) {
     private const val KEY_HIGH_HR_ALERT = "sensor_high_hr_alert"
     private const val KEY_LOW_HR_ALERT = "sensor_low_hr_alert"
     private const val KEY_STRESS_ENABLED = "stress_automatic"
+    private const val KEY_WATCH_LANGUAGE = "watch_language"
     private const val KEY_STRESS_CALIBRATION = "stress_calibration"
     private const val KEY_AUTO_STRESS_LISTED = "stress_auto_listed"
     private const val KEY_NIGHT_HRV_RULES = "night_hrv_sleep_rules_version"

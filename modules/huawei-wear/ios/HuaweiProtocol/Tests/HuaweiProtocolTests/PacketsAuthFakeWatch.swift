@@ -180,6 +180,7 @@ final class PacketsAuthFakeWatch: FrameSink, @unchecked Sendable {
         case (1, 0x30), (1, 0x3F), (1, 0x3D), (1, 0x35): try reply(packet.serviceId, packet.commandId, HuaweiTLV())
         case (1, 0x3E): break // GB: "The watch never answers to this command"
         case (0x1A, 0x05): try reply(0x1A, 0x05, HuaweiTLV())
+        case (0x0C, 0x01): try reply(0x0C, 0x01, HuaweiTLV())
         case (7, 0x01): lock.lock(); _motionGoal = tlv; lock.unlock(); try reply(7, 0x01, HuaweiTLV())
         case (7, 0x02): lock.lock(); _userInfo = tlv; lock.unlock(); try reply(7, 0x02, HuaweiTLV())
         // The sensor switches, the zone configs and the capability notifications are answered with an empty TLV (what the watch does).

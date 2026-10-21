@@ -30,6 +30,7 @@ import idThreadsShare from './locales/id/threadsshare.json';
 import idLoops from './locales/id/loops.json';
 import idScale from './locales/id/scale.json';
 import idThermometer from './locales/id/thermometer.json';
+import idPro from './locales/id/pro.json';
 import enCommon from './locales/en/common.json';
 import enToday from './locales/en/today.json';
 import enHealth from './locales/en/health.json';
@@ -62,15 +63,16 @@ import enThreadsShare from './locales/en/threadsshare.json';
 import enLoops from './locales/en/loops.json';
 import enScale from './locales/en/scale.json';
 import enThermometer from './locales/en/thermometer.json';
+import enPro from './locales/en/pro.json';
 
 /** Indonesian is the source: its JSON shapes the key types. */
-const id = {common: idCommon, today: idToday, health: idHealth, workouts: idWorkouts, sharing: idSharing, watch: idWatch, routes: idRoutes, family: idFamily, social: idSocial, onboarding: idOnboarding, settings: idSettings, gear: idGear, coach: idCoach, strength: idStrength, routines: idRoutines, lifts: idLifts, strengthshare: idStrengthShare, strengthcloud: idStrengthCloud, koneksi: idKoneksi, nowatch: idNoWatch, cycling: idCycling, stickers: idStickers, stickerdata: idStickerData, replay: idReplay, bikecomp: idBikeComp, bikemap: idBikeMap, bikelive: idBikeLive, ride: idRide, threadsshare: idThreadsShare, loops: idLoops, scale: idScale, thermometer: idThermometer};
+const id = {common: idCommon, today: idToday, health: idHealth, workouts: idWorkouts, sharing: idSharing, watch: idWatch, routes: idRoutes, family: idFamily, social: idSocial, onboarding: idOnboarding, settings: idSettings, gear: idGear, coach: idCoach, strength: idStrength, routines: idRoutines, lifts: idLifts, strengthshare: idStrengthShare, strengthcloud: idStrengthCloud, koneksi: idKoneksi, nowatch: idNoWatch, cycling: idCycling, stickers: idStickers, stickerdata: idStickerData, replay: idReplay, bikecomp: idBikeComp, bikemap: idBikeMap, bikelive: idBikeLive, ride: idRide, threadsshare: idThreadsShare, loops: idLoops, scale: idScale, thermometer: idThermometer, pro: idPro};
 
 /** English is typed as `typeof id`: tsc fails on a missing or extra key. */
-const en: typeof id = {common: enCommon, today: enToday, health: enHealth, workouts: enWorkouts, sharing: enSharing, watch: enWatch, routes: enRoutes, family: enFamily, social: enSocial, onboarding: enOnboarding, settings: enSettings, gear: enGear, coach: enCoach, strength: enStrength, routines: enRoutines, lifts: enLifts, strengthshare: enStrengthShare, strengthcloud: enStrengthCloud, koneksi: enKoneksi, nowatch: enNoWatch, cycling: enCycling, stickers: enStickers, stickerdata: enStickerData, replay: enReplay, bikecomp: enBikeComp, bikemap: enBikeMap, bikelive: enBikeLive, ride: enRide, threadsshare: enThreadsShare, loops: enLoops, scale: enScale, thermometer: enThermometer};
+const en: typeof id = {common: enCommon, today: enToday, health: enHealth, workouts: enWorkouts, sharing: enSharing, watch: enWatch, routes: enRoutes, family: enFamily, social: enSocial, onboarding: enOnboarding, settings: enSettings, gear: enGear, coach: enCoach, strength: enStrength, routines: enRoutines, lifts: enLifts, strengthshare: enStrengthShare, strengthcloud: enStrengthCloud, koneksi: enKoneksi, nowatch: enNoWatch, cycling: enCycling, stickers: enStickers, stickerdata: enStickerData, replay: enReplay, bikecomp: enBikeComp, bikemap: enBikeMap, bikelive: enBikeLive, ride: enRide, threadsshare: enThreadsShare, loops: enLoops, scale: enScale, thermometer: enThermometer, pro: enPro};
 
 export const resources = { id, en };
 export type Resources = typeof id;
-export const NAMESPACES = ['common', 'today', 'health', 'workouts', 'sharing', 'watch', 'routes', 'family', 'social', 'onboarding', 'settings', 'gear', 'coach', 'strength', 'routines', 'lifts', 'strengthshare', 'strengthcloud', 'koneksi', 'nowatch', 'cycling', 'stickers', 'stickerdata', 'replay', 'bikecomp', 'bikemap', 'bikelive', 'ride', 'threadsshare', 'loops', 'scale', 'thermometer'] as const;
+export const NAMESPACES = ['common', 'today', 'health', 'workouts', 'sharing', 'watch', 'routes', 'family', 'social', 'onboarding', 'settings', 'gear', 'coach', 'strength', 'routines', 'lifts', 'strengthshare', 'strengthcloud', 'koneksi', 'nowatch', 'cycling', 'stickers', 'stickerdata', 'replay', 'bikecomp', 'bikemap', 'bikelive', 'ride', 'threadsshare', 'loops', 'scale', 'thermometer', 'pro'] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 export const DEFAULT_NAMESPACE = 'common' as const;

@@ -512,6 +512,8 @@ internal class WearLink(
         profile = settings.profile,
         notificationsEnabled = settings.notificationsEnabled,
         healthSensors = settings.healthSensors,
+        pinnedLanguage = settings.watchLanguage,
+        phoneLocale = LanguageSender.phoneLocale(appContext),
         deviceType = connection.deviceType,
       ).run()
 

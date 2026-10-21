@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { Button } from '@/components/Button';
 import { KeyValue } from '@/components/KeyValue';
 import { Field } from '@/components/Input';
@@ -55,9 +56,6 @@ export function CyclingSettings() {
       </Section>
 
       <Section title={t('settings.ftp.title')} icon="flash">
-        <AppText variant="caption" muted>
-          {t('settings.ftp.body')}
-        </AppText>
         <Field
           label={t('settings.ftp.label')}
           hint={t('settings.ftp.hint', range)}
@@ -74,6 +72,7 @@ export function CyclingSettings() {
         <AppText variant="caption" muted>
           {t('settings.ftp.tip')}
         </AppText>
+        <Details>{t('settings.ftp.body')}</Details>
       </Section>
 
       <Section title={t('settings.zones.title')} icon="stats-chart">

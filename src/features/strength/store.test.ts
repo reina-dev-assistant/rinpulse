@@ -19,6 +19,7 @@ import {
   listDirty,
   listFolders,
   listRestPrefs,
+  listTimedPrefs,
   listRoutines,
   listStrengthWorkouts,
   listStrengthWorkoutsByPlanKey,
@@ -31,6 +32,7 @@ import {
   saveSettings,
   saveWorkout,
   setRestPref,
+  setTimedPref,
   DEFAULT_SETTINGS,
 } from './store';
 import { emptyDraft } from './draft';
@@ -216,6 +218,37 @@ describe('sync bookkeeping', () => {
     await saveWorkout(db, w);
     await applyRemote(db, [{ kind: 'workout', id: w.id, json: JSON.stringify({ ...w, deletedAt: w.updatedAt + 9, updatedAt: w.updatedAt + 9 }), updatedAt: w.updatedAt + 9, deletedAt: w.updatedAt + 9 }]);
     expect(await listStrengthWorkouts(db)).toEqual([]);
+  });
+
+  it('carries a timed workout, routine and measure pref to another phone unchanged', async () => {
+    const { db } = await open();
+    const w = workout({
+      exercises: [
+        { key: 'k1', exerciseId: 'plank', timed: true, note: '', restSec: 60, supersetGroup: null, sets: [{ id: 's1', type: 'normal', weightKg: null, reps: null, seconds: 45, rpe: null, done: true, doneAt: T0 + 1 }] },
+        { key: 'k2', exerciseId: 'push_up', timed: false, note: '', restSec: null, supersetGroup: null, sets: [{ id: 's2', type: 'normal', weightKg: null, reps: 12, seconds: null, rpe: null, done: true, doneAt: T0 + 2 }] },
+      ],
+    });
+    const routine = {
+      id: 'r1',
+      name: 'Core',
+      folderId: null,
+      note: '',
+      exercises: [{ exerciseId: 'plank', timed: true, restSec: null, note: '', supersetGroup: null, sets: [{ type: 'normal' as const, weightKg: null, reps: null, seconds: 60 }] }],
+      sortOrder: 1,
+      createdAt: T0,
+      updatedAt: T0,
+      deletedAt: null,
+    };
+    await saveWorkout(db, w);
+    await saveRoutine(db, routine);
+    await setTimedPref(db, 'plank', true, T0);
+
+    const { db: other } = await open();
+    await applyRemote(other, (await listDirty(db, 10)).map(({ kind, id, json, updatedAt, deletedAt }) => ({ kind, id, json, updatedAt, deletedAt })));
+
+    expect(await getStrengthWorkout(other, w.id)).toEqual(w);
+    expect((await listRoutines(other))[0]).toMatchObject({ exercises: [{ timed: true, sets: [{ seconds: 60, reps: null }] }] });
+    expect((await listTimedPrefs(other)).get('plank')).toBe(true);
   });
 });
 

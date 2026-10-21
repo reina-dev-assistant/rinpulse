@@ -5,7 +5,7 @@
  * Supersets here mean two or more ADJACENT exercises with the same `supersetGroup`; every function ends with `normalizeSupersets`,
  * so a move or a removal that breaks adjacency leaves no half group behind.
  */
-import { clampRest, MAX_EXERCISES, MAX_SETS_PER_EXERCISE, type ExerciseInfo } from './draft';
+import { clampRest, MAX_EXERCISES, MAX_SETS_PER_EXERCISE, resolveTimed, type ExerciseInfo } from './draft';
 import { newId } from './store';
 import type { Routine, RoutineExercise, RoutineSet, SetType } from './types';
 
@@ -105,7 +105,7 @@ export function addExercises(edit: EditRoutine, infos: readonly ExerciseInfo[], 
   const room = MAX_EXERCISES - edit.exercises.length;
   if (room <= 0) return edit;
   const added = infos.slice(0, room).map(
-    (info): EditExercise => ({ key: newId('k'), exerciseId: info.exerciseId, restSec: restOf(info.exerciseId), note: '', supersetGroup: null, sets: defaultSets(info.timed) }),
+    (info): EditExercise => ({ key: newId('k'), exerciseId: info.exerciseId, timed: info.timed, restSec: restOf(info.exerciseId), note: '', supersetGroup: null, sets: defaultSets(info.timed) }),
   );
   return { ...edit, exercises: [...edit.exercises, ...added] };
 }
@@ -158,11 +158,31 @@ export function replaceExercise(edit: EditRoutine, key: string, info: ExerciseIn
   return mapExercise(edit, key, (e) => ({
     ...e,
     exerciseId: info.exerciseId,
+    timed: info.timed,
     sets: e.sets.map((s) => ({
       ...s,
       reps: info.timed ? null : (s.reps ?? DEFAULT_REPS),
       seconds: info.timed ? (s.seconds ?? DEFAULT_SECONDS) : null,
     })),
+  }));
+}
+
+/** Whether any set holds a repetition or seconds value the person typed (not just the default of a new exercise): switching the measure would replace it. */
+export const hasCustomAmounts = (exercise: Pick<RoutineExercise, 'sets'>): boolean =>
+  exercise.sets.some((s) => (s.reps !== null && s.reps !== DEFAULT_REPS) || (s.seconds !== null && s.seconds !== DEFAULT_SECONDS));
+
+/**
+ * Measures a routine exercise in seconds (`true`) or repetitions (`false`). Sets keep their type and weight; the amount of the measure
+ * left is dropped and the new one starts at the default of a new exercise (10 repetitions, 30 seconds), like `replaceExercise` here.
+ * Nothing changes when it is measured that way already.
+ */
+export function setExerciseTimed(edit: EditRoutine, key: string, timed: boolean, catalogTimed: boolean | null = null): EditRoutine {
+  const target = edit.exercises.find((e) => e.key === key);
+  if (!target || resolveTimed(target, catalogTimed) === timed) return edit;
+  return mapExercise(edit, key, (e) => ({
+    ...e,
+    timed,
+    sets: e.sets.map((s) => ({ ...s, reps: timed ? null : DEFAULT_REPS, seconds: timed ? DEFAULT_SECONDS : null })),
   }));
 }
 

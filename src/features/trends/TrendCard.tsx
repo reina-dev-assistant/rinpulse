@@ -68,6 +68,7 @@ export function TrendCard({ title, tint, values, kind, format, firstDay, domain,
             domain={domain}
             reference={reference}
             average={summary.average}
+            format={format}
             label={t('trends.chartA11y', {
               title,
               count: values.length,

@@ -88,10 +88,18 @@
     "finish": "Selesai",
     "workout": "Latihan",
     "status": {
+      "searching": "Mencari GPS di jam…",
       "preparing": "Memulai",
       "running": "Langsung",
       "paused": "Dijeda",
       "ended": "Selesai"
+    },
+    "searchingHint": "Latihan belum dimulai. Waktu mulai berjalan setelah jam mendapat GPS dan latihan benar-benar berjalan di jam.",
+    "endPrompt": {
+      "title": "Jam sepertinya sudah berhenti",
+      "body": "Jam tidak melaporkan latihan yang berjalan, tapi belum memastikan sudah selesai. Akhiri latihan langsung ini?",
+      "finish": "Akhiri",
+      "keep": "Lanjutkan"
     },
     "timeA11y": "Waktu {{value}}",
     "zone": "Zona {{zone}} · {{label}}",

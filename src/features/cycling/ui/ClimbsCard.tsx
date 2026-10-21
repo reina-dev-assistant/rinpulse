@@ -2,9 +2,10 @@ import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Details } from '@/components/Details';
 import { formatDuration, type WorkoutAnalysis } from '@/features/workouts/analysis/types';
 import { useAnalysisContext } from '@/features/workouts/analysis/ui/context';
-import { Card, Chip, MIN_HIT, Note, Txt } from '@/features/workouts/analysis/ui/primitives';
+import { Card, Chip, MIN_HIT, Txt } from '@/features/workouts/analysis/ui/primitives';
 import { useScrubSelector } from '@/features/workouts/analysis/ui/scrub';
 import { fmtDecimal, fmtInt } from '@/i18n';
 
@@ -116,7 +117,9 @@ function ClimbsCardImpl({ analysis, climbs }: { analysis: WorkoutAnalysis; climb
           <ClimbRow climb={climb} index={i} active={i === active} onSelect={select} />
         </View>
       ))}
-      <Note>{t('climbs.note')}</Note>
+      <View style={styles.note}>
+        <Details>{t('climbs.note')}</Details>
+      </View>
     </Card>
   );
 }
@@ -131,4 +134,5 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 6, marginTop: 6 },
   stat: { minWidth: 56 },
   rule: { height: StyleSheet.hairlineWidth },
+  note: { marginTop: 10 },
 });

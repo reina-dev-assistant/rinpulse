@@ -21,7 +21,7 @@ export function Metric({ value, unit, size = 'lg', color, unitColor }: MetricPro
     <Text
       style={[
         styles.value,
-        { fontFamily: fonts.heavy, fontSize: scale.size, lineHeight: scale.line, letterSpacing: scale.tracking, color: color ?? colors.foreground },
+        { fontFamily: fonts.numeral, fontSize: scale.size, lineHeight: scale.line, letterSpacing: scale.tracking, color: color ?? colors.foreground },
       ]}>
       {value}
       {unit ? (

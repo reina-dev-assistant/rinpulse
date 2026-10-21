@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/AppText';
+import { HeroGradient } from '@/components/HeroGradient';
 import { Metric } from '@/components/Metric';
 import { StatusDot } from '@/components/StatusDot';
 import { Notice } from '@/components/States';
@@ -31,6 +32,7 @@ export function WatchStatusCard() {
 
   return (
     <View style={[styles.card, { backgroundColor: colors.hero, borderRadius: themeRadius.card }]}>
+      <HeroGradient />
       <View style={styles.linkRow} accessible accessibilityLabel={t('watch:device.status.linkA11y', { label })}>
         <StatusDot color={dotColor} live={isLinkLive(linkState)} />
         <AppText variant="heading" color={colors.heroForeground} style={styles.linkLabel}>
@@ -90,7 +92,7 @@ export function WatchStatusCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { padding: spacing.md + 4, gap: spacing.sm + 2 },
+  card: { padding: spacing.md + 4, gap: spacing.sm + 2, overflow: 'hidden' },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 28 },
   linkLabel: { flex: 1 },
   batteryRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },

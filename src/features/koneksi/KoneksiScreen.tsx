@@ -8,11 +8,12 @@ import { rogo, type RogoMcpActivity, type RogoMcpConnection, type RogoMcpInfo } 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { Details } from '@/components/Details';
 import { Divider, Screen, Section } from '@/components/Screen';
 import { EmptyState, Notice, Skeleton } from '@/components/States';
 import { useToast } from '@/components/Toast';
 import { activityRange, isMcpTool, readableScopeKeys } from '@/features/koneksi/scopes';
-import { ProUpsell } from '@/features/social/ProUpsell';
+import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { SignInGate } from '@/features/social/SignInGate';
 import { useRogoQuery } from '@/features/social/useRogoQuery';
 import { formatAgo } from '@/format';
@@ -22,8 +23,6 @@ import { spacing, useColors } from '@/theme';
 
 const GUIDE_URL = 'https://joyorogo.com/panduan/ai';
 const PRIVACY_URL = 'https://fit.joyorogo.com/privasi#koneksi-ai';
-/** The notice on a Free account links to JoyoRogo's pricing the way the Social upsell does; utm convention: docs/utm.md in the joyorogo repo. */
-const UPSELL_CAMPAIGN = 'evergreen-koneksi-ai';
 const ACTIVITY_LIMIT = 20;
 /** How long the copy button shows its check. */
 const COPIED_MS = 1800;
@@ -106,18 +105,7 @@ export function KoneksiScreen() {
                 </Notice>
               ) : null}
 
-              {!data.info.unlocked ? (
-                <ProUpsell
-                  campaign={UPSELL_CAMPAIGN}
-                  copy={{
-                    title: t('koneksi:pro.title'),
-                    description: t('koneksi:pro.required'),
-                    seeLabel: t('koneksi:pro.cta'),
-                    openLabel: t('koneksi:pro.cta'),
-                    mention: t('koneksi:pro.required'),
-                  }}
-                />
-              ) : null}
+              {!data.info.unlocked ? <UpgradeCard moment="koneksi" dismissible /> : null}
 
               <Section title={t('koneksi:connector.title')} icon="link" tint="link">
                 <AppText variant="caption" muted>
@@ -157,9 +145,6 @@ export function KoneksiScreen() {
               </Section>
 
               <Section title={t('koneksi:activity.title')} icon="time" tint="link">
-                <AppText variant="caption" muted>
-                  {t('koneksi:activity.hint')}
-                </AppText>
                 {data.activity.length === 0 ? (
                   <AppText variant="caption" muted>
                     {t('koneksi:activity.empty')}
@@ -172,12 +157,11 @@ export function KoneksiScreen() {
                     </View>
                   ))
                 )}
+                <Details>{t('koneksi:activity.hint')}</Details>
               </Section>
 
-              <AppText variant="caption" muted>
-                {t('koneksi:disclaimer')}
-              </AppText>
               <Button label={t('koneksi:privacy')} variant="ghost" icon="shield-checkmark-outline" onPress={() => void Linking.openURL(PRIVACY_URL)} />
+              <Details>{t('koneksi:disclaimer')}</Details>
             </>
           ) : null}
         </SignInGate>

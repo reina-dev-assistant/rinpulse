@@ -107,30 +107,39 @@ internal class WorkoutLink(
   private var statusPoll: kotlinx.coroutines.Job? = null
   private var lastStatusLog: String? = null
 
+  /** The watch has answered the poll with a workout state at least once on this link. */
+  @Volatile
+  private var statusAnswered = false
+
   private fun startStatusPoll(session: HuaweiSession) {
     statusPoll?.cancel()
+    statusAnswered = false
     // The Fit 4 Pro does not list 17/03; it is probed anyway and the poll stops on the first failure.
     if (!DeviceCaps.supports(WORKOUT_SERVICE, STATUS)) log("Workout link: the watch does not list 17/03; probing it")
     statusPoll = scope.launch {
       kotlinx.coroutines.delay(STATUS_FIRST_MS)
-      // Once the watch has answered, a failed poll is a busy or briefly lost link, not a missing command: keep polling,
-      // or a running workout would lose its end signal.
-      var answered = false
       while (true) {
         val handle = link.handle() ?: return@launch
         if (handle.session !== session) return@launch
-        if (pollStatus(handle.session)) {
-          answered = true
-        } else if (!answered) {
+        // Once the watch has answered, a failed poll is a busy or briefly lost link, not a missing command: keep polling,
+        // or a running workout would lose its end signal.
+        if (!pollStatus(handle.session) && !statusAnswered) {
           log("Workout link: no workout status from the watch; indoor workouts need Start on the phone")
           return@launch
         }
-        kotlinx.coroutines.delay(STATUS_EVERY_MS)
+        // A stop on the watch reaches the phone within a few answers: poll faster while a workout is followed.
+        kotlinx.coroutines.delay(if (live.isLive) LiveWorkoutPolicy.LIVE_POLL_MS else LiveWorkoutPolicy.IDLE_POLL_MS)
       }
     }
   }
 
-  /** False when the watch does not answer with a status (unsupported). */
+  /** Asks the status now, outside the poll's rhythm (a GPS request opened a session that waits for the answer). */
+  private fun pollSoon() {
+    val handle = link.handle() ?: return
+    scope.launch { pollStatus(handle.session) }
+  }
+
+  /** False when the watch does not answer with a status (unsupported, or no answer yet). */
   private suspend fun pollStatus(session: HuaweiSession): Boolean {
     val answer = try {
       session.request(RawPacket(session.params, WORKOUT_SERVICE, STATUS, HuaweiTLV().put(0x81)), REQUEST_MS, "workout status")
@@ -140,14 +149,20 @@ internal class WorkoutLink(
       log("Workout link: workout status failed: ${e.message}")
       return false
     }
-    val tlv = answer.getTlv() ?: return false
-    val text = tlv.toString()
+    val tlv = answer.getTlv()
+    val text = tlv?.toString() ?: "(empty)"
     // Logged when it changes, so the log shows what each state looks like.
     if (text != lastStatusLog) {
       lastStatusLog = text
       log("Workout link: workout status $text")
     }
-    if (!tlv.contains(0x81)) return false
+    if (tlv == null || !tlv.contains(0x81)) {
+      // A watch that already answered with a workout state and now sends none has no workout to report.
+      if (!statusAnswered) return false
+      live.watchStatus(running = false, paused = false, workoutType = null)
+      return true
+    }
+    statusAnswered = true
     val body = tlv.getObject(0x81)
     fun int(tag: Int) = body.getBytes(tag, null)?.let { LiveWorkoutWire.unsigned(it)?.toInt() }
     val operator = int(0x03)
@@ -175,8 +190,9 @@ internal class WorkoutLink(
         log("Workout link: GPS answer not sent: ${e.message}")
       }
       if (enable) {
-        // A workout is running on the watch: follow it.
-        live.gpsPing()
+        // A workout screen is open on the watch: follow it. The request comes before the workout runs (the watch is still
+        // looking for a fix), so the session only prepares until the status poll says it runs; ask it right away.
+        if (live.gpsPing()) pollSoon()
         openReport()
         startGps()
       } else {
@@ -303,7 +319,6 @@ internal class WorkoutLink(
     const val REQUEST_MS = 5_000L
     const val STATUS = 0x03
     const val STATUS_FIRST_MS = 5_000L
-    const val STATUS_EVERY_MS = 30_000L
   }
 }
 

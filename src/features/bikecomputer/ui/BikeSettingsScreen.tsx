@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Segmented } from '@/components/Segmented';
 import { Divider, Section } from '@/components/Screen';
 import { SwitchRow } from '@/components/SwitchRow';
@@ -148,9 +149,7 @@ export function BikeSettingsScreen() {
           value={settings.enabled}
           onValueChange={(enabled) => bikeSettingsStore.set({ enabled })}
         />
-        <AppText variant="caption" muted>
-          {t('settings.mode.body')}
-        </AppText>
+        <Details>{t('settings.mode.body')}</Details>
       </Section>
 
       <Section title={t('settings.display.title')} icon="contrast">

@@ -3,7 +3,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { AppState, Keyboard, KeyboardAvoidingView, ScrollView, StyleSheet, TextInput, Vibration, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -31,6 +31,7 @@ import {
   elapsedMs,
   emptyDraft,
   finishDraft,
+  hasMeasureValues,
   leaveSuperset,
   makeSuperset,
   moveExercise,
@@ -38,9 +39,11 @@ import {
   removeExercise,
   removeSet,
   replaceExercise,
+  resolveTimed,
   restFor,
   resumeDraft,
   setExerciseNote,
+  setExerciseTimed,
   skipRest,
   toggleSetDone,
   updateSet,
@@ -54,6 +57,7 @@ import {
   clampRestChoice,
   defaultWorkoutName,
   previousAt,
+  previousForMeasure,
   REST_CHOICES,
   restLabel,
   RPE_CHOICES,
@@ -72,6 +76,7 @@ import {
   scheduleRestEnd,
   type RestPermission,
 } from '@/features/strength/restNotification';
+import { COUNTDOWN_VIBRATION, startSetTimer, timerFinished, timerResultSec, type SetTimer } from '@/features/strength/setTimer';
 import { getStarterRoutine } from '@/features/strength/starterRoutines';
 import {
   DEFAULT_SETTINGS,
@@ -81,14 +86,16 @@ import {
   lastPerformance,
   listCustomExercises,
   listRestPrefs,
+  listTimedPrefs,
   loadDraft,
   loadSettings,
   saveDraft,
   saveWorkout,
   setRestPref,
+  setTimedPref,
   type StrengthSettings,
 } from '@/features/strength/store';
-import type { StrengthDraft, StrengthWorkout } from '@/features/strength/types';
+import type { StrengthDraft, StrengthExercise, StrengthWorkout } from '@/features/strength/types';
 import { ExerciseCard, type ExerciseCardActions } from '@/features/strength/ui/ExerciseCard';
 import { ExerciseInfoSheet } from '@/features/strength/ui/ExerciseInfoSheet';
 import { ExercisePicker } from '@/features/strength/ui/ExercisePicker';
@@ -135,6 +142,9 @@ export default function ActiveWorkoutScreen() {
   const [initialJson, setInitialJson] = useState('');
   const [settings, setSettings] = useState<StrengthSettings>(DEFAULT_SETTINGS);
   const [prefs, setPrefs] = useState<ReadonlyMap<string, number>>(new Map());
+  const [timedPrefs, setTimedPrefs] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const [measureFor, setMeasureFor] = useState<{ key: string; timed: boolean } | null>(null);
+  const [setTimer, setSetTimer] = useState<SetTimer | null>(null);
   const [catalog, setCatalog] = useState<Catalog>(() => buildCatalog([]));
   const [previous, setPrevious] = useState<Record<string, PreviousSet[]>>({});
   const [flash, setFlash] = useState<Flash | null>(null);
@@ -165,6 +175,10 @@ export default function ActiveWorkoutScreen() {
   settingsRef.current = settings;
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
+  const timedPrefsRef = useRef(timedPrefs);
+  timedPrefsRef.current = timedPrefs;
+  const setTimerRef = useRef(setTimer);
+  setTimerRef.current = setTimer;
   const previousRef = useRef(previous);
   previousRef.current = previous;
   const catalogRef = useRef(catalog);
@@ -189,10 +203,11 @@ export default function ActiveWorkoutScreen() {
     started.current = true;
     let cancelled = false;
     (async () => {
-      const [loadedSettings, loadedPrefs, custom] = await Promise.all([loadSettings(db), listRestPrefs(db), listCustomExercises(db)]);
+      const [loadedSettings, loadedPrefs, loadedTimed, custom] = await Promise.all([loadSettings(db), listRestPrefs(db), listTimedPrefs(db), listCustomExercises(db)]);
       if (cancelled) return;
       setSettings(loadedSettings);
       setPrefs(loadedPrefs);
+      setTimedPrefs(loadedTimed);
       setCatalog(buildCatalog(custom));
       setPermission(await restPermission(db));
 
@@ -280,6 +295,7 @@ export default function ActiveWorkoutScreen() {
       if (phase !== 'ready') return;
       void loadSettings(db).then(setSettings);
       void listRestPrefs(db).then(setPrefs);
+      void listTimedPrefs(db).then(setTimedPrefs);
     }, [db, phase]),
   );
 
@@ -341,19 +357,72 @@ export default function ActiveWorkoutScreen() {
   }, [restOver]);
 
   // -------------------------------------------------------------------------------------------------------------------
+  // Measure (Repetisi / Waktu) and the stopwatch of a timed set
+  // -------------------------------------------------------------------------------------------------------------------
+  /** Whether an entry is measured in seconds now: its own choice, else the library's flag. */
+  const timedOf = useCallback((entry: StrengthExercise) => resolveTimed(entry, catalogRef.current.get(entry.exerciseId)?.timed ?? null), []);
+
+  const applyMeasure = useCallback(
+    (key: string, timed: boolean) => {
+      const entry = current()?.exercises.find((e) => e.key === key);
+      if (!entry) return;
+      if (setTimerRef.current?.exerciseKey === key) setSetTimer(null);
+      update((d) => setExerciseTimed(d, key, timed, catalogRef.current.get(entry.exerciseId)?.timed ?? null));
+      // The choice sticks: the next time this exercise is added it starts that way.
+      void setTimedPref(db, entry.exerciseId, timed).then(() => listTimedPrefs(db)).then(setTimedPrefs);
+    },
+    [current, update, db],
+  );
+
+  /** Stores what the stopwatch measured in its set and clears it; a countdown that reached zero also buzzes. */
+  const stopSetTimer = useCallback(
+    (timer: SetTimer, vibrate: boolean) => {
+      setSetTimer(null);
+      update((d) => updateSet(d, timer.exerciseKey, timer.setId, { seconds: timerResultSec(timer, Date.now()) }));
+      if (vibrate) Vibration.vibrate([...COUNTDOWN_VIBRATION]);
+    },
+    [update],
+  );
+
+  // A countdown ends by itself: checked on a short interval and again when the app comes back to the front. One whose set was removed
+  // or replaced meanwhile is dropped without a buzz.
+  useEffect(() => {
+    if (!setTimer || setTimer.targetSec === null) return;
+    const check = () => {
+      const alive = current()?.exercises.some((e) => e.key === setTimer.exerciseKey && e.sets.some((s) => s.id === setTimer.setId));
+      if (!alive) setSetTimer(null);
+      else if (timerFinished(setTimer, Date.now())) stopSetTimer(setTimer, true);
+    };
+    const id = setInterval(check, 250);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') check();
+    });
+    return () => {
+      clearInterval(id);
+      sub.remove();
+    };
+  }, [setTimer, stopSetTimer, current]);
+
+  /** The running stopwatch, unless its set is gone (a stopwatch that counts up and lost its set just stays unseen until the next start). */
+  const shownTimer = setTimer && draft?.exercises.some((e) => e.key === setTimer.exerciseKey && e.sets.some((s) => s.id === setTimer.setId)) ? setTimer : null;
+
+  // -------------------------------------------------------------------------------------------------------------------
   // Actions on sets and exercises
   // -------------------------------------------------------------------------------------------------------------------
   const actions = useMemo<ExerciseCardActions>(
     () => ({
       onChange: (key, setId, patch) => update((d) => updateSet(d, key, setId, patch)),
       onToggle: (key, setId) => {
+        const running = setTimerRef.current;
+        if (running && running.exerciseKey === key && running.setId === setId) stopSetTimer(running, false);
         const d = current();
         const entry = d?.exercises.find((e) => e.key === key);
         if (!d || !entry) return;
         const index = entry.sets.findIndex((s) => s.id === setId);
+        const timed = timedOf(entry);
         const before = previousAt(previousRef.current[entry.exerciseId], index);
         const context: RestContext = { defaultRestSec: settingsRef.current.defaultRestSec, autoRest: settingsRef.current.autoRest && !editing, prefs: prefsRef.current };
-        const result = toggleSetDone(d, key, setId, Date.now(), context, before ? { weightKg: before.weightKg, reps: before.reps, seconds: before.seconds } : null);
+        const result = toggleSetDone(d, key, setId, Date.now(), context, before ? previousForMeasure({ weightKg: before.weightKg, reps: before.reps, seconds: before.seconds }, timed) : null);
         if (result.refused) {
           flashCount.current += 1;
           setFlash({ exerciseKey: key, setId, n: flashCount.current });
@@ -370,17 +439,35 @@ export default function ActiveWorkoutScreen() {
         const entry = d?.exercises.find((e) => e.key === key);
         if (!entry) return;
         const before = previousAt(previousRef.current[entry.exerciseId], entry.sets.findIndex((s) => s.id === setId));
-        if (before) update((x) => updateSet(x, key, setId, { weightKg: before.weightKg, reps: before.reps, seconds: before.seconds }));
+        if (before) {
+          const { weightKg, reps, seconds } = previousForMeasure(before, timedOf(entry));
+          update((x) => updateSet(x, key, setId, { weightKg, reps, seconds }));
+        }
       },
       onPickRpe: (key, setId) => setRpeFor({ key, setId }),
+      onTimer: (key, setId) => {
+        const running = setTimerRef.current;
+        const same = running?.exerciseKey === key && running.setId === setId;
+        if (running) stopSetTimer(running, false);
+        if (same) return;
+        const set = current()?.exercises.find((e) => e.key === key)?.sets.find((s) => s.id === setId);
+        if (!set || set.done) return;
+        setSetTimer(startSetTimer(key, setId, set.seconds, settingsRef.current.countdownTimed, Date.now()));
+      },
+      onMeasure: (key, timed) => {
+        const entry = current()?.exercises.find((e) => e.key === key);
+        if (!entry || timedOf(entry) === timed) return;
+        if (hasMeasureValues(entry)) setMeasureFor({ key, timed });
+        else applyMeasure(key, timed);
+      },
       onAddSet: (key) => update((d) => addSet(d, key)),
       onInfo: (key) => setInfoKey(key),
       onNote: (key) => setNotePrompt({ key }),
       onRest: (key) => setRestFor(key),
       onExerciseMenu: (key) => setExerciseMenu(key),
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- everything else is read from refs
-    [update, commit, current, editing, show, t],
+    // `editing` and the callbacks above are all this reads; everything else comes from refs.
+    [update, commit, current, editing, show, t, timedOf, applyMeasure, stopSetTimer],
   );
 
   const onRestEnded = useCallback(() => {
@@ -666,7 +753,8 @@ export default function ActiveWorkoutScreen() {
               entry={entry}
               name={nameOf(entry.exerciseId)}
               muscles={info ? info.primary.map((m) => t(`coach:muscle.${m}`)).join(', ') : ''}
-              timed={info?.timed ?? false}
+              timed={timedOf(entry)}
+              timer={shownTimer?.exerciseKey === entry.key ? shownTimer : null}
               superset={entry.supersetGroup === null ? null : (letters.get(entry.supersetGroup) ?? null)}
               previous={previous[entry.exerciseId] ?? null}
               restSec={restSecOf(entry)}
@@ -724,9 +812,10 @@ export default function ActiveWorkoutScreen() {
         onPick={(ids) => {
           const target = picker;
           if (!target) return;
-          const infos = ids.map((id) => ({ exerciseId: id, timed: catalogRef.current.get(id)?.timed ?? false }));
+          const infos = ids.map((id) => ({ exerciseId: id, timed: timedPrefsRef.current.get(id) ?? catalogRef.current.get(id)?.timed ?? false }));
           if (target.mode === 'replace') {
             const first = infos[0];
+            if (setTimerRef.current?.exerciseKey === target.key) setSetTimer(null);
             if (first) update((d) => replaceExercise(d, target.key, first));
           } else {
             update((d) => addExercises(d, infos));
@@ -831,6 +920,19 @@ export default function ActiveWorkoutScreen() {
       />
 
       <ConfirmDialog
+        visible={measureFor !== null}
+        title={t('strength:measure.confirmTitle', { measure: measureFor?.timed ? t('strength:table.time') : t('strength:table.reps') })}
+        message={t('strength:measure.confirmMessage')}
+        confirmLabel={t('strength:measure.confirm')}
+        cancelLabel={t('strength:measure.cancel')}
+        onConfirm={() => {
+          const target = measureFor;
+          setMeasureFor(null);
+          if (target) applyMeasure(target.key, target.timed);
+        }}
+        onCancel={() => setMeasureFor(null)}
+      />
+      <ConfirmDialog
         visible={confirm === 'discard'}
         title={t('strength:discard.title')}
         message={t('strength:discard.message')}
@@ -910,7 +1012,7 @@ export default function ActiveWorkoutScreen() {
 
 /** What decides "was something changed" when a finished workout is edited: sets and texts, not ids. */
 function editFingerprint(d: StrengthDraft): string {
-  return JSON.stringify([d.name, d.note, d.exercises.map((e) => [e.exerciseId, e.note, e.sets.map((s) => [s.weightKg, s.reps, s.seconds, s.type, s.rpe, s.done])])]);
+  return JSON.stringify([d.name, d.note, d.exercises.map((e) => [e.exerciseId, e.timed ?? null, e.note, e.sets.map((s) => [s.weightKg, s.reps, s.seconds, s.type, s.rpe, s.done])])]);
 }
 
 /** The stopwatch and the sets done, redrawn every second without redrawing the exercises. */

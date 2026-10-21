@@ -95,6 +95,15 @@ describe('exerciseSeries', () => {
     expect(availableMetrics([push], 'pushup')).toEqual(['reps']);
     expect(availableMetrics([], 'bench')).toEqual([]);
   });
+
+  it('offers both reps and hold charts and records for an exercise measured both ways', () => {
+    const byReps = workout(5, [exercise('plank', [set(null, 12)])], { id: 'r' });
+    const byTime = workout(10, [exercise('plank', [set(null, null, { seconds: 60 })])], { id: 't' });
+    expect(availableMetrics([byReps, byTime], 'plank')).toEqual(['reps', 'time', 'totalTime']);
+    expect(exerciseSeries([byReps, byTime], 'plank', 'reps').map((p) => p.workoutId)).toEqual(['r']);
+    expect(exerciseSeries([byReps, byTime], 'plank', 'time').map((p) => p.workoutId)).toEqual(['t']);
+    expect(exerciseRecords([byReps, byTime], 'plank').time).toMatchObject({ value: 60, workoutId: 't' });
+  });
 });
 
 describe('exerciseSessions', () => {

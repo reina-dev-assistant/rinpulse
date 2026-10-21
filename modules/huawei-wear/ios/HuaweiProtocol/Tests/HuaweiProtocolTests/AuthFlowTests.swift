@@ -714,6 +714,57 @@ final class AuthFlowTests: XCTestCase {
         XCTAssertTrue(rig.log.contains("branch=none"))
     }
 
+    /// The phone's language reaches a watch that lists 0C/01 as the last init request: the legacy `in` for Indonesian, metric, no script
+    /// without ExpandCapability 57; the app's pinned language wins over the phone's.
+    func testInitSendsThePhoneLanguageWhenTheWatchListsIt() async throws {
+        var config = PacketsAuthFakeWatch.Config()
+        config.commands[0x0C] = [0x01]
+        let rig = makeRig(config)
+        _ = try await rig.authenticator.authenticate()
+        let authCount = rig.watch.seen.count
+        let initializer = HuaweiInitializer(
+            session: rig.session, caps: DeviceCaps(), log: rig.log.sink, bondedName: nil, protocolVersion: 2, phoneLanguage: "id-ID"
+        )
+        initializer.timeouts = fastTimeouts()
+        initializer.now = { self.now }
+        _ = try await initializer.run()
+
+        XCTAssertEqual(rig.watch.seen[authCount...].map(\.label).last, "0c/01", "the language is the last init request")
+        let request = try XCTUnwrap(rig.watch.requests("0c/01").first)
+        XCTAssertEqual(try request.tlv.string(0x01), "in-ID")
+        XCTAssertEqual(try request.tlv.byte(0x02), 0, "metric")
+        XCTAssertFalse(request.tlv.contains(0x03), "ExpandCapability 57 is not offered")
+        XCTAssertTrue(request.encrypted)
+        XCTAssertTrue(rig.log.contains("LanguageSetting: in-ID, metric (phone language)"))
+    }
+
+    func testInitSendsThePinnedAppLanguageOverThePhones() async throws {
+        var config = PacketsAuthFakeWatch.Config()
+        config.commands[0x0C] = [0x01]
+        let rig = makeRig(config)
+        _ = try await rig.authenticator.authenticate()
+        let initializer = HuaweiInitializer(
+            session: rig.session, caps: DeviceCaps(), log: rig.log.sink, bondedName: nil, protocolVersion: 2,
+            pinnedLanguage: "en", phoneLanguage: "id-ID"
+        )
+        initializer.timeouts = fastTimeouts()
+        initializer.now = { self.now }
+        _ = try await initializer.run()
+        XCTAssertEqual(try rig.watch.requests("0c/01").first?.tlv.string(0x01), "en-US")
+        XCTAssertTrue(rig.log.contains("LanguageSetting: en-US, metric (app language en)"))
+    }
+
+    func testInitSendsNoLanguageToAWatchThatDoesNotListIt() async throws {
+        let rig = makeRig()
+        _ = try await rig.authenticator.authenticate()
+        let initializer = HuaweiInitializer(session: rig.session, caps: DeviceCaps(), log: rig.log.sink, bondedName: nil, protocolVersion: 2, phoneLanguage: "id-ID")
+        initializer.timeouts = fastTimeouts()
+        initializer.now = { self.now }
+        _ = try await initializer.run()
+        XCTAssertTrue(rig.watch.requests("0c/01").isEmpty)
+        XCTAssertTrue(rig.log.contains("LanguageSetting: the watch does not list 0C/01, not sent"))
+    }
+
     func testInitWithoutDriftSendsTheTimeOnce() async throws {
         var config = PacketsAuthFakeWatch.Config()
         config.clockOffset = 0

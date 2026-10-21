@@ -43,6 +43,7 @@ export function newExercise(info: ExerciseInfo, sets = 1, restSec: number | null
   return {
     key: newId('k'),
     exerciseId: info.exerciseId,
+    timed: info.timed,
     note: '',
     restSec,
     supersetGroup: null,
@@ -79,6 +80,7 @@ function exerciseFromRoutine(e: RoutineExercise): StrengthExercise {
   return {
     key: newId('k'),
     exerciseId: e.exerciseId,
+    ...(e.timed === undefined ? {} : { timed: e.timed }),
     note: e.note,
     restSec: e.restSec,
     supersetGroup: e.supersetGroup,
@@ -97,6 +99,7 @@ export function draftFromPlan(planKey: string, planned: readonly PlannedInput[],
       exerciseId: p.exerciseId,
       note: '',
       restSec: p.restSec > 0 ? p.restSec : null,
+      timed: p.seconds !== null && p.seconds > 0,
       supersetGroup: null,
       sets: Array.from({ length: Math.max(1, p.sets) }, () =>
         newSet('normal', p.seconds !== null && p.seconds > 0 ? { seconds: p.seconds } : { reps: p.reps > 0 ? p.reps : null }),
@@ -145,13 +148,44 @@ export function addExercises(draft: StrengthDraft, infos: readonly ExerciseInfo[
   return { ...draft, exercises: [...draft.exercises, ...infos.slice(0, room).map((i) => newExercise(i, 1, restOf(i.exerciseId)))] };
 }
 
+/**
+ * Whether an exercise is measured in seconds: the person's choice on the entry (`timed`), else the library's flag, else, for an exercise
+ * nothing knows any more (deleted custom exercise), what its sets hold.
+ */
+export function resolveTimed(entry: { timed?: boolean; sets: readonly { reps: number | null; seconds: number | null }[] }, catalogTimed: boolean | null): boolean {
+  if (entry.timed !== undefined) return entry.timed;
+  if (catalogTimed !== null) return catalogTimed;
+  return entry.sets.some((s) => s.seconds !== null && s.reps === null);
+}
+
+/** Whether any set of the entry holds reps, seconds or a tick: switching its measure would throw those away (the screens ask first). */
+export const hasMeasureValues = (entry: { sets: readonly { reps: number | null; seconds: number | null; done?: boolean }[] }): boolean =>
+  entry.sets.some((s) => s.reps !== null || s.seconds !== null || s.done === true);
+
 /** Swaps the exercise of an entry for another one, keeping its sets that fit (weight and reps are kept; set types too). */
 export function replaceExercise(draft: StrengthDraft, key: string, info: ExerciseInfo): StrengthDraft {
   return mapExercise(draft, key, (e) => ({
     ...e,
     exerciseId: info.exerciseId,
+    timed: info.timed,
     sets: e.sets.map((s) => ({ ...s, done: false, doneAt: null, seconds: info.timed ? s.seconds : null, reps: info.timed ? null : s.reps })),
   }));
+}
+
+/**
+ * Measures an exercise in seconds (`true`) or repetitions (`false`) in this workout. Its sets are converted like `replaceExercise` does:
+ * weight and type stay, the value of the measure left is cleared and no set stays ticked (a tick on a cleared value would count
+ * nothing). Nothing changes when the exercise is measured that way already. A rest timer started by one of its sets is dropped.
+ */
+export function setExerciseTimed(draft: StrengthDraft, key: string, timed: boolean, catalogTimed: boolean | null = null): StrengthDraft {
+  const target = draft.exercises.find((e) => e.key === key);
+  if (!target || resolveTimed(target, catalogTimed) === timed) return draft;
+  const next = mapExercise(draft, key, (e) => ({
+    ...e,
+    timed,
+    sets: e.sets.map((s) => ({ ...s, done: false, doneAt: null, reps: null, seconds: null })),
+  }));
+  return { ...next, rest: draft.rest?.exerciseKey === key ? null : draft.rest };
 }
 
 export function removeExercise(draft: StrengthDraft, key: string): StrengthDraft {
@@ -399,6 +433,7 @@ export function finishDraft(draft: StrengthDraft, now: number, fallbackName: str
 export function routineExercisesOf(workout: Pick<StrengthWorkout, 'exercises'>): RoutineExercise[] {
   return workout.exercises.map((e) => ({
     exerciseId: e.exerciseId,
+    ...(e.timed === undefined ? {} : { timed: e.timed }),
     restSec: e.restSec,
     note: e.note,
     supersetGroup: e.supersetGroup,

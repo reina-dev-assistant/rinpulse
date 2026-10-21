@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Card } from '@/components/Screen';
 import { useCloud } from '@/state/CloudProvider';
 import { spacing } from '@/theme';
@@ -32,22 +33,18 @@ export function JoyoRogoCard() {
         <AppText variant="bodyStrong">{t('rogoCard.title')}</AppText>
         {cloud.signedIn ? (
           <>
-            <AppText variant="caption" muted>
-              {t('rogoCard.signedIn')}
-            </AppText>
             <View style={styles.actions}>
               <Button label={t('rogoCard.openDiary')} icon="restaurant" onPress={() => void Linking.openURL(DIARY_URL)} />
             </View>
+            <Details>{t('rogoCard.signedIn')}</Details>
           </>
         ) : (
           <>
-            <AppText variant="caption" muted>
-              {t('rogoCard.signedOut')}
-            </AppText>
             <View style={styles.actions}>
               <Button label={t('rogoCard.signIn')} icon="log-in" onPress={() => void cloud.signIn()} />
               <Button label={t('rogoCard.whatIs')} variant="ghost" onPress={() => void Linking.openURL(ABOUT_URL)} />
             </View>
+            <Details>{t('rogoCard.signedOut')}</Details>
             {cloud.error ? (
               <AppText variant="caption" muted>
                 {cloud.error}

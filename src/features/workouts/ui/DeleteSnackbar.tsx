@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { PressableScale } from '@/components/PressableScale';
+import { useFloatingTabBarFootprint } from '@/components/useFloatingTabBarFootprint';
 import { undoPendingDelete, usePendingDelete } from '@/features/workouts/pendingDelete';
 import { HIT, spacing, useTheme } from '@/theme';
 
@@ -16,10 +16,10 @@ export function DeleteSnackbar() {
   const pending = usePendingDelete();
   const { t } = useTranslation('workouts');
   const { colors, radius } = useTheme();
-  const insets = useSafeAreaInsets();
+  const footprint = useFloatingTabBarFootprint();
   if (pending === null) return null;
   return (
-    <View pointerEvents="box-none" style={[styles.anchor, { paddingBottom: insets.bottom + 88 }]}>
+    <View pointerEvents="box-none" style={[styles.anchor, { paddingBottom: footprint + spacing.sm }]}>
       <View accessibilityLiveRegion="polite" style={[styles.bar, { backgroundColor: colors.hero, borderRadius: radius.control }]}>
         <Ionicons name="trash-outline" size={18} color={colors.heroAccent} />
         <AppText variant="label" color={colors.heroForeground} style={styles.text} numberOfLines={1}>

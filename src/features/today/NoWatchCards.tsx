@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { NavRow } from '@/components/NavRow';
 import { Card, Divider } from '@/components/Screen';
 import { startStrengthWorkout } from '@/features/strength/start';
@@ -85,9 +86,6 @@ export function RogoStrengthCard() {
   return (
     <Card>
       <AppText variant="bodyStrong">{t('noWatch.rogo.title')}</AppText>
-      <AppText variant="caption" muted>
-        {cloud.signedIn ? t('noWatch.rogo.signedIn') : t('noWatch.rogo.signedOut')}
-      </AppText>
       <View style={styles.actions}>
         {cloud.signedIn ? (
           <Button label={t('rogoCard.openDiary')} icon="restaurant" onPress={() => void Linking.openURL(DIARY_URL)} />
@@ -95,6 +93,8 @@ export function RogoStrengthCard() {
           <Button label={t('rogoCard.signIn')} icon="log-in" onPress={() => void cloud.signIn()} />
         )}
       </View>
+      <Details>{cloud.signedIn ? t('noWatch.rogo.signedIn') : t('noWatch.rogo.signedOut')}</Details>
+
       {cloud.error ? (
         <AppText variant="caption" muted>
           {cloud.error}

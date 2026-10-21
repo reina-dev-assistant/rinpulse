@@ -9,6 +9,7 @@ import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { ButtonRow } from '@/components/ButtonRow';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { HeroGradient } from '@/components/HeroGradient';
 import { IconChip } from '@/components/IconChip';
 import { NavRow } from '@/components/NavRow';
 import { Card, Screen, Section } from '@/components/Screen';
@@ -29,10 +30,10 @@ import {
   type PrKind,
 } from '@/features/strength/calc';
 import { buildCatalog, type Catalog } from '@/features/strength/catalog';
-import { routineExercisesOf } from '@/features/strength/draft';
+import { resolveTimed, routineExercisesOf } from '@/features/strength/draft';
 import { detachWorkoutRow } from '@/features/strength/link';
 import { DEFAULT_WEIGHT_KG, hasUserWeight } from '@/features/strength/profile';
-import { prValueText, previousLabel, rpeText, SET_BADGE } from '@/features/strength/logFormat';
+import { prValueText, previousLabel, rpeText, SET_BADGE, timerText } from '@/features/strength/logFormat';
 import { nextSortOrder } from '@/features/strength/routineEdit';
 import { startStrengthWorkout } from '@/features/strength/start';
 import {
@@ -219,7 +220,12 @@ export default function StrengthSummaryScreen() {
           </View>
           <View style={styles.tileRow}>
             <StatTile icon="layers-outline" tint="link" label={t('strength:summary.sets')} value={fmtInt(totals.sets)} sub={totals.warmupSets > 0 ? t('strength:summary.warmupSets', { count: totals.warmupSets }) : undefined} />
-            <StatTile icon="repeat" tint="sleep" label={t('strength:summary.reps')} value={fmtInt(totals.reps)} />
+            {/* A workout of holds only has no reps to show: its time takes the tile; with both, the time goes under the reps. */}
+            {totals.reps === 0 && totals.seconds > 0 ? (
+              <StatTile icon="timer-outline" tint="sleep" label={t('strength:summary.time')} value={timerText(totals.seconds)} />
+            ) : (
+              <StatTile icon="repeat" tint="sleep" label={t('strength:summary.reps')} value={fmtInt(totals.reps)} sub={totals.seconds > 0 ? timerText(totals.seconds) : undefined} />
+            )}
           </View>
           <View style={styles.tileRow}>
             <StatTile icon="list-outline" tint="workouts" label={t('strength:summary.exercises')} value={fmtInt(totals.exercises)} />
@@ -285,7 +291,7 @@ export default function StrengthSummaryScreen() {
                   key={set.id}
                   position={index + 1}
                   type={set.type}
-                  text={previousLabel(set, info?.timed ?? false) ?? t('strength:table.dash')}
+                  text={previousLabel(set, resolveTimed(exercise, info?.timed ?? null)) ?? t('strength:table.dash')}
                   rpe={set.rpe}
                   record={recordSets.has(set.id)}
                 />
@@ -340,6 +346,7 @@ function FreshHeader({ name, records }: { name: string; records: number }) {
   const colors = useColors();
   return (
     <Card style={[styles.fresh, { backgroundColor: colors.hero }]}>
+      <HeroGradient />
       <Ionicons name="checkmark-circle" size={44} color={colors.heroAccent} />
       <AppText variant="title" color={colors.heroForeground} style={styles.centered} accessibilityRole="header">
         {t('summary.freshTitle')}
@@ -468,7 +475,7 @@ const styles = StyleSheet.create({
   titleBlock: { gap: 2 },
   tiles: { gap: spacing.sm },
   tileRow: { flexDirection: 'row', gap: spacing.sm, flex: 1 },
-  fresh: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg },
+  fresh: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg, overflow: 'hidden' },
   centered: { textAlign: 'center' },
   recordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   grow: { flex: 1 },

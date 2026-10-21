@@ -69,7 +69,7 @@ describe('workoutTotals', () => {
       exercise('bench', [set(40, 10, { type: 'warmup' }), set(60, 8), set(60, 8), set(60, 6, { done: false })]),
       exercise('plank', [set(null, null, { seconds: 60 })]),
     ]);
-    expect(workoutTotals(w)).toEqual({ volume: 960, sets: 3, warmupSets: 1, reps: 16, exercises: 2 });
+    expect(workoutTotals(w)).toEqual({ volume: 960, sets: 3, warmupSets: 1, reps: 16, seconds: 60, exercises: 2 });
   });
   it('does not count an exercise with nothing done', () => {
     expect(workoutTotals(workout(0, [exercise('a', [set(10, 10, { done: false })])])).exercises).toBe(0);

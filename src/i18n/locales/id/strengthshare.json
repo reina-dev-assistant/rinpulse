@@ -4,6 +4,7 @@
   "stats": {
     "volume": "Total volume",
     "reps": "Repetisi",
+    "hold": "Waktu tahan",
     "time": "Durasi",
     "sets": "Set",
     "kcal": "Energi"
@@ -18,6 +19,8 @@
   "description": {
     "totalsVolume_other": "Total volume {{volume}} kg, {{count}} set, {{reps}} repetisi.",
     "totalsReps_other": "{{count}} set, {{reps}} repetisi.",
+    "totalsTime_other": "{{count}} set, tahan {{time}}.",
+    "hold": "Waktu tahan total {{time}}.",
     "topSets": "Set terbaik: {{sets}}."
   },
   "share": {

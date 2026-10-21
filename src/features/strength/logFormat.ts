@@ -41,6 +41,34 @@ export const clampWeight = (n: number | null): number | null => (n === null ? nu
 export const clampReps = (n: number | null): number | null => (n === null ? null : Math.min(MAX_REPS, Math.round(n)));
 export const clampSeconds = (n: number | null): number | null => (n === null ? null : Math.min(MAX_SECONDS, Math.round(n)));
 
+/**
+ * Time entry like a kitchen timer, for a number pad without a colon: digits fill from the right, so "1", "13", "130" read 0:01, 0:13, 1:30
+ * and a backspace drops the last digit. The last two digits are seconds, the rest minutes ("90" is 0:90 = 1:30, carried over).
+ */
+export const MAX_DURATION_DIGITS = 5;
+
+export function secondsFromDigits(digits: string): number | null {
+  const clean = digits.replace(/\D/g, '').slice(0, MAX_DURATION_DIGITS);
+  if (clean === '') return null;
+  const minutes = Number(clean.slice(0, -2) || '0');
+  return clampSeconds(minutes * 60 + Number(clean.slice(-2)));
+}
+
+/** The digits that read back as `seconds`: 90 is "130", 45 is "45", 0 is "0". */
+export function digitsFromSeconds(seconds: number | null): string {
+  if (seconds === null) return '';
+  const sec = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(sec / 60);
+  return minutes === 0 ? String(sec) : `${minutes}${String(sec % 60).padStart(2, '0')}`;
+}
+
+/** What the box shows while the digits are typed: "130" is "1:30", "5" is "0:05"; nothing for no digits. */
+export function digitsClock(digits: string): string {
+  const clean = digits.replace(/\D/g, '').slice(0, MAX_DURATION_DIGITS);
+  if (clean === '') return '';
+  return `${clean.slice(0, -2) || '0'}:${clean.slice(-2).padStart(2, '0')}`;
+}
+
 /** `m:ss`, or `h:mm:ss` from an hour on. Seconds in. */
 export function timerText(totalSec: number): string {
   const sec = Math.max(0, Math.floor(totalSec));
@@ -77,6 +105,11 @@ export function defaultWorkoutName(nowMs: number): string {
 export const weightText = (kg: number): string => t('strength:unit.kg', { value: fmtNumber(roundKg(kg), 1) });
 
 export const secondsText = (sec: number): string => t('strength:unit.sec', { value: fmtInt(sec) });
+
+/** A previous set read in the measure of the exercise being logged: reps of a time exercise (or seconds of a rep exercise) are left out, so ticking a row never fills the wrong column. */
+export function previousForMeasure<T extends { reps: number | null; seconds: number | null }>(set: T, timed: boolean): T {
+  return timed ? { ...set, reps: null } : { ...set, seconds: null };
+}
 
 /** What an earlier set was: "60 kg x 8", "8" (bodyweight), "0:45" (timed), "60 kg x 0:45". Null for a set with nothing in it. */
 export function previousLabel(set: Pick<StrengthSet, 'weightKg' | 'reps' | 'seconds'>, timed: boolean): string | null {

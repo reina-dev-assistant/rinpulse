@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { rogo, type RogoVisibility } from '@/cloud/rogo';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Field } from '@/components/Input';
 import { PressableScale } from '@/components/PressableScale';
 import { Segmented } from '@/components/Segmented';
@@ -147,9 +148,7 @@ export function ShareToRogoButton({ workout, points, analysis, analysisPending, 
                   {hasComparison ? (
                     <SwitchRow label={t('share.includeComparison')} value={includeComparison} onValueChange={setIncludeComparison} />
                   ) : null}
-                  <AppText variant="caption" muted>
-                    {t('share.note')}
-                  </AppText>
+                  <Details>{t('share.note')}</Details>
                   {error ? <Notice tone="danger">{error}</Notice> : null}
                   <Button label={t('share.post')} variant="primary" icon="send" loading={posting || analysisPending} onPress={() => void post()} />
                 </>

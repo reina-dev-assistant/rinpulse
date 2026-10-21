@@ -219,6 +219,7 @@ function lift() {
   const k = kit('tl');
   const hero = k.stat({ w: 'fill' }, '{strength.volumeKg|int}', { unit: tl('unit.kg'), label: tl('label.volume'), size: 230, unitSize: 64, labelSize: 28, labelPos: 'above', gap: 12, weight: 800, color: '$accent', minSize: 100, when: has('strength.volumeKg') });
   const heroReps = k.stat({ w: 'fill' }, '{strength.reps|int}', { label: tl('label.reps'), size: 230, labelSize: 28, labelPos: 'above', gap: 12, weight: 800, color: '$accent', minSize: 100, when: all(lacks('strength.volumeKg'), has('strength.reps')) });
+  const heroSecs = k.stat({ w: 'fill' }, '{strength.seconds|dur}', { label: tl('label.hold'), size: 230, labelSize: 28, labelPos: 'above', gap: 12, weight: 800, color: '$accent', minSize: 100, when: all(lacks('strength.volumeKg'), lacks('strength.reps'), has('strength.seconds')) });
   const pr = k.group(
     { w: 'fill', h: 'auto' },
     [
@@ -243,7 +244,7 @@ function lift() {
       { value: '{strength.kcal|int}', label: tl('label.kcal'), unit: tl('unit.kcal') },
     ]),
   ];
-  return slide({ id: 'lift', k, subject: 'lift', requires: ['strength.name'], body: [hero, heroReps, pr, ...rows, deviceLine(k)], gap: 28, tags: ['summary'] });
+  return slide({ id: 'lift', k, subject: 'lift', requires: ['strength.name'], body: [hero, heroReps, heroSecs, pr, ...rows, deviceLine(k)], gap: 28, tags: ['summary'] });
 }
 
 // ------------------------------------------------------------------------------------------------------------- splits

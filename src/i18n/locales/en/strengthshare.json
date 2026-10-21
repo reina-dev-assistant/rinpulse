@@ -4,6 +4,7 @@
   "stats": {
     "volume": "Total volume",
     "reps": "Reps",
+    "hold": "Hold time",
     "time": "Time",
     "sets": "Sets",
     "kcal": "Energy"
@@ -22,6 +23,9 @@
     "totalsVolume_other": "Total volume {{volume}} kg, {{count}} sets, {{reps}} reps.",
     "totalsReps_one": "{{count}} set, {{reps}} reps.",
     "totalsReps_other": "{{count}} sets, {{reps}} reps.",
+    "totalsTime_one": "{{count}} set, {{time}} held.",
+    "totalsTime_other": "{{count}} sets, {{time}} held.",
+    "hold": "Total hold time {{time}}.",
     "topSets": "Top sets: {{sets}}."
   },
   "share": {

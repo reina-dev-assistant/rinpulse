@@ -63,7 +63,7 @@ export function Stepper({ label, hint, value, min, max, step, format, onChange, 
         ) : null}
       </View>
       {button(-1)}
-      <AppText style={[styles.value, { fontFamily: fonts.heavy }]} numberOfLines={1}>
+      <AppText style={[styles.value, { fontFamily: fonts.numeral }]} numberOfLines={1}>
         {text}
       </AppText>
       {button(1)}

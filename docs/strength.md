@@ -22,7 +22,7 @@ The two meet at three points:
 Tables are created from JS (`ensureStrengthSchema`, called by `_layout.tsx`; the native migration list is part of the binary, same
 reason as `features/gear/store.ts`):
 
-- `strength_record (kind, id, json, sort_at, plan_key, workout_start, updated_at, deleted_at, dirty)`: one JSON document per record; kinds `workout`, `routine`, `folder`, `exercise` (custom), `pref` (rest timer per exercise). A delete is a row with `deleted_at` (a tombstone, the cloud hears about it). `dirty = 1` marks what still has to be uploaded.
+- `strength_record (kind, id, json, sort_at, plan_key, workout_start, updated_at, deleted_at, dirty)`: one JSON document per record; kinds `workout`, `routine`, `folder`, `exercise` (custom), `pref` (rest timer and last Repetisi / Waktu choice per exercise; a pref with neither is a tombstone). A delete is a row with `deleted_at` (a tombstone, the cloud hears about it). `dirty = 1` marks what still has to be uploaded.
 - `strength_exercise_use (workout_id, exercise_id, started_at)`: which workouts contain which exercise, so the inline "previous" of a set is one indexed read.
 - `strength_meta (key, value)`: the workout in progress (`draft`, local only until finished), logger settings, sync cursor, import state.
 
@@ -41,6 +41,7 @@ Types are in `types.ts`. The workout in progress (`StrengthDraft`) is saved on e
 - Counted set: done and not a warm-up. Volume = sum of weight x reps of counted sets (a bodyweight set adds reps, not volume).
 - Estimated 1RM (Epley): `w * (1 + reps / 30)`, one rep = the weight, none above 30 reps.
 - Records, against everything logged before the workout (an exercise never done before has none): heaviest weight, best 1RM, best set volume, most reps at that load or heavier (needs an earlier set at that load or heavier), longest timed set.
+- Time: a set holds `reps` or `seconds`. Totals add the seconds of counted sets (`WorkoutTotals.seconds`); the time record (longest hold) needs an earlier hold of the exercise, so the first hold after counting it in reps starts the record instead of breaking it.
 - Muscle load: every counted set adds 1 to the groups of the exercise's primary muscles and 0.5 to the groups of its secondary muscles (12 groups, `MUSCLE_GROUPS`), per week from Monday.
 
 ### Energy when the watch did not record it (MET method)
@@ -53,6 +54,12 @@ kcal = MET x 3.5 x weight(kg) x minutes / 200
 ```
 
 3.5 and 6.0 are the Compendium of Physical Activities values for light-to-moderate and vigorous resistance training; 12 and 30 sets per hour are a slow session with long rests and a circuit. It is the formula JoyoRogo uses for its own quick entries (kcal per minute = MET x 3.5 x kg / 200), so the numbers agree. An estimate, never a measurement; weight comes from Settings > Profile (70 kg when empty).
+
+## Reps or time per exercise
+
+Each exercise of a workout or routine is measured in repetitions or in seconds. `StrengthExercise.timed` / `RoutineExercise.timed` hold the choice (absent = the library's `timed` flag, as in everything saved before the field; `resolveTimed` in `draft.ts` decides, falling back to what the sets hold for an exercise nothing knows any more). The Repetisi / Waktu switch (`ui/MeasureToggle.tsx`) sits in the chip row of the logger's exercise card and in the routine editor's card; `setExerciseTimed` converts the sets (weight and type stay, the other amounts and the ticks go; the screens ask first when a set holds something) and `setTimedPref` saves the choice in the exercise's `pref` record, so the exercise starts that way the next time it is added (`ExercisePref.timed`). A custom exercise picks its default when created. Everything downstream reads the sets, so history, records, share cards and the cloud need no flag.
+
+Time entry (`logFormat.ts`: `secondsFromDigits`, `digitsClock`) works like a kitchen timer on the number pad: "1", "3", "0" read 0:01, 0:13, 1:30. A timed set also has a stopwatch button (`setTimer.ts`, held by `active.tsx`): a tap starts it, a second tap stores the seconds in the set; with `countdownTimed` (Settings > Set berwaktu, on by default) and seconds already in the set (the plan or routine target) it counts down from them and vibrates at zero. It never touches the rest timer.
 
 ## Without a watch
 

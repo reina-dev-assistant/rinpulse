@@ -38,12 +38,14 @@ export interface WorkoutTotals {
   warmupSets: number;
   /** Repetitions of counted sets. */
   reps: number;
+  /** Seconds of counted timed sets (plank, wall sit, or anything measured in time). */
+  seconds: number;
   /** Exercises with at least one done set. */
   exercises: number;
 }
 
 export function workoutTotals(workout: Pick<StrengthWorkout, 'exercises'>): WorkoutTotals {
-  const totals: WorkoutTotals = { volume: 0, sets: 0, warmupSets: 0, reps: 0, exercises: 0 };
+  const totals: WorkoutTotals = { volume: 0, sets: 0, warmupSets: 0, reps: 0, seconds: 0, exercises: 0 };
   for (const exercise of workout.exercises) {
     let any = false;
     for (const set of exercise.sets) {
@@ -56,6 +58,7 @@ export function workoutTotals(workout: Pick<StrengthWorkout, 'exercises'>): Work
       totals.sets += 1;
       totals.volume += setVolume(set);
       totals.reps += set.reps ?? 0;
+      totals.seconds += set.seconds ?? 0;
     }
     if (any) totals.exercises += 1;
   }
@@ -177,7 +180,8 @@ export function findPersonalRecords(
       consider('weight', set.id, weight, prior.weight);
       consider('e1rm', set.id, epley1rm(set.weightKg, set.reps) ?? 0, prior.e1rm);
       consider('volume', set.id, setVolume(set), prior.volume);
-      consider('time', set.id, set.seconds ?? 0, prior.time);
+      // Like a rep record, a hold needs an earlier hold: an exercise first timed after being counted in reps starts its record here.
+      if (prior.time > 0) consider('time', set.id, set.seconds ?? 0, prior.time);
       // A load never lifted before is a weight record, not a rep record: a rep record needs an earlier set at that load or heavier.
       const earlierReps = repsAtOrAbove(prior, weight);
       if (reps > 0 && earlierReps > 0) consider('reps', set.id, reps, earlierReps);

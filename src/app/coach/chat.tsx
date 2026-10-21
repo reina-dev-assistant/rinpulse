@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Input } from '@/components/Input';
 import { Card, Screen } from '@/components/Screen';
 import { Notice, Skeleton } from '@/components/States';
@@ -11,6 +12,7 @@ import { chatFailure, coachChat, MAX_MESSAGE_CHARS, type ChatTurn } from '@/feat
 import { clearChat, readChat, writeChat } from '@/features/coach/chat/history';
 import { buildSnapshot } from '@/features/coach/chat/snapshot';
 import { CoachGate } from '@/features/coach/ui/CoachGate';
+import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { useCoach } from '@/features/coach/useCoach';
 import { useNightHrvAvailability } from '@/features/today/useNightHrvAvailability';
 import { fmtInt, useLocale } from '@/i18n';
@@ -41,6 +43,8 @@ function ChatBody() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The server refused the chat because the account is not Pro (the phone's last known answer said it was).
+  const [paywall, setPaywall] = useState(false);
   const [usage, setUsage] = useState<{ used: number; cap: number } | null>(null);
   const [flagged, setFlagged] = useState(false);
 
@@ -54,6 +58,7 @@ function ChatBody() {
     setText('');
     setSending(true);
     setError(null);
+    setPaywall(false);
     try {
       const answer = await coachChat(next, buildSnapshot(coach));
       const done: ChatTurn[] = [...next, { role: 'assistant', content: answer.reply }];
@@ -63,7 +68,8 @@ function ChatBody() {
       setFlagged(answer.flagged !== null);
     } catch (e) {
       const failure = chatFailure(e);
-      setError(failure.kind === 'cap' ? t('chat.capReached') : failure.kind === 'paywall' ? t('access.upsell.title') : t('chat.error', { message: failure.message }));
+      setPaywall(failure.kind === 'paywall');
+      setError(failure.kind === 'cap' ? t('chat.capReached') : failure.kind === 'other' ? t('chat.error', { message: failure.message }) : null);
       // Keep the question in the box so it can be sent again.
       setTurns(turns);
       setText(message);
@@ -76,6 +82,7 @@ function ChatBody() {
     clearChat();
     setTurns([]);
     setError(null);
+    setPaywall(false);
     setFlagged(false);
   };
 
@@ -84,14 +91,12 @@ function ChatBody() {
       {turns.length === 0 ? (
         <Card>
           <AppText variant="heading">{t('chat.emptyTitle')}</AppText>
-          <AppText variant="caption" muted>
-            {t('chat.emptyBody')}
-          </AppText>
           <View style={styles.suggestions}>
             {(['q1', 'q2', 'q3'] as const).map((key) => (
               <Button key={key} label={t(`chat.suggest.${key}`)} variant="secondary" lines={2} onPress={() => void send(t(`chat.suggest.${key}`))} disabled={sending} />
             ))}
           </View>
+          <Details>{t('chat.emptyBody')}</Details>
         </Card>
       ) : (
         <View style={styles.list}>
@@ -106,6 +111,7 @@ function ChatBody() {
         </AppText>
       ) : null}
       {flagged ? <Notice icon="medkit">{t('chat.flagged')}</Notice> : null}
+      {paywall ? <UpgradeCard moment="coach-chat" /> : null}
       {error ? <Notice tone="danger">{error}</Notice> : null}
       <Input
         value={text}
@@ -125,12 +131,14 @@ function ChatBody() {
           {t('chat.usage', { used: fmtInt(usage.used), cap: fmtInt(usage.cap) })}
         </AppText>
       ) : null}
-      <AppText variant="caption" muted>
-        {t('chat.privacy')}
-      </AppText>
-      <AppText variant="caption" muted>
-        {t('disclaimer')}
-      </AppText>
+      <Details>
+        <AppText variant="caption" muted>
+          {t('chat.privacy')}
+        </AppText>
+        <AppText variant="caption" muted>
+          {t('disclaimer')}
+        </AppText>
+      </Details>
     </>
   );
 }
@@ -138,7 +146,7 @@ function ChatBody() {
 export default function CoachChatScreen() {
   return (
     <Screen>
-      <CoachGate campaign="evergreen-coach-chat">
+      <CoachGate moment="coach-chat">
         <ChatBody />
       </CoachGate>
     </Screen>

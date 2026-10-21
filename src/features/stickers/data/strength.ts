@@ -46,6 +46,7 @@ export function buildStrengthSubject(input: StrengthSubjectInput, locale: Locale
   if (Number.isFinite(workout.startedAt)) strength.startedAt = workout.startedAt;
   if (positive(totals.volume)) strength.volumeKg = Math.round(totals.volume * 10) / 10;
   if (positive(totals.reps)) strength.reps = Math.round(totals.reps);
+  if (positive(totals.seconds)) strength.seconds = Math.round(totals.seconds);
   if (positive(totals.sets)) strength.sets = Math.round(totals.sets);
   if (positive(workout.durationSec)) strength.durationSec = Math.round(workout.durationSec);
   if (positive(workout.kcal)) strength.kcal = Math.round(workout.kcal);

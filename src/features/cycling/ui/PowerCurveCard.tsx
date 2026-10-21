@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, G, Line, Path, Text as SvgText } from 'react-native-svg';
 
+import { Details } from '@/components/Details';
 import { useAnalysisContext } from '@/features/workouts/analysis/ui/context';
-import { Card, Chip, Note, Txt } from '@/features/workouts/analysis/ui/primitives';
+import { Card, Chip, Txt } from '@/features/workouts/analysis/ui/primitives';
 import { fmtDecimal, fmtInt } from '@/i18n';
 
 import { KEY_DURATIONS } from '../power';
@@ -150,7 +151,9 @@ function PowerCurveCardImpl({ curve, allTime, records, weightKg }: Props) {
           </View>
         </View>
       ))}
-      <Note>{t('curve.note')}</Note>
+      <View style={styles.note}>
+        <Details>{t('curve.note')}</Details>
+      </View>
     </Card>
   );
 }
@@ -166,4 +169,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, gap: 8 },
   rowName: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, flexWrap: 'wrap' },
   rowValue: { flexShrink: 0 },
+  note: { marginTop: 10 },
 });

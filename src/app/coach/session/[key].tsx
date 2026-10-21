@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Card, Screen, Section } from '@/components/Screen';
 import { Notice, Skeleton } from '@/components/States';
 import { markSession } from '@/features/coach/actions';
@@ -151,9 +152,7 @@ function SessionDetail({ session, coach }: { session: PlannedSession; coach: Coa
           <Button label={t('session.mark.skip')} variant="secondary" icon="play-skip-forward" onPress={() => mark('skipped')} />
         </View>
       )}
-      <AppText variant="caption" muted>
-        {t('disclaimer')}
-      </AppText>
+      <Details>{t('disclaimer')}</Details>
     </>
   );
 }
@@ -176,7 +175,7 @@ function SessionByKey() {
 export default function CoachSessionScreen() {
   return (
     <Screen>
-      <CoachGate campaign="evergreen-coach-session">
+      <CoachGate>
         <SessionByKey />
       </CoachGate>
     </Screen>

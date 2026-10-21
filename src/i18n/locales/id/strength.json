@@ -42,7 +42,17 @@
     "repsField": "Repetisi set {{label}}",
     "secondsField": "Waktu set {{label}}, detik",
     "rpeField": "RPE set {{label}}",
-    "doneField": "Set {{label}} selesai"
+    "doneField": "Set {{label}} selesai",
+    "timerStart": "Mulai stopwatch set {{label}}",
+    "timerStop": "Hentikan dan simpan waktu set {{label}}"
+  },
+  "measure": {
+    "label": "Cara mengukur {{name}}",
+    "confirmTitle": "Ganti ke {{measure}}?",
+    "confirmMessage": "Isi repetisi atau waktu di semua set latihan ini dikosongkan dan centang set dilepas. Beban dan jenis set tetap.",
+    "confirmMessageRoutine": "Isi repetisi atau waktu di semua set latihan ini diganti dengan angka awal. Beban dan jenis set tetap.",
+    "confirm": "Ganti",
+    "cancel": "Batal"
   },
   "exercise": {
     "openInfo": "Lihat cara melakukan {{name}}",
@@ -212,10 +222,10 @@
     "formName": "Nama",
     "formMuscles": "Otot utama",
     "formEquipment": "Alat",
-    "formTimed": "Dihitung dalam waktu",
-    "formTimedHint": "Untuk plank dan gerakan tahan lainnya: kamu mengisi detik, bukan repetisi.",
     "deleteTitle": "Hapus latihan ini?",
-    "deleteMessage": "Riwayat latihan yang memakainya tetap ada."
+    "deleteMessage": "Riwayat latihan yang memakainya tetap ada.",
+    "formMeasure": "Diukur dengan",
+    "formMeasureHint": "Repetisi untuk gerakan yang dihitung per angkatan, Waktu untuk plank dan gerakan tahan. Bisa diganti per latihan nanti."
   },
   "pr": {
     "weight": "Beban terberat",
@@ -237,6 +247,7 @@
     "sets": "Set",
     "warmupSets": "+{{count}} pemanasan",
     "reps": "Repetisi",
+    "time": "Waktu",
     "exercises": "Latihan",
     "kcal": "Energi",
     "kcalWatch": "dari jam",
@@ -272,6 +283,9 @@
     "restMore": "Tambah 15 detik",
     "autoRest": "Mulai otomatis",
     "autoRestHint": "Timer jalan sendiri saat kamu menandai set selesai.",
+    "timedTitle": "Set berwaktu",
+    "countdown": "Hitung mundur dari target",
+    "countdownHint": "Stopwatch set berwaktu menghitung mundur dari waktu yang sudah terisi dan bergetar di nol. Kalau mati, stopwatch menghitung naik.",
     "screenTitle": "Layar dan kolom",
     "keepAwake": "Layar tetap menyala",
     "keepAwakeHint": "Selama kamu membuka pencatat latihan.",

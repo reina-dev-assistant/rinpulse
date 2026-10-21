@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useHideTabBar } from '@/components/navigation';
 import { Screen } from '@/components/Screen';
 import { BikeRideView } from '@/features/bikecomputer/ui/BikeRideView';
 import { useBikeSettings } from '@/features/bikecomputer/ui/useBikeSettings';
@@ -51,6 +52,7 @@ export function RecordScreen() {
   const bike = useBikeSettings();
   // Bike computer mode takes the whole screen (no header, no scrolling page) while a ride is recording.
   const bikeLive = bike.enabled && snapshot.sport === 'ride' && (phase === 'active' || phase === 'saving');
+  useHideTabBar(bikeLive && !leaving);
 
   // Opened from another tab, from Manual entry or from the notification, the live screen can sit on its own or on a screen it has nothing
   // to do with. Putting the Workouts list under it makes back (hardware, header, iOS swipe) a plain pop onto the list with the live card.

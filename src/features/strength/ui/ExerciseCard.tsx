@@ -10,7 +10,9 @@ import { HIT, spacing, tintColors, useColors, useTheme, type Tint } from '@/them
 
 import { setLabels } from '../draft';
 import { restLabel, type PreviousSet } from '../logFormat';
+import type { SetTimer } from '../setTimer';
 import type { StrengthExercise } from '../types';
+import { MeasureToggle } from './MeasureToggle';
 import { COLUMN, SetRow, type SetRowActions } from './SetRow';
 
 export interface ExerciseCardActions extends SetRowActions {
@@ -19,6 +21,8 @@ export interface ExerciseCardActions extends SetRowActions {
   onExerciseMenu: (exerciseKey: string) => void;
   onNote: (exerciseKey: string) => void;
   onRest: (exerciseKey: string) => void;
+  /** Measures the exercise in seconds (`true`) or repetitions (`false`); the screen confirms first when sets hold values. */
+  onMeasure: (exerciseKey: string, timed: boolean) => void;
 }
 
 /** One colour per superset letter; they cycle. */
@@ -30,6 +34,8 @@ interface ExerciseCardProps {
   /** Primary muscles, already translated. */
   muscles: string;
   timed: boolean;
+  /** The stopwatch running on a set of this exercise, else null. */
+  timer: SetTimer | null;
   /** `A`, `B`, ... when the exercise is in a superset. */
   superset: string | null;
   previous: readonly PreviousSet[] | null;
@@ -41,7 +47,7 @@ interface ExerciseCardProps {
   actions: ExerciseCardActions;
 }
 
-function ExerciseCardView({ entry, name, muscles, timed, superset, previous, restSec, showRpe, flash, actions }: ExerciseCardProps) {
+function ExerciseCardView({ entry, name, muscles, timed, timer, superset, previous, restSec, showRpe, flash, actions }: ExerciseCardProps) {
   const { t } = useTranslation('strength');
   const { colors, radius } = useTheme();
   const labels = setLabels(entry.sets);
@@ -80,6 +86,7 @@ function ExerciseCardView({ entry, name, muscles, timed, superset, previous, res
       </View>
 
       <View style={styles.chips}>
+        <MeasureToggle timed={timed} name={name} onChange={(next) => actions.onMeasure(entry.key, next)} />
         {superset ? (
           <View style={[styles.pill, { backgroundColor: rail ?? colors.muted }]}>
             <AppText variant="label" color={colors.primaryForeground}>
@@ -114,7 +121,7 @@ function ExerciseCardView({ entry, name, muscles, timed, superset, previous, res
           <AppText variant="label" muted style={[styles.hSet, { width: COLUMN.set }]}>
             {t('table.set')}
           </AppText>
-          <AppText variant="label" muted style={styles.hPrevious}>
+          <AppText variant="label" muted style={[styles.hPrevious, timed && styles.hPreviousTimed]}>
             {t('table.previous')}
           </AppText>
           <AppText variant="label" muted style={styles.hField}>
@@ -123,6 +130,7 @@ function ExerciseCardView({ entry, name, muscles, timed, superset, previous, res
           <AppText variant="label" muted style={styles.hField}>
             {timed ? t('table.time') : t('table.reps')}
           </AppText>
+          {timed ? <View style={{ width: COLUMN.timer }} /> : null}
           {showRpe ? (
             <AppText variant="label" muted style={[styles.hSet, { width: COLUMN.rpe }]}>
               {t('table.rpe')}
@@ -138,6 +146,7 @@ function ExerciseCardView({ entry, name, muscles, timed, superset, previous, res
             label={labels[index] ?? String(index + 1)}
             previous={previous?.[index] ?? null}
             timed={timed}
+            timer={timer?.setId === set.id ? timer : null}
             showRpe={showRpe}
             flash={flash?.setId === set.id ? flash.n : 0}
             actions={actions}
@@ -157,11 +166,12 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   title: { flex: 1, gap: 2, minHeight: HIT, justifyContent: 'center' },
   menu: { width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.md, minHeight: 28, borderRadius: 14 },
   table: { gap: 2 },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.xs },
   hSet: { textAlign: 'center' },
   hPrevious: { flex: 1.3, textAlign: 'center' },
+  hPreviousTimed: { flex: 0.9 },
   hField: { flex: 1, textAlign: 'center' },
 });

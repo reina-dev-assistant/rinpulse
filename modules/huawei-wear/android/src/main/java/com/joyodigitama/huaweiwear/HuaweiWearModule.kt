@@ -309,6 +309,11 @@ class HuaweiWearModule : Module() {
       runtime().setUserProfile(profileOf(profile))
     }
 
+    // The language the watch is told (service 0C): the app's pinned language, or null for the phone's (WatchLanguage.kt).
+    AsyncFunction("setWatchLanguage") Coroutine { language: String? ->
+      runtime().language.setPinned(language)
+    }
+
     // The watch's own heart rate, SpO2 and sleep sensors, and the live heart rate on Today (HealthSensors.kt, LiveHeartRate.kt).
     Function("getHealthSensors") {
       runtime().healthSensorsStatus()

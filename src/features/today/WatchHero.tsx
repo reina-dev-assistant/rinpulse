@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { HeroGradient } from '@/components/HeroGradient';
 import { Metric } from '@/components/Metric';
 import { PressableScale } from '@/components/PressableScale';
 import { Ring } from '@/components/Ring';
@@ -53,6 +54,7 @@ export function WatchHero({ linkState, deviceName, steps, goal, heart, nowSec, b
 
   return (
     <View style={[styles.hero, { backgroundColor: colors.hero, borderRadius: radius.card }]}>
+      <HeroGradient />
       <View
         style={styles.top}
         accessible
@@ -146,7 +148,7 @@ export function WatchHero({ linkState, deviceName, steps, goal, heart, nowSec, b
 }
 
 const styles = StyleSheet.create({
-  hero: { padding: spacing.md + 4, gap: spacing.md },
+  hero: { padding: spacing.md + 4, gap: spacing.md, overflow: 'hidden' },
   top: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginLeft: -8, minHeight: 28 },
   link: { flexShrink: 0 },
   device: { flex: 1, textAlign: 'right' },

@@ -14,6 +14,7 @@ import type { StrengthWorkout } from '@/features/strength/types';
 import { fmtInt, useLocale } from '@/i18n';
 import { spacing } from '@/theme';
 
+import { timerText } from '../logFormat';
 import { setText, volumeText } from './liftFormat';
 
 interface StrengthDetailSectionProps {
@@ -49,7 +50,8 @@ export function StrengthDetailSection({ strength, catalog }: StrengthDetailSecti
       <View style={styles.figures}>
         <Figure label={t('detail.volume')} value={volumeText(totals.volume)} />
         <Figure label={t('detail.sets')} value={fmtInt(totals.sets)} />
-        <Figure label={t('detail.reps')} value={fmtInt(totals.reps)} />
+        {totals.reps > 0 || totals.seconds === 0 ? <Figure label={t('detail.reps')} value={fmtInt(totals.reps)} /> : null}
+        {totals.seconds > 0 ? <Figure label={t('detail.time')} value={timerText(totals.seconds)} /> : null}
       </View>
       {rows.map((row) => (
         <View key={row.key} style={styles.row} accessible accessibilityLabel={row.best ? t('detail.rowA11y', { name: row.name, count: row.sets, best: row.best }) : row.name}>

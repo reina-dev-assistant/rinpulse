@@ -3,13 +3,13 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, KeyboardAvoidingView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Segmented } from '@/components/Segmented';
 import { LoadingState, Notice } from '@/components/States';
+import { useTabBarInset } from '@/components/tabBarInset';
 import {
   addVerdict,
   drawReducer,
@@ -71,11 +71,11 @@ function DrawMap({ maplibre }: { maplibre: MapLibre }) {
   const { t } = useTranslation('routes', { keyPrefix: 'map.draw' });
   const { t: tRoot } = useTranslation('routes');
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { Map: MapView, Camera } = maplibre;
 
   const cameraRef = useRef<CameraRef>(null);
+  const tabBarInset = useTabBarInset();
   const rootRef = useRef<View>(null);
   const [rootTop, setRootTop] = useState(0);
   const [startView, setStartView] = useState<StartView | null>(null);
@@ -292,9 +292,7 @@ function DrawMap({ maplibre }: { maplibre: MapLibre }) {
           behavior="padding"
           keyboardVerticalOffset={rootTop}
           style={styles.bottom}>
-          <View
-            pointerEvents="box-none"
-            style={[styles.stack, { paddingBottom: sheet === 'controls' ? insets.bottom + spacing.sm : spacing.sm }]}>
+          <View pointerEvents="box-none" style={[styles.stack, { paddingBottom: spacing.sm + tabBarInset }]}>
             <MapAttribution extra={credits} style={styles.credit} />
             {sheet === 'name' ? (
               <NameSheet
@@ -373,7 +371,7 @@ const styles = StyleSheet.create({
   top: { position: 'absolute', top: spacing.sm, left: spacing.sm, right: 56, gap: spacing.sm },
   side: { position: 'absolute', top: 56, right: spacing.sm, gap: spacing.sm },
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0 },
-  stack: { paddingHorizontal: spacing.sm },
+  stack: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
   credit: { position: 'relative', left: 0, bottom: 0, alignSelf: 'flex-start', marginBottom: spacing.xs, marginLeft: spacing.xs },
   summaryRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

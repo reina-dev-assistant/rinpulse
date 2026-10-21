@@ -15,6 +15,9 @@ Reading is open to every signed-in account; writing needs Pro. The server side i
 - `json` is the document exactly as the phone stores it (`src/features/strength/types.ts`). The server validates it and stores the
   same string, so keys a newer app adds survive an older server. A record is at most 48 KB, a workout has at most 60 exercises
   with at most 60 sets each, notes at most 2000 characters, ids at most 64.
+- Optional `timed` (true = seconds, false = repetitions) on a workout's or routine's exercise and on a `pref` is the person's Repetisi /
+  Waktu choice (`docs/strength.md`). Sets already carry `seconds` next to `reps`, so timed sets round-trip unchanged; an older
+  server or app ignores the extra key and keeps it in `json`.
 - `updated_at` / `deleted_at` are the record's own `updatedAt` / `deletedAt` (ms), sent next to the document. A delete is a
   tombstone: the document stays, `deleted_at` is set, so every phone learns of it.
 - `server_at` is when the server stored the row. Within one push it strictly increases, and it is always later than anything the

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { rogo } from '@/cloud/rogo';
 import { Notice, Skeleton } from '@/components/States';
-import { ProUpsell } from '@/features/social/ProUpsell';
+import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { detailMapOf, type DetailMap } from '@/features/social/detailMap';
 import { useRogoQuery } from '@/features/social/useRogoQuery';
 import { useAnalysisPalette, useMapTheme } from '@/features/workouts/analysis/palette';
@@ -38,7 +38,7 @@ export function WorkoutDetailSection({
   if (!data) {
     return error !== null ? <Notice tone="danger">{error}</Notice> : <Skeleton width="100%" height={320} radius="card" />;
   }
-  if (data.locked) return <ProUpsell />;
+  if (data.locked) return <UpgradeCard moment="workout" />;
   if (data.analysis) {
     return <WorkoutAnalysisView analysis={data.analysis} palette={palette} t={analysisT} mapTheme={mapTheme} onScrubActive={onScrubActive} />;
   }

@@ -19,6 +19,7 @@ import {
   type RogoSession,
   type RogoSet,
 } from './importRogo';
+import { resolveTimed } from './draft';
 import { deleteStrengthWorkout, ensureStrengthSchema, getRecord, getStrengthMeta, listDirty, markUploaded, putRecord } from './store';
 
 const SLUGS = new Set((exercisesJson as { id: string }[]).map((e) => e.id));
@@ -129,6 +130,14 @@ describe('mapSession', () => {
     const w = mapSession(session({ sets: [set({ id: 'a', exerciseId: 'wall_sit', position: 0, reps: null, durationSec: 45 })] }));
     expect(w.exercises[0]!.exerciseId).toBe('wall_sit');
     expect(w.exercises[0]!.sets[0]).toMatchObject({ reps: null, seconds: 45 });
+    // Imported history carries no `timed` flag: the sets alone make it a timed exercise downstream.
+    expect(w.exercises[0]!.timed).toBeUndefined();
+    expect(resolveTimed(w.exercises[0]!, null)).toBe(true);
+  });
+
+  it('keeps the seconds of a routine set', () => {
+    const r = mapRoutine({ id: 'r2', name: 'Core', note: null, createdAt: 0, updatedAt: 0, exercises: [{ exerciseId: 'wall_sit', sets: [{ setType: 'normal', durationSec: 60 }] }] }, 0);
+    expect(r.exercises[0]!.sets[0]).toMatchObject({ reps: null, seconds: 60 });
   });
 
   it('groups consecutive rows, splits a repeated exercise, keeps supersets', () => {

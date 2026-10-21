@@ -105,6 +105,7 @@ describe('buildStrengthSubject', () => {
     const d = strengthOf(build(workout([plank])));
     expect(d.volumeKg).toBeUndefined();
     expect(d.reps).toBeUndefined();
+    expect(d.seconds).toBe(45);
     expect(d.sets).toBe(1);
     expect(d.exercises).toBe(1);
     expect(d.topSets[0].load).toBe('45 s');
@@ -115,7 +116,7 @@ describe('buildStrengthSubject', () => {
     const d = strengthOf(s);
     expect(s.kinds).toEqual(['strength']);
     expect(d.name).toBe('Push day');
-    for (const key of ['volumeKg', 'reps', 'sets', 'exercises', 'durationSec', 'kcal', 'topSets', 'prs', 'muscleLabels', 'muscleSets', 'muscleColors', 'avgRpe']) {
+    for (const key of ['volumeKg', 'reps', 'seconds', 'sets', 'exercises', 'durationSec', 'kcal', 'topSets', 'prs', 'muscleLabels', 'muscleSets', 'muscleColors', 'avgRpe']) {
       expect(d[key]).toBeUndefined();
     }
     const empty = strengthOf(build(workout([])));

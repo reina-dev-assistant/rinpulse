@@ -72,7 +72,9 @@
   },
   "list": {
     "history": "Riwayat dan kalender",
-    "strengthLine_other": "{{count}} set, {{volume}}"
+    "strengthLine_other": "{{count}} set, {{volume}}",
+    "strengthLineTime_other": "{{count}} set, {{time}}",
+    "strengthLineSets_other": "{{count}} set"
   },
   "exercises": {
     "title": "Latihan beban",
@@ -182,6 +184,7 @@
     "volume": "Volume",
     "sets": "Set",
     "reps": "Repetisi",
+    "time": "Waktu",
     "setsCount_other": "{{count}} set",
     "rowA11y_other": "{{name}}, {{count}} set, terbaik {{best}}",
     "open": "Buka ringkasan latihan beban"

@@ -1,3 +1,6 @@
+import { useFocusEffect, useNavigation } from 'expo-router';
+import { useCallback } from 'react';
+
 import { useTheme } from '@/theme';
 
 /**
@@ -16,4 +19,20 @@ export function useStackOptions() {
     headerTitleStyle: { fontFamily: fonts.bold, fontSize: 18, color: colors.foreground },
     contentStyle: { backgroundColor: colors.background },
   } as const;
+}
+
+/**
+ * Hides the floating tab bar while this screen is focused and `hidden` is true (a full-screen view such as the bike computer). The tab
+ * navigator is the parent of the tab's stack; `tabBarStyle: { display: 'none' }` is the convention `FloatingTabBar` reads.
+ */
+export function useHideTabBar(hidden: boolean) {
+  const navigation = useNavigation();
+  useFocusEffect(
+    useCallback(() => {
+      if (!hidden) return;
+      const tabs = navigation.getParent();
+      tabs?.setOptions({ tabBarStyle: { display: 'none' } });
+      return () => tabs?.setOptions({ tabBarStyle: undefined });
+    }, [navigation, hidden]),
+  );
 }

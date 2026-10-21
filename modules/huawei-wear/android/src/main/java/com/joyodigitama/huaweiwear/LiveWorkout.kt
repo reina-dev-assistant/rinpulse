@@ -21,12 +21,14 @@ import kotlinx.coroutines.launch
  * A workout on the watch, followed live on the phone. Two sources:
  *  - the watch's own numbers, when it sends them (Huawei Health's reverse linkage [LiveWorkoutWire], or the `17/11` report);
  *  - otherwise JoyoFit's own session ([Source.GPS] / [Source.STATUS] / [Source.MANUAL]): the Fit 4 Pro (6.1.0.117) sends
- *    neither, but asks for the phone's GPS about every 20 s while an outdoor workout runs, answers the `17/03` status poll,
- *    and pushes realtime heart rate when asked. The session runs on that heart rate: time from the phone, calories from
- *    [HeartRateEnergy]. It ends when the status poll says "no workout" [IDLE_ANSWERS_TO_END] times in a row with no GPS
- *    request for [GPS_SILENCE_MS], on GPS silence alone only if the poll is not answered, or when the user taps Finish.
+ *    neither, but asks for the phone's GPS about every 20 s from the moment its workout screen looks for a fix, answers the
+ *    `17/03` status poll, and pushes realtime heart rate when asked. The session runs on that heart rate: calories from
+ *    [HeartRateEnergy], time from the phone's clock, which starts only when the watch's status says the workout runs
+ *    (until then the session is [Status.PREPARING]: "searching for GPS"). It ends when the status poll says "no workout"
+ *    [LiveWorkoutPolicy.IDLE_ANSWERS_TO_END] times in a row, or the user taps Finish; a watch that is not conclusive (still
+ *    asks for GPS, or answers nothing) makes the screen ask the user (`endSuspected`) instead of dropping the session.
  * Either way it keeps JoyoFit's fat and carbohydrate estimate ([SubstrateEstimator]), an ongoing notification that opens the
- * live screen, and reports every change to JS (`onLiveWorkout`).
+ * live screen, and reports every change to JS (`onLiveWorkout`). The state decisions live in [LiveWorkoutPolicy].
  */
 internal class LiveWorkout(
   context: Context,
@@ -57,7 +59,16 @@ internal class LiveWorkout(
     var estimatedKcal: Double = 0.0,
     var lastHeartRateAtMs: Long? = null,
     var lastGpsAtMs: Long = 0L,
-  )
+  ) {
+    /** Phone-side session: workout time, counted from the moment the watch really ran the workout. */
+    val clock = WorkoutClock()
+
+    /** Phone-side session: the watch's own status said the workout runs (a GPS request alone does not). */
+    var confirmed = false
+
+    /** The watch looks to have stopped but did not say so: JS asks the user (Finish / keep going). */
+    var endSuspected = false
+  }
 
   private var watchdog: Job? = null
 
@@ -110,9 +121,7 @@ internal class LiveWorkout(
     synchronized(lock) {
       val s = session ?: return
       if (s.status == Status.ENDED) return
-      s.status = Status.ENDED
-      s.updatedAtMs = System.currentTimeMillis()
-      s.endedAtMs = s.updatedAtMs
+      setStatus(s, Status.ENDED, System.currentTimeMillis())
     }
     log("Live workout: ended ($why)")
     liveHeartRate.setWorkoutActive(false)
@@ -121,25 +130,33 @@ internal class LiveWorkout(
     publish(force = true)
   }
 
-  /** Realtime heart rate from the watch: drives a phone-side session; a watch-fed one has its own heart rate. */
+  /**
+   * Realtime heart rate from the watch: drives a phone-side session; a watch-fed one has its own heart rate. While the
+   * watch only prepares (searching for GPS) the heart rate shows but no time or energy is counted.
+   */
   fun onHeartRate(bpm: Int) {
     synchronized(lock) {
       val s = session ?: return
-      if (s.status != Status.RUNNING || s.source == Source.WATCH) return
+      if (s.source == Source.WATCH || (s.status != Status.RUNNING && s.status != Status.PREPARING)) return
       val now = System.currentTimeMillis()
-      val last = s.lastHeartRateAtMs
-      s.lastHeartRateAtMs = now
-      if (last != null) {
-        // A reading covers the time since the previous one, at most 10 s (the link may have dropped in between).
-        val minutes = (now - last).coerceIn(0L, 10_000L) / 60_000.0
-        val profile = settings.profile
-        val age = profile?.birthYear?.takeIf { it > 0 }?.let { ProfileSender.age(it, LocalDate.now()) } ?: DEFAULT_AGE
-        val weight = profile?.weightKg?.takeIf { it > 0 } ?: DEFAULT_WEIGHT_KG
-        s.estimatedKcal += HeartRateEnergy.kcalPerMinute(bpm, weight, age, profile?.sex ?: "unknown") * minutes
+      if (s.status == Status.PREPARING) {
+        s.metrics = s.metrics.copy(heartRate = bpm)
+        s.updatedAtMs = now
+      } else {
+        val last = s.lastHeartRateAtMs
+        s.lastHeartRateAtMs = now
+        if (last != null) {
+          // A reading covers the time since the previous one, at most 10 s (the link may have dropped in between).
+          val minutes = (now - last).coerceIn(0L, 10_000L) / 60_000.0
+          val profile = settings.profile
+          val age = profile?.birthYear?.takeIf { it > 0 }?.let { ProfileSender.age(it, LocalDate.now()) } ?: DEFAULT_AGE
+          val weight = profile?.weightKg?.takeIf { it > 0 } ?: DEFAULT_WEIGHT_KG
+          s.estimatedKcal += HeartRateEnergy.kcalPerMinute(bpm, weight, age, profile?.sex ?: "unknown") * minutes
+        }
+        s.metrics = s.metrics.copy(heartRate = bpm, calories = s.estimatedKcal, durationSec = s.clock.seconds(now) ?: s.metrics.durationSec)
+        s.updatedAtMs = now
+        s.estimator.update(s.estimatedKcal, bpm)
       }
-      s.metrics = s.metrics.copy(heartRate = bpm, calories = s.estimatedKcal, durationSec = ((now - s.id) / 1000).toInt())
-      s.updatedAtMs = now
-      s.estimator.update(s.estimatedKcal, bpm)
     }
     publish(force = false)
   }
@@ -147,7 +164,7 @@ internal class LiveWorkout(
   private suspend fun onEvent(event: SampleEvent) {
     when (event.eventId) {
       LiveWorkoutWire.EVENT_CONTROL -> onControl(LiveWorkoutWire.parseControl(event.data))
-      LiveWorkoutWire.EVENT_START -> change(LiveWorkoutWire.parseWorkoutType(event.data), Status.RUNNING, "started")
+      LiveWorkoutWire.EVENT_START -> change(LiveWorkoutWire.parseWorkoutType(event.data), Status.RUNNING, "started", opens = true)
       LiveWorkoutWire.EVENT_PAUSE -> change(LiveWorkoutWire.parseWorkoutType(event.data), Status.PAUSED, "paused")
       LiveWorkoutWire.EVENT_RESUME -> change(LiveWorkoutWire.parseWorkoutType(event.data), Status.RUNNING, "resumed")
       LiveWorkoutWire.EVENT_STOP -> change(LiveWorkoutWire.parseWorkoutType(event.data), Status.ENDED, "stopped")
@@ -194,18 +211,20 @@ internal class LiveWorkout(
     )
   }
 
-  private fun change(workoutType: Int?, status: Status, what: String) {
+  private fun change(workoutType: Int?, status: Status, what: String, opens: Boolean = false) {
+    val now = System.currentTimeMillis()
     synchronized(lock) {
-      val current = session
-      // A pause or resume without a known start (the app started mid-workout) still opens a session.
-      if (current == null || current.status == Status.ENDED && status != Status.ENDED) {
+      val current = session?.takeIf { it.status != Status.ENDED }
+      if (current == null) {
+        // Nothing to stop; right after a workout ended only a start opens a new one (a late pause or resume is a straggler).
+        if (status == Status.ENDED) return
+        val endedAt = session?.endedAtMs
+        if (!opens && endedAt != null && now - endedAt < LiveWorkoutPolicy.RESTART_GUARD_MS) return
+        // A pause or resume without a known start (the app started mid-workout) still opens a session.
         session = newSession(workoutType, status)
       } else {
         if (workoutType != null) current.sportType = workoutType
-        if (current.status == Status.ENDED) return
-        current.status = status
-        current.updatedAtMs = System.currentTimeMillis()
-        if (status == Status.ENDED) current.endedAtMs = current.updatedAtMs
+        setStatus(current, status, now)
       }
     }
     log("Live workout: $what (type $workoutType)")
@@ -214,60 +233,79 @@ internal class LiveWorkout(
 
   private fun onPoint(point: SamplePointIn) {
     synchronized(lock) {
-      val current = watchSession()
+      val now = System.currentTimeMillis()
+      val frame = LiveMetrics().applyPoint(point.values)
+      val running = frame.watchState == 1 || frame.watchState == 2
+      if (!acceptsWatchFrame(running, frame.durationSec, frame.watchState == 3, now)) return
+      val current = watchSession(if (LiveWorkoutPolicy.isRunningFrame(running, frame.durationSec)) Status.RUNNING else Status.PREPARING)
       val metrics = current.metrics.applyPoint(point.values)
       current.metrics = metrics
-      current.updatedAtMs = System.currentTimeMillis()
+      current.updatedAtMs = now
       current.estimator.update(metrics.calories, metrics.heartRate)
-      val fromStream = when (metrics.watchState) {
+      val next = when (metrics.watchState) {
         1 -> Status.RUNNING
         2 -> Status.PAUSED
         3 -> Status.ENDED
-        else -> null
+        else -> if (current.status == Status.PREPARING && LiveWorkoutPolicy.isRunningFrame(running, metrics.durationSec)) Status.RUNNING else null
       }
-      if (fromStream != null && fromStream != current.status && current.status != Status.ENDED) {
-        current.status = fromStream
-        if (fromStream == Status.ENDED) current.endedAtMs = current.updatedAtMs
-      }
+      if (next != null) setStatus(current, next, now)
     }
     publish(force = false)
   }
 
   /**
-   * The watch's answer to the 30 s status poll (`17/03`): starts a heart-rate session for a running workout (indoor ones
-   * included), follows pause and resume, and ends a session it or the GPS requests started once the watch is idle.
+   * The watch's answer to the status poll (`17/03`): the watch says when the workout really runs (after its GPS search and
+   * countdown), so this is what starts the phone's timer for a session opened by a GPS request, and what starts one for
+   * a running workout nothing else announced (indoor ones included). It follows pause and resume, and ends a session once
+   * the watch is idle ([LiveWorkoutPolicy.idleVerdict]).
    */
   fun watchStatus(running: Boolean, paused: Boolean, workoutType: Int?) {
     var created = false
     var ended = false
     var changed = false
+    var note: String? = null
     synchronized(lock) {
-      lastStatusAtMs = System.currentTimeMillis()
+      val now = System.currentTimeMillis()
+      lastStatusAtMs = now
       idleAnswers = if (running) 0 else idleAnswers + 1
       val s = session?.takeIf { it.status != Status.ENDED }
       when {
         running && s == null -> {
-          session = newSession(workoutType, if (paused) Status.PAUSED else Status.RUNNING, Source.STATUS)
+          session = newSession(workoutType, if (paused) Status.PAUSED else Status.RUNNING, Source.STATUS).also { it.confirmed = true }
           created = true
         }
         running && s != null -> {
           if (workoutType != null && s.sportType == null) s.sportType = workoutType
           if (s.source != Source.WATCH) {
+            s.confirmed = true
             val want = if (paused) Status.PAUSED else Status.RUNNING
             if (s.status != want) {
-              s.status = want
-              // A pause must not count as workout time once resumed.
-              s.lastHeartRateAtMs = null
+              note = if (paused) "the watch paused the workout" else if (s.status == Status.PAUSED) "the watch resumed the workout" else "the watch started the workout; timer running"
+              setStatus(s, want, now)
+              changed = true
+            } else if (s.endSuspected) {
+              s.endSuspected = false
               changed = true
             }
           }
         }
-        // One idle answer is not enough to end a workout the user is still doing, and a watch still asking for the
-        // phone's GPS is running one whatever the poll says.
-        !running && s != null && (s.source == Source.STATUS || s.source == Source.GPS) ->
-          ended = idleAnswers >= IDLE_ANSWERS_TO_END && System.currentTimeMillis() - s.lastGpsAtMs > GPS_SILENCE_MS
+        !running && s != null && (s.source == Source.STATUS || s.source == Source.GPS) -> {
+          when (LiveWorkoutPolicy.idleVerdict(s.status == Status.PREPARING, s.confirmed, idleAnswers, now - s.lastGpsAtMs)) {
+            LiveWorkoutPolicy.Verdict.END -> ended = true
+            LiveWorkoutPolicy.Verdict.SUSPECT -> if (!s.endSuspected) {
+              s.endSuspected = true
+              changed = true
+              note = "the watch reports no workout but still asks for GPS; asking the user"
+            }
+            LiveWorkoutPolicy.Verdict.KEEP -> Unit
+          }
+        }
+        // A watch-fed session normally ends on the watch's stop frame; with the frames silent and the poll idle, a lost stop does not leave it running.
+        !running && s != null && s.source == Source.WATCH ->
+          ended = LiveWorkoutPolicy.watchFedEnds(s.status == Status.PREPARING, idleAnswers, now - s.updatedAtMs)
       }
     }
+    note?.let { log("Live workout: $it") }
     when {
       created -> {
         log("Live workout: the watch reports a workout running (type $workoutType); following its heart rate")
@@ -279,70 +317,149 @@ internal class LiveWorkout(
     }
   }
 
-  /** The watch asked for the phone's GPS: an outdoor workout is running (the request repeats about every 20 s). */
-  fun gpsPing() {
-    val created = synchronized(lock) {
-      val s = session
-      if (s != null && s.status != Status.ENDED) {
-        s.lastGpsAtMs = System.currentTimeMillis()
-        false
+  /**
+   * The watch asked for the phone's GPS (the request repeats about every 20 s). It asks from the moment its workout screen
+   * starts looking for a fix, which is before the workout runs, so this opens a session that is only preparing (the timer
+   * waits); [watchStatus] or the watch's own numbers start it. A watch that never answered the status poll gives nothing
+   * else to wait for, so its session runs from the first request. Returns true while the status should be asked now (the
+   * session was just opened, or still prepares).
+   */
+  fun gpsPing(): Boolean {
+    var created = false
+    var changed = false
+    var askStatus = false
+    synchronized(lock) {
+      val now = System.currentTimeMillis()
+      val last = session
+      val s = last?.takeIf { it.status != Status.ENDED }
+      if (s != null) {
+        s.lastGpsAtMs = now
+        askStatus = s.status == Status.PREPARING
+        if (s.endSuspected) {
+          s.endSuspected = false
+          changed = true
+        }
       } else {
-        session = newSession(null, Status.RUNNING, Source.GPS).also { it.lastGpsAtMs = it.id }
-        true
+        // A straggling request right after a workout ended does not open a second one.
+        val endedAt = last?.endedAtMs
+        if (endedAt != null && now - endedAt < LiveWorkoutPolicy.RESTART_GUARD_MS) return false
+        val pollAnswers = lastStatusAtMs > 0L
+        session = newSession(null, if (pollAnswers) Status.PREPARING else Status.RUNNING, Source.GPS).also { it.lastGpsAtMs = now }
+        created = true
+        askStatus = pollAnswers
       }
     }
-    if (!created) return
-    log("Live workout: running on the watch (it asked for the phone's GPS); following its heart rate")
+    if (!created) {
+      if (changed) publish(force = true)
+      return askStatus
+    }
+    log("Live workout: the watch asked for the phone's GPS; following its heart rate" + if (askStatus) " (timer waits for the watch to start the workout)" else "")
     liveHeartRate.setWorkoutActive(true)
     watchdog?.cancel()
     watchdog = scope.launch {
       while (isActive) {
         delay(15_000L)
-        val silent = synchronized(lock) {
+        var verdict = LiveWorkoutPolicy.Verdict.KEEP
+        synchronized(lock) {
           val s = session
-          val now = System.currentTimeMillis()
-          // The watch stops asking once its own GPS has a fix, so silence alone says nothing while the status poll
-          // answers; then the poll decides. Silence ends the session only on watches that do not answer the poll.
-          s != null && s.source == Source.GPS && s.status != Status.ENDED &&
-            now - s.lastGpsAtMs > GPS_SILENCE_MS && now - lastStatusAtMs > STATUS_STALE_MS
+          if (s != null && s.source == Source.GPS && s.status != Status.ENDED) {
+            val now = System.currentTimeMillis()
+            verdict = LiveWorkoutPolicy.silenceVerdict(s.status == Status.PREPARING, now - s.lastGpsAtMs, now - lastStatusAtMs)
+            if (verdict == LiveWorkoutPolicy.Verdict.SUSPECT) {
+              if (s.endSuspected) verdict = LiveWorkoutPolicy.Verdict.KEEP else s.endSuspected = true
+            }
+          }
         }
-        if (silent) end("the watch stopped asking for GPS and does not answer the status poll")
+        when (verdict) {
+          LiveWorkoutPolicy.Verdict.END -> end("the watch stopped asking for GPS and does not answer the status poll")
+          LiveWorkoutPolicy.Verdict.SUSPECT -> {
+            log("Live workout: the watch stopped asking for GPS and does not answer the status poll; asking the user")
+            publish(force = true)
+          }
+          LiveWorkoutPolicy.Verdict.KEEP -> Unit
+        }
       }
     }
     publish(force = true)
+    return askStatus
   }
 
   /** A `17/11` realtime report ([WorkoutReport]); operator type 1 running, 2 paused, 3 resumed, 4 stopped. */
   fun onReport(report: WorkoutReport.Parsed) {
     synchronized(lock) {
-      val current = watchSession()
+      val now = System.currentTimeMillis()
+      val operator = report.operatorType
+      val running = operator == 1 || operator == 2 || operator == 3
+      val frame = report.apply(LiveMetrics())
+      if (!acceptsWatchFrame(running, frame.durationSec, operator == 4, now)) return
+      val current = watchSession(if (LiveWorkoutPolicy.isRunningFrame(running, frame.durationSec)) Status.RUNNING else Status.PREPARING)
       val metrics = report.apply(current.metrics)
       current.metrics = metrics
-      current.updatedAtMs = System.currentTimeMillis()
+      current.updatedAtMs = now
       current.estimator.update(metrics.calories, metrics.heartRate)
-      when (report.operatorType) {
-        1, 3 -> current.status = Status.RUNNING
-        2 -> current.status = Status.PAUSED
-        4 -> {
-          current.status = Status.ENDED
-          current.endedAtMs = current.updatedAtMs
-        }
+      val next = when (operator) {
+        1, 3 -> Status.RUNNING
+        2 -> Status.PAUSED
+        4 -> Status.ENDED
+        else -> if (current.status == Status.PREPARING && LiveWorkoutPolicy.isRunningFrame(running, metrics.durationSec)) Status.RUNNING else null
       }
+      if (next != null) setStatus(current, next, now)
     }
     publish(force = false)
   }
 
   /**
    * The session watch numbers go into. A phone-side session is replaced by a watch-fed one with the same id, because the
-   * watch's cumulative calories and its estimate would otherwise be mixed. Callers hold [lock].
+   * watch's cumulative calories and its estimate would otherwise be mixed. [initial] is the state of a session opened by
+   * the frame. Callers hold [lock].
    */
-  private fun watchSession(): Session {
+  private fun watchSession(initial: Status = Status.RUNNING): Session {
     val current = session?.takeIf { it.status != Status.ENDED }
     if (current != null && current.source == Source.WATCH) return current
-    val fresh = newSession(current?.sportType, Status.RUNNING, Source.WATCH, id = current?.id)
+    val status = current?.status?.takeIf { it != Status.PREPARING } ?: initial
+    val fresh = newSession(current?.sportType, status, Source.WATCH, id = current?.id)
     session = fresh
     if (current != null) log("Live workout: the watch sends its own numbers; using them instead of the heart-rate estimate")
     return fresh
+  }
+
+  /**
+   * Whether a frame with the watch's own numbers belongs to a workout to follow. Not: a stop with nothing to stop; right
+   * after a workout ended, anything but the start of a new one (stragglers must not open a second session); while a
+   * phone-side session still only prepares, a frame that shows no running workout (the watch is searching for GPS).
+   * Callers hold [lock].
+   */
+  private fun acceptsWatchFrame(running: Boolean, durationSec: Int?, stop: Boolean, now: Long): Boolean {
+    val last = session
+    val current = last?.takeIf { it.status != Status.ENDED }
+    if (stop) return current != null
+    if (current == null) {
+      val endedAt = last?.endedAtMs ?: return true
+      return now - endedAt >= LiveWorkoutPolicy.RESTART_GUARD_MS || LiveWorkoutPolicy.isFreshStart(running, durationSec)
+    }
+    if (current.status == Status.PREPARING && current.source != Source.WATCH) return LiveWorkoutPolicy.isRunningFrame(running, durationSec)
+    return true
+  }
+
+  /** Moves a session to [status]; a phone-side session's clock follows it. Callers hold [lock]. */
+  private fun setStatus(s: Session, status: Status, now: Long) {
+    if (s.status == status) return
+    if (s.source != Source.WATCH) {
+      when (status) {
+        Status.RUNNING -> {
+          s.clock.resume(now)
+          // A pause must not count as workout time once resumed.
+          s.lastHeartRateAtMs = null
+        }
+        Status.PAUSED, Status.ENDED -> s.clock.pause(now)
+        Status.PREPARING -> Unit
+      }
+      s.clock.seconds(now)?.let { s.metrics = s.metrics.copy(durationSec = it) }
+    }
+    s.status = status
+    s.updatedAtMs = now
+    s.endSuspected = false
+    if (status == Status.ENDED) s.endedAtMs = now
   }
 
   private fun newSession(workoutType: Int?, status: Status, source: Source = Source.WATCH, id: Long? = null): Session {
@@ -350,7 +467,14 @@ internal class LiveWorkout(
     val age = birthYear?.let { ProfileSender.age(it, LocalDate.now()) } ?: DEFAULT_AGE
     val maxHr = SubstrateEstimator.maxHeartRate(age)
     val now = System.currentTimeMillis()
-    return Session(id ?: now, workoutType, status, LiveMetrics(), SubstrateEstimator(maxHr), maxHr, now, source)
+    val s = Session(id ?: now, workoutType, status, LiveMetrics(), SubstrateEstimator(maxHr), maxHr, now, source)
+    // A phone-side session counts its own time, from the moment the workout is really running (not while it only prepares).
+    if (source != Source.WATCH && status != Status.PREPARING) {
+      s.clock.start(now)
+      if (status == Status.PAUSED) s.clock.pause(now)
+      s.metrics = s.metrics.copy(durationSec = 0)
+    }
+    return s
   }
 
   private fun toJs(s: Session): Map<String, Any?> {
@@ -383,6 +507,7 @@ internal class LiveWorkout(
       "fatGrams" to s.estimator.fatGrams,
       "carbGrams" to s.estimator.carbGrams,
       "fatShare" to m.heartRate?.let { SubstrateEstimator.fatShare(it, s.maxHeartRate) },
+      "endSuspected" to s.endSuspected,
     )
   }
 
@@ -418,7 +543,7 @@ internal class LiveWorkout(
     val m = s.metrics
     val sport = s.sportType?.let { WorkoutSportTypes.name(it) } ?: "Workout"
     val title = when (s.status) {
-      Status.PREPARING -> "$sport starting on your watch"
+      Status.PREPARING -> if (s.source == Source.WATCH) "$sport starting on your watch" else "$sport: searching for GPS on your watch"
       Status.PAUSED -> "$sport paused"
       else -> sport
     }
@@ -432,7 +557,13 @@ internal class LiveWorkout(
       .setSmallIcon(R.drawable.ic_stat_joyofit)
       .setColor(appContext.getColor(R.color.joyofit_notification_accent))
       .setContentTitle(title)
-      .setContentText(if (parts.isEmpty()) "Tap to follow it live" else parts.joinToString(" · "))
+      .setContentText(
+        when {
+          s.endSuspected -> "The watch may have stopped. Tap to check."
+          parts.isEmpty() -> "Tap to follow it live"
+          else -> parts.joinToString(" · ")
+        },
+      )
       .setCategory(Notification.CATEGORY_WORKOUT)
       .setOngoing(true)
       .setOnlyAlertOnce(true)
@@ -469,14 +600,5 @@ internal class LiveWorkout(
 
     /** Weight for the heart-rate energy estimate when no profile is saved. */
     const val DEFAULT_WEIGHT_KG = 70.0
-
-    /** No GPS request for this long counts as GPS silence (the watch asks about every 20 s until its own GPS has a fix). */
-    const val GPS_SILENCE_MS = 120_000L
-
-    /** "No workout" answers in a row (one per 30 s poll) that end a phone-side session. */
-    const val IDLE_ANSWERS_TO_END = 2
-
-    /** No status answer for this long means the poll stopped (the watch does not answer 17/03). */
-    const val STATUS_STALE_MS = 90_000L
   }
 }

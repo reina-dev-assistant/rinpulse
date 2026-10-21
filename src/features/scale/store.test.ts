@@ -5,6 +5,7 @@ import {
   completeWeighIn, deleteWeighIn, ensureScaleSchema, insertWeighIn, latestWeighIn, listScales, listWeighIns, markRogo,
   pendingWeighIns, removeScale, renameScale, saveScale, scaleLabel, type ScaleDb,
 } from './store';
+import { fmtDateTime } from '@/i18n';
 import { pushPendingWeighIns } from './sync';
 
 async function openDb(): Promise<ScaleDb> {
@@ -109,5 +110,16 @@ describe('pushPendingWeighIns', () => {
     await markRogo(db, id, 'pending', null);
     await pushPendingWeighIns(db, async () => void calls++, notSignedIn);
     expect(calls).toBe(1);
+  });
+
+  it('stores taken_at as epoch ms: a number given to fmtDateTime is seconds, so the history passes a Date', async () => {
+    const db = await openDb();
+    const ms = Date.UTC(2026, 9, 21, 6, 52);
+    await insertWeighIn(db, weigh(ms, 106.6));
+    const [row] = await listWeighIns(db);
+    expect(row.takenAt).toBe(ms);
+    expect(fmtDateTime(new Date(row.takenAt), 'en')).toContain('2026');
+    // The shape the device showed ("Apr 24, 58773"): ms read as seconds.
+    expect(fmtDateTime(row.takenAt, 'en')).toMatch(/5877\d/);
   });
 });

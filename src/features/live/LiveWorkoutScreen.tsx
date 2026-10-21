@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -15,10 +16,12 @@ import { BurnFigure, FuelBar } from '@/features/live/FuelBar';
 import {
   distanceParts,
   elapsedSec,
+  endPromptVisible,
   heartZone,
+  livePhase,
   paceValue,
   prefersSpeed,
-  statusLabel,
+  showsClock,
 } from '@/features/live/liveWorkout';
 import { sportIcon } from '@/features/workouts/sportIcon';
 import { formatElapsed } from '@/features/workouts/summary';
@@ -40,6 +43,11 @@ export function LiveWorkoutScreen() {
   const live = useLiveWorkout();
   const router = useRouter();
   const { linkState } = useWatch();
+  // "Keep going" holds while the suspicion lasts; when the watch proves itself running again, a later one asks again.
+  const [kept, setKept] = useState(false);
+  const suspected = live?.endSuspected === true;
+  // Adjusting state while rendering (not in an effect): the answer is forgotten as soon as the suspicion is gone.
+  if (kept && !suspected) setKept(false);
 
   if (!live) {
     return (
@@ -58,6 +66,16 @@ export function LiveWorkoutScreen() {
   return (
     <Screen>
       <HiddenTabHeader title={live.sportName ? sportLabel(live.sportName) : t('live.title')} />
+      {endPromptVisible(live, kept) ? (
+        <Card>
+          <AppText variant="bodyStrong">{t('live.endPrompt.title')}</AppText>
+          <AppText variant="caption" muted>
+            {t('live.endPrompt.body')}
+          </AppText>
+          <Button label={t('live.endPrompt.finish')} variant="primary" icon="stop" onPress={() => HuaweiWear.finishLiveWorkout()} />
+          <Button label={t('live.endPrompt.keep')} onPress={() => setKept(true)} />
+        </Card>
+      ) : null}
       <LiveBody live={live} />
       {live.status === 'ended' ? (
         <Button
@@ -94,6 +112,7 @@ function LiveBody({ live }: { live: LiveWorkout }) {
   const colors = useColors();
   const nowMs = useNow(TICK_MS);
   const seconds = elapsedSec(live, nowMs);
+  const phase = livePhase(live);
   const zone = live.heartRate !== null ? heartZone(live.heartRate, live.maxHeartRate) : null;
   const distance = live.distanceM !== null ? distanceParts(live.distanceM) : null;
   const speed = prefersSpeed(live);
@@ -111,14 +130,19 @@ function LiveBody({ live }: { live: LiveWorkout }) {
             <View style={styles.statusRow}>
               <View style={[styles.dot, { backgroundColor: statusColor }]} />
               <AppText variant="label" color={statusColor}>
-                {statusLabel(live.status)}
+                {t(`live.status.${phase}`)}
               </AppText>
             </View>
           </View>
         </View>
         <View accessible accessibilityLabel={t('live.timeA11y', { value: formatElapsed(seconds) })} style={styles.clock}>
-          <Metric value={live.durationSec === null ? DASH : formatElapsed(seconds)} size="hero" />
+          <Metric value={showsClock(live) ? formatElapsed(seconds) : DASH} size="hero" />
         </View>
+        {phase === 'searching' ? (
+          <AppText variant="caption" muted style={styles.hint}>
+            {t('live.searchingHint')}
+          </AppText>
+        ) : null}
         <View style={styles.heartRow}>
           <Metric
             value={live.heartRate !== null ? fmtInt(live.heartRate) : DASH}
@@ -194,6 +218,7 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   dot: { width: 8, height: 8, borderRadius: 4 },
   clock: { alignItems: 'center' },
+  hint: { textAlign: 'center' },
   heartRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   zone: { borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
   burnRow: { flexDirection: 'row', gap: spacing.md },

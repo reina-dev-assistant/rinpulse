@@ -184,13 +184,6 @@
       "Run down": "Run down"
     }
   },
-  "upsell": {
-    "title": "Heart rate and route are for Pro",
-    "description": "Seeing the heart-rate chart and the route of someone else's workout is part of JoyoRogo Pro. Your own are always free to see, and sharing them is free too.",
-    "see": "See JoyoRogo Pro",
-    "open": "Open JoyoRogo",
-    "mention": "JoyoRogo Pro is available in JoyoRogo."
-  },
   "share": {
     "button": "Share to JoyoRogo",
     "title": "Share to JoyoRogo",

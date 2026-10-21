@@ -52,6 +52,7 @@ ProductInfo with their own tag sets. None of this has been tried on a real band 
 | `01` | `05` | TimeRequest | read/set watch time |
 | `01` | `08` | BatteryLevel | battery % |
 | `01` | `02` / `03` | SupportedServices / SupportedCommands | capability discovery |
+| `0C` LocaleConfig | `01` | SetLanguageSetting | `01` locale text `xx-YY` (`in-ID`, `en-US`), `02` unit byte (0 metric, 1 imperial), `03` script (`Latn`, `Hant`; only with ExpandCapability 57). Sent last in init when the watch lists `0C/01`, and again when the app's language or the phone's changes; see Language |
 | `07` FitnessData | `0C` / `0D` | sleep MessageCount / MessageData | sleep segments `(start, minutes, type)` |
 | `07` | `0A` / `0B` | step MessageCount / MessageData | per-minute steps / kcal / distance / HR / SpO₂ / resting HR |
 | `07` | `03` | FitnessTotals | today's totals |
@@ -98,6 +99,44 @@ Init appends, after `ConnectStatus` and in GB order: UserInfo `07/02` and Motion
 the user saved a profile; each only if the watch lists the command), NotificationCapabilities,
 NotificationConstraints, NotificationState. UserInfo carries the optional gender-unknown (ExpandCapability
 `0x57`) and precision-weight (`0xB3`, weight × 100 in tag `0x0B`) fields. VO2 max is never sent.
+
+## Language (service 0x0C) and the workout voice
+
+**What the phone tells the watch.** `0C/01` SetLanguageSetting carries the phone's language as `xx-YY`, one unit byte and, on watches with
+ExpandCapability 57, the script. Huawei Health 17.0.8.300 (`LanguageUtil`, class `npn`) sends it from `sendConnectStateBroadcast` on
+every connect and from `LanguageChangedReceiver` on every `ACTION_LOCALE_CHANGED`; Gadgetbridge (`SetLanguageSettingRequest`) puts it in
+its init queue after the time zone and before the date format, and again when the language or distance-unit preference changes.
+The watch must list `0C/01` in SupportedCommands (GB `supportsLanguageSetting`).
+
+**The tag.** Huawei Health runs the language through `CommonUtil.c(Locale)`, which maps `id` to `in`, `he` to `iw` and `yi` to `ji` (Java's
+old codes), and writes `language + "-" + country`. Without ExpandCapability 57 it writes `zh-CHT` for traditional Chinese outside TW and HK.
+JoyoFit sends `in-ID` for Indonesian, `en-US` for English (`WatchLocale.kt`, `WatchLocale.swift`), not `id-ID`. A language without a country
+(the app's pinned `id` / `en`) gets `ID` / `US`; other languages repeat the language upper case, as GB does.
+
+**Which language.** JoyoFit's own "Bahasa" choice when it is pinned (Indonesia / English), else the phone's language ("Otomatis"). The JS
+side calls `HuaweiWear.setWatchLanguage('id' | 'en' | null)` (`src/features/device/watchLanguage.ts`) at startup when pinned and whenever
+the choice changes; the module stores it, sends it at every connect and, when linked, right away. On Android the phone language
+is re-sent on `ACTION_LOCALE_CHANGED` (`WatchLanguage.kt`), on iOS on `NSLocale.currentLocaleDidChangeNotification`.
+
+**Units.** JoyoFit has no unit setting and shows kilometres, so the unit byte is always 0 (metric). Huawei Health leaves tag `02` out for two
+product types (7 and 14, not named in the APK); JoyoFit sends it everywhere, as GB does.
+
+**Why this is the likely cause of Chinese workout prompts (UNVERIFIED on a watch).** Before this change JoyoFit never sent `0C/01`, on
+either platform. A watch that was factory reset and then bound to JoyoFit therefore never heard a phone language. The watch's own menus use
+the language picked on the watch (Huawei Health's pairing screen says "select the language on the watch", `IDS_device_pair_select_the_language_on_the_watch`),
+which is why only the voice was Chinese. Nothing in the APK ties `0C/01` to the voice by name; the claim is an inference from "the one
+language command Huawei Health and GB send that JoyoFit did not". If the prompts stay Chinese after this ships, the next suspects are below.
+
+**If it is not enough.** (1) Voice resources: Huawei Health downloads sport voice data for its own phone-side player from Huawei's cloud
+(`VoiceDataApi`, `checkDownloadVoiceResource`, `getVoiceBroadcastList`, `MultilingualAudioProxy`), and `com.huawei.health_deviceFeature_config`
+(config id 900100007, actions 5 and 6, see `/home/dzul/re/huawei-health/FEATURE_CONFIG_PROTOCOL.md`) carries voice/remind texts. Its
+`LanguageManager` / `dynamic_language_config.json` language packages are the app's own UI languages, not the watch's. The string search of
+this session found no voice pack sent to the watch through file service `28` (a search of strings, not a full read of the code), and
+nothing in JoyoFit or GB does it; if the watch needs one, how it arrives is not known (UNVERIFIED). (2) The
+country code: GB's `SendCountryCodeRequest` (`1A/0A` AccountRelated, tag `01` country, optional `02` site id; gated by ExpandCapability 30 and
+170) is off by default in GB and not sent by JoyoFit. (3) A voice-language option on the watch itself (not looked for in the APK); ask the
+user whether the workout settings show one. The watch's `17/0D` "voice play" request (LIVE_WORKOUT_PROTOCOL.md in the Huawei Health notes) is
+answered by Huawei Health's phone-side voice player [INFERENCE], so it is not the watch's own speaker.
 
 ## Sleep files (TruSleep / dictionary)
 

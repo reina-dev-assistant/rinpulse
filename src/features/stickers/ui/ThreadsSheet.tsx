@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authClient } from '@/cloud/auth';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { ChipRow } from '@/components/ChipRow';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useFlash } from '@/components/motion';
@@ -407,14 +408,16 @@ export function ThreadsSheet({ subject, visible, onClose }: { subject: StickerSu
           </View>
 
           <Notice>{t('threadsshare:branding')}</Notice>
-          <AppText variant="caption" muted>
-            {t('threadsshare:actions.pasteHint')}
-          </AppText>
-          {SAVE_AVAILABLE ? (
+          <Details>
             <AppText variant="caption" muted>
-              {t('threadsshare:actions.saveOpenHint')}
+              {t('threadsshare:actions.pasteHint')}
             </AppText>
-          ) : null}
+            {SAVE_AVAILABLE ? (
+              <AppText variant="caption" muted>
+                {t('threadsshare:actions.saveOpenHint')}
+              </AppText>
+            ) : null}
+          </Details>
 
           {feedback ? (
             <Notice tone={feedback.tone} action={feedback.action}>

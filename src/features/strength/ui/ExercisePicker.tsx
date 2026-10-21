@@ -14,7 +14,7 @@ import { IconChip } from '@/components/IconChip';
 import { Field, Input } from '@/components/Input';
 import { PressableScale } from '@/components/PressableScale';
 import { EmptyState } from '@/components/States';
-import { SwitchRow } from '@/components/SwitchRow';
+import { Segmented } from '@/components/Segmented';
 import { exerciseImageUrl, muscleList } from '@/features/coach/exercises';
 import { useLocale, type Locale } from '@/i18n';
 import { HIT, spacing, useColors } from '@/theme';
@@ -402,7 +402,20 @@ function ExerciseForm({ target, onClose, onSaved, onDeleted }: ExerciseFormProps
             <Chip key={e} label={t(`coach:equipment.${e}`)} selected={equipment === e} onPress={() => setEquipment(e)} />
           ))}
         </View>
-        <SwitchRow label={t('strength:picker.formTimed')} hint={t('strength:picker.formTimedHint')} value={timed} onValueChange={setTimed} />
+        <AppText variant="label" muted>
+          {t('strength:picker.formMeasure')}
+        </AppText>
+        <Segmented
+          options={[
+            { value: 'reps', label: t('strength:table.reps') },
+            { value: 'time', label: t('strength:table.time') },
+          ]}
+          value={timed ? 'time' : 'reps'}
+          onChange={(value) => setTimed(value === 'time')}
+        />
+        <AppText variant="caption" muted>
+          {t('strength:picker.formMeasureHint')}
+        </AppText>
         <Button label={t('common:actions.save')} variant="primary" disabled={!valid} loading={busy} onPress={() => void save()} />
         {existing ? <Button label={t('common:actions.delete')} variant="destructive" icon="trash-outline" onPress={() => setConfirmDelete(true)} /> : null}
       </BottomSheet>

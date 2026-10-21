@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { Button } from '@/components/Button';
 import { ButtonRow } from '@/components/ButtonRow';
 import { Section } from '@/components/Screen';
@@ -38,9 +38,6 @@ export function OtaSection() {
         <Pair label={t('updates.labels.running')} value={running} wide />
         <Pair label={t('updates.labels.runtime')} value={ota.runtimeVersion ? ota.runtimeVersion.slice(0, 8) : null} />
       </PairGrid>
-      <AppText variant="caption" muted>
-        {t('updates.hint')}
-      </AppText>
       <ButtonRow>
         {ota.phase === 'ready' ? (
           <Button label={t('updates.restart')} variant="primary" onPress={() => void ota.restart()} />
@@ -52,6 +49,7 @@ export function OtaSection() {
           disabled={busy}
         />
       </ButtonRow>
+      <Details>{t('updates.hint')}</Details>
     </Section>
   );
 }

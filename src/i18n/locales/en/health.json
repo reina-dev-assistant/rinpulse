@@ -131,7 +131,6 @@
     "woke": "Woke {{time}}"
   },
   "hourly": {
-    "a11y": "Minutes per stage for each hour. {{details}}",
     "part": "{{stage}} {{minutes}} min",
     "line": "{{hour}}, {{parts}}",
     "none": "no sleep recorded"
@@ -287,7 +286,8 @@
         "breakdown": "{{moderate}} moderate minutes + 2 x {{vigorous}} vigorous minutes. Estimate.",
         "chart": "Intensity minutes per day, Monday to Sunday",
         "endLabel": "Sunday",
-        "how": "A JoyoFit estimate from the per-minute heart rate the watch stored (maximum {{maxHr}} bpm). Minutes at 60 to 80 percent of maximum (zones 2 and 3) count 1, minutes at 80 percent and above (zones 4 and 5) count 2. The week runs Monday to Sunday. The target of 150 minutes a week follows WHO 2020 and ACSM 2018 advice."
+        "how": "A JoyoFit estimate from the per-minute heart rate the watch stored (maximum {{maxHr}} bpm). Minutes at 60 to 80 percent of maximum (zones 2 and 3) count 1, minutes at 80 percent and above (zones 4 and 5) count 2. The week runs Monday to Sunday. The target of 150 minutes a week follows WHO 2020 and ACSM 2018 advice.",
+        "minutes": "{{value}} min"
       }
     }
   }

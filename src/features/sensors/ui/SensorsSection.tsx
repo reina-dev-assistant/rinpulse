@@ -5,6 +5,7 @@ import { Linking, StyleSheet } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { NavRow } from '@/components/NavRow';
 import { Divider, Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -40,10 +41,8 @@ export function SensorsSection() {
       }>
       {saved.length === 0 ? (
         <>
-          <AppText variant="caption" muted>
-            {t('sensors.hub.empty')}
-          </AppText>
           <Button label={t('sensors.hub.add')} variant="primary" icon="add" onPress={open} />
+          <Details>{t('sensors.hub.empty')}</Details>
         </>
       ) : (
         <>

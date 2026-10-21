@@ -199,6 +199,14 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
    */
   setUserProfile(profile: UserProfile): Promise<boolean>;
 
+  /**
+   * The language the watch is told (Huawei service 0C, command 01): `id` or `en` when JoyoFit's language is pinned, `null` to follow the
+   * phone. Stored, sent at every connect, and sent now when a watch is connected and the value changed. Resolves true when the connected
+   * watch took it, false when stored only. Rejects with ERR_INVALID_ARGUMENT for something that is not a language tag. Builds from before
+   * this function lack it: check `typeof HuaweiWear.setWatchLanguage === 'function'` first.
+   */
+  setWatchLanguage(language: string | null): Promise<boolean>;
+
   /** The sensor switches as stored, plus what the connected watch supports (`supported` is null when none is connected). */
   getHealthSensors(): HealthSensorsStatus;
   /**

@@ -165,7 +165,7 @@ function LibraryRow() {
 export default function CoachScreen() {
   return (
     <Screen>
-      <CoachGate campaign="evergreen-coach-screen">
+      <CoachGate>
         <CoachBody />
       </CoachGate>
       <LibraryRow />

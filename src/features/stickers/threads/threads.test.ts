@@ -217,6 +217,11 @@ describe('caption', () => {
     expect(lift).toContain('2 new PRs');
   });
 
+  test('a hold-only lift names the time held where reps would be', () => {
+    const subject = { data: { strength: { name: 'Core', sets: 3, seconds: 150, durationSec: 1200 } } };
+    expect(buildCaption(subject, { locale: 'en', question: null, hashtag: false }).split('\n')[0]).toBe('Core: 3 sets · 2:30 hold · 20:00');
+  });
+
   test('a sparse workout still has a headline and never says undefined', () => {
     const text = buildCaption(WALK_SPARSE(), { locale: 'id', question: 'runPlan', hashtag: true });
     expect(text.split('\n')[0]).toMatch(/^Jalan /);

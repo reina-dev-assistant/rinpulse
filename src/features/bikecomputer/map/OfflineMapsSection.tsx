@@ -4,6 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Divider, Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -88,9 +89,7 @@ export function OfflineMapsSection() {
             {index.attribution}
           </AppText>
         ) : null}
-        <AppText variant="caption" muted>
-          {t('section.licenseNote')}
-        </AppText>
+        <Details>{t('section.licenseNote')}</Details>
         <Button
           label={t('section.licenseLink')}
           variant="ghost"

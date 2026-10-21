@@ -17,6 +17,7 @@
     "strain": "Strain",
     "volume": "Volume",
     "reps": "Reps",
+    "hold": "Hold time",
     "sets": "Sets",
     "duration": "Duration",
     "workouts": "Workouts",
@@ -73,6 +74,7 @@
     },
     "preparing": "Preparing the image",
     "entry": {
+      "menu": "Share",
       "sleep": "Share your sleep",
       "week": "Share this week",
       "badges": "Share achievements",
@@ -325,6 +327,7 @@
         "sets_other": "{{count}} sets",
         "reps_one": "{{count}} rep",
         "reps_other": "{{count}} reps",
+        "hold": "{{value}} hold",
         "exercises_one": "{{count}} exercise",
         "exercises_other": "{{count}} exercises",
         "prs_one": "{{count}} new PR",

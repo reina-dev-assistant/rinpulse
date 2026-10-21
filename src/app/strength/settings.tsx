@@ -92,6 +92,10 @@ export default function StrengthSettingsScreen() {
             <SwitchRow label={t('settings.autoRest')} hint={t('settings.autoRestHint')} value={settings.autoRest} onValueChange={(autoRest) => change({ autoRest })} />
           </Section>
 
+          <Section title={t('settings.timedTitle')} icon="stopwatch-outline" tint="workouts">
+            <SwitchRow label={t('settings.countdown')} hint={t('settings.countdownHint')} value={settings.countdownTimed} onValueChange={(countdownTimed) => change({ countdownTimed })} />
+          </Section>
+
           <Section title={t('settings.screenTitle')} icon="phone-portrait-outline" tint="link">
             <SwitchRow label={t('settings.keepAwake')} hint={t('settings.keepAwakeHint')} value={settings.keepAwake} onValueChange={(keepAwake) => change({ keepAwake })} />
             <Divider />

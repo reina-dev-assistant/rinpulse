@@ -65,7 +65,7 @@ export function LapsPage({ laps, current, width, palette }: LapsPageProps) {
                 }`}
                 style={[styles.row, { borderBottomColor: palette.hairline }]}>
                 <Text style={[styles.rowName, { color: palette.muted, fontFamily: fonts.bold }]}>{t('page.laps.row', { number: row.number })}</Text>
-                <Text style={[styles.rowTime, { color: palette.foreground, fontFamily: fonts.heavy }]}>{time}</Text>
+                <Text style={[styles.rowTime, { color: palette.foreground, fontFamily: fonts.numeral }]}>{time}</Text>
                 <Text style={[styles.rowDistance, { color: palette.foreground, fontFamily: fonts.bold }]}>{stats}</Text>
                 {row.avgHr !== null ? <Text style={[styles.rowHr, { color: palette.muted, fontFamily: fonts.bold }]}>{fmtInt(row.avgHr)}</Text> : null}
               </View>

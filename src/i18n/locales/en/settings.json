@@ -172,9 +172,6 @@
     },
     "title": "Cloud sync",
     "notConfigured": "No cloud server URL in this build. Deploy server/, set EXPO_PUBLIC_JOYOFIT_CLOUD_URL, rebuild.",
-    "getPro": "Get Pro",
-    "lockedLink": "Your workouts stay on this phone. Cloud sync is a JoyoRogo Pro benefit. What is already in your cloud stays readable and restores onto a new phone.",
-    "locked": "Your workouts stay on this phone. Cloud sync is a JoyoRogo Pro benefit (get Pro in JoyoRogo). What is already in your cloud stays readable and restores onto a new phone.",
     "uploading": "Uploading {{done}} of {{total}}",
     "refused_one": "{{n}} workout could not be uploaded. It is tried again tomorrow, or sooner after an app update.",
     "refused_other": "{{n}} workouts could not be uploaded. They are tried again tomorrow, or sooner after an app update.",
@@ -526,7 +523,12 @@
   "appearance": {
     "title": "Theme",
     "aboutTitle": "About themes",
-    "details": "A theme changes colors, corner shapes and the size of the big numbers. Classic and Ocean follow the light or dark setting of your phone; Sport is always dark."
+    "details": "A theme changes colors, corner shapes, fonts and the size of the big numbers. Themes marked as following the phone use its light or dark setting; the others are fixed. Applying a theme restarts the app so every screen and the bars start clean in it; if it does not restart by itself, close the app and open it again.",
+    "confirm": {
+      "title": "Apply the {{name}} theme?",
+      "message": "The app will restart so colors, fonts and the navigation bars start clean in the new theme.",
+      "apply": "Apply"
+    }
   },
   "meals": {
     "support": {

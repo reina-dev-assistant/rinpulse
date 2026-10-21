@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { ChipRow } from '@/components/ChipRow';
+import { Details } from '@/components/Details';
 import { Field } from '@/components/Input';
 import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -44,9 +45,6 @@ export function WheelSection() {
 
   return (
     <Section title={t('sensors.wheel.title')} icon="disc">
-      <AppText variant="caption" muted>
-        {t('sensors.wheel.body')}
-      </AppText>
       <View style={styles.presets}>
         <AppText variant="label" muted>
           {t('sensors.wheel.presets')}
@@ -77,6 +75,7 @@ export function WheelSection() {
         maxLength={4}
         returnKeyType="done"
       />
+      <Details>{t('sensors.wheel.body')}</Details>
       {invalid ? <Notice tone="danger">{t('sensors.wheel.invalid', range)}</Notice> : null}
     </Section>
   );

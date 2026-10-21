@@ -1,7 +1,7 @@
 // Port of the connection-essential part of HuaweiInitializer.kt (GB HuaweiSupportProvider.initializeDeviceConfigure): ProductInfo,
 // SetTime, BatteryLevel, SupportedServices -> SupportedCommands, ExpandCapability, ExtendedAccount, SettingRelated, AcceptAgreement,
 // ReverseCapabilities, SetUpDeviceStatus (+ WearStatus), ConnectStatus, the saved profile, the heart-rate zones (FitnessData branch) and the
-// saved health sensor switches.
+// saved health sensor switches, and last the phone's language (SetLanguageSetting).
 // Not ported on purpose: notification capabilities/constraints/state; the P2P (Track) branch of the heart-rate zones.
 import Foundation
 
@@ -39,6 +39,10 @@ public final class HuaweiInitializer {
     /// The sensor switches the user saved (continuous heart rate, SpO2, TruSleep, alerts); sent on every connect.
     private let healthSensors: HealthSensorConfig
     private let deviceType: HuaweiDeviceType
+    /// The language JoyoFit's Settings pinned (`id`, `en`), or nil to follow `phoneLanguage`; sent as the watch's language.
+    private let pinnedLanguage: String?
+    /// The phone's first language as a BCP-47 tag (`Locale.preferredLanguages`).
+    private let phoneLanguage: String
 
     /// Replaced by tests: the phase timeouts, the clock SetTime reads and the zone it reports.
     var timeouts = LinkTimeouts()
@@ -49,7 +53,8 @@ public final class HuaweiInitializer {
 
     public init(
         session: HuaweiSession, caps: DeviceCaps, log: @escaping LogSink, bondedName: String?, protocolVersion: Int,
-        profile: UserProfileData? = nil, healthSensors: HealthSensorConfig = HealthSensorConfig(), deviceType: HuaweiDeviceType = .ble
+        profile: UserProfileData? = nil, healthSensors: HealthSensorConfig = HealthSensorConfig(), deviceType: HuaweiDeviceType = .ble,
+        pinnedLanguage: String? = nil, phoneLanguage: String = LanguageSender.phoneLanguage()
     ) {
         self.session = session
         self.caps = caps
@@ -59,6 +64,8 @@ public final class HuaweiInitializer {
         self.profile = profile
         self.healthSensors = healthSensors
         self.deviceType = deviceType
+        self.pinnedLanguage = pinnedLanguage
+        self.phoneLanguage = phoneLanguage
     }
 
     private func info(_ message: String) {
@@ -156,6 +163,10 @@ public final class HuaweiInitializer {
         }
         caps.supportedCommands = supportedCommands
         caps.expandCapabilities = expandCapabilities
+        // What the support report needs to answer "can this watch take a language / music?": GB supportsLanguageSetting is 0C/01, music upload
+        // is 25/04, music control 25/02, "more music" ExpandCapability 122 (docs/watch-music.md).
+        func listed(_ service: Int) -> String { supportedCommands[service].map { $0.map { $0.hex2 }.joined(separator: " ") } ?? "not listed" }
+        info("Language and music: 0C=[\(listed(0x0C))] 25=[\(listed(0x25))] moreMusic(ExpandCapability 122)=\(expandCapability(122))")
 
         // SendExtendedAccountRequest (first in GB initializeDynamicServices): no Huawei account, so GB's default empty account is sent.
         // Watches that judge accounts wait for this after a bind.
@@ -244,6 +255,13 @@ public final class HuaweiInitializer {
             let plan = HealthSensors.plan(supports: caps.supports, config: healthSensors, previous: nil)
             let acknowledged = try await HealthSensors.send(session: session, log: log, plan: plan, timeoutMs: timeouts.initMs)
             info("HealthSensors: \(acknowledged) of \(plan.count) requests acknowledged")
+        }
+
+        // SetLanguageSettingRequest (GB init queue; Huawei Health sends it on every connect), see `LanguageSender`.
+        try await soft("LanguageSetting") {
+            _ = try await LanguageSender.send(
+                session: session, caps: caps, log: log, pinned: pinnedLanguage, phone: phoneLanguage, timeoutMs: timeouts.initMs
+            )
         }
 
         return InitResult(

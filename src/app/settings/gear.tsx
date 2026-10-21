@@ -8,6 +8,7 @@ import { Image, StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { Details } from '@/components/Details';
 import { IconChip } from '@/components/IconChip';
 import { PressableScale } from '@/components/PressableScale';
 import { Card, Screen, Section } from '@/components/Screen';
@@ -59,10 +60,6 @@ export default function GearScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: t('title') }} />
-      <AppText variant="caption" muted>
-        {t('intro')}
-      </AppText>
-
       {!ready ? (
         <Skeleton width="100%" height={120} radius={16} />
       ) : gear.length === 0 ? (
@@ -103,6 +100,7 @@ export default function GearScreen() {
           </Section>
         </>
       )}
+      <Details>{t('intro')}</Details>
     </Screen>
   );
 }

@@ -12,7 +12,9 @@ import { fmtInt, fmtNumber } from '@/i18n';
 import { HIT, spacing, useColors, useTheme } from '@/theme';
 
 import { MAX_REST_SEC, MIN_REST_SEC, setLabels } from '../draft';
+import { digitsClock, digitsFromSeconds, MAX_DURATION_DIGITS, secondsFromDigits, timerText } from '../logFormat';
 import { MAX_REPS, MAX_SECONDS, MAX_WEIGHT_KG, parseAmount, type EditExercise, type SetPatch } from '../routineEdit';
+import { MeasureToggle } from './MeasureToggle';
 
 /** Seconds one tap on the rest stepper adds or takes away. */
 const REST_STEP = 15;
@@ -58,10 +60,41 @@ function NumberCell({ value, max, decimals, label, placeholder, keyboard, onChan
   );
 }
 
+/** A time box typed like a kitchen timer ("1", "3", "0" read 0:01, 0:13, 1:30) and shown as `m:ss`; see `secondsFromDigits`. */
+function DurationCell({ value, label, onChange }: { value: number | null; label: string; onChange: (value: number | null) => void }) {
+  const [text, setText] = useState(digitsFromSeconds(value));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    setText((current) => (secondsFromDigits(current) === value ? current : digitsFromSeconds(value)));
+  }, [value]);
+  return (
+    <View style={styles.cell}>
+      <Input
+        value={focused ? digitsClock(text) : value === null ? '' : timerText(value)}
+        onChangeText={(next) => {
+          const digits = next.replace(/\D/g, '').slice(0, MAX_DURATION_DIGITS);
+          setText(digits);
+          const seconds = secondsFromDigits(digits);
+          onChange(seconds === null ? null : Math.min(MAX_SECONDS, seconds));
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        keyboardType="number-pad"
+        accessibilityLabel={label}
+        maxLength={MAX_DURATION_DIGITS + 2}
+        selectTextOnFocus
+        style={styles.number}
+      />
+    </View>
+  );
+}
+
 interface RoutineExerciseCardProps {
   exercise: EditExercise;
   name: string;
   timed: boolean;
+  /** Switches between repetitions and seconds; the screen asks first when the sets hold amounts. */
+  onMeasure: (timed: boolean) => void;
   /** The rest used when the exercise has none of its own, seconds. */
   defaultRestSec: number;
   onMenu: () => void;
@@ -78,6 +111,7 @@ export function RoutineExerciseCard({
   exercise,
   name,
   timed,
+  onMeasure,
   defaultRestSec,
   onMenu,
   onNote,
@@ -110,6 +144,10 @@ export function RoutineExerciseCard({
           ) : null}
         </View>
         <IconAction icon="ellipsis-horizontal" label={t('editor.exerciseMenu', { name })} onPress={onMenu} />
+      </View>
+
+      <View style={styles.measureRow}>
+        <MeasureToggle timed={timed} name={name} onChange={onMeasure} />
       </View>
 
       <Input
@@ -170,11 +208,8 @@ export function RoutineExerciseCard({
               onChange={(weightKg) => onSetPatch(setIndex, { weightKg })}
             />
             {timed ? (
-              <NumberCell
+              <DurationCell
                 value={set.seconds}
-                max={MAX_SECONDS}
-                decimals={0}
-                keyboard="number-pad"
                 label={t('editor.secondsLabel', { name, number: setIndex + 1 })}
                 onChange={(seconds) => onSetPatch(setIndex, { seconds, reps: null })}
               />
@@ -212,5 +247,6 @@ const styles = StyleSheet.create({
   colRemove: { width: HIT },
   typeButton: { height: 40, alignItems: 'center', justifyContent: 'center' },
   cell: { flex: 1 },
+  measureRow: { flexDirection: 'row' },
   number: { textAlign: 'center' },
 });

@@ -17,6 +17,7 @@
     "strain": "Beban",
     "volume": "Volume",
     "reps": "Repetisi",
+    "hold": "Waktu tahan",
     "sets": "Set",
     "duration": "Durasi",
     "workouts": "Latihan",
@@ -73,6 +74,7 @@
     },
     "preparing": "Menyiapkan gambar",
     "entry": {
+      "menu": "Bagikan",
       "sleep": "Bagikan tidurmu",
       "week": "Bagikan minggu ini",
       "badges": "Bagikan pencapaian",
@@ -319,6 +321,7 @@
         "volume": "volume {{value}} kg",
         "sets_other": "{{count}} set",
         "reps_other": "{{count}} repetisi",
+        "hold": "tahan {{value}}",
         "exercises_other": "{{count}} gerakan",
         "prs_other": "{{count}} PR baru",
         "rpe": "RPE rata-rata {{value}}"

@@ -237,10 +237,34 @@ export async function listRestPrefs(db: SQLiteDatabase): Promise<Map<string, num
   return new Map(prefs.filter((p) => p.restSec !== null).map((p) => [p.id, p.restSec as number]));
 }
 
-/** Remembers the rest timer of an exercise (null forgets it, so the default applies again). */
-export async function setRestPref(db: SQLiteDatabase, exerciseId: string, restSec: number | null, nowMs = Date.now()): Promise<void> {
-  await putRecord(db, 'pref', { id: exerciseId, restSec, updatedAt: nowMs, deletedAt: restSec === null ? nowMs : null });
+/** Writes the pref of an exercise with `patch` applied; a pref left with neither a rest nor a measure becomes a tombstone. `updatedAt` always moves on so the cloud takes it. */
+async function patchPref(db: SQLiteDatabase, exerciseId: string, patch: Partial<Pick<ExercisePref, 'restSec' | 'timed'>>, nowMs: number): Promise<void> {
+  const before = await getRecord(db, 'pref', exerciseId);
+  const restSec = patch.restSec !== undefined ? patch.restSec : (before?.deletedAt === null ? before.restSec : null);
+  const timed = patch.timed !== undefined ? patch.timed : (before?.deletedAt === null ? (before.timed ?? null) : null);
+  const empty = restSec === null && timed === null;
+  await putRecord(db, 'pref', {
+    id: exerciseId,
+    restSec,
+    timed,
+    updatedAt: Math.max(nowMs, (before?.updatedAt ?? 0) + 1),
+    deletedAt: empty ? nowMs : null,
+  });
 }
+
+/** Remembers the rest timer of an exercise (null forgets it, so the default applies again). The saved measure stays. */
+export const setRestPref = (db: SQLiteDatabase, exerciseId: string, restSec: number | null, nowMs = Date.now()): Promise<void> =>
+  patchPref(db, exerciseId, { restSec }, nowMs);
+
+/** Saved measure by exercise id (`true` = seconds, `false` = repetitions), only for exercises the person switched. */
+export async function listTimedPrefs(db: SQLiteDatabase): Promise<Map<string, boolean>> {
+  const prefs = await listRecords(db, 'pref');
+  return new Map(prefs.filter((p) => typeof p.timed === 'boolean').map((p) => [p.id, p.timed as boolean]));
+}
+
+/** Remembers how the person measures an exercise (the last Repetisi / Waktu choice); null forgets it, so the exercise's default applies again. */
+export const setTimedPref = (db: SQLiteDatabase, exerciseId: string, timed: boolean | null, nowMs = Date.now()): Promise<void> =>
+  patchPref(db, exerciseId, { timed }, nowMs);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // The active workout (draft) and small settings
@@ -282,9 +306,11 @@ export interface StrengthSettings {
   showRpe: boolean;
   /** Upload finished workouts to Strava as Weight Training once Strava is linked (a per-workout button always works). */
   autoStrava: boolean;
+  /** The stopwatch of a timed set counts down from the planned seconds when the set has some (it counts up otherwise, and always when off). */
+  countdownTimed: boolean;
 }
 
-export const DEFAULT_SETTINGS: StrengthSettings = { defaultRestSec: 90, autoRest: true, keepAwake: true, showRpe: false, autoStrava: false };
+export const DEFAULT_SETTINGS: StrengthSettings = { defaultRestSec: 90, autoRest: true, keepAwake: true, showRpe: false, autoStrava: false, countdownTimed: true };
 
 export async function loadSettings(db: SQLiteDatabase): Promise<StrengthSettings> {
   const json = await getMeta(db, 'settings');

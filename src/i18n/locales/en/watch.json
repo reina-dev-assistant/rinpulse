@@ -103,6 +103,7 @@
     "bonded": {
       "forgetTitle": "Forget pairing?",
       "forgetMessage": "This deletes the watch's authentication key from this phone and removes the watch from your list. Health data already stored stays. The next connection is a first pairing and has to be confirmed on the watch. The Android Bluetooth pairing does not change.",
+      "forgetMessageIos": "This deletes the watch's authentication key from this phone and removes the watch from your list. Health data already stored stays. JoyoFit cannot remove the watch's side: to use Huawei Health again, also reset or unbind the watch (watch Settings > System > Reset, or remove the phone in the watch's own Bluetooth settings), then pair it in Huawei Health. If the watch is listed in the iPhone's Settings > Bluetooth, tap the (i) icon and choose Forget This Device.",
       "forget": "Forget",
       "forgetPairing": "Forget pairing",
       "unnamed": "Unnamed device",

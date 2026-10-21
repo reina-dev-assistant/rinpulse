@@ -5,6 +5,7 @@
 import type { FitSet } from '@/features/strava/activityFile';
 
 import type { Catalog, CatalogExercise } from '../catalog';
+import { resolveTimed } from '../draft';
 import type { Muscle, StrengthWorkout } from '../types';
 
 /** `exercise_category` enum values of the FIT profile (`@garmin/fitsdk` Profile.js), the ones used below. */
@@ -122,11 +123,15 @@ export const ACTIVE_SET_MS = 40_000;
  * warm-up, drop and failure sets are active sets too (FIT has no such types here). A done set without a `doneAt` is left out.
  */
 export function fitSetsOf(workout: Pick<StrengthWorkout, 'startedAt' | 'exercises'>, catalog: Pick<Catalog, 'get'>): FitSet[] {
-  const done: { doneAt: number; order: number; exerciseId: string; weightKg: number | null; reps: number | null; seconds: number | null }[] = [];
+  const done: { doneAt: number; order: number; exerciseId: string; timed: boolean; weightKg: number | null; reps: number | null; seconds: number | null }[] = [];
   let order = 0;
   for (const exercise of workout.exercises) {
+    // A set holding both reps and seconds is read the way its exercise is measured here; one holding only one of them is read as it is.
+    const timedHere = resolveTimed(exercise, catalog.get(exercise.exerciseId)?.timed ?? null);
     for (const set of exercise.sets) {
-      if (set.done && set.doneAt !== null) done.push({ doneAt: set.doneAt, order: order++, exerciseId: exercise.exerciseId, weightKg: set.weightKg, reps: set.reps, seconds: set.seconds });
+      if (set.done && set.doneAt !== null) {
+        done.push({ doneAt: set.doneAt, order: order++, exerciseId: exercise.exerciseId, timed: timedHere, weightKg: set.weightKg, reps: set.reps, seconds: set.seconds });
+      }
       else order += 1;
     }
   }
@@ -137,7 +142,7 @@ export function fitSetsOf(workout: Pick<StrengthWorkout, 'startedAt' | 'exercise
   for (const set of done) {
     const endMs = Math.max(set.doneAt, previousEnd);
     const gap = endMs - previousEnd;
-    const timed = set.seconds !== null && set.seconds > 0;
+    const timed = set.seconds !== null && set.seconds > 0 && (set.timed || set.reps === null);
     const durationMs = timed ? Math.min((set.seconds as number) * 1000, gap) : Math.min(ACTIVE_SET_MS, gap);
     sets.push({
       startMs: endMs - durationMs,

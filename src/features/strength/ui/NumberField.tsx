@@ -4,7 +4,7 @@ import { Animated, StyleSheet, TextInput, type StyleProp, type ViewStyle } from 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { fontSize, useTheme } from '@/theme';
 
-import { clampReps, clampSeconds, clampWeight, inputText, parseNumber, parseSeconds, timerText } from '../logFormat';
+import { clampReps, clampWeight, digitsClock, digitsFromSeconds, inputText, MAX_DURATION_DIGITS, parseNumber, secondsFromDigits, timerText } from '../logFormat';
 
 export type FieldKind = 'weight' | 'reps' | 'seconds';
 
@@ -21,28 +21,32 @@ interface NumberFieldProps {
   style?: StyleProp<ViewStyle>;
 }
 
+/** What the box keeps as text: digits for a time (see `secondsFromDigits`), the typed number otherwise. */
 const parse = (kind: FieldKind, text: string): number | null => {
-  if (kind === 'seconds') return clampSeconds(parseSeconds(text));
+  if (kind === 'seconds') return secondsFromDigits(text);
   const n = parseNumber(text);
   return kind === 'weight' ? clampWeight(n) : clampReps(n);
 };
 
+const textOf = (kind: FieldKind, value: number | null): string => (kind === 'seconds' ? digitsFromSeconds(value) : inputText(value));
+
 /**
- * A number box of the set table: comma or dot decimals, everything selected on focus, a timed set shows `m:ss` when not being edited. The text is
- * the field's own while typing ("7," stays "7,"); the value goes up on every keystroke.
+ * A number box of the set table: comma or dot decimals, everything selected on focus. A time is typed like a kitchen timer ("1", "3", "0"
+ * read 0:01, 0:13, 1:30) and shown as `m:ss`, also when not being edited. Weight and reps keep what is typed ("7," stays "7,"); the value
+ * goes up on every keystroke.
  */
 export function NumberField({ kind, value, hint, label, done, flash, onChange, style }: NumberFieldProps) {
   const { colors, fonts, radius } = useTheme();
   const reduced = useReducedMotion();
-  const [text, setText] = useState(() => inputText(value));
+  const [text, setText] = useState(() => textOf(kind, value));
   const [focused, setFocused] = useState(false);
   const [shake] = useState(() => new Animated.Value(0));
   const [warn, setWarn] = useState(false);
   const lastFlash = useRef(flash);
 
-  // The value changed from outside (a tap on "previous", a tick that filled the row): show it.
+  // The value changed from outside (a tap on "previous", a tick that filled the row, a stopwatch): show it.
   useEffect(() => {
-    if (parse(kind, text) !== value) setText(inputText(value));
+    if (parse(kind, text) !== value) setText(textOf(kind, value));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only an outside change of `value` matters
   }, [value, kind]);
 
@@ -62,7 +66,7 @@ export function NumberField({ kind, value, hint, label, done, flash, onChange, s
     return () => clearTimeout(timeout);
   }, [flash, reduced, shake]);
 
-  const shown = kind === 'seconds' && !focused && value !== null ? timerText(value) : text;
+  const shown = kind === 'seconds' ? (focused ? digitsClock(text) : value !== null ? timerText(value) : '') : text;
   return (
     <Animated.View
       style={[
@@ -83,13 +87,14 @@ export function NumberField({ kind, value, hint, label, done, flash, onChange, s
         selectionColor={colors.primary}
         keyboardType={kind === 'weight' ? 'decimal-pad' : 'number-pad'}
         selectTextOnFocus
-        maxLength={8}
+        maxLength={kind === 'seconds' ? MAX_DURATION_DIGITS + 2 : 8}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         onChangeText={(next) => {
-          const clean = kind === 'seconds' ? next.replace(/[^0-9:]/g, '') : kind === 'weight' ? next.replace(/[^0-9.,]/g, '') : next.replace(/[^0-9]/g, '');
-          setText(clean);
-          onChange(parse(kind, clean));
+          const clean = kind === 'weight' ? next.replace(/[^0-9.,]/g, '') : next.replace(/[^0-9]/g, '');
+          const kept = kind === 'seconds' ? clean.slice(0, MAX_DURATION_DIGITS) : clean;
+          setText(kept);
+          onChange(parse(kind, kept));
         }}
         style={[styles.input, { color: colors.foreground, fontFamily: fonts.bold }]}
       />

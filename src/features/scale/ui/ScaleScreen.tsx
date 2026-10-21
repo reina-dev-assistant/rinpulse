@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Linking } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Divider, Screen, Section } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
@@ -140,14 +141,16 @@ export function ScaleScreen() {
       <RecordSection devices={discovery.devices} />
 
       <Section title={t('supported.title')} icon="information-circle">
-        <AppText variant="caption" muted>
-          {t('supported.body')}
-        </AppText>
-        {PROTOCOLS.map((p) => (
-          <AppText key={p.id} variant="caption">
-            {`${p.label} (${p.brands.slice(0, 3).join(', ')})`}
+        <Details>
+          <AppText variant="caption" muted>
+            {t('supported.body')}
           </AppText>
-        ))}
+          {PROTOCOLS.map((p) => (
+            <AppText key={p.id} variant="caption">
+              {`${p.label} (${p.brands.slice(0, 3).join(', ')})`}
+            </AppText>
+          ))}
+        </Details>
       </Section>
 
       <RoutineNameDialog

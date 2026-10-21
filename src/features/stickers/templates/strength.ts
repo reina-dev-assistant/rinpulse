@@ -19,6 +19,7 @@ type Canvas = 'story' | 'square';
 
 const VOL = 'strength.volumeKg';
 const REPS = 'strength.reps';
+const SECS = 'strength.seconds';
 const SETS = 'strength.sets';
 const DUR = 'strength.durationSec';
 const PR = 'strength.prCount';
@@ -27,10 +28,11 @@ const DATE = '{strength.startedAt|date:medium}';
 const topEx = (i: number) => `strength.topSets.${i}.exercise`;
 const topLoad = (i: number) => `strength.topSets.${i}.load`;
 
-/** The hero number: volume, else reps (bodyweight), else duration. Exactly one of the three passes its condition. */
+/** The hero number: volume, else reps (bodyweight), else time held (plank), else duration. Exactly one of the four passes its condition. */
 const heroVol = has(VOL);
 const heroReps = all(lacks(VOL), has(REPS));
-const heroDur = all(lacks(VOL), lacks(REPS), has(DUR));
+const heroSecs = all(lacks(VOL), lacks(REPS), has(SECS));
+const heroDur = all(lacks(VOL), lacks(REPS), lacks(SECS), has(DUR));
 
 const spacer = (k: Kit, when?: Cond) => k.shape({ w: 1, h: 'fill' }, 'rect', {}, { when });
 
@@ -66,6 +68,7 @@ function hero(k: Kit, o: HeroOpts): LayerJson[] {
   return [
     k.stat(box, `{${VOL}|int}`, { ...base, unit: tl('unit.kg'), unitSize: o.unitSize, label: tl('label.volume'), when: heroVol }),
     k.stat(box, `{${REPS}|int}`, { ...base, label: tl('label.reps'), when: heroReps }),
+    k.stat(box, `{${SECS}|dur}`, { ...base, label: tl('label.hold'), when: heroSecs }),
     k.stat(box, `{${DUR}|durhm}`, { ...base, label: tl('label.duration'), when: heroDur }),
   ];
 }
@@ -124,7 +127,7 @@ function statsRow(k: Kit, o: { size: number; labelSize: number; color: string; l
     [
       { value: `{${SETS}|int}`, label: tl('label.sets') },
       { value: `{${REPS}|int}`, label: tl('label.reps'), when: has(VOL) },
-      { value: `{${DUR}|durhm}`, label: tl('label.duration'), when: any(has(VOL), has(REPS)) },
+      { value: `{${DUR}|durhm}`, label: tl('label.duration'), when: any(has(VOL), has(REPS), has(SECS)) },
     ],
     { size: o.size, labelSize: o.labelSize, color: o.color, labelColor: o.labelColor, unitSize: o.unitSize, weight: 800 },
   );
@@ -485,6 +488,7 @@ function receipt() {
     leaderRow(k, { left: tl('label.volume'), right: `{${VOL}|int} kg`, size: 36, weight: 700, upper: true, when: has(VOL) }),
     leaderRow(k, { left: tl('label.sets'), right: `{${SETS}|int}`, size: 30, upper: true, when: has(SETS) }),
     leaderRow(k, { left: tl('label.reps'), right: `{${REPS}|int}`, size: 30, upper: true, when: has(REPS) }),
+    leaderRow(k, { left: tl('label.hold'), right: `{${SECS}|dur}`, size: 30, upper: true, when: has(SECS) }),
     leaderRow(k, { left: tl('label.duration'), right: `{${DUR}|durhm}`, size: 30, upper: true, when: has(DUR) }),
     leaderRow(k, { left: tl('tpl.strength.text.pr'), right: `{${PR}|int}`, size: 30, weight: 700, when: has(PR) }),
   ];
@@ -539,6 +543,7 @@ function statsSticker() {
     [
       label('label.volume', heroVol),
       label('label.reps', heroReps),
+      label('label.hold', heroSecs),
       label('label.duration', heroDur),
       ...hero(k, { size: 220, unitSize: 80, minSize: 110, color: '$fg', labelColor: '$fg', labelSize: 30, align: 'center', shadow: true, labelPos: 'none' }),
     ],

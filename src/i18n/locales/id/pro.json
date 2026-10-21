@@ -1,0 +1,18 @@
+{
+  "upgrade": {
+    "title": "Upgrade ke Pro",
+    "cta": "Upgrade ke Pro",
+    "later": "Nanti",
+    "managed": "Pro diaktifkan di aplikasi JoyoRogo, dengan akun yang sama.",
+    "openFailed": "Tautannya tidak bisa dibuka. Cari JoyoRogo di toko aplikasi.",
+    "moment": {
+      "coach-chat": "Tanya coach soal latihan dan tidurmu, dijawab dari data jam kamu. Chat ini bagian dari JoyoRogo Pro.",
+      "coach": "Saran latihan harian, rencana lari dan latihan kekuatan, dan chat Tanya coach, semuanya dari data jam kamu. Rencanamu tersimpan di akun JoyoRogo.",
+      "coach-today": "Dapat saran latihan untuk hari ini dari data jam kamu, plus rencana lari dan latihan kekuatan.",
+      "cloud": "Cadangkan setiap latihan ke cloud, lengkap dengan rute dan analisisnya, lalu pulihkan di HP baru. Sekarang latihanmu hanya ada di ponsel ini.",
+      "workout": "Lihat grafik detak jantung dan rute latihan orang lain. Punyamu sendiri selalu bisa dilihat gratis, dan membagikannya juga gratis.",
+      "koneksi": "Biarkan Claude, ChatGPT, atau aplikasi AI lain membaca datamu dan menjawab soal latihan dan tidurmu. Menyambungkan bisa sekarang; aplikasi AI baru membaca datamu setelah Pro aktif.",
+      "family": "Memantau sampai 5 orang, semua pemberitahuan (detak jantung, langkah, tidur, kadar oksigen), email, dan riwayat sampai 90 hari ada di JoyoRogo Pro. Yang berlangganan hanya yang memantau: orang yang kamu pantau tidak pernah dikenai biaya. Pemberitahuan \"Belum sinkron\" tetap gratis."
+    }
+  }
+}

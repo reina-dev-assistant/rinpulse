@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { ButtonRow } from '@/components/ButtonRow';
 import { isIos } from '@/components/IosUnavailable';
 import { Section } from '@/components/Screen';
+import { Details } from '@/components/Details';
 import { Notice } from '@/components/States';
 import { ATUR_REPORTS_ENABLED } from '@/features/device/aturConfig';
 import { AturReportForm } from '@/features/device/AturReportForm';
@@ -44,9 +45,6 @@ export function SilentWatchHelp() {
 
   return (
     <Section title={t('watch:device.silent.title')} icon="help-buoy">
-      <AppText variant="caption" muted>
-        {t('watch:device.silent.intro')}
-      </AppText>
       {silentWatchSteps(isIos ? 'ios' : 'android').map((step, index) => (
         <View key={step} style={styles.step}>
           <AppText variant="caption" muted style={styles.number}>
@@ -57,6 +55,7 @@ export function SilentWatchHelp() {
           </AppText>
         </View>
       ))}
+      <Details>{t('watch:device.silent.intro')}</Details>
       <AppText variant="caption" muted>
         {t('watch:device.silent.reportHelp')}
       </AppText>

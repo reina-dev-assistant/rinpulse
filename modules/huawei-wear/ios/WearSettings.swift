@@ -31,6 +31,7 @@ public final class WearSettings: @unchecked Sendable {
         static let highHrAlert = "high_hr_alert"
         static let lowHrAlert = "low_hr_alert"
         static let stressEnabled = "stress_enabled"
+        static let watchLanguage = "watch_language"
         static let stressCalibration = "stress_calibration"
         static let autoStressListed = "stress_auto_listed"
     }
@@ -113,6 +114,12 @@ public final class WearSettings: @unchecked Sendable {
             defaults.set(newValue.highHeartRateAlert, forKey: Key.highHrAlert)
             defaults.set(newValue.lowHeartRateAlert, forKey: Key.lowHrAlert)
         }
+    }
+
+    /// The language JoyoFit's "Bahasa" setting pinned (`id`, `en`), sent to the watch as its language; nil follows the phone.
+    public var watchLanguage: String? {
+        get { defaults.string(forKey: Key.watchLanguage) }
+        set { set(newValue, forKey: Key.watchLanguage) }
     }
 
     /// The watch's automatic stress switch as the user last set it here (GB PREF_HUAWEI_STRESS_SWITCH).

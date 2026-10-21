@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { HiddenTabHeader } from '@/components/HiddenTabHeader';
 import { Metric } from '@/components/Metric';
 import { Card, Screen } from '@/components/Screen';
@@ -179,9 +180,7 @@ function Zones({ zoneSeconds, bounds, maxHr }: { zoneSeconds: readonly number[];
           <Bar fraction={fractions[i] ?? 0} color={palette.zones[i]!} />
         </View>
       ))}
-      <AppText variant="caption" muted>
-        {t('heartDay.zonesNote', { max: maxHr })}
-      </AppText>
+      <Details>{t('heartDay.zonesNote', { max: maxHr })}</Details>
     </View>
   );
 }

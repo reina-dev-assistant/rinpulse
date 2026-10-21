@@ -27,6 +27,7 @@ import { useStrengthHistory } from '@/features/strength/history';
 import { workoutTotals } from '@/features/strength/calc';
 import type { StrengthWorkout } from '@/features/strength/types';
 import { ActiveWorkoutBanner } from '@/features/strength/ui/ActiveWorkoutBanner';
+import { timerText } from '@/features/strength/logFormat';
 import { volumeText } from '@/features/strength/ui/liftFormat';
 import { getStrengthMeta, setStrengthMeta } from '@/features/strength/store';
 import {
@@ -123,7 +124,11 @@ function WorkoutCard({ workout, strength, onDelete }: { workout: WorkoutRow; str
         <View style={styles.strengthLine}>
           <Ionicons name="barbell-outline" size={16} color={colors.mutedForeground} />
           <AppText variant="caption" muted style={styles.partialText}>
-            {lifts('list.strengthLine', { count: totals.sets, volume: volumeText(totals.volume) })}
+            {totals.volume > 0
+              ? lifts('list.strengthLine', { count: totals.sets, volume: volumeText(totals.volume) })
+              : totals.seconds > 0
+                ? lifts('list.strengthLineTime', { count: totals.sets, time: timerText(totals.seconds) })
+                : lifts('list.strengthLineSets', { count: totals.sets })}
           </AppText>
         </View>
       ) : null}

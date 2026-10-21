@@ -103,6 +103,7 @@
     "bonded": {
       "forgetTitle": "Lupakan pairing?",
       "forgetMessage": "Ini menghapus kunci autentikasi jam ini dari HP dan jam dihapus dari daftar jam kamu. Data kesehatan yang sudah tersimpan tetap ada. Hubungan berikutnya jadi pairing pertama dan harus dikonfirmasi di jam. Pairing Bluetooth Android tidak berubah.",
+      "forgetMessageIos": "Ini menghapus kunci autentikasi jam ini dari HP dan jam dihapus dari daftar jam kamu. Data kesehatan yang sudah tersimpan tetap ada. JoyoFit tidak bisa menghapus pairing di sisi jam: agar Huawei Health bisa dipakai lagi, reset atau lepas juga jamnya (Pengaturan jam > Sistem > Reset, atau hapus HP ini di pengaturan Bluetooth jam), lalu pairing di Huawei Health. Jika jam tampil di Pengaturan > Bluetooth iPhone, ketuk ikon (i) lalu pilih Lupakan Perangkat Ini.",
       "forget": "Lupakan",
       "forgetPairing": "Lupakan pairing",
       "unnamed": "Perangkat tanpa nama",

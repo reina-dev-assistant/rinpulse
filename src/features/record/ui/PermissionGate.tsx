@@ -5,6 +5,7 @@ import { AppState, Linking, PermissionsAndroid, Platform, StyleSheet, View } fro
 import type { BluetoothState } from '@/ble';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { IconChip, type IconName } from '@/components/IconChip';
 import { Card } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -129,12 +130,14 @@ interface ExplainCardProps {
   icon: IconName;
   title: string;
   body: string;
+  /** Long optional rationale: hidden behind "Details" so the button stays in view. */
+  collapsed?: boolean;
   busy: boolean;
   onContinue: () => void;
 }
 
 /** Why the app asks, before the system dialog. The only button is "Lanjut": the system dialog opens from it. */
-function ExplainCard({ icon, title, body, busy, onContinue }: ExplainCardProps) {
+function ExplainCard({ icon, title, body, collapsed = false, busy, onContinue }: ExplainCardProps) {
   const { t } = useTranslation('workouts');
   return (
     <Card>
@@ -144,10 +147,13 @@ function ExplainCard({ icon, title, body, busy, onContinue }: ExplainCardProps) 
           {title}
         </AppText>
       </View>
-      <AppText variant="caption" muted>
-        {body}
-      </AppText>
+      {collapsed ? null : (
+        <AppText variant="caption" muted>
+          {body}
+        </AppText>
+      )}
       <Button label={t('record.permission.continue')} variant="primary" loading={busy} onPress={onContinue} />
+      {collapsed ? <Details>{body}</Details> : null}
     </Card>
   );
 }
@@ -212,6 +218,7 @@ export function PermissionCards({ permissions, plan }: PermissionCardsProps) {
               icon="footsteps-outline"
               title={t('record.permission.steps.title')}
               body={t('record.permission.steps.body')}
+              collapsed
               busy={asking === 'steps'}
               onContinue={() => void permissions.askSteps()}
             />

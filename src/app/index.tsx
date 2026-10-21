@@ -11,7 +11,7 @@ import { NavRow } from '@/components/NavRow';
 import { Card, Screen, Section } from '@/components/Screen';
 import { Notice, Skeleton } from '@/components/States';
 import { StatTile } from '@/components/StatTile';
-import { elapsedSec, formatGrams, isActive } from '@/features/live/liveWorkout';
+import { elapsedSec, formatGrams, isActive, livePhase } from '@/features/live/liveWorkout';
 import { HourlyBars } from '@/features/today/HourlyBars';
 import { scoreFor } from '@/features/sleep/nights';
 import { SleepSummaryView } from '@/features/today/SleepSummaryView';
@@ -79,6 +79,7 @@ function WatchToday() {
   const goal = useStepGoal();
   const live = useLiveHeartRate(isLinkUp(linkState));
   const liveWorkout = useLiveWorkout();
+  const liveSearching = liveWorkout !== null && livePhase(liveWorkout) === 'searching';
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -219,15 +220,20 @@ function WatchToday() {
             <NavRow
               icon="pulse"
               tint="workouts"
-              title={t(liveWorkout.status === 'paused' ? 'home.workoutPaused' : 'home.workoutInProgress', {
-                sport: liveWorkout.sportName ? sportLabel(liveWorkout.sportName) : t('home.workoutDefault'),
-              })}
-              subtitle={t(liveWorkout.heartRate !== null ? 'home.workoutSubtitleHr' : 'home.workoutSubtitle', {
-                elapsed: formatElapsed(elapsedSec(liveWorkout, nowMs)),
-                bpm: liveWorkout.heartRate,
-                fat: formatGrams(liveWorkout.fatGrams),
-                carbs: formatGrams(liveWorkout.carbGrams),
-              })}
+              title={t(
+                liveSearching ? 'home.workoutSearching' : liveWorkout.status === 'paused' ? 'home.workoutPaused' : 'home.workoutInProgress',
+                { sport: liveWorkout.sportName ? sportLabel(liveWorkout.sportName) : t('home.workoutDefault') },
+              )}
+              subtitle={
+                liveSearching
+                  ? t('home.workoutSearchingSubtitle')
+                  : t(liveWorkout.heartRate !== null ? 'home.workoutSubtitleHr' : 'home.workoutSubtitle', {
+                      elapsed: formatElapsed(elapsedSec(liveWorkout, nowMs)),
+                      bpm: liveWorkout.heartRate,
+                      fat: formatGrams(liveWorkout.fatGrams),
+                      carbs: formatGrams(liveWorkout.carbGrams),
+                    })
+              }
               onPress={() => router.push('/workout-live')}
             />
           </Card>

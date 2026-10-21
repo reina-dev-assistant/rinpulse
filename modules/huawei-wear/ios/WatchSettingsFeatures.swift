@@ -20,6 +20,8 @@ public final class WatchSettingsFeatures: LinkObserver, @unchecked Sendable {
     public let hrv: HrvSpot
     /// The automatic stress switch.
     public let stress: StressFeature
+    /// Keeps the phone-language observer registered for the life of the object.
+    private var localeObserver: NSObjectProtocol?
 
     public init(
         handle: @escaping @Sendable () -> LinkHandle?, settings: WearSettings, syncStore: SyncStore, events: WearEvents,
@@ -32,6 +34,7 @@ public final class WatchSettingsFeatures: LinkObserver, @unchecked Sendable {
         self.liveHeartRate = LiveHeartRate(handle: handle, settings: settings, events: events, nowMs: nowMs)
         self.hrv = HrvSpot(handle: handle, liveHeartRate: liveHeartRate, syncStore: syncStore, events: events)
         self.stress = StressFeature(handle: handle, settings: settings, hrv: hrv, events: events)
+        observeLocaleChanges()
     }
 
     // MARK: LinkObserver
@@ -96,6 +99,44 @@ public final class WatchSettingsFeatures: LinkObserver, @unchecked Sendable {
         if plan.isEmpty { return true }
         let acknowledged = try await h.operationLock.withLock { try await HealthSensors.send(session: h.session, log: events.sink, plan: plan) }
         return acknowledged == plan.count
+    }
+
+    // MARK: language
+
+    /// `setWatchLanguage`: the app language the watch follows (`id`, `en`), nil for the phone's. Stored, sent at every connect, and sent now when
+    /// a watch is connected and the value changed; true when the connected watch took it.
+    public func setWatchLanguage(_ language: String?) async throws -> Bool {
+        let trimmed = language?.trimmingCharacters(in: .whitespaces)
+        let value = trimmed?.isEmpty == false ? trimmed : nil
+        if let value, !WatchLocale.isLanguageTag(value) { throw WearError(.invalidArgument, "'\(value)' is not a language tag") }
+        if settings.watchLanguage == value { return false }
+        settings.watchLanguage = value
+        return await resendLanguage(reason: "the app language changed")
+    }
+
+    /// Sends the language to the connected watch; false when none is connected or the watch did not take it.
+    @discardableResult
+    public func resendLanguage(reason: String) async -> Bool {
+        guard let h = handle() else { return false }
+        do {
+            return try await h.operationLock.withLock {
+                try await LanguageSender.send(
+                    session: h.session, caps: h.caps, log: events.sink, pinned: settings.watchLanguage, phone: LanguageSender.phoneLanguage()
+                )
+            }
+        } catch {
+            events.sink(LogEntry(.error, "LanguageSetting not sent (\(reason)): \(error)"))
+            return false
+        }
+    }
+
+    /// The phone's language changed while the app runs: a watch that follows the phone is told again, as Huawei Health does. A pinned app
+    /// language does not move with the phone.
+    private func observeLocaleChanges() {
+        localeObserver = NotificationCenter.default.addObserver(forName: NSLocale.currentLocaleDidChangeNotification, object: nil, queue: nil) { [weak self] _ in
+            guard let self, self.settings.watchLanguage == nil else { return }
+            Task { await self.resendLanguage(reason: "the phone language changed") }
+        }
     }
 }
 

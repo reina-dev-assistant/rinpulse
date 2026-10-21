@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { Details } from '@/components/Details';
 import { fmtPercent } from '@/i18n';
 
 import { formatDuration, formatPace, type PaceZoneKey, type WorkoutAnalysis } from '../types';
@@ -87,7 +88,7 @@ function HrZonesCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
           {t('zones.below', { time: formatDuration(zones.belowSec) })}
         </Txt>
       ) : null}
-      <Note>{t('zones.hrNote')}</Note>
+      <Details>{t('zones.hrNote')}</Details>
     </Card>
   );
 }

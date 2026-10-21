@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { BarChart, type BarDatum } from '@/components/BarChart';
 import { Metric } from '@/components/Metric';
 import { Segmented } from '@/components/Segmented';
-import { fmtDate, fmtDistance, fmtDuration, fmtInt, useLocale } from '@/i18n';
+import { fmtDate, fmtDecimal, fmtDistance, fmtDuration, fmtInt, useLocale } from '@/i18n';
 import { spacing, useTheme } from '@/theme';
 import {
   aggregateProgress,
@@ -39,12 +40,19 @@ export function ProgressCard({ kind, rows, nowSec, period, onPeriodChange }: Pro
   const locale = useLocale();
   const progress = useMemo(() => aggregateProgress(rows, kind, period, nowSec), [rows, kind, period, nowSec]);
   const { current, previous, buckets } = progress;
-  const peak = Math.max(...buckets.map((b) => b.distance));
   const distance = workoutDistanceParts(current.distance);
   const diff = current.distance - previous.distance;
   const trend = previous.count === 0 ? 'none' : Math.abs(diff) < SAME_UNDER_M ? 'same' : diff > 0 ? 'up' : 'down';
   const compare = t(`progress.compare.${trend}.${period}`, { value: fmtDistance(Math.abs(diff)) });
   const trendIcon = trend === 'up' ? 'arrow-up' : trend === 'down' ? 'arrow-down' : 'remove';
+  const chartData: BarDatum[] = buckets.map((bucket, i) => ({
+    key: bucket.start,
+    value: bucket.distance,
+    title: period === 'week' ? t('progress.weekOf', { date: fmtDate(bucket.start, 'medium', locale) }) : fmtDate(bucket.start, 'month', locale),
+    text: fmtDistance(bucket.distance),
+    short: fmtDecimal(bucket.distance / 1000, 1, locale),
+    dim: i !== PROGRESS_BUCKETS - 1,
+  }));
   const dateStyle = period === 'week' ? 'short' : 'monthShort';
 
   return (
@@ -88,37 +96,14 @@ export function ProgressCard({ kind, rows, nowSec, period, onPeriodChange }: Pro
             {t(`progress.empty.${period}`, { sport: t(`progress.kind.${kind}`) })}
           </AppText>
         ) : (
-          <View accessible accessibilityLabel={t(`progress.chartA11y.${period}`, { value: fmtDistance(peak) })}>
-            <View style={styles.bars}>
-              {buckets.map((bucket, i) => (
-                <View key={bucket.start} style={styles.slot}>
-                  <View
-                    style={[
-                      styles.bar,
-                      bucket.distance > 0
-                        ? {
-                            height: Math.max(3, (bucket.distance / peak) * BAR_AREA_HEIGHT),
-                            backgroundColor: colors.workouts,
-                            opacity: i === PROGRESS_BUCKETS - 1 ? 1 : 0.5,
-                          }
-                        : { height: 3, backgroundColor: colors.muted },
-                    ]}
-                  />
-                </View>
-              ))}
-            </View>
-            <View style={styles.axis}>
-              {buckets.map((bucket, i) => (
-                <View key={bucket.start} style={styles.slot}>
-                  {i % LABEL_EVERY === 0 ? (
-                    <AppText variant="caption" muted style={styles.tick} numberOfLines={1}>
-                      {fmtDate(bucket.start, dateStyle, locale)}
-                    </AppText>
-                  ) : null}
-                </View>
-              ))}
-            </View>
-          </View>
+          <BarChart
+            data={chartData}
+            color={colors.workouts}
+            height={BAR_AREA_HEIGHT}
+            gap={4}
+            tick={(i) => (i % LABEL_EVERY === 0 ? fmtDate(buckets[i]!.start, dateStyle, locale) : null)}
+            tickWidth={44}
+          />
         )}
       </View>
     </View>
@@ -148,9 +133,4 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: spacing.md },
   stat: { flex: 1, gap: 2 },
   chart: { gap: spacing.sm, marginTop: spacing.xs },
-  bars: { flexDirection: 'row', height: BAR_AREA_HEIGHT, alignItems: 'flex-end', gap: 4 },
-  slot: { flex: 1, justifyContent: 'flex-end' },
-  bar: { borderTopLeftRadius: 3, borderTopRightRadius: 3, borderBottomLeftRadius: 1, borderBottomRightRadius: 1 },
-  axis: { flexDirection: 'row', gap: 4, marginTop: 6 },
-  tick: { width: 44, marginLeft: -12, textAlign: 'center', fontSize: 11, lineHeight: 15 },
 });

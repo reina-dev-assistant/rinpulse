@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { IconChip, type IconName } from '@/components/IconChip';
 import { PressableScale } from '@/components/PressableScale';
+import { useTabBarInset } from '@/components/tabBarInset';
 import { useKeyboardOverlap } from '@/components/useKeyboardOverlap';
 import { spacing, useColors, useTheme, type Tint } from '@/theme';
 
@@ -20,12 +21,14 @@ export interface RefreshProps {
  * Padding for a screen's scrolling content. Tab-root screens draw their own title and sit under the
  * status bar (`withTitle`); stack screens have a native header that already clears it.
  */
-export function useContentPadding(withTitle: boolean): ViewStyle {
+export function useContentPadding(withTitle: boolean, clearTabBar = true): ViewStyle {
   const insets = useSafeAreaInsets();
+  // The tab bar floats over the scene: the end of the content clears it so the last item scrolls fully above it.
+  const tabBar = useTabBarInset();
   return {
     paddingTop: (withTitle ? insets.top : 0) + spacing.sm,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.xl + (clearTabBar ? tabBar : 0),
   };
 }
 
@@ -87,9 +90,11 @@ interface ScreenProps {
 
 export function Screen({ title, caption, right, refresh, scrollEnabled = true, scrollRef, footer, children }: ScreenProps) {
   const colors = useColors();
-  const padding = useContentPadding(title !== undefined);
+  // With a footer the footer sits above the bar, so the content above it does not clear the bar again.
+  const padding = useContentPadding(title !== undefined, footer === undefined);
   const refreshControl = useRefreshControl(refresh);
   const keyboard = useKeyboardOverlap();
+  const tabBar = useTabBarInset();
   const scroll = (
     <ScrollView
       ref={scrollRef}
@@ -105,7 +110,7 @@ export function Screen({ title, caption, right, refresh, scrollEnabled = true, s
   );
   if (!footer) return scroll;
   return (
-    <View ref={keyboard.ref} collapsable={false} style={[styles.fill, { backgroundColor: colors.background, paddingBottom: keyboard.lift }]}>
+    <View ref={keyboard.ref} collapsable={false} style={[styles.fill, { backgroundColor: colors.background, paddingBottom: Math.max(keyboard.lift, tabBar) }]}>
       {scroll}
       {footer}
     </View>

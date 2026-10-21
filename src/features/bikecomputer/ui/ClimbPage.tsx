@@ -72,7 +72,7 @@ export function ClimbPage({ nav, hasRoute, elevationStrip, palette }: ClimbPageP
               <Text style={[styles.statLabel, { color: palette.muted, fontFamily: fonts.bold }]} numberOfLines={1}>
                 {stat.label}
               </Text>
-              <Text style={[styles.statValue, { color: palette.foreground, fontFamily: fonts.heavy }]} numberOfLines={1}>
+              <Text style={[styles.statValue, { color: palette.foreground, fontFamily: fonts.numeral }]} numberOfLines={1}>
                 {stat.value}
                 <Text style={[styles.statUnit, { color: palette.muted }]}> {stat.unit}</Text>
               </Text>

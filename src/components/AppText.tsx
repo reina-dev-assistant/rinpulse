@@ -28,20 +28,20 @@ export function AppText({ variant = 'body', muted, danger, color, style, ...rest
     () =>
       StyleSheet.create({
         display: {
-          fontFamily: fonts.heavy,
+          fontFamily: fonts.numeral,
           fontSize: numeral.hero.size,
           lineHeight: numeral.hero.line,
           letterSpacing: numeral.hero.tracking,
           fontVariant: ['tabular-nums'],
         },
         figure: {
-          fontFamily: fonts.heavy,
+          fontFamily: fonts.numeral,
           fontSize: numeral.lg.size,
           lineHeight: numeral.lg.line,
           letterSpacing: numeral.lg.tracking,
           fontVariant: ['tabular-nums'],
         },
-        title: { fontFamily: fonts.heavy, fontSize: title.size, lineHeight: title.line, letterSpacing: title.tracking },
+        title: { fontFamily: fonts.headline, fontSize: title.size, lineHeight: title.line, letterSpacing: title.tracking },
         heading: { fontFamily: fonts.bold, fontSize: fontSize.md, lineHeight: 22 },
         bodyStrong: { fontFamily: fonts.medium, fontSize: fontSize.base, lineHeight: 21 },
         body: { fontFamily: fonts.regular, fontSize: fontSize.base, lineHeight: 22 },

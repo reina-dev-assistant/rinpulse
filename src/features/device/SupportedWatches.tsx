@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Linking, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { Button } from '@/components/Button';
 import { ButtonRow } from '@/components/ButtonRow';
 import { Card } from '@/components/Screen';
@@ -20,9 +21,6 @@ export function SupportedWatches() {
   return (
     <Card>
       <AppText variant="heading">{t('supported.title')}</AppText>
-      <AppText variant="caption" muted>
-        {t('supported.intro')}
-      </AppText>
       <View style={styles.list}>
         {WATCH_FAMILIES.map((family) => (
           <View key={family.id} style={styles.row} accessible accessibilityLabel={`${family.name}. ${t(`supported.status.${family.support}`)}`}>
@@ -41,9 +39,14 @@ export function SupportedWatches() {
           </View>
         ))}
       </View>
-      <AppText variant="caption" muted>
-        {t('supported.footer')}
-      </AppText>
+      <Details>
+        <AppText variant="caption" muted>
+          {t('supported.intro')}
+        </AppText>
+        <AppText variant="caption" muted>
+          {t('supported.footer')}
+        </AppText>
+      </Details>
       <ButtonRow>
         <Button label={t('supported.fullList')} icon="list" lines={2} onPress={() => void Linking.openURL(SUPPORTED_LIST_URL)} />
         <Button label={t('supported.request')} icon="logo-github" lines={2} onPress={() => void Linking.openURL(WATCH_REQUEST_URL)} />

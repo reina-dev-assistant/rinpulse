@@ -1,0 +1,151 @@
+import { describe, expect, test } from 'bun:test';
+
+import type { Platform } from '@/features/onboarding/flow';
+import { applyLocale, t } from '@/i18n';
+
+import {
+  campaignOf,
+  dismissalExpired,
+  DISMISS_MS,
+  JOYOROGO_APP_STORE_URL,
+  JOYOROGO_APP_URL,
+  openProUpgrade,
+  proUpgradeAction,
+  type Distribution,
+  type ProMoment,
+} from './offer';
+
+const MOMENTS: ProMoment[] = ['coach-chat', 'coach', 'coach-today', 'cloud', 'workout', 'koneksi', 'family'];
+
+describe('proUpgradeAction: store rules per platform and distribution', () => {
+  test('Google Play: the Play listing only, no price, no web checkout', () => {
+    for (const moment of MOMENTS) {
+      const action = proUpgradeAction('android', 'play', moment);
+      expect(action.kind).toBe('app-or-store');
+      expect(action.showPrice).toBe(false);
+      expect(action.primaryUrl.startsWith('market://details?id=com.joyodigitama.joyorogo&referrer=')).toBe(true);
+      expect(action.primaryUrl).toContain(`utm_campaign%3D${campaignOf(moment)}`);
+      expect(action.fallbackUrl?.startsWith('https://play.google.com/store/apps/details?id=com.joyodigitama.joyorogo&referrer=')).toBe(true);
+      for (const url of [action.appUrl, action.primaryUrl, action.fallbackUrl ?? '']) expect(url).not.toContain('joyorogo.com');
+    }
+  });
+
+  test('iOS: the App Store page only, no price, no web checkout, whatever the distribution constant says', () => {
+    for (const distribution of ['play', 'sideload'] as Distribution[]) {
+      const action = proUpgradeAction('ios', distribution, 'cloud');
+      expect(action.kind).toBe('app-or-store');
+      expect(action.showPrice).toBe(false);
+      expect(action.primaryUrl.startsWith(JOYOROGO_APP_STORE_URL)).toBe(true);
+      expect(action.primaryUrl).toContain('ct=joyofit-evergreen-pro-cloud');
+      expect(action.fallbackUrl).toBeNull();
+      expect(action.primaryUrl).not.toContain('joyorogo.com');
+    }
+  });
+
+  test('sideloaded Android: the web page with utm tags and the live price', () => {
+    for (const moment of MOMENTS) {
+      const action = proUpgradeAction('android', 'sideload', moment);
+      expect(action.kind).toBe('web');
+      expect(action.showPrice).toBe(true);
+      expect(action.primaryUrl).toBe(
+        `https://joyorogo.com/pro?from=joyofit&utm_source=joyofit&utm_medium=app&utm_campaign=evergreen-pro-${moment}`,
+      );
+      expect(action.fallbackUrl).toBeNull();
+    }
+  });
+
+  test('every platform tries the JoyoRogo app first, by its custom scheme', () => {
+    for (const platform of ['ios', 'android'] as Platform[]) {
+      for (const distribution of ['play', 'sideload'] as Distribution[]) {
+        expect(proUpgradeAction(platform, distribution, 'koneksi').appUrl).toBe(JOYOROGO_APP_URL);
+      }
+    }
+    expect(JOYOROGO_APP_URL).toBe('joyorogo://founder?from=joyofit');
+  });
+
+  test('only a sideloaded build ever shows a price', () => {
+    const shown = (['ios', 'android'] as Platform[]).flatMap((platform) =>
+      (['play', 'sideload'] as Distribution[]).filter((distribution) => proUpgradeAction(platform, distribution, 'cloud').showPrice).map((d) => `${platform}/${d}`),
+    );
+    expect(shown).toEqual(['android/sideload']);
+  });
+});
+
+describe('openProUpgrade', () => {
+  const fakeOpen = (installed: (url: string) => boolean) => {
+    const tried: string[] = [];
+    const open = async (url: string) => {
+      tried.push(url);
+      if (!installed(url)) throw new Error('Could not open URL');
+    };
+    return { tried, open };
+  };
+
+  test('JoyoRogo installed: opens its app and stops', async () => {
+    const { tried, open } = fakeOpen(() => true);
+    expect(await openProUpgrade(proUpgradeAction('android', 'play', 'cloud'), open)).toBe(true);
+    expect(tried).toEqual([JOYOROGO_APP_URL]);
+  });
+
+  test('Play without the app: the market link', async () => {
+    const action = proUpgradeAction('android', 'play', 'cloud');
+    const { tried, open } = fakeOpen((url) => url.startsWith('market://'));
+    expect(await openProUpgrade(action, open)).toBe(true);
+    expect(tried).toEqual([JOYOROGO_APP_URL, action.primaryUrl]);
+  });
+
+  test('Play without the app and without a market handler: the https listing', async () => {
+    const action = proUpgradeAction('android', 'play', 'cloud');
+    const { tried, open } = fakeOpen((url) => url.startsWith('https://'));
+    expect(await openProUpgrade(action, open)).toBe(true);
+    expect(tried).toEqual([JOYOROGO_APP_URL, action.primaryUrl, action.fallbackUrl as string]);
+  });
+
+  test('sideload without the app: the web page; iOS without the app: the App Store page', async () => {
+    for (const [platform, distribution] of [['android', 'sideload'], ['ios', 'play']] as const) {
+      const action = proUpgradeAction(platform, distribution, 'koneksi');
+      const { tried, open } = fakeOpen((url) => url.startsWith('https://'));
+      expect(await openProUpgrade(action, open)).toBe(true);
+      expect(tried).toEqual([JOYOROGO_APP_URL, action.primaryUrl]);
+    }
+  });
+
+  test('nothing opens: false, never a throw', async () => {
+    const { open } = fakeOpen(() => false);
+    expect(await openProUpgrade(proUpgradeAction('android', 'play', 'cloud'), open)).toBe(false);
+  });
+});
+
+describe('dismissal', () => {
+  const now = 1_800_000_000_000;
+  test('never dismissed or garbage: shows', () => {
+    expect(dismissalExpired(null, now)).toBe(true);
+    expect(dismissalExpired(Number.NaN, now)).toBe(true);
+  });
+  test('hidden for two weeks, then shows again', () => {
+    expect(dismissalExpired(now - 1000, now)).toBe(false);
+    expect(dismissalExpired(now - DISMISS_MS + 1, now)).toBe(false);
+    expect(dismissalExpired(now - DISMISS_MS, now)).toBe(true);
+  });
+  test('a clock set back does not hide the card for good', () => {
+    expect(dismissalExpired(now + 1000, now)).toBe(true);
+  });
+});
+
+describe('copy', () => {
+  test('every moment has text in both languages, the button reads "Upgrade ke Pro" and no moment text has an em dash or a price', () => {
+    for (const locale of ['id', 'en'] as const) {
+      applyLocale(locale);
+      for (const moment of MOMENTS) {
+        const body = t(`pro:upgrade.moment.${moment}`);
+        expect(body.length).toBeGreaterThan(20);
+        expect(body).not.toContain('\u2014');
+        expect(body).not.toMatch(/Rp\s?\d/);
+      }
+    }
+    applyLocale('id');
+    expect(t('pro:upgrade.cta')).toBe('Upgrade ke Pro');
+    expect(t('pro:upgrade.title')).toBe('Upgrade ke Pro');
+    expect(t('pro:upgrade.later')).toBe('Nanti');
+  });
+});

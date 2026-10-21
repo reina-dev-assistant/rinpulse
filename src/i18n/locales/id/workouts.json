@@ -254,10 +254,6 @@
       "week": "Jarak per minggu",
       "month": "Jarak per bulan"
     },
-    "chartA11y": {
-      "week": "Jarak per minggu, 12 minggu terakhir. Terjauh {{value}}.",
-      "month": "Jarak per bulan, 12 bulan terakhir. Terjauh {{value}}."
-    },
     "stat": {
       "time": "Waktu",
       "elevation": "Tanjakan",
@@ -290,7 +286,8 @@
     "empty": {
       "week": "Tidak ada aktivitas {{sport}} dalam 12 minggu terakhir.",
       "month": "Tidak ada aktivitas {{sport}} dalam 12 bulan terakhir."
-    }
+    },
+    "weekOf": "Minggu {{date}}"
   },
   "detail": {
     "title": "Latihan",

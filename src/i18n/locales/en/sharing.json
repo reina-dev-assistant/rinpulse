@@ -88,10 +88,18 @@
     "finish": "Finish",
     "workout": "Workout",
     "status": {
+      "searching": "Searching for GPS on the watch…",
       "preparing": "Starting",
       "running": "Live",
       "paused": "Paused",
       "ended": "Finished"
+    },
+    "searchingHint": "The workout has not started. The timer begins once the watch has GPS and the workout is really running on the watch.",
+    "endPrompt": {
+      "title": "The watch seems to have stopped",
+      "body": "The watch reports no workout running but has not confirmed it finished. End this live workout?",
+      "finish": "End",
+      "keep": "Keep going"
     },
     "timeA11y": "Time {{value}}",
     "zone": "Zone {{zone}} · {{label}}",

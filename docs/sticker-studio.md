@@ -380,7 +380,7 @@ byte-identical (`src/features/stickers/core/`, pinned by `core.sha256` and `core
 | Today share (`ShareTodayButton`, `dayShareStats`) | `templates/ready.ts` + `watch.ts` via `buildTodaySubject` |
 | `shareImage.ts`, `shareTargets.ts` | `stickers/share/shareImage.ts`, `shareTargets.ts` (capture at an explicit 1080 x H, `transparent` decides the Instagram route) |
 | `shareStats.ts`, `dayShareStats.ts` | `data/run.ts`, `data/today.ts` (numbers raw, the templates format them); the old files keep only `effortKind` and `DayShareInput` |
-| no sleep, week, load, plan or badge sharing | `ShareSleepButton`, `ShareWeekButton`, `ShareBadgesButton`, `SharePlanButton` |
+| no sleep, week, load, plan or badge sharing | `ShareSleepButton`, `ShareMenuButton` (Trends header: this week and each badge), `SharePlanButton` |
 | (JoyoRogo post `ShareToRogo`, Strava upload) | unchanged: they are not image shares |
 
 ### Layout of `src/features/stickers/`

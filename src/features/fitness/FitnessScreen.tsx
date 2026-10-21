@@ -89,7 +89,7 @@ export function FitnessScreen() {
                       ) : null}
                     </View>
                   </View>
-                  {shown.vo2.trend.length > 1 ? <Sparkline values={shown.vo2.trend.map((p) => p.value)} color={colors.heart} label={t('fitness.screen.vo2.trend')} /> : null}
+                  {shown.vo2.trend.length > 1 ? <Sparkline values={shown.vo2.trend.map((p) => p.value)} color={colors.heart} label={t('fitness.screen.vo2.trend')} readout={shown.vo2.trend.map((p) => ({ title: fmtDate(p.at, 'medium'), text: `${fmtDecimal(p.value, vo2Decimals)} ${t('fitness.screen.vo2.unit')}` }))} /> : null}
                 </>
               ) : (
                 <AppText variant="caption" muted>
@@ -119,7 +119,7 @@ export function FitnessScreen() {
                   </AppText>
                   <KeyValue icon="flash-outline" label={t('fitness.screen.load.avg7')} value={t('fitness.screen.load.perDay', { value: fmtInt(shown.load.acute) })} />
                   <KeyValue icon="calendar-outline" label={t('fitness.screen.load.avg28')} value={t('fitness.screen.load.perDay', { value: fmtInt(shown.load.chronic) })} />
-                  <TrendChart values={loadSeries} kind="bar" color={colors.workouts} firstDay={loadDays[0]} label={t('fitness.screen.load.chart')} endLabel={t('common:time.yesterday')} />
+                  <TrendChart values={loadSeries} kind="bar" color={colors.workouts} format={(v) => t('fitness.screen.load.perDay', { value: fmtInt(v) })} firstDay={loadDays[0]} label={t('fitness.screen.load.chart')} endLabel={t('common:time.yesterday')} />
                 </>
               ) : (
                 <AppText variant="caption" muted>
@@ -215,6 +215,7 @@ export function FitnessScreen() {
                 values={shown.intensity.days.map((d) => (d.day <= data.dayStart ? d.total : null))}
                 kind="bar"
                 color={colors.link}
+                format={(v) => t('fitness.screen.intensity.minutes', { value: fmtInt(v) })}
                 firstDay={shown.intensity.weekStart}
                 label={t('fitness.screen.intensity.chart')}
                 endLabel={t('fitness.screen.intensity.endLabel')}

@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Chip } from '@/components/Chip';
 import { Field } from '@/components/Input';
 import { Card, Screen, Section } from '@/components/Screen';
@@ -110,10 +111,6 @@ export function FaceCustomizeScreen() {
           {t('faceEdit.faceId', { id })}
         </AppText>
       </View>
-
-      <Notice icon="information-circle">
-        {t('faceEdit.explain')}
-      </Notice>
       {notice ? <Notice icon="checkmark-circle">{notice}</Notice> : null}
       {error ? <Notice tone="danger">{error}</Notice> : null}
 
@@ -193,6 +190,8 @@ export function FaceCustomizeScreen() {
           onPress={() => void revert()}
         />
       </View>
+
+      <Details>{t('faceEdit.explain')}</Details>
     </Screen>
   );
 }

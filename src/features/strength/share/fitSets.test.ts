@@ -117,6 +117,14 @@ describe('fitSetsOf', () => {
     const first = fitSetsOf({ startedAt, exercises: [exercise('push_up', [set('x', { reps: 10, doneAt: startedAt - 5_000 })])] }, catalog);
     expect(first[0]).toMatchObject({ startMs: startedAt, endMs: startedAt, durationMs: 0 });
   });
+
+  it('reads a set holding both reps and seconds the way the exercise is measured in this workout', () => {
+    const both = set('b', { reps: 10, seconds: 30, doneAt: startedAt + 100_000 });
+    const asTime = fitSetsOf({ startedAt, exercises: [{ ...exercise('push_up', [both]), timed: true }] }, catalog);
+    expect(asTime[0]).toMatchObject({ reps: null, durationMs: 30_000 });
+    const asReps = fitSetsOf({ startedAt, exercises: [{ ...exercise('plank', [both]), timed: false }] }, catalog);
+    expect(asReps[0]).toMatchObject({ reps: 10, durationMs: ACTIVE_SET_MS });
+  });
 });
 
 describe('buildFit with sets', () => {

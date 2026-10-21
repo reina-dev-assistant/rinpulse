@@ -3,6 +3,7 @@
 // SendFitnessUserInfo,SendFitnessGoal,GetNotificationCapabilities,GetNotificationConstraints,SetNotification}Request.
 package com.joyodigitama.huaweiwear
 
+import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.CancellationException
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiCoordinator.HuaweiDeviceType
@@ -24,8 +25,8 @@ internal class InitResult(
  * Port of HuaweiSupportProvider.initializeDeviceConfigure (the same on every transport; [deviceType] only picks the
  * ProductInfo tag set, as GB does for HuaweiDeviceType.AW):
  * ProductInfo -> SetTime (get, set again if drifted) -> BatteryLevel -> SupportedServices ->
- * SupportedCommands. Each request has GB's 2 s `initTimeout`; like GB, a missing reply only skips
- * to the next request.
+ * SupportedCommands, the profile, sensors and notification setup, and last the phone's language (SetLanguageSetting).
+ * Each request has GB's 2 s `initTimeout`; like GB, a missing reply only skips to the next request.
  */
 internal class HuaweiInitializer(
   private val session: HuaweiSession,
@@ -42,6 +43,10 @@ internal class HuaweiInitializer(
   private val healthSensors: HealthSensorConfig,
   /** GB HuaweiDeviceType of the link; AW asks ProductInfo for a shorter tag set. */
   private val deviceType: HuaweiDeviceType = HuaweiDeviceType.BR,
+  /** The language JoyoFit's Settings pinned (`id`, `en`), or null to follow [phoneLocale]; sent as the watch's language. */
+  private val pinnedLanguage: String? = null,
+  /** The phone's first language. */
+  private val phoneLocale: Locale = Locale.getDefault(),
 ) {
   private val params get() = session.params
 
@@ -132,6 +137,16 @@ internal class HuaweiInitializer(
     }
     DeviceCaps.supportedCommands = supportedCommands
     DeviceCaps.expandCapabilities = expandCapabilities
+    // What the support report needs to answer "can this watch take a language / music?": GB supportsLanguageSetting is 0C/01, music upload
+    // is 25/04, music control 25/02, "more music" ExpandCapability 122 (docs/watch-music.md).
+    fun listed(service: Int) = supportedCommands[service]?.joinToString(" ") { it.hex2() } ?: "not listed"
+    events.log(
+      LogDirection.INFO,
+      null,
+      null,
+      null,
+      "Language and music: 0C=[${listed(0x0C)}] 25=[${listed(0x25)}] moreMusic(ExpandCapability 122)=${expandCapability(122)}",
+    )
     // SendExtendedAccountRequest (first in GB initializeDynamicServices): no Huawei account, so
     // GB's default empty account is sent. Watches that judge accounts wait for this after a bind.
     if (supports(AccountRelated.id.toInt(), 0x05) && supports(AccountRelated.id.toInt(), 0x06)) {
@@ -248,6 +263,8 @@ internal class HuaweiInitializer(
       }
     }
     soft("NotificationState") { ProfileSender.sendNotificationSwitch(session, events, notificationsEnabled) }
+    // SetLanguageSettingRequest (GB init queue; Huawei Health sends it on every connect), see [LanguageSender].
+    soft("LanguageSetting") { LanguageSender.send(session, events, pinnedLanguage, phoneLocale) }
 
     return InitResult(productModel, softwareVersion, hardwareVersion, serialNumber, deviceName, battery, notificationState)
   }

@@ -4,6 +4,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { HeroGradient } from '@/components/HeroGradient';
 import { KeyValue } from '@/components/KeyValue';
 import { Metric } from '@/components/Metric';
 import { StatusDot } from '@/components/StatusDot';
@@ -73,6 +74,7 @@ export function LiveView({ saving, saveError, onFinish, onSaveAgain, onDiscard }
       {paused && !busy ? <Notice icon="pause-circle">{t('record.live.pausedBanner')}</Notice> : null}
 
       <Card style={[styles.hero, { backgroundColor: colors.hero, borderRadius: radius.card }]}>
+        <HeroGradient />
         <View style={styles.heroHead}>
           <AppText variant="label" color={colors.heroMuted} numberOfLines={1} style={styles.sport}>
             {sportName}
@@ -248,7 +250,7 @@ export function LiveView({ saving, saveError, onFinish, onSaveAgain, onDiscard }
 }
 
 const styles = StyleSheet.create({
-  hero: { gap: spacing.md, padding: spacing.lg },
+  hero: { gap: spacing.md, padding: spacing.lg, overflow: 'hidden' },
   heroHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   sport: { flex: 1 },
   clock: { alignItems: 'center', paddingVertical: spacing.xs },

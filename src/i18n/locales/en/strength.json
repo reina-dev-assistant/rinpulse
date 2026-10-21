@@ -43,7 +43,17 @@
     "repsField": "Reps of set {{label}}",
     "secondsField": "Time of set {{label}}, seconds",
     "rpeField": "RPE of set {{label}}",
-    "doneField": "Set {{label}} done"
+    "doneField": "Set {{label}} done",
+    "timerStart": "Start stopwatch for set {{label}}",
+    "timerStop": "Stop and save time of set {{label}}"
+  },
+  "measure": {
+    "label": "How {{name}} is measured",
+    "confirmTitle": "Switch to {{measure}}?",
+    "confirmMessage": "The reps or time of every set of this exercise are cleared and the set ticks are removed. Weight and set types stay.",
+    "confirmMessageRoutine": "The reps or time of every set of this exercise are replaced with the starting numbers. Weight and set types stay.",
+    "confirm": "Switch",
+    "cancel": "Cancel"
   },
   "exercise": {
     "openInfo": "How to do {{name}}",
@@ -215,10 +225,10 @@
     "formName": "Name",
     "formMuscles": "Main muscles",
     "formEquipment": "Equipment",
-    "formTimed": "Counted in time",
-    "formTimedHint": "For planks and other holds: you enter seconds, not reps.",
     "deleteTitle": "Delete this exercise?",
-    "deleteMessage": "Workouts that used it keep their history."
+    "deleteMessage": "Workouts that used it keep their history.",
+    "formMeasure": "Measured by",
+    "formMeasureHint": "Reps for movements you count per rep, Time for planks and other holds. You can change it per workout later."
   },
   "pr": {
     "weight": "Heaviest weight",
@@ -241,6 +251,7 @@
     "sets": "Sets",
     "warmupSets": "+{{count}} warm-up",
     "reps": "Reps",
+    "time": "Time",
     "exercises": "Exercises",
     "kcal": "Energy",
     "kcalWatch": "from the watch",
@@ -276,6 +287,9 @@
     "restMore": "15 seconds more",
     "autoRest": "Start automatically",
     "autoRestHint": "The timer starts when you tick a set done.",
+    "timedTitle": "Timed sets",
+    "countdown": "Count down from the target",
+    "countdownHint": "The stopwatch of a timed set counts down from the time already entered and vibrates at zero. When off, it counts up.",
     "screenTitle": "Screen and columns",
     "keepAwake": "Keep screen on",
     "keepAwakeHint": "While the logger is open.",

@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { Field } from '@/components/Input';
 import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
@@ -26,9 +27,6 @@ export function JoinView({ initialCode }: { initialCode: string }) {
   return (
     <>
       <Section title={t('join.title')} icon="laptop-outline" tint="link">
-        <AppText variant="caption" muted>
-          {t('join.steps', { url: RIDE_WEB_URL.replace(/^https?:\/\//, '') })}
-        </AppText>
         {initialCode !== '' && code === cleanCode(initialCode) ? <Notice icon="qr-code">{t('join.fromLink')}</Notice> : null}
         <Field
           label={t('join.codeLabel')}
@@ -52,6 +50,7 @@ export function JoinView({ initialCode }: { initialCode: string }) {
           </Notice>
         ) : null}
         <Button label={t('join.action')} variant="primary" icon="log-in-outline" disabled={!isCompleteCode(code)} loading={busy} style={styles.action} onPress={() => void join(code)} />
+        <Details>{t('join.steps', { url: RIDE_WEB_URL.replace(/^https?:\/\//, '') })}</Details>
       </Section>
       <AppText variant="caption" muted>
         {t('join.ride')}

@@ -94,13 +94,6 @@
     "none": "No data has been sent yet.",
     "sentAt": "Sent {{at}}. This is exactly what the server stored:"
   },
-  "upsell": {
-    "title": "This is for JoyoRogo Pro",
-    "description": "Watching up to 5 people, all alerts (heart rate, steps, sleep, blood oxygen), email, and history up to 90 days are part of JoyoRogo Pro. The watcher subscribes: the people you watch are never charged. \"Not synced\" alerts stay free.",
-    "see": "See JoyoRogo Pro",
-    "open": "Open JoyoRogo",
-    "mention": "JoyoRogo Pro is managed inside the JoyoRogo app."
-  },
   "home": {
     "emptyTitle": "You are not watching anyone yet",
     "emptyDescription": "Invite your parents. You will see a short summary from their Huawei watch, and get alerts when something looks unusual. They decide what is shared.",
@@ -169,7 +162,10 @@
     "latest": "Latest",
     "a11y": "{{metric}} chart, last {{count}} days",
     "baseline": "Dashed line: usually {{bpm}} bpm.",
-    "sleepBars": "Bar height is in hours."
+    "sleepBars": "Bar height is in hours.",
+    "valueSteps": "{{value}} steps",
+    "valueRestingHr": "{{value}} bpm",
+    "valueSleep": "{{value}} h"
   },
   "me": {
     "emptyTitle": "Nobody is watching you yet",

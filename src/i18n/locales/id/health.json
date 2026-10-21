@@ -127,7 +127,6 @@
     "woke": "Bangun {{time}}"
   },
   "hourly": {
-    "a11y": "Menit per fase tiap jam. {{details}}",
     "part": "{{stage}} {{minutes}} mnt",
     "line": "{{hour}}, {{parts}}",
     "none": "tidak ada tidur tercatat"
@@ -280,7 +279,8 @@
         "breakdown": "{{moderate}} menit sedang + 2 x {{vigorous}} menit berat. Perkiraan.",
         "chart": "Menit intensitas per hari, Senin sampai Minggu",
         "endLabel": "Minggu",
-        "how": "Perkiraan JoyoFit dari detak jantung per menit yang disimpan jam (maksimal {{maxHr}} bpm). Menit di 60 sampai 80 persen maksimal (zona 2 dan 3) dihitung 1, menit di 80 persen ke atas (zona 4 dan 5) dihitung 2. Minggu dihitung Senin sampai Minggu. Target 150 menit per minggu mengikuti anjuran WHO 2020 dan ACSM 2018."
+        "how": "Perkiraan JoyoFit dari detak jantung per menit yang disimpan jam (maksimal {{maxHr}} bpm). Menit di 60 sampai 80 persen maksimal (zona 2 dan 3) dihitung 1, menit di 80 persen ke atas (zona 4 dan 5) dihitung 2. Minggu dihitung Senin sampai Minggu. Target 150 menit per minggu mengikuti anjuran WHO 2020 dan ACSM 2018.",
+        "minutes": "{{value}} mnt"
       }
     }
   }

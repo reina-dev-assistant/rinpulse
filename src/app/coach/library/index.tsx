@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { Details } from '@/components/Details';
 import { ChipRow } from '@/components/ChipRow';
 import { Input } from '@/components/Input';
 import { Screen } from '@/components/Screen';
@@ -56,9 +57,7 @@ export default function LibraryScreen() {
           ))}
         </View>
       )}
-      <AppText variant="caption" muted>
-        {t('library.credits')}
-      </AppText>
+      <Details>{t('library.credits')}</Details>
     </Screen>
   );
 }

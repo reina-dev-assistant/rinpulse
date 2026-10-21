@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
+import { Details } from '@/components/Details';
 import { IconChip } from '@/components/IconChip';
 import { Divider, Section } from '@/components/Screen';
 import { LoadingState, Notice } from '@/components/States';
@@ -87,10 +88,8 @@ export function ScanSection({ onPermission, onFailure }: ScanSectionProps) {
       }>
       {!introduced ? (
         <>
-          <AppText variant="caption" muted>
-            {t('sensors.scan.intro')}
-          </AppText>
           <Button label={t('sensors.scan.continue')} variant="primary" icon="bluetooth" loading={starting} onPress={onContinue} />
+          <Details>{t('sensors.scan.intro')}</Details>
         </>
       ) : (
         <>
@@ -115,9 +114,7 @@ export function ScanSection({ onPermission, onFailure }: ScanSectionProps) {
           )}
         </>
       )}
-      <AppText variant="caption" muted>
-        {t('sensors.scan.tips')}
-      </AppText>
+      <Details>{t('sensors.scan.tips')}</Details>
     </Section>
   );
 }

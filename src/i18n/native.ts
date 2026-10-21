@@ -1,6 +1,7 @@
 import Storage from 'expo-sqlite/kv-store';
 
 import { notePrefChanged } from '@/cloud/prefsSync';
+import { syncWatchLanguage } from '@/features/device/watchLanguage';
 
 import { applyLocale } from './core';
 import { deviceLanguages, isLocalePref, resolveLocale, type LocalePref } from './locale';
@@ -27,6 +28,9 @@ export function getLocalePref(): LocalePref {
 export function initLocale(): void {
   const pref = getLocalePref();
   void applyLocale(resolveLocale({ pref, device: deviceLanguages() }));
+  // "Otomatis" is the native default (the phone's language); only a pinned language has to reach it, so the startup of everyone else
+  // does not wake the watch module.
+  if (pref !== 'auto') void syncWatchLanguage(pref);
 }
 
 /** Settings: pin a language or follow the phone. Applies at once and is remembered. */
@@ -39,6 +43,7 @@ export function setLocalePref(pref: LocalePref): void {
   }
   void applyLocale(resolveLocale({ pref, device: deviceLanguages() }));
   void notePrefChanged('locale');
+  void syncWatchLanguage(pref);
 }
 
 /** Re-resolves after the phone language changed (app returns to the foreground). No-op when pinned. */

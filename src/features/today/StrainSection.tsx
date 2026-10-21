@@ -2,13 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { BarReadout, useBarScrub } from '@/components/BarChart';
 import { Details } from '@/components/Details';
 import { CountUpText } from '@/components/motion';
 import { Ring } from '@/components/Ring';
 import { Section } from '@/components/Screen';
 import { STRAIN_MAX, type DayStrain } from '@/features/today/strain';
 import { STRAIN_DAYS } from '@/features/today/useTodayData';
-import { fmtDecimal, fmtInt, INTL_TAG, getLocale, t as translate } from '@/i18n';
+import { fmtDate, fmtDecimal, fmtInt, INTL_TAG, getLocale, t as translate } from '@/i18n';
 import { radius, spacing, useColors } from '@/theme';
 
 const BAR_HEIGHT = 56;
@@ -42,6 +43,8 @@ export function StrainSection({ days, dayStart, maxHr }: { days: readonly DayStr
     return { day, strain: byDay.get(day)?.strain ?? null };
   });
   const today = byDay.get(dayStart) ?? null;
+  const scrub = useBarScrub(week.length, dayStart);
+  const picked = scrub.selected !== null ? week[scrub.selected]! : null;
   const hard = today ? Math.round(today.zoneMinutes[2] + today.zoneMinutes[3] + today.zoneMinutes[4]) : 0;
   const easy = today ? Math.round(today.zoneMinutes[0] + today.zoneMinutes[1]) : 0;
 
@@ -78,20 +81,33 @@ export function StrainSection({ days, dayStart, maxHr }: { days: readonly DayStr
           ) : null}
         </View>
       </View>
-      <View style={styles.bars} accessibilityLabel={t('strain.weekA11y')}>
-        {week.map(({ day, strain }) => (
-          <View key={day} style={styles.barCol}>
+      <BarReadout
+        title={picked ? fmtDate(picked.day, 'weekday') : null}
+        text={picked ? (picked.strain !== null ? t('strain.barValue', { value: formatStrain(picked.strain), max: STRAIN_MAX }) : t('strain.noneDay')) : null}
+        color={colors.workoutsText}
+      />
+      <View {...scrub.touch} style={styles.bars}>
+        {week.map(({ day, strain }, i) => (
+          <View
+            key={day}
+            accessible
+            accessibilityLabel={`${fmtDate(day, 'weekday')}: ${strain !== null ? t('strain.barValue', { value: formatStrain(strain), max: STRAIN_MAX }) : t('strain.noneDay')}`}
+            style={styles.barCol}>
             <View style={[styles.barTrack, { backgroundColor: colors.workoutsSoft }]}>
               {strain !== null ? (
                 <View
                   style={[
                     styles.barFill,
-                    { height: Math.max(3, (BAR_HEIGHT * strain) / STRAIN_MAX), backgroundColor: day === dayStart ? colors.workouts : colors.workoutsText },
+                    {
+                      height: Math.max(3, (BAR_HEIGHT * strain) / STRAIN_MAX),
+                      backgroundColor: day === dayStart ? colors.workouts : colors.workoutsText,
+                      opacity: scrub.selected !== null && scrub.selected !== i ? 0.5 : 1,
+                    },
                   ]}
                 />
               ) : null}
             </View>
-            <AppText variant="caption" muted style={styles.small}>
+            <AppText variant="caption" muted={scrub.selected !== i} color={scrub.selected === i ? colors.workoutsText : undefined} style={styles.small}>
               {strain !== null ? formatStrain(strain) : '-'}
             </AppText>
             <AppText variant="caption" muted style={styles.small}>
