@@ -48,6 +48,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.P2P;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.Workout;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.Weather;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.FileUpload;
+import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.MusicControl;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.Watchface;
 import nodomain.freeyourgadget.gadgetbridge.util.CheckSums;
 
@@ -542,6 +543,18 @@ public class HuaweiPacket {
                         return new FileDownloadService2C.BlockResponse(paramsProvider).fromPacket(this);
                     case FileDownloadService2C.IncomingInitRequest.id:
                         return new FileDownloadService2C.IncomingInitRequest.Response(paramsProvider).fromPacket(this);
+                    default:
+                        this.isEncrypted = this.attemptDecrypt(); // Helps with debugging
+                        return this;
+                }
+            case MusicControl.id:
+                switch (this.commandId) {
+                    case MusicControl.MUSIC_STATUS:
+                        return new MusicControl.MusicStatus(paramsProvider).fromPacket(this);
+                    case MusicControl.MUSIC_INFO:
+                        return new MusicControl.MusicInfo.Response(paramsProvider).fromPacket(this);
+                    case MusicControl.CONTROL:
+                        return new MusicControl.Control(paramsProvider).fromPacket(this);
                     default:
                         this.isEncrypted = this.attemptDecrypt(); // Helps with debugging
                         return this;
