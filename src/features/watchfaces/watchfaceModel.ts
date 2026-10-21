@@ -37,3 +37,15 @@ export function resolveCategory(width: number): WatchCategory {
   }
   return 'Band (194x368)';
 }
+
+/**
+ * What the "My watch" tab offers for putting a .hwt on the watch. `import`: save into the phone library (needs the
+ * native package parser, Android only). `install`: send the picked file to the watch straight away (iOS, whose module
+ * cannot read a package). `update`: an Android binary that predates the parser.
+ */
+export type LibraryEntry = 'import' | 'install' | 'update';
+
+export function libraryEntry(os: string, hasParser: boolean): LibraryEntry {
+  if (os === 'ios') return 'install';
+  return hasParser ? 'import' : 'update';
+}

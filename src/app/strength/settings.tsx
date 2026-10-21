@@ -23,6 +23,7 @@ import {
   setRestPref,
   type StrengthSettings,
 } from '@/features/strength/store';
+import { useWatchWorkoutAvailability } from '@/features/strength/useStrengthWatch';
 
 /** Logger settings: the default rest, the switches, and the rest timers saved per exercise. */
 export default function StrengthSettingsScreen() {
@@ -31,6 +32,7 @@ export default function StrengthSettingsScreen() {
   const db = useSQLiteContext();
   const colors = useColors();
   const [settings, setSettings] = useState<StrengthSettings | null>(null);
+  const watchStart = useWatchWorkoutAvailability();
   const [prefs, setPrefs] = useState<Map<string, number>>(new Map());
   const [catalog, setCatalog] = useState<Catalog>(() => buildCatalog([]));
 
@@ -95,6 +97,23 @@ export default function StrengthSettingsScreen() {
           <Section title={t('settings.timedTitle')} icon="stopwatch-outline" tint="workouts">
             <SwitchRow label={t('settings.countdown')} hint={t('settings.countdownHint')} value={settings.countdownTimed} onValueChange={(countdownTimed) => change({ countdownTimed })} />
           </Section>
+
+          {watchStart !== 'unavailable' ? (
+            <Section title={t('settings.watchTitle')} icon="watch-outline" tint="link">
+              {watchStart === 'unsupported' ? (
+                <AppText variant="caption" muted>
+                  {t('settings.startOnWatchUnsupported')}
+                </AppText>
+              ) : (
+                <SwitchRow
+                  label={t('settings.startOnWatch')}
+                  hint={watchStart === 'offline' ? `${t('settings.startOnWatchHint')} ${t('settings.startOnWatchOffline')}` : t('settings.startOnWatchHint')}
+                  value={settings.startOnWatch}
+                  onValueChange={(startOnWatch) => change({ startOnWatch })}
+                />
+              )}
+            </Section>
+          ) : null}
 
           <Section title={t('settings.screenTitle')} icon="phone-portrait-outline" tint="link">
             <SwitchRow label={t('settings.keepAwake')} hint={t('settings.keepAwakeHint')} value={settings.keepAwake} onValueChange={(keepAwake) => change({ keepAwake })} />

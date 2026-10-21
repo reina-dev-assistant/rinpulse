@@ -194,7 +194,6 @@
   "list": {
     "title": "Latihan",
     "start": {
-      "button": "Mulai latihan",
       "title": "Mulai latihan",
       "record": {
         "title": "Rekam di HP",
@@ -535,9 +534,35 @@
     "setup": {
       "sensors": "Sensor",
       "noSensors": "Belum ada sensor yang dipasangkan. Strap detak jantung atau sensor sepeda bisa kamu tambah kapan saja, tidak wajib.",
-      "manageSensors": "Kelola sensor",
+      "sensorsNote": "Sensor yang diatur tersambung otomatis akan tersambung begitu kamu menekan Mulai.",
+      "stepsOn": "Langkah dan kadens dihitung dari penghitung langkah di HP. Datanya tidak keluar dari HP.",
+      "aboutTitle": "Apa arti indikator ini?",
+      "chip": {
+        "gpsOff": "Tanpa GPS",
+        "gpsPermission": "Izin lokasi",
+        "gpsSearching": "Mencari GPS",
+        "gpsWeak": "GPS lemah",
+        "gpsMeters": "GPS {{meters}} m",
+        "sensors_other": "{{count}} sensor",
+        "sensorsA11y_other": "{{count}} sensor akan tersambung saat mulai. Buka daftar sensor.",
+        "sensorsNoneA11y": "Belum ada sensor yang tersambung otomatis. Buka daftar sensor.",
+        "steps": "Langkah",
+        "stepsOnA11y": "Langkah dan kadens dari HP aktif. Ketuk untuk penjelasan.",
+        "stepsOffA11y": "Langkah dan kadens dari HP belum aktif. Ketuk untuk mengaktifkannya."
+      },
+      "map": {
+        "searching": "Mencari posisimu. Peta muncul begitu GPS menemukan sinyal.",
+        "needsLocation": "Peta menampilkan posisimu setelah izin lokasi diberikan."
+      },
+      "actions": {
+        "routes": "Rute",
+        "loop": "Loop"
+      },
       "gpsNote": "GPS HP merekam rute dan jarak latihan ini.",
       "noGpsNote": "Tanpa GPS. Jarak dan kecepatan datang dari sensor, kalau ada.",
+      "gnssHint": "Jam bilang data GNSS kedaluwarsa? Itu wajar. GPS tetap jalan, cuma butuh 30–60 detik di luar ruangan. Tunggu ikon GPS sebelum mulai.",
+      "gnssWhy": "Kenapa?",
+      "gnssWhyBody": "Data bantuan GPS jam Huawei hanya bisa datang dari Huawei Health. JoyoFit mengirim lokasi dan waktu HP-mu untuk membantu titik GPS pertama. Jamnya tidak rusak.",
       "start": "Mulai",
       "prepareError": "Tidak bisa menyiapkan rekaman: {{error}}",
       "bluetoothOff": "Bluetooth mati. Nyalakan dulu supaya sensor bisa tersambung."
@@ -569,7 +594,6 @@
       "weak": "Sinyal GPS lemah, akurasi {{meters}} m. Cari tempat yang lebih terbuka."
     },
     "ready": {
-      "gps": "GPS",
       "hint": "Kamu bisa mulai tanpa menunggu GPS. Jarak dihitung begitu sinyalnya siap.",
       "hintNoGps": "Tekan Mulai kalau kamu sudah siap.",
       "noPhoneSteps": "Penghitung langkah HP tidak aktif, jadi kadens dan langkah hanya terekam kalau ada sensor lari yang tersambung.",
@@ -671,5 +695,26 @@
     "done": "Latihan dihapus",
     "undo": "Urungkan",
     "undoA11y": "Urungkan penghapusan {{sport}}"
+  },
+  "export": {
+    "title": "Ekspor file",
+    "formats": ".fit · GPX",
+    "save": {
+      "fit": "Simpan file .fit",
+      "gpx": "Simpan file GPX"
+    },
+    "saveFiles": {
+      "fit": "Simpan .fit ke Files",
+      "gpx": "Simpan GPX ke Files"
+    },
+    "share": {
+      "fit": "Bagikan file .fit",
+      "gpx": "Bagikan file GPX"
+    },
+    "strava": "Upload di strava.com",
+    "stravaHint": "Di HP, pakai mode Situs desktop di browser, lalu pilih file .fit dari Unduhan.",
+    "stravaHintFiles": "Di HP, pakai mode Situs desktop di browser, lalu pilih file .fit dari Files.",
+    "saved": "Tersimpan di {{folder}}",
+    "otherFolder": "Simpan di folder lain"
   }
 }

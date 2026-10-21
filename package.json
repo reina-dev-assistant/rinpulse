@@ -56,13 +56,14 @@
   "devDependencies": {
     "@types/react": "~19.2.2",
     "sharp": "^0.35.5",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
     "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "prebuild": "expo prebuild -p android",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsrs --noEmit",
     "test": "bun test ./src/",
     "lint": "expo lint",
     "test:native": "cd android && ./gradlew :huawei-wear:testDebugUnitTest",

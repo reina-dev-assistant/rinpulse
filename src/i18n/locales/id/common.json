@@ -48,8 +48,8 @@
     "today": "Hari ini",
     "workouts": "Latihan",
     "social": "Sosial",
-    "watch": "Jam",
-    "settings": "Pengaturan"
+    "more": "Lainnya",
+    "start": "Mulai latihan"
   },
   "dbRecovery": {
     "inline": "Data di ponsel kamu sedang diperbaiki. Tunggu sebentar lalu coba lagi.",
@@ -91,6 +91,8 @@
     "serverAnsweredCode": "Server cloud menjawab {{status}} ({{code}}).",
     "cloudLocked": "Cadangan cloud adalah bagian dari JoyoRogo Pro.",
     "rogoAnswered": "JoyoRogo menjawab {{status}}.",
+    "rogoSlow": "JoyoRogo lambat merespons, coba lagi.",
+    "rogoUnreachable": "JoyoRogo tidak terjangkau. Cek koneksi internetmu, lalu coba lagi.",
     "appleNoData": "Apple tidak mengirim data masuk. Coba lagi.",
     "appleNoCode": "Apple tidak mengirim kode otorisasi. Coba lagi.",
     "appleFailed": "Masuk dengan Apple gagal. Coba lagi sebentar lagi.",
@@ -101,7 +103,7 @@
     "dbNewer": "Skema database v{{current}} lebih baru dari yang didukung aplikasi ini (v{{max}})."
   },
   "strava": {
-    "stravaNotConnected": "Strava belum terhubung. Hubungkan lagi di Pengaturan.",
+    "stravaNotConnected": "Strava belum terhubung. Hubungkan lagi di Lainnya, Strava.",
     "refused": "Strava menolak berkasnya ({{status}}).",
     "rateLimit": "Batas permintaan Strava tercapai; akan dicoba lagi nanti.",
     "answered": "Strava menjawab {{status}}.",
@@ -126,6 +128,7 @@
     "watchMealName": "Dicatat di jam",
     "watchMealFailed": "makanan dari jam tidak bisa ditulis ke JoyoRogo: {{error}}",
     "goalsNotRead": "target tidak terbaca: {{error}}",
+    "watchNoAnswer": "Sambungan ke jam belum mengonfirmasi tepat waktu. Coba Kirim sekarang lagi.",
     "withIssues": "{{note}}; {{issues}}",
     "noteSent_other": "{{count}} makanan, {{kcal}} kcal, terkirim ke jam",
     "noteStored_other": "{{count}} makanan, {{kcal}} kcal, disimpan untuk jam",
@@ -159,7 +162,7 @@
     },
     "sogan": {
       "name": "Sogan",
-      "tagline": "Cokelat sogan batik, indigo, dan emas, judul berkait. Mengikuti HP."
+      "tagline": "Cokelat sogan batik, indigo, dan emas, motif kawung di header, judul berkait. Mengikuti HP."
     },
     "retro": {
       "name": "Retro",
@@ -176,6 +179,30 @@
     "mono": {
       "name": "Mono",
       "tagline": "Hitam putih, sudut tajam, angka monospasi. Mengikuti HP."
+    },
+    "sakura": {
+      "name": "Sakura",
+      "tagline": "Pink bunga sakura dan mawar tua, judul berkait, kelopak di header. Mengikuti HP."
+    },
+    "lavender": {
+      "name": "Lavender",
+      "tagline": "Lilac muda dan ungu plum dengan judul membulat lembut. Mengikuti HP."
+    },
+    "peach": {
+      "name": "Persik",
+      "tagline": "Persik hangat, aksen koral, dan judul berkait. Selalu terang."
+    },
+    "rosegold": {
+      "name": "Rose Gold",
+      "tagline": "Gelap dengan teks blush, aksen emas rosé, dan panel jam tembaga. Selalu gelap."
+    },
+    "strawberry": {
+      "name": "Susu Stroberi",
+      "tagline": "Pink susu, kartu krem, dan bentuk paling membulat. Selalu terang."
+    },
+    "matcha": {
+      "name": "Matcha Latte",
+      "tagline": "Krem dan hijau matcha dengan teks membulat lembut. Selalu terang."
     }
   },
   "notFound": {

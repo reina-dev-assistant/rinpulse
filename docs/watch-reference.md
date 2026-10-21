@@ -2,6 +2,8 @@
 
 Detail for the Huawei and Honor watch side of JoyoFit: supported models, how the app talks to the watch, what works, and the watch-side features. The overview is in the [README](../README.md); app features that do not depend on a watch are in [app-reference.md](app-reference.md).
 
+> The Watch tab is now **More → Watch** (the Watch hub, route `/watch`; the tab bar is Today, Workouts, a centre "Start workout" button, Social, More: see the Tab bar section of [app-reference.md](app-reference.md)). "Watch tab" below means that screen.
+
 ## Supported watches
 
 JoyoFit talks to Huawei Watch models over Bluetooth Classic (RFCOMM), the link the Watch Fit 4 Pro uses, and to Huawei and Honor bands over Bluetooth LE (GATT). The model list comes from Gadgetbridge's Huawei support (see `WatchModels.kt`). **Only the Huawei Watch Fit 4 Pro has been tested with JoyoFit.** Everything else is a best guess until someone tries it.
@@ -390,6 +392,11 @@ ExpandCapability 83 / 84 / 85 / 173). **None of it has been seen working on the 
   A meal quick-logged on the watch (`{event:6}`) is stored, acknowledged (`{punchResult:0,event:6}`, needs bit 215) and written to JoyoRogo as a diary item by the app (`food.add`); until then it stays on the phone.
   - **Limitation.** The JoyoRogo sign-in lives in `expo-secure-store` and native code cannot read it, so the background service cannot refresh from JoyoRogo. With the app closed it answers from the last day the
     app stored, rolled over to an empty new day with the same goals; a watch meal logged then is written to JoyoRogo the next time the app opens.
+  - **Slow or unreachable JoyoRogo.** Each of the three reads waits up to 30 s and is repeated once (after 1 s) on a timeout, a network failure, 408 / 425 / 429 or 5xx; the diary write for a watch meal waits as long but is never repeated (it would write the meal twice).
+    A failure shows "JoyoRogo lambat merespons, coba lagi" / "JoyoRogo is slow to respond. Try again." (or "could not reach JoyoRogo"), never the transport's text: `fetch failed: Fetch request has been canceled` is expo's wording for the app aborting a request at its deadline (it was 20 s before).
+    While a refresh runs, a sync, foreground or connect trigger does not queue a second one; a meal the watch just logged does.
+  - **The push does not wait for the watch.** `setDietDay` / `pushDietNow` return once the `37/01` and `37/03` frames are written to the link (`DataSyncService.send` is fire and forget); the 2026-10-21 logcat shows no `RX svc=37` answer to either, and nothing in the push path waits for one.
+    The app also stops waiting for a native call after 15 s (the spinner ends with "Sambungan ke jam belum mengonfirmasi tepat waktu").
   - JoyoRogo has no body fat or blood pressure, so the Health Glance card (event `80030006`) gets only height, weight and BMI; unknown fields are left out, as Huawei does.
 - **Goals and reminders** (Settings → Goals and reminders). Steps, active kcal (sent as kcal x 1000 like Gadgetbridge), exercise minutes and stand hours, plus the stand, progress and goal-reached
   reminders, sent as configs `900200006`..`900200009`, the bundle `900200002` and `900200004` / `900200010` / `900200011` on every save, and on every connect once you have saved goals (nothing is pushed before, so goals set on the watch survive). Defaults are Huawei's:

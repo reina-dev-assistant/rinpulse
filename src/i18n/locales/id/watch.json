@@ -69,7 +69,7 @@
       "notPaired": "Android tidak punya pairing Bluetooth dengan jam ini (terhapus, atau jam menolak dipasangkan lagi). Buka pengaturan Bluetooth Android dan pasangkan jamnya, lalu ketuk Coba lagi. Kalau jam tidak muncul di sana, lepas HP ini sekali di pengaturan Bluetooth jam. JoyoFit tidak menghapus apa pun."
     },
     "silent": {
-      "short": "Jam tersambung lewat Bluetooth tapi tidak menjawab. Langkah perbaikannya ada di tab Jam.",
+      "short": "Jam tersambung lewat Bluetooth tapi tidak menjawab. Langkah perbaikannya ada di Lainnya, Jam.",
       "title": "Jam tersambung tapi tidak menjawab",
       "intro": "JoyoFit sudah menjangkau jam lewat Bluetooth, tapi jam tidak membalas permintaan pertama. Biasanya jam sedang dipakai aplikasi atau HP lain. Coba satu per satu, lalu ketuk Coba lagi.",
       "step": {
@@ -243,6 +243,11 @@
   "faces": {
     "active": "Aktif",
     "installResult": "{{name}}: {{message}}",
+    "unsignedTitle": "Jam ini butuh tampilan resmi Huawei",
+    "unsignedBody": "Jam ini hanya menerima tampilan jam yang ditandatangani Huawei. File ini kemungkinan ditolak setelah dikirim. Photo face tetap bisa dipakai.",
+    "unsignedTryAnyway": "Tetap coba",
+    "unsignedUsePhoto": "Pakai Photo face",
+    "signatureRefused": "Jam menolak tampilan ini karena tidak ditandatangani Huawei. Coba tampilan lain dari galeri JoyoFit.",
     "deleteTitle": "Hapus tampilan jam",
     "deleteMessage": "Hapus \"{{name}}\" dari jam?",
     "screenSize": "Layar {{width}} x {{height}} px",
@@ -292,6 +297,8 @@
     "importHwt": "Impor file .hwt",
     "noSaved": "Belum ada tampilan tersimpan",
     "noSavedHint": "Impor file .hwt dari penyimpanan ponsel untuk mulai mengoleksi secara offline.",
+    "noSavedHintIos": "Di iPhone tampilan jam dikirim ke jam langsung dari file dan tidak disimpan di sini. Pakai Pasang dari file di atas untuk memasangnya.",
+    "installFromFileHint": "Pasang file .hwt langsung ke jam. Di iPhone file dikirim dari pemilih file dan tidak disimpan di perpustakaan ini.",
     "installed": "Terpasang",
     "installedOnWatch": "Terpasang di Jam",
     "wrongSize": "Ukuran salah",
@@ -490,7 +497,7 @@
     "gateSet": "Gerbang Huawei: sudah diatur",
     "gateNotSet": "Gerbang Huawei: belum diatur",
     "unverified": "Belum terverifikasi: format program berasal dari analisis statis Huawei Health. Jam mungkin menolaknya.",
-    "disabled": "Program lari dimatikan. Nyalakan di Pengaturan, Lanjutan.",
+    "disabled": "Program lari dimatikan. Nyalakan di Lainnya, Lanjutan.",
     "saveError": "Draf tidak bisa disimpan di HP ini: {{error}}",
     "title": "Program",
     "name": "Nama",

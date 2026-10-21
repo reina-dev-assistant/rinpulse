@@ -61,6 +61,13 @@ internal class P2pController(
           handle.session, events, settings,
           { manager -> HealthModelService(manager, settings, events, scope, ::loadDay, ::goals) },
           { HeartRateZonesSync.age(wearSettings.profile) },
+          { manager ->
+            QuickRepliesService(
+              manager, events, { settings.quickReplies },
+              { replies -> settings.quickRepliesSent == sentKey(replies) },
+              { replies -> settings.quickRepliesSent = sentKey(replies) },
+            )
+          },
         )
         stack = created
         created.start()
@@ -114,6 +121,24 @@ internal class P2pController(
     HealthModelData.load(syncStore.db(), requestedDay, wearSettings.profile?.dailyStepGoal ?: 0, System.currentTimeMillis())
 
   private fun goals() = HealthGoals()
+
+  private fun sentKey(replies: List<String>) = "${link.handle()?.address}|${QuickRepliesPacket.fingerprint(replies)}"
+
+  fun quickRepliesStatus(): Map<String, Any?> = mapOf(
+    "supported" to (stack?.quickReplies != null),
+    "slots" to QuickRepliesPacket.SLOTS,
+    "maxLength" to QuickRepliesPacket.MAX_LENGTH,
+  )
+
+  /** Stores [replies] and, when the watch takes them, sends them now (once; a reconnect sends only a changed list). Rejects an invalid list. */
+  fun setQuickReplies(replies: List<String>): Boolean {
+    val problem = QuickRepliesPacket.problem(replies)
+    if (problem != null) throw WearException(ErrorCodes.INVALID_ARGUMENT, problem)
+    settings.quickReplies = replies
+    val service = stack?.quickReplies ?: return false
+    if (settings.quickRepliesSent == sentKey(replies)) return true
+    return service.send(replies)
+  }
 
   fun healthLivingStatus(): Map<String, Any?> {
     val current = stack

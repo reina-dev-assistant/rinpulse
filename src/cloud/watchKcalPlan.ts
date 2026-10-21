@@ -1,4 +1,4 @@
-import { wibDay } from '@/features/strength/calc';
+import { rogoDay } from './rogoZone';
 
 import { MAX_DURATION_MIN, MAX_EXTERNAL_ID, MAX_KCAL, MAX_NAME, MIN_DURATION_MIN } from './strengthKcalPlan';
 
@@ -54,7 +54,7 @@ export interface WatchWorkoutRow {
 
 export interface WatchKcalPayload {
   externalId: string;
-  /** WIB day, `YYYY-MM-DD`. */
+  /** JoyoRogo day (its profile zone), `YYYY-MM-DD`. */
   date: string;
   name: string;
   durationMin: number;
@@ -89,7 +89,7 @@ export function watchKcalPayload(row: WatchWorkoutRow, name: string): WatchKcalP
   const seconds = row.end > row.start ? row.end - row.start : row.duration;
   return {
     externalId: externalIdForWatch(row.start),
-    date: wibDay(row.start * 1000),
+    date: rogoDay(row.start * 1000),
     name: name.slice(0, MAX_NAME),
     durationMin: Math.min(MAX_DURATION_MIN, Math.max(MIN_DURATION_MIN, Math.round(seconds / 60))),
     kcal,

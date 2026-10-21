@@ -511,6 +511,8 @@ public class HuaweiPacket {
                         return new Notifications.NotificationConstraints.Response(paramsProvider).fromPacket(this);
                     case Notifications.NotificationCapabilities.id:
                         return new Notifications.NotificationCapabilities.Response(paramsProvider).fromPacket(this);
+                    case Notifications.NotificationReply.id:
+                        return new Notifications.NotificationReply.ReplyResponse(paramsProvider).fromPacket(this);
                     default:
                         this.isEncrypted = this.attemptDecrypt(); // Helps with debugging
                         return this;

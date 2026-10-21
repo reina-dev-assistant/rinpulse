@@ -11,8 +11,10 @@ import android.service.notification.StatusBarNotification
 import java.util.LinkedList
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
+import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiPacket
+import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.Notifications
 /**
  * Turns [StatusBarNotification]s into GB's Notifications packets and sends them over the single
  * link, if the watch supports them. Filters: own app, ongoing, group summaries, local-only, calls,
@@ -30,6 +32,9 @@ internal class NotificationForwarder(
   private val ownPackage = appContext.packageName
 
   private val lock = Any()
+  val actionCache = NotificationActionCache()
+  private var attached: HuaweiSession? = null
+  private val subscriptions = ArrayList<AutoCloseable>()
 
   /** HuaweiNotificationsManager.notificationSpecCache: the last notifications, for remove requests. */
   private val cache = LinkedList<WatchNotification>()
@@ -69,8 +74,10 @@ internal class NotificationForwarder(
       if (lastSent[sbn.key] == hash) return
       if (lastSent.size > MAX_TRACKED) lastSent.clear()
       lastSent[sbn.key] = hash
+      val id = nextId++
+      val reply = actionCache.extractAndStore(sbn, id)
       spec = WatchNotification(
-        id = nextId++,
+        id = id,
         key = sbn.key ?: "",
         sourceAppId = sbn.packageName,
         sourceName = appInfo?.let { label(it) } ?: sbn.packageName,
@@ -80,6 +87,8 @@ internal class NotificationForwarder(
         category = notification.category,
         whenMs = notification.`when`,
         isEmail = notification.category == Notification.CATEGORY_EMAIL,
+        hasReply = reply != null,
+        replyKey = reply?.key,
       )
       // GB keeps the last 11 and replaces one with the same id.
       if (cache.size > 10) cache.poll()
@@ -90,6 +99,7 @@ internal class NotificationForwarder(
   }
 
   fun onRemoved(sbn: StatusBarNotification) {
+    sbn.key?.let { actionCache.remove(it) }
     val spec: WatchNotification?
     synchronized(lock) {
       lastSent.remove(sbn.key)
@@ -133,6 +143,125 @@ internal class NotificationForwarder(
       throw e
     } catch (e: Exception) {
       events.log(LogDirection.ERROR, null, null, null, "Removing notification from ${spec.sourceAppId} failed: ${e.message}")
+    }
+  }
+
+  @Synchronized
+  fun onLinkState(state: LinkState) {
+    when (state) {
+      LinkState.CONNECTED, LinkState.SYNCING -> {
+        val session = link.handle()?.session ?: return
+        if (session === attached) return
+        detach()
+        attached = session
+        subscriptions += session.subscribe(
+          Notifications.id,
+          Notifications.NotificationReply.id,
+          "notification reply",
+        ) { onWatchReplyPacket(it, session) }
+      }
+      LinkState.DISCONNECTED -> {
+        detach()
+        actionCache.clear()
+      }
+      else -> Unit
+    }
+  }
+
+  private fun detach() {
+    subscriptions.forEach { it.close() }
+    subscriptions.clear()
+    attached = null
+  }
+
+  private fun onWatchReplyPacket(packet: HuaweiPacket, session: HuaweiSession) {
+    scope.launch(Dispatchers.IO) {
+      try {
+        val reply = packet as? Notifications.NotificationReply.ReplyResponse ?: return@launch
+        reply.parseTlv()
+
+        val text = reply.text
+        val key = reply.key ?: ""
+        val type = reply.type
+
+        events.log(
+          LogDirection.INFO,
+          Notifications.id.toInt(),
+          Notifications.NotificationReply.id.toInt(),
+          null,
+          "Watch reply received: type=$type, subId=${reply.subId}, length=${text?.length ?: 0}",
+        )
+
+        // Only handle type 2 (app notification); ignore other types (e.g. type 1 SMS)
+        if (type != 2) {
+          events.log(
+            LogDirection.INFO,
+            Notifications.id.toInt(),
+            Notifications.NotificationReply.id.toInt(),
+            null,
+            "Watch reply ignored: unsupported type $type",
+          )
+          return@launch
+        }
+
+        if (text.isNullOrBlank()) {
+          events.log(LogDirection.INFO, null, null, null, "Watch reply text is blank, nothing to forward")
+          return@launch
+        }
+
+        val cachedAction = actionCache.find(key, notificationId = reply.subId.takeIf { it != 0 })
+        if (cachedAction == null) {
+          events.log(
+            LogDirection.ERROR,
+            Notifications.id.toInt(),
+            Notifications.NotificationReply.id.toInt(),
+            null,
+            "No matching notification action found for watch reply (type=$type, subId=${reply.subId})",
+          )
+          sendAck(session, (0x7f).toByte())
+          return@launch
+        }
+
+        try {
+          NotificationActionCache.sendReply(appContext, cachedAction, text)
+          events.log(
+            LogDirection.INFO,
+            Notifications.id.toInt(),
+            Notifications.NotificationReply.id.toInt(),
+            null,
+            "Smart reply sent to ${cachedAction.packageName} (type=$type, length=${text.length})",
+          )
+          sendAck(session, (0xff).toByte())
+        } catch (e: Exception) {
+          events.log(
+            LogDirection.ERROR,
+            Notifications.id.toInt(),
+            Notifications.NotificationReply.id.toInt(),
+            null,
+            "Failed to send smart reply to ${cachedAction.packageName}: ${e.message ?: e.javaClass.simpleName}",
+          )
+          sendAck(session, (0x7f).toByte())
+        }
+      } catch (e: Exception) {
+        events.log(
+          LogDirection.ERROR,
+          Notifications.id.toInt(),
+          Notifications.NotificationReply.id.toInt(),
+          null,
+          "Error processing watch notification reply: ${e.message}",
+        )
+      }
+    }
+  }
+
+  private suspend fun sendAck(session: HuaweiSession, ackCode: Byte) {
+    try {
+      session.send(
+        Notifications.NotificationReply.ReplyAck(session.params, ackCode),
+        "NotificationReplyAck",
+      )
+    } catch (e: Exception) {
+      events.log(LogDirection.ERROR, null, null, null, "Sending NotificationReplyAck failed: ${e.message}")
     }
   }
 

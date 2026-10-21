@@ -6,6 +6,7 @@ import {
   GPS_SETTLE_SEC,
   GPS_STALE_SEC,
   canPrepare,
+  gpsChip,
   gpsStatus,
   lapRows,
   liveTiles,
@@ -110,6 +111,27 @@ describe('permissions before prepare', () => {
     expect(canPrepare(plan, 'unknown', 'granted')).toBe(true);
     expect(canPrepare(plan, 'unknown', 'denied')).toBe(true);
     expect(canPrepare(plan, 'unknown', 'blocked')).toBe(true);
+  });
+});
+
+describe('what the setup screen shows of the GPS', () => {
+  const fix = { accuracyM: 6, ageSec: 1, usableSec: 0 };
+
+  it('says there is no GPS for an indoor sport, whatever the permission', () => {
+    expect(gpsChip(permissionPlan('treadmill', 0), 'denied', fix)).toBe('off');
+  });
+
+  it('puts the missing location permission before the signal', () => {
+    const plan = permissionPlan('run', 0);
+    expect(gpsChip(plan, 'unknown', fix)).toBe('permission');
+    expect(gpsChip(plan, 'blocked', fix)).toBe('permission');
+  });
+
+  it('reports the signal once location is allowed', () => {
+    const plan = permissionPlan('run', 0);
+    expect(gpsChip(plan, 'granted', null)).toBe('searching');
+    expect(gpsChip(plan, 'granted', fix)).toBe('ready');
+    expect(gpsChip(plan, 'granted', { accuracyM: 60, ageSec: 1, usableSec: null })).toBe('weak');
   });
 });
 

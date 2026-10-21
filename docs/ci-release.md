@@ -4,13 +4,31 @@ Written 2026-10-17. Three workflows in `.github/workflows/`. The repo is public,
 
 | Workflow | Runs on | Needs secrets | Does |
 | --- | --- | --- | --- |
-| `ci.yml` | pull requests, pushes to `master`, manual | none (safe for forks, read-only token) | jobs in parallel: app (`tsc`, `bun test ./src/`, `check-api.mjs`, `packages/hwt` tests + types), server (`tsc`, vitest), site (typecheck + build), Kotlin (unit tests of the three modules after `expo prebuild`, then Android Lint `NewApi` only, see below), Swift tests for `HuaweiProtocol` and `ModuleLogicTests` (Swift 6.4.1 on Ubuntu) plus `check-inert-shapes.mjs` |
+| `ci.yml` | pull requests, pushes to `master`, manual | none (safe for forks, read-only token) | jobs in parallel: app (`tsrs`, `bun test ./src/`, `check-api.mjs`, `packages/hwt` tests + types), server (`tsrs`, vitest), site (typecheck + build), Kotlin (unit tests of the three modules after `expo prebuild`, then Android Lint `NewApi` only, see below), Swift tests for `HuaweiProtocol` and `ModuleLogicTests` (Swift 6.4.1 on Ubuntu) plus `check-inert-shapes.mjs` |
 | `release-android.yml` | **manual only** (`workflow_dispatch`) | yes, environment `release` | ubuntu, JDK 17, Bun, Gradle cache: `scripts/build-release.sh --play` (AAB + forbidden-permission guard) and/or `scripts/build-release.sh` (sideload APK); artifacts; optional Play upload |
 | `release-ios.yml` | **manual only** | yes, environment `release` | `scripts/ios/mac-build.sh` on `macos-latest`: expo prebuild, pods, `xcodebuild archive` + export, IPA checks, optional TestFlight upload |
 
 Android Lint `NewApi` (`./gradlew :huawei-wear:lintDebug :ble-sensors:lintDebug :replay-encoder:lintDebug`, config in `modules/newapi-lint.gradle`, applied by each module) fails the job on a call to an API newer than `minSdk` 29 that is not behind a `Build.VERSION.SDK_INT` check. Without it that kind of call compiles and works on the developer's phone and throws `NoSuchMethodError` on an older one (`PackageManager.ResolveInfoFlags.of`, API 33, crashed the notification app chooser on Android 12). Only `NewApi` is on, so unrelated lint findings never block a build; each finding is printed to the job log with its file and line.
 
 The release workflows are ready but never fire by themselves. Tag triggers (`v*`) are commented out at the top of each file; uncomment them to build on tags (the `release` approval below still applies).
+
+## Typecheck
+
+Every type-only check runs [tsrs](https://github.com/oxc-project/tsrs) (`tsrs --noEmit`, a Rust port of the TypeScript 7 checker, same flags and `tsconfig.json`), pinned to an exact version as a devDependency in the root, `web/`, `site/`, `server/` and `packages/hwt/` (each has its own `package.json` and lockfile). Where it runs: `bun run typecheck` in each of those, `scripts/ota.sh` step 1 (it gates every OTA: `set -e`, a type error exits 2 and nothing is exported or published), the `app`, `server` and `site` jobs of `ci.yml` (the site one through `bun run build`), `web`'s `build`, and `modules/huawei-wear/ios/ModuleLogicTests/check-inert-shapes.mjs`.
+
+`typescript` (6.0.3 at the root) stays as a devDependency: `expo lint` runs typescript-eslint through eslint-config-expo, which needs the `typescript` package, and so do editors; tsrs replaces only the `tsc` command. No script calls `tsc` any more. Bump tsrs by hand (its version names the TypeScript commit it follows) and re-run `bun run typecheck` in the five projects; on a mismatch with tsc, compare with `bunx tsc --noEmit` first.
+
+Parity with tsc 6.0.3 on this tree (2026-10-21, tsrs 0.18.0-ts7.1.0-dev.20260929, Linux x64, shared laptop so times are rough): both pass clean on all five projects. With deliberate errors in scratch edits (not committed: a wrong argument type, a wrong assigned type, a missing property, an unknown name, plus one wrong type in each other project) the diagnostics were byte-identical in every project. Wall time, `--noEmit`, first run after install / mean of the next two:
+
+| Project | tsc | tsrs |
+| --- | --- | --- |
+| root app | 23.7 s / 29.0 s | 1.9 s / 2.1 s |
+| `web/` | 6.8 s / 7.9 s | 0.5 s / 0.4 s |
+| `site/` | 6.8 s / 6.0 s | 0.3 s / 0.35 s |
+| `server/` | 3.7 s / 3.7 s | 0.2 s / 0.2 s |
+| `packages/hwt/` | 1.6 s / 1.6 s | 0.1 s / 0.1 s |
+
+Neither tool writes an incremental cache here, so "cold" is the first run and "warm" is a repeat with the OS file cache hot.
 
 ## Build numbers
 

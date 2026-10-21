@@ -96,6 +96,7 @@ public struct WatchfaceList: Equatable, Sendable {
             "width": screen.map { $0.width as Any } ?? NSNull(),
             "height": screen.map { $0.height as Any } ?? NSNull(),
             "maxVersion": screen.map { $0.maxVersion as Any } ?? NSNull(),
+            "requiresSignature": screen.flatMap { s -> Any? in s.supportCapability >= 0 ? s.supportsSignature : nil } ?? NSNull(),
             "faces": faces.map { $0.toJS() },
             "updatedAt": updatedAtMs,
         ]

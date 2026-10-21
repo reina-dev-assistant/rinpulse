@@ -25,6 +25,8 @@ export interface WatchfaceList {
   height: number | null;
   /** The newest watch face format version the watch accepts; null when the watch gave none. */
   maxVersion: string | null;
+  /** The watch deletes watch faces not signed by Huawei (capability bit 8); null when the watch did not report its capabilities. */
+  requiresSignature?: boolean | null;
   faces: WatchfaceInfo[];
   /** Unix milliseconds when the list was read. */
   updatedAt: number;

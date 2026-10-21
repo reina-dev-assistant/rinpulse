@@ -91,7 +91,7 @@
     "loading": "Memuat gear Strava...",
     "empty": "Tidak ada {{kind}} di akun Strava kamu. Tambahkan dulu di strava.com, Pengaturan, Gear: Strava tidak mengizinkan aplikasi membuatnya.",
     "error": "Gear Strava tidak bisa dimuat: {{error}}",
-    "notConnected": "Hubungkan Strava dulu di Pengaturan, Strava.",
+    "notConnected": "Hubungkan Strava dulu di Lainnya, Strava.",
     "otherNoLink": "Gear jenis Lainnya tidak punya padanan di Strava.",
     "note": "Setelah latihan terkirim, JoyoFit memasang gear ini di aktivitas Strava-nya.",
     "gearAccess": {

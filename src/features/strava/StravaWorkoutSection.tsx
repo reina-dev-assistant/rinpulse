@@ -58,6 +58,8 @@ export function StravaWorkoutSection({ workout }: { workout: WorkoutRow }) {
   }, [db, workout.id, strava]);
 
   const done = row?.status === 'done' && row.activityId !== null;
+  // Without a connection, or when Strava turns the upload away, the .fit file can still be uploaded by hand on strava.com.
+  const fileHint = !connected || row?.status === 'rejected' || row?.status === 'failed';
 
   return (
     <Section title={t('strava.title')} icon="share-social" tint="workouts">
@@ -94,6 +96,11 @@ export function StravaWorkoutSection({ workout }: { workout: WorkoutRow }) {
           ) : null}
         </>
       )}
+      {fileHint ? (
+        <AppText variant="caption" muted>
+          {t('strava.fileHint')}
+        </AppText>
+      ) : null}
     </Section>
   );
 }

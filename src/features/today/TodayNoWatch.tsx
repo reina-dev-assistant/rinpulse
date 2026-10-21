@@ -21,7 +21,7 @@ export function TodayNoWatch() {
   const { t } = useTranslation('common');
   const { dataVersion } = useWatch();
   return (
-    <Screen title={t('nav.today')} caption={new Date().toLocaleDateString(INTL_TAG[getLocale()], WEEKDAY_FORMAT)}>
+    <Screen title={t('nav.today')} caption={new Date().toLocaleDateString(INTL_TAG[getLocale()], WEEKDAY_FORMAT)} decorated>
       <View style={styles.stack}>
         <StrengthTodayCard />
         <CoachTodayCard dataVersion={dataVersion} availability={null} />

@@ -7,8 +7,8 @@
   "description": "Landing page for JoyoFit (fit.joyorogo.com).",
   "scripts": {
     "dev": "vite",
-    "build": "bun scripts/gen-timbangan.ts && tsc --noEmit && vite build && bun scripts/prerender.ts",
-    "typecheck": "tsc --noEmit",
+    "build": "bun scripts/gen-timbangan.ts && tsrs --noEmit && vite build && bun scripts/prerender.ts",
+    "typecheck": "tsrs --noEmit",
     "jam": "bun scripts/gen-jam.ts",
     "timbangan": "bun scripts/gen-timbangan.ts",
     "test": "bun test scripts",
@@ -34,6 +34,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "qrcode-generator": "^2.0.4",
     "tailwindcss": "^4.3.3",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",
     "wrangler": "^4.151.0"

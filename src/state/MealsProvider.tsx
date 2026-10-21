@@ -12,8 +12,10 @@ import {
 import { useSQLiteContext } from 'expo-sqlite';
 import { AppState } from 'react-native';
 
+import { withDeadline } from '@/cloud/deadline';
 import { authClient } from '@/cloud/auth';
 import { rogo } from '@/cloud/rogo';
+import { setRogoProfileZone } from '@/cloud/rogoZone';
 import { rememberedWatch } from '@/features/device/rememberedWatch';
 import { bodyMetricsFrom, buildDay, localDate, rogoMealFor } from '@/features/meals/mealMap';
 import { errorMessage } from '@/format';
@@ -24,6 +26,22 @@ import { HuaweiWear, type DietStatus, type LogDirection } from '@/wear';
 
 /** Wait this long after a watch sync (or a burst of triggers) so they become one refresh. */
 const REFRESH_DEBOUNCE_MS = 2_000;
+
+/**
+ * The native calls of a pass return once their frames are written to the link; none waits for an answer from the watch, so they
+ * take well under a second. This is the guard against a spinner that never stops.
+ */
+const NATIVE_DEADLINE_MS = 15_000;
+
+/**
+ * The one trigger that still earns a second pass when it lands during a pass: a meal the watch just logged may have missed the
+ * pass that is running. A sync, a foreground or a connect would only read the same JoyoRogo day again, which on a slow JoyoRogo
+ * doubled the wait.
+ */
+const WATCH_MEAL = 'watch meal';
+
+/** Ends the wait for a native call with a sentence to show. */
+const bounded = <T,>(work: Promise<T>) => withDeadline(work, NATIVE_DEADLINE_MS, () => new Error(t('common:meals.watchNoAnswer')));
 
 /** Lines in the Log screen next to the native ones. */
 const log = (direction: LogDirection, message: string) =>
@@ -109,13 +127,14 @@ export function MealsProvider({ children }: { children: ReactNode }) {
       if (food.status === 'rejected') throw food.reason;
       const profile = my.status === 'fulfilled' ? my.value : null;
       if (my.status === 'rejected') notes.push(t('common:meals.goalsNotRead', { error: errorMessage(my.reason) }));
+      else setRogoProfileZone(my.value.profile?.timezone);
       const latest = weighIn.status === 'fulfilled' ? weighIn.value : null;
 
       const body = bodyMetricsFrom(profile, latest);
-      if (Object.keys(body).length > 0) await HuaweiWear.setBodyMetrics(body);
+      if (Object.keys(body).length > 0) await bounded(HuaweiWear.setBodyMetrics(body));
 
       const day = buildDay(date, food.value.items, profile);
-      const sent = await HuaweiWear.setDietDay(day);
+      const sent = await bounded(HuaweiWear.setDietDay(day));
       const kcal = Math.round(day.meals.reduce((sum, m) => sum + m.kcal, 0));
       const count = day.meals.length;
       const goal = day.goals?.dailyKcal;
@@ -134,7 +153,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     (reason: string): Promise<void> => {
       if (!signedIn) return Promise.resolve();
       if (running.current) {
-        again.current = reason;
+        if (reason === WATCH_MEAL) again.current = reason;
         return running.current;
       }
       const run = (async () => {
@@ -168,7 +187,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      await HuaweiWear.pushDietNow();
+      await bounded(HuaweiWear.pushDietNow());
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -208,7 +227,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
   // The watch quick-logged a meal: native stored it; write it to JoyoRogo and read the diary back.
   useEventListener(HuaweiWear, 'onWatchMealLogged', () => {
     reloadStatus();
-    void refresh('watch meal');
+    void refresh(WATCH_MEAL);
   });
 
   const value = useMemo<MealsContextValue>(

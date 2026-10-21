@@ -148,7 +148,7 @@
     },
     "off": {
       "message": "HRV malam mati",
-      "detail": "Nyalakan Stres otomatis di Pengaturan > Detak jantung dan sensor supaya jam mencatat HRV saat kamu tidur."
+      "detail": "Nyalakan Stres otomatis di Lainnya > Detak jantung dan sensor supaya jam mencatat HRV saat kamu tidur."
     },
     "noneRecorded": {
       "message": "HRV malam tidak tersedia di jam ini",

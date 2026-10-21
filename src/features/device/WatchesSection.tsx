@@ -11,6 +11,7 @@ import { isIos } from '@/components/IosUnavailable';
 import { Divider, Section } from '@/components/Screen';
 import { SwitchRow } from '@/components/SwitchRow';
 import { isLinkUp, linkLabel } from '@/features/device/linkState';
+import { watchListName } from '@/features/device/watchName';
 import { watchActionKey, watchLabel, type WatchRow } from '@/features/device/watches';
 import { RoutineNameDialog } from '@/features/strength/ui/RoutineNameDialog';
 import { formatSyncTime } from '@/format';
@@ -108,7 +109,7 @@ function WatchItem({ watch: w, several, busy, onRename, onRemove }: WatchItemPro
   const live = useWatch();
   const active = live.activeAddress === w.address && live.linkState !== 'disconnected';
   const linked = active && isLinkUp(live.linkState);
-  const label = watchLabel(w);
+  const label = watchListName(w);
 
   const status = [
     w.isPrimary && several ? t('multi.badge.primary') : null,

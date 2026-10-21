@@ -338,6 +338,9 @@ class HuaweiWearModule : Module() {
     // Find my watch / find my phone, calls and alarms (PhoneFeaturesModuleApi.kt).
     phoneFeaturesApi { runtime() }
 
+    // A workout started, paused and stopped on the watch from the phone: the strength logger (WatchWorkout.kt, WatchWorkoutModuleApi.kt).
+    watchWorkoutApi { runtime() }
+
     // Calorie intake, body metrics and activity-ring goals over DataSync (DietModuleApi.kt).
     dietApi { runtime() }
 

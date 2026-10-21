@@ -55,11 +55,13 @@ export async function ensureStepCounter(): Promise<Granted> {
     if (result === PermissionsAndroid.RESULTS.GRANTED) return 'granted';
     return result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ? 'blocked' : 'denied';
   }
+  if (typeof BleSensors.requestStepCounterPermission !== 'function') return 'denied';
   const answer: StepCounterPermission = await BleSensors.requestStepCounterPermission();
   return answer === 'granted' ? 'granted' : 'denied';
 }
 
 /** The step counter permission without asking; `unavailable` when the phone has no step counter. */
-export function stepCounterState(): Promise<StepCounterPermission> {
+export async function stepCounterState(): Promise<StepCounterPermission> {
+  if (typeof BleSensors.stepCounterPermission !== 'function') return 'unavailable';
   return BleSensors.stepCounterPermission();
 }

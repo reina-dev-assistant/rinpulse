@@ -3,6 +3,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { installFailureText } from '@/features/watchfaces/installError';
 import { errorMessage } from '@/format';
 import { t } from '@/i18n';
 import { useWatch } from '@/state/WatchProvider';
@@ -67,8 +68,10 @@ export function useWatchfaces() {
             setNotice(t('watch:faces.installResult', { name: result.name, message: result.message }));
             outcome = result;
           } else {
-            setError(t('watch:faces.installResult', { name: result.name, message: result.message }));
+            setError(t('watch:faces.installResult', { name: result.name, message: installFailureText(result.message, t('watch:faces.signatureRefused')) }));
           }
+        } catch (e) {
+          setError(installFailureText(errorMessage(e), t('watch:faces.signatureRefused')));
         } finally {
           setProgress(null);
         }

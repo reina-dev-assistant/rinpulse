@@ -20,6 +20,8 @@
   <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED" />
   <uses-permission android:name="android.permission.health.WRITE_SLEEP" />
   <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
+  <!-- The GPS route of a workout recorded with GPS, attached to its exercise session. Asked with the others; optional. -->
+  <uses-permission android:name="android.permission.health.WRITE_EXERCISE_ROUTE" />
   <!-- Find my phone vibration; incoming calls, caller name and number, and answering/rejecting them from the watch. -->
   <uses-permission android:name="android.permission.VIBRATE" />
   <uses-permission android:name="android.permission.READ_PHONE_STATE" />

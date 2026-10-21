@@ -196,7 +196,6 @@
   "list": {
     "title": "Workouts",
     "start": {
-      "button": "Start workout",
       "title": "Start a workout",
       "record": {
         "title": "Record on phone",
@@ -540,9 +539,37 @@
     "setup": {
       "sensors": "Sensors",
       "noSensors": "No sensors paired yet. You can add a heart rate strap or a bike sensor any time, none is required.",
-      "manageSensors": "Manage sensors",
+      "sensorsNote": "Sensors set to connect automatically connect as soon as you press Start.",
+      "stepsOn": "Steps and cadence are counted by the phone's step counter. Nothing leaves the phone.",
+      "aboutTitle": "What do these indicators mean?",
+      "chip": {
+        "gpsOff": "No GPS",
+        "gpsPermission": "Location access",
+        "gpsSearching": "Finding GPS",
+        "gpsWeak": "Weak GPS",
+        "gpsMeters": "GPS {{meters}} m",
+        "sensors_one": "{{count}} sensor",
+        "sensors_other": "{{count}} sensors",
+        "sensorsA11y_one": "{{count}} sensor will connect when you start. Open the sensor list.",
+        "sensorsA11y_other": "{{count}} sensors will connect when you start. Open the sensor list.",
+        "sensorsNoneA11y": "No sensors connect automatically yet. Open the sensor list.",
+        "steps": "Steps",
+        "stepsOnA11y": "Steps and cadence from the phone are on. Tap for an explanation.",
+        "stepsOffA11y": "Steps and cadence from the phone are not on yet. Tap to turn them on."
+      },
+      "map": {
+        "searching": "Finding where you are. The map appears once the GPS has a signal.",
+        "needsLocation": "The map shows where you are once location access is allowed."
+      },
+      "actions": {
+        "routes": "Routes",
+        "loop": "Loop"
+      },
       "gpsNote": "The phone's GPS records the route and distance of this workout.",
       "noGpsNote": "No GPS. Distance and speed come from your sensors, if you have any.",
+      "gnssHint": "Watch says GNSS data expired? That's normal. GPS still works, it just needs 30–60 seconds outdoors. Wait for the GPS icon before you start.",
+      "gnssWhy": "Why?",
+      "gnssWhyBody": "Huawei watches only get GPS assistance data from Huawei Health. JoyoFit sends your phone's location and time to help the first fix. Nothing is wrong with the watch.",
       "start": "Start",
       "prepareError": "Could not get the recording ready: {{error}}",
       "bluetoothOff": "Bluetooth is off. Turn it on so your sensors can connect."
@@ -574,7 +601,6 @@
       "weak": "Weak GPS signal, accuracy {{meters}} m. Find a more open spot."
     },
     "ready": {
-      "gps": "GPS",
       "hint": "You can start without waiting for GPS. Distance counts as soon as the signal is ready.",
       "hintNoGps": "Press Start when you are ready.",
       "noPhoneSteps": "The phone step counter is off, so cadence and steps are only recorded when a running pod is connected.",
@@ -676,5 +702,26 @@
     "done": "Workout deleted",
     "undo": "Undo",
     "undoA11y": "Undo deleting {{sport}}"
+  },
+  "export": {
+    "title": "Export file",
+    "formats": ".fit · GPX",
+    "save": {
+      "fit": "Save .fit file",
+      "gpx": "Save GPX file"
+    },
+    "saveFiles": {
+      "fit": "Save .fit to Files",
+      "gpx": "Save GPX to Files"
+    },
+    "share": {
+      "fit": "Share .fit file",
+      "gpx": "Share GPX file"
+    },
+    "strava": "Upload on strava.com",
+    "stravaHint": "On your phone, switch the browser to Desktop site, then pick the .fit file from Downloads.",
+    "stravaHintFiles": "On your phone, switch the browser to Desktop site, then pick the .fit file from Files.",
+    "saved": "Saved to {{folder}}",
+    "otherFolder": "Save to another folder"
   }
 }

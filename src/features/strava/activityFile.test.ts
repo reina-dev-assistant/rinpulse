@@ -6,6 +6,7 @@ import {
   DESCRIPTION_LINK,
   duplicateOf,
   externalId,
+  plainStravaError,
   stravaSport,
   type StravaPoint,
   type StravaWorkout,
@@ -361,8 +362,16 @@ describe('sport mapping and upload form', () => {
 
   it('reads the activity id out of a duplicate error', () => {
     expect(duplicateOf('joyofit-1.fit duplicate of activity 9876543210')).toBe(9876543210);
+    expect(
+      duplicateOf("joyofit-1785798055.fit duplicate of <a href='/activities/19589870698' target='_blank'>Outdoor run</a>"),
+    ).toBe(19589870698);
     expect(duplicateOf('The file is empty')).toBeNull();
     expect(duplicateOf(null)).toBeNull();
+  });
+
+  it('shows Strava errors without their HTML', () => {
+    expect(plainStravaError("x.fit duplicate of <a href='/activities/1' target='_blank'>Outdoor run</a>")).toBe('x.fit duplicate of Outdoor run');
+    expect(plainStravaError('The file is empty')).toBe('The file is empty');
   });
 
   it('uses one stable external id per workout', () => {

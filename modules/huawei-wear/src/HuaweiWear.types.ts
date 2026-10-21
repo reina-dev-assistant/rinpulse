@@ -229,7 +229,10 @@ export interface UserProfile {
 
 export type HealthConnectAvailability = 'available' | 'update-required' | 'unavailable';
 
-/** Health Connect record types JoyoFit writes; also the names in `granted` / `missing`. */
+/**
+ * Health Connect record types JoyoFit writes; also the names in `granted` / `missing`. `ExerciseRoute` (Android only) is the
+ * permission to attach a workout's GPS route to its exercise session, not a record type of its own.
+ */
 export type HealthConnectRecordType =
   | 'Steps'
   | 'HeartRate'
@@ -238,7 +241,8 @@ export type HealthConnectRecordType =
   | 'Distance'
   | 'ActiveCaloriesBurned'
   | 'SleepSession'
-  | 'ExerciseSession';
+  | 'ExerciseSession'
+  | 'ExerciseRoute';
 
 /** State of the Health Connect export (write only; JoyoFit never reads Health Connect). */
 export interface HealthConnectStatus {
@@ -465,6 +469,41 @@ export interface LiveWorkout {
    * screen asks the user to finish or keep going. Absent from builds before the watch-status timer.
    */
   endSuspected?: boolean;
+}
+
+/** Huawei sport code of strength training (Gadgetbridge's sport table; `WorkoutSportTypes.kt`). */
+export const WATCH_SPORT_STRENGTH_TRAINING = 140;
+
+/**
+ * What a start, pause, resume or stop sent to the watch came to (`startWatchWorkout` ...). `confirmed`: the watch accepted it (a start:
+ * and reports the workout running). `sent`: the command went out and the watch did not confirm it (no answer, or a start its status
+ * does not show). `refused`: the watch answered with an error `code`. `unsupported`: the watch does not list the command.
+ * `not_connected`: no watch link.
+ */
+export type WatchWorkoutOutcome = 'confirmed' | 'sent' | 'refused' | 'unsupported' | 'not_connected';
+
+export interface WatchWorkoutResult {
+  outcome: WatchWorkoutOutcome;
+  /** The watch's result code when it sent one (100000 accepts), else null. */
+  code: number | null;
+  /**
+   * Android only: the wear state the watch reported right after a refusal (DeviceConfig `01/3D`): false is "not on the wrist", true is worn,
+   * null when it was not asked or the watch did not say. Absent on iOS and on a binary older than that change.
+   */
+  worn?: boolean | null;
+}
+
+/** `getWatchWorkout`: whether the connected watch can be told to start a workout, and the workout the phone started on it. */
+export interface WatchWorkoutStatus {
+  connected: boolean;
+  /** The watch lists the phone-started workout command (`17/01`). */
+  supported: boolean;
+  /** A workout started from the phone is open (until its stop, or a stop on the watch). */
+  active: boolean;
+  sport: number | null;
+  state: 'running' | 'paused' | null;
+  /** The last operator the watch itself reported (1 start, 2 pause, 3 resume, 4 stop); null when none. */
+  watchOperator: number | null;
 }
 
 export type HuaweiWearModuleEvents = {

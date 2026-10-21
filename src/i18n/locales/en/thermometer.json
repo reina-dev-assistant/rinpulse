@@ -50,7 +50,7 @@
   },
   "privacy": {
     "title": "Your room data",
-    "body": "Raw readings stay on this phone and are deleted after 120 days. All that can leave the phone is the average temperature and humidity per night (mean, lowest, highest and number of readings), and only when Sleep insights is on in Settings, Connections, JoyoRogo. A night with too few readings sends no room data."
+    "body": "Raw readings stay on this phone and are deleted after 120 days. All that can leave the phone is the average temperature and humidity per night (mean, lowest, highest and number of readings), and only when Sleep insights is on in More, Connections, JoyoRogo. A night with too few readings sends no room data."
   },
   "capture": {
     "notification": {

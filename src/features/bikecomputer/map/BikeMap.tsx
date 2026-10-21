@@ -49,6 +49,10 @@ export interface BikeMapProps {
   headingUp?: boolean;
   /** The map could not load its style or tiles (a missing file, no signal on the online source). */
   onLoadFailed?: () => void;
+  /** Square corners, for a map that fills the screen edge to edge instead of sitting in a rounded frame. */
+  flat?: boolean;
+  /** dp the overlays move in from the top and the bottom edge, where a bar or a sheet covers the map: the source label, the follow button and the credit. Default 0. */
+  inset?: { top?: number; bottom?: number };
 }
 
 /**
@@ -64,7 +68,7 @@ export function BikeMap(props: BikeMapProps) {
   const [failed, setFailed] = useState(false);
   const { height = 'fill', onLoadFailed } = props;
 
-  const frame = [styles.frame, height === 'fill' ? styles.fill : { height }, { borderRadius: radius.tile, backgroundColor: colors.muted }];
+  const frame = [styles.frame, height === 'fill' ? styles.fill : { height }, { borderRadius: props.flat ? 0 : radius.tile, backgroundColor: colors.muted }];
 
   if (!maplibre || failed) {
     return (
@@ -73,6 +77,11 @@ export function BikeMap(props: BikeMapProps) {
         <AppText variant="caption" muted style={styles.noteText}>
           {maplibre ? t('map.loadFailed') : t('map.unavailable')}
         </AppText>
+        {maplibre && props.style.source !== 'offline' ? (
+          <AppText variant="caption" muted style={styles.noteText}>
+            {props.style.source === 'stream' ? t('map.stream') : t('map.online')}
+          </AppText>
+        ) : null}
       </View>
     );
   }
@@ -109,12 +118,14 @@ function LiveMap({
   colors: ink,
   onFollowChange,
   headingUp = false,
+  inset,
   onFail,
 }: LiveMapProps) {
   const { t } = useTranslation('bikemap');
   const { colors } = useTheme();
   const { Map: MapView, Camera, GeoJSONSource, Layer } = maplibre;
   const cameraRef = useRef<CameraRef>(null);
+  const [creditOpen, setCreditOpen] = useState(false);
 
   // Hand the native map the same style object until the key changes: a new object with the same content would reload it.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the style object is identified by its key
@@ -201,38 +212,45 @@ function LiveMap({
         </GeoJSONSource>
       </MapView>
 
-      {style.source !== 'offline' ? (
-        <View pointerEvents="none" style={[styles.chip, styles.chipTop]}>
-          <AppText variant="caption" color={MAP_INK.chipText} style={styles.chipText}>
-            {style.source === 'stream' ? t('map.stream') : t('map.online')}
-          </AppText>
-        </View>
-      ) : null}
-
       {!follow ? (
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t('map.recenter')}
           scaleTo={0.96}
           onPress={() => onFollowChange(true)}
-          style={[styles.recenter, { backgroundColor: colors.card, borderColor: colors.hairline }]}>
+          style={[styles.recenter, { backgroundColor: colors.card, borderColor: colors.hairline, bottom: spacing.xl + (inset?.bottom ?? 0) }]}>
           <Ionicons name="locate" size={30} color={colors.foreground} />
         </PressableScale>
       ) : null}
 
-      <Pressable
-        accessibilityRole="link"
-        accessibilityLabel={t('map.attributionLabel')}
-        hitSlop={{ top: 10, bottom: 10, left: 6, right: 10 }}
-        onPress={() => void Linking.openURL(COPYRIGHT_URL)}
-        style={[styles.chip, styles.chipBottom]}>
-        <AppText variant="caption" color={MAP_INK.chipText} style={styles.chipText}>
-          {style.attribution}
-        </AppText>
-      </Pressable>
+      <View style={[styles.credit, { bottom: 6 + (inset?.bottom ?? 0) }]}>
+        {creditOpen ? (
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={t('map.attributionLabel')}
+            onPress={() => void Linking.openURL(COPYRIGHT_URL)}
+            style={styles.chip}>
+            <AppText variant="caption" color={MAP_INK.chipText} style={styles.chipText}>
+              {style.attribution}
+            </AppText>
+          </Pressable>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('map.attributionToggle')}
+          accessibilityState={{ expanded: creditOpen }}
+          hitSlop={10}
+          onPress={() => setCreditOpen((open) => !open)}
+          style={styles.info}>
+          <Ionicons name="information" size={14} color={MAP_INK.chipText} />
+        </Pressable>
+      </View>
     </>
   );
 }
+
+/** Translucent so the credit never reads as a white box on the map. */
+const CREDIT_BACKGROUND = 'rgba(255,255,255,0.6)';
 
 const styles = StyleSheet.create({
   frame: { overflow: 'hidden' },
@@ -244,10 +262,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    backgroundColor: MAP_INK.chipBackground,
+    backgroundColor: CREDIT_BACKGROUND,
   },
-  chipBottom: { left: 6, bottom: 6, maxWidth: '70%' },
-  chipTop: { left: 6, top: 6 },
+  credit: { position: 'absolute', left: 6, flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: '86%' },
+  info: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: CREDIT_BACKGROUND },
   chipText: { fontSize: 11, lineHeight: 15 },
   recenter: {
     position: 'absolute',

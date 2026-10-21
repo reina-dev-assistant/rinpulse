@@ -7,7 +7,9 @@ what JoyoFit can and cannot do about it, why, and what is implemented.
 **Short version.** JoyoFit answers the watch's request, serves the public Broadcom LTO file when (and only when) the watch asks for that
 kind, declines every other kind, and shows honestly what happened. It cannot clear the warning on a watch that asks for Huawei's own data:
 that data is prepared by Huawei's app from Huawei servers, with formats nobody has fully documented, and the watch does not check what it
-is given.
+is given. Deep dive of 2026-10-21 (below): the two sources the owner pointed at are about Huami/Zepp, not Huawei; the Fit 4 Pro's kind
+(`HW_PGNSS_PRED`) has no legal or known-format source; the Band 11 Pro's kind (`HW_AGNSS`) can be rebuilt from open data, and a tested generator
+exists, but it is not connected to the app because its acceptance by the watch is unverified.
 
 Code (Android): `modules/huawei-wear/android/.../Ephemeris.kt` (exchange, status, update now), `EphemerisDownload.kt` (HTTP, cache),
 `AgpsSource.kt` (where the data comes from), `AgpsPolicy.kt` (schedule, validation), `AgpsStore.kt` (persisted state),
@@ -41,15 +43,116 @@ HTTP, Caches copy), `AgpsStore.swift`, `AgpsReachability.swift`, and in `HuaweiP
 | 0 | none (URLs in the consult) | Broadcom LTO file, `https://gllto.glpals.com/7day/v6/latest/lto.dat` | served, only when the watch asks for version 0 |
 | 1 to 3 | `HW_AGNSS` (`HW_AGNSS_RTCM_33`), `HW_PGNSS_*` (GPS, GLONASS, GALILEO, BDS, QZS, EXTRA, `HW_PGNSS_PRED`, `HW_PGNSS_TRANS`), `MTK_EPO_*`, `HW_RSMC_*`, `HW_PRECSION_ION` | Huawei servers and MediaTek EPO, converted by Huawei Health | declined: state 4 "failed", outcome `unsupported`; nothing else is ever offered instead |
 
-For a Watch GT4 the captured sequence is `HW_AGNSS_RTCM_33`, then `HW_PGNSS_*`, then `MTK_EPO_*` (Gadgetbridge issue 3928). Which set the Fit 4 Pro
-asks for is **not yet observed**: the watch never asked on its own while JoyoFit watched, and answers the phone-started question with error
-118001 (see "Device findings"). JoyoFit logs the consult (version, tag names) to the status row and the full tag to logcat (tag `JoyoFit`, `AGPS:`)
-the first time it asks.
+What each watch asked for, from JoyoFit's own logs (consult answer, tag names only), plus the one external capture:
+
+| Watch | Asks | Evidence |
+|---|---|---|
+| Huawei Band 11 Pro (Candy-B49WG, software 6.0.0.130(SP3C00M03)), asks on its own (twice, 21 s apart, in the log) | **one kind**: download version 3, tag `higeo/v1/gnssinfo?type=0x0004/HW_AGNSS` (38 characters) | support-report log of 2026-10-19 23:26 +07:00 (the "often disconnects" report): `AGPS: consult answer: download version 3, tag 38 chars (HW_AGNSS), 0 urls`, then our `1F/03` state 4, the watch acknowledged `7f=000186A0` |
+| Huawei Watch Fit 4 Pro (6.1.0.117), only when the update is started on the watch | **one kind**: download version 3, tag `com.huawei.higeo_dataModule_PGNSSConfig?type=HW_EEV2/HW_PGNSS_PRED;` (67 characters) | logcat 2026-10-18 22:06 to 22:07, see "Observed on the watch's own ask" |
+| Huawei Watch GT 4 (not ours) | `HW_AGNSS_RTCM_33`, `HW_PGNSS_GPS/GLONASS/GALILEO/BDS/QZS/EXTRA`, `MTK_EPO_BDS_GAL`, `MTK_EPO_GPS_GLN`, one after the other | Gadgetbridge issue 3928, comments by Me7c7 (author of Gadgetbridge's Huawei ephemeris code) |
+
+So "file status 4" in a support log is **JoyoFit's own answer** ("failed"), not a rejection by the watch: the watch accepted the answer and no file transfer
+(`1C`) ever started. No payload of ours has been refused by a watch. The tag the Band 11 Pro asks for is the same tag (with `"ver":3`) that the
+community decoder lists for `HW_AGNSS_RTCM_33` (<https://codeberg.org/Me7c7/HDataResearch>, `pgnss/HW_AGNSS_RTCM_33_info.cpp`), which is the only reason to think the
+file the watch wants for `HW_AGNSS` is named `HW_AGNSS_RTCM_33` [INFERENCE: nobody has seen the watch's file-list request for it].
+
+JoyoFit logs the consult (version, tag names) to the status row and the full tag to logcat (tag `JoyoFit`, `AGPS:`) the first time it asks.
 
 Format notes from the community (Me7c7, MIT, <https://codeberg.org/Me7c7/HDataResearch/src/branch/main/pgnss>): `HW_AGNSS_RTCM_33` is RTCM 3.x
 ephemeris messages 1019 (GPS), 1020 (GLONASS), 1042 (BeiDou), 1046 (Galileo I/NAV), CRC-24Q; `HW_PGNSS_GPS` is a 72-slot header of
 `{time, offset, size}` with 2564-byte blocks of 80-byte ephemeris records, built from `HiEE.dat` (JSON with base64 values, Huawei server);
 `MTK_EPO_*` is 72-byte records per satellite with an XOR checksum. His attempt to match the PGNSS data with public ephemeris failed.
+
+## Deep dive (2026-10-21): sources, terms, chips, and what a correct payload would be
+
+### The two sources the owner named are about Huami / Zepp (Amazfit), not Huawei
+
+- [Gadgetbridge "Huami GPS"](https://gadgetbridge.org/internals/topics/huami-gps/): Bip / Zepp OS watches take `cep_pak.bin` + `gps_alm.bin` (from `cep_7days.zip`,
+  `cep_alm_pak.zip`), or on Zepp OS an EPO zip or a "UIHH" bundle, flashed by the phone; the page says not all newer devices can be updated this way. Nothing about Huawei.
+- [AGPS Helper](https://codeberg.org/citizenserious/agps-helper-android) (MIT, alpha 0.1.0-alpha.6, adapted from `huami-token`, itself MIT) logs in **with the user's Zepp account**
+  (`api-user-us2.zepp.com`, `api-mifit-us2.zepp.com`, headers copied from the Zepp app and a Firefox user agent; unofficial, "may stop working at any time"), asks the Zepp file
+  service for file types `AGPS_ALM, AGPSZIP, LLE, AGPS, EPO, LTO` (`/apps/com.xiaomi.hm.health/fileTypes/<type>/files`) and builds a UIHH bundle (magic `UIHH`, CRC32, records `0x05`
+  gps_alm, `0x0f` gln_alm, `0x86..0x8a` lle_bds/gps/glo/gal/qzss). Its data is Huami's own (CEP / LLE), not u-blox AssistNow, Broadcom LTO or Sony. None of it matches a Huawei
+  watch: Huawei has a different protocol (the watch pulls, see below), different file kinds, and no Zepp account would help.
+- What carries over is the idea Gadgetbridge uses for Huami: phone gets the vendor's file and hands it over. For Huawei that idea is exactly what is blocked (below).
+
+### How a Huawei watch gets satellite data today
+
+Gadgetbridge master `0735529275` (2026-10-21), `app/src/main/java/nodomain/freeyourgadget/gadgetbridge/`: `service/devices/huawei/HuaweiEphemerisManager.java`
+(last changed `29d01ddfe5`, 2026-02-11, "HW_PRECSION_ION workaround. URL contain lat/lon"), `devices/huawei/packets/Ephemeris.java` (service `0x1F`: `01` operator, `02` parameter
+consult, `03` file status), `devices/huawei/packets/EphemerisFileUpload.java` (file service `0x1C`: `01` file list, `02` consult, `03` single file info, `04` data request, `05` chunks,
+`06` done). It is **not** `HuaweiFileUploadManager`: that is the normal file upload (watch faces, music), a different service. `GpsAndTime` is the phone-location stream (service `0x18`).
+
+1. The watch sends `1F/01` op 1 (no useful content). The phone answers `100000` (ok), `100007` (no network) or an error; on ok it asks `1F/02`.
+2. The watch answers with a download version and a tag, which names what it wants and where Huawei Health has to fetch it: `higeo/v1/gnssinfo?type=0x0004/HW_AGNSS`,
+   `com.huawei.higeo_dataModule_PGNSSConfig?type=HW_EEV2/HW_PGNSS_PRED;`. Huawei Health asks Huawei's servers (some need authorization; the URL of `HW_PRECSION_ION` carries
+   latitude and longitude), converts the answer into the watch's own binary files and answers `1F/03` state 3 (ready; GB uses 5 for "error or timeout"; JoyoFit uses 4 for "failed").
+3. The watch pulls: `1C/01` (type 0 or 1, product id) gets a `;`-joined list of file names; `1C/02` agrees protocol, transfer size, max data per request; `1C/03` per file gives size and
+   CRC16 (init 0); `1C/04` offset and length of a window, the phone names the stored file `sha256hex(watch address without colons) + name` and streams `1C/05` frames; `1C/06` closes it.
+   Codes: `100000` ok, `100001` refused. Type 1 is the one Gadgetbridge implements for versions 1 to 3; for version 0 its code says `fileList = "gpslocation.dat"` is a TODO,
+   which JoyoFit does (Broadcom LTO).
+4. File names are not `agps.bin` or `gnss_*`. Known names: `HW_AGNSS_RTCM_33`, `HW_PGNSS_GPS`, `HW_PGNSS_GLONASS`, `HW_PGNSS_GALILEO`, `HW_PGNSS_BDS`, `HW_PGNSS_QZS`, `HW_PGNSS_EXTRA`,
+   `MTK_EPO_BDS_GAL`, `MTK_EPO_GPS_GLN` (a Watch GT 4; the list differs per watch and firmware). Gadgetbridge only replays an `ephemeris.zip` taken from Huawei Health
+   (`time`, `ephemeris_config.json` with `ver`, `uuid`, `files` per tag, files under `<uuid>/`), and refuses it when `time` is older than 30 minutes.
+5. Validity: Huawei Health's files live 1 to 30 minutes on the Huawei side (some hold three hours of data) and the server files refresh hourly or slower; Huawei tells owners to update every
+   1 to 2 days. The Broadcom file is 7 days. Several requests follow each other and **all** are required; the watch does not validate the files; Gadgetbridge's author bootlooped a
+   watch and wedged its GPS with wrong data.
+
+Other Gadgetbridge issues on this: [3928](https://codeberg.org/Freeyourgadget/Gadgetbridge/issues/3928) (the research, open since 2024, Me7c7's comments are the source of most facts above),
+[6283](https://codeberg.org/Freeyourgadget/Gadgetbridge/issues/6283) (Fit 4, closed: "not trivial to generate the necessary files"; Me7c7: at least one request carries longitude and latitude, sending that to Huawei is a privacy leak),
+[6340](https://codeberg.org/Freeyourgadget/Gadgetbridge/issues/6340) (a Fit 4 user says he links the Huawei account and runs Huawei Health beside Gadgetbridge to update the GNSS data),
+and PR 5444, after which a user reported a first fix in 1 to 2 minutes instead of 10+ (the PR itself was not read here; JoyoFit streams the phone's location over service `0x18` already).
+The Gadgetbridge Huawei page lists slow GPS as a known issue for that reason.
+
+### Data sources, terms and which watch they could serve
+
+| Source | What it gives | Terms | Matches |
+|---|---|---|---|
+| Huawei servers (via Huawei Health's calls) | every `HW_*` kind | Huawei API agreement, see "Why Huawei's servers are not used"; some endpoints need Huawei authorization | the only source of `HW_PGNSS_*` / `HW_PGNSS_PRED`, and the format conversion is unknown. **Not used.** |
+| Zepp / Huami file service (AGPS Helper) | CEP, LLE, EPO, LTO files for Amazfit | needs the user's Zepp account, unofficial, may break | no Huawei watch |
+| u-blox AssistNow | UBX-MGA | needs a per-customer token ([user guide](https://content.u-blox.com/sites/default/files/products/documents/MultiGNSS-Assistance_UserGuide_%28UBX-13004360%29.pdf) section 8); the product page now lists the classic AssistNow as "no longer available" (replaced by a Thingstream service with pricing). Terms not read [INFERENCE: not redistributable] | u-blox chips only; none of the watches asks for UBX |
+| Broadcom LTO (`gllto.glpals.com`) | 7-day LTO, version 0 | no published terms, best effort (see below) | watches that ask version 0 (none of ours has) |
+| MediaTek EPO | `MTK_EPO_*` | vendor / project / device id service, no public terms, 403 for a dummy id | part of a GT 4's set only |
+| BKG broadcast ephemeris | GPS, GLONASS, Galileo, BeiDou, QZSS broadcast orbits, every 15 min | IGS terms: open, commercial use allowed, cite IGS and providers, no warranty; BKG licence text not found | the **content** of `HW_AGNSS_RTCM_33` (see "Lab path") |
+| Sony (CXD5603 / CXD5605) | Sony receivers show up in Garmin watches ([chipset list](https://logiqx.github.io/gps-details/devices/garmin/chipsets)); no public assistance service was looked up | | no evidence a Huawei watch uses one |
+
+Chips (what could be found; Huawei publishes no GNSS vendor for these watches):
+
+| Model | What is known |
+|---|---|
+| Watch Fit 4 Pro, Watch Fit 4 | Dual band: L1 GPS, GLONASS, Galileo, BDS, QZSS and L5 GPS, Galileo, BDS, QZSS ([Huawei specs](https://consumer.huawei.com/en/wearables/watch-fit4-pro/specs/)). Vendor not published. Asks `HW_PGNSS_PRED` (Fit 4 Pro, observed). |
+| Band 11 Pro | Huawei markets "sports GNSS positioning". Vendor and bands not found. Asks `HW_AGNSS` (observed). |
+| Watch GT 4 | Vendor not found. It requests `MTK_EPO_*` files, so its receiver takes MediaTek-format EPO data [INFERENCE]. |
+| Watch Ultimate | Dual band GPS receiver by Airoha ([TechInsights](https://www.techinsights.com/blog/deep-dive-teardown-huawei-watch-ultimate-clb-b19-smartwatch)). Airoha is MediaTek's GNSS line (general knowledge, not sourced here), which fits the EPO files above [INFERENCE]. |
+| Watch GT 5 Pro, GT 6, other GT | TechInsights teardown of the GT 5 Pro exists but is paywalled (HTTP 403 here); nothing public found. |
+
+The watches ask for Huawei's own kinds, never for a UBX, LTO or Sony file (LTO only for version 0, which none of ours has asked), so u-blox, Broadcom and Sony feeds are not what they request.
+
+### What JoyoFit sends and what the watch would need
+
+- Today JoyoFit sends Broadcom LTO only to a watch that asks version 0, and nothing to the Band 11 Pro and Fit 4 Pro, which never ask version 0. The "expired" warning stays, and GPS
+  lock without a file takes minutes. The phone's location over `0x18` during a workout is what shortens it, and that is already on.
+- Band 11 Pro (`HW_AGNSS`): the watch needs the file(s) Huawei Health builds for that tag. Everything the community knows says that file is a plain concatenation of RTCM 3
+  ephemeris frames. If so, a correct payload is what `scripts/agps-rtcm.ts` writes. Unconfirmed: the file's name, whether it has a header in front, whether Huawei sends fewer or other
+  messages (the decoder lists 1019, 1020, 1042, 1046 and skips anything before the first `D3` byte), and the chip's tolerance of a different mix of satellites.
+- Fit 4 Pro (`HW_PGNSS_PRED`): Huawei's predicted ephemeris, built by Huawei Health from Huawei's `HiEE.dat`-style data with a proprietary conversion. Its content is not public
+  broadcast data (a community attempt to match it to public ephemeris failed). No correct payload can be made. Not in `pgnss/` of the community repo either (no decoder for `PRED`).
+
+### Recommendation
+
+1. **Do nothing for the Fit 4 Pro**, except what exists: phone GPS over `0x18`, and the decline. The watch's own satellite update over Wi-Fi (Settings, Workout settings, Location Services,
+   Satellite updates) is the one route that is not blocked by us; Huawei's support page says watches after the Watch 4 series can do it over Wi-Fi or eSIM. Not tried on the owner's
+   watch (it changes a watch setting and needs the watch on Wi-Fi). If it works for the owner, a help text could say so.
+2. **Band 11 Pro `HW_AGNSS`: keep declining until a lab test says the generator's file is accepted.** The legal side is the cleanest of every source (open IGS data, no account,
+   nothing about the user sent anywhere; cite IGS and BKG, confirm BKG's own licence). The technical side is one file of about 8 KB and the existing `1C` sender. The blocker is
+   the watch not validating input and nobody having seen the file-list exchange for this kind. Test plan, in order, all needing a **store build** (native change) and a Band 11 Pro that
+   may be factory-reset (not the owner's Fit 4 Pro, which never asks for this kind):
+   a. Native: answer `1F/03` state 3 to a consult that is exactly one tag ending `/HW_AGNSS`, log the `1C/01` request (type, product id), refuse it with `100001`. Sends no data; shows
+      what the watch asks for and whether it repeats.
+   b. If `1C/01` asks type 1: serve one file `HW_AGNSS_RTCM_33` built by the phone or a Worker cache (`GET` of the BKG file once per 15 minutes for all users, about 8 KB out) and watch the
+      watch's GNSS state and GPS lock time before and after, with a factory reset ready.
+   c. Only then wire the JS side (`agpsVisible` shows the row for this kind), the status text and `LEGAL.md` / Play data-safety wording (BKG request is from our Worker or the phone's IP).
+3. Keep the existing rule that nothing else is ever offered in place of a kind the watch asked for.
 
 ## Why Huawei's servers are not used
 
@@ -75,19 +178,30 @@ as well, and `LEGAL.md` and the Play data-safety text stay true as they are.
 
 | Source | Finding |
 |---|---|
-| Broadcast ephemeris, BKG (`https://igs.bkg.bund.de/root_ftp/IGS/BRDC/`) | Anonymous, public daily multi-GNSS RINEX navigation files (e.g. `BRDC00WRD_R_20262910000_01D_MN.rnx.gz`). Could be re-encoded to RTCM 1019/1020/1042/1046 = only the `HW_AGNSS_RTCM_33` part. |
+| Broadcast ephemeris, BKG (`https://igs.bkg.bund.de/root_ftp/IGS/BRDC/<year>/<doy>/`) | Anonymous, public multi-GNSS RINEX navigation files. `BRDC00WRD_S_...` is "ephemeris from data streams, updated every 15 min" (checked 2026-10-21: GPS 231, GLONASS 703, Galileo 3318, BeiDou 520, QZSS 84 records, 719 KB gz); the `_R_` file of the same day is a smaller one built from a subset. Re-encoded to RTCM 1019/1020/1042/1046 this is exactly the content the community reads out of `HW_AGNSS_RTCM_33` (see "Lab path"). Data is from IGS stations: [IGS data terms](https://igs.org/wp-content/uploads/2020/09/IGS-Data-and-Product-Disclaimer-and-Terms-of-Use-200805.pdf) allow scientific, educational and commercial use, require citing IGS and the providers, give no warranty. No separate BKG licence text was reachable (the directory listing has none, the BKG page returned 503): confirm before shipping. |
 | Broadcast ephemeris, NASA CDDIS | Needs an Earthdata login (HTTP 401). |
 | MediaTek EPO (`wpepodownload.mediatek.com`, `vendor` / `project` / `device_id` query) | Vendor service, no public terms found; a GET with dummy values answered 403 on 2026-10-18. |
 | u-blox AssistNow | UBX-MGA for u-blox receivers; free tier needs a token. Not this watch's chip. |
 | Galileo GSC almanac | Almanac only; no ephemeris, wrong format. |
 | Google SUPL | Network assistance protocol, no public terms, no file interface. |
 
-### Future, lab-only option (not implemented)
+### Lab path for `HW_AGNSS` (generator built and tested, not connected to the app)
 
-A generator for `HW_AGNSS_RTCM_33` from the BKG broadcast ephemeris is technically possible (RTCM encoding of four message types, about two days with
-tests). It would still leave `HW_PGNSS_*` (Huawei's predicted ephemeris, partly unknown fields, orbit prediction needed) and `MTK_EPO_*`, and the watch
-asks for all of them in sequence. Only revisit it as a lab switch on a watch that can be factory-reset, never on a daily watch, and only with the
-owner's explicit decision.
+What exists: `scripts/agps-rtcm.ts` (tests: `scripts/agps-rtcm.test.ts`, real records in `scripts/agps-rtcm.fixture.ts`). It reads a RINEX 3 navigation file (BKG's
+merged `BRDC00WRD_S_<year><doy>0000_01D_MN.rnx.gz`, rebuilt every 15 minutes, 719 KB compressed) and writes one RTCM 3 frame per healthy satellite:
+message 1019 (GPS), 1020 (GLONASS), 1042 (BeiDou), 1046 (Galileo I/NAV). A real run on 2026-10-21 13:55 UTC: 7 839 bytes, 32 GPS + 23 GLONASS + 28 Galileo + 37 BeiDou
+satellites, none skipped. Checked against an independent decoder (`pyrtcm` 1.2.1, run once on the output, not a repo dependency): every frame passes CRC-24Q,
+all four message types decode, and the decoded orbit values (sqrt(A), e, af0, M0, BGD, week, GLONASS X and tau_n) equal the RINEX values.
+
+What it proves: the bytes are valid RTCM 3 ephemeris messages for current satellites. What it does **not** prove: that a Huawei watch's GNSS chip takes
+exactly this file. The unknowns are listed under "Recommendation". Nothing calls the tool, the Worker does not serve it, native code still answers
+state 4 to `HW_AGNSS`, and the watch has not been sent anything. Run it only for a lab test on a watch that can be factory-reset, with the owner's decision.
+
+```sh
+bun scripts/agps-rtcm.ts --out /tmp/HW_AGNSS_RTCM_33                 # fetches today's BKG file
+bun scripts/agps-rtcm.ts --in BRDC.rnx.gz --out out.rtcm --now 2026-10-21T13:55:00Z
+bun test ./scripts/agps-rtcm.test.ts
+```
 
 ## What is implemented
 

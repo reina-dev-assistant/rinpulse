@@ -181,6 +181,12 @@
     "button": "Bagikan ke JoyoRogo",
     "title": "Bagikan ke JoyoRogo",
     "posted": "Terkirim ke JoyoRogo.",
+    "needsProfile": {
+      "title": "Lengkapi profil JoyoRogo dulu",
+      "body": "Feed hanya untuk akun dengan profil, supaya isinya orang sungguhan dan bebas spam. Isi tinggi, berat, dan targetmu sekali saja di JoyoRogo.",
+      "open": "Buka JoyoRogo",
+      "later": "Nanti"
+    },
     "viewPost": "Lihat postingan",
     "caption": "Keterangan",
     "captionHint": "Opsional.",

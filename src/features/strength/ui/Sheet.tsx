@@ -58,14 +58,16 @@ export interface MenuItem {
   /** A tick after the label: the current choice. */
   selected?: boolean;
   disabled?: boolean;
+  /** A muted line under the label. */
+  hint?: string;
   onPress: () => void;
 }
 
 /** One-tap actions in a bottom sheet; choosing one closes the sheet first. */
-export function MenuSheet({ visible, onClose, title, items }: { visible: boolean; onClose: () => void; title?: string; items: readonly MenuItem[] }) {
+export function MenuSheet({ visible, onClose, onDismiss, title, items }: { visible: boolean; onClose: () => void; onDismiss?: () => void; title?: string; items: readonly MenuItem[] }) {
   const colors = useColors();
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={title}>
+    <BottomSheet visible={visible} onClose={onClose} onDismiss={onDismiss} title={title}>
       {items.map((item) => (
         <PressableScale
           key={item.key}
@@ -80,9 +82,16 @@ export function MenuSheet({ visible, onClose, title, items }: { visible: boolean
           }}
           style={styles.item}>
           <Ionicons name={item.icon} size={22} color={item.danger ? colors.destructive : colors.foreground} />
-          <AppText variant="bodyStrong" danger={item.danger} style={styles.itemLabel}>
-            {item.label}
-          </AppText>
+          <View style={styles.itemLabel}>
+            <AppText variant="bodyStrong" danger={item.danger}>
+              {item.label}
+            </AppText>
+            {item.hint ? (
+              <AppText variant="caption" muted>
+                {item.hint}
+              </AppText>
+            ) : null}
+          </View>
           {item.selected ? <Ionicons name="checkmark" size={20} color={colors.primary} /> : null}
         </PressableScale>
       ))}

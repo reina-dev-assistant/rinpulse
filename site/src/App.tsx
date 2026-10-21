@@ -177,9 +177,9 @@ const LIVE: { Icon: LucideIcon; name: string; note: string }[] = [
 ];
 
 const FACES: { Icon: LucideIcon; name: string; note: string }[] = [
-  { Icon: Palette, name: "Watch face", note: "Daftar, pratinjau, ganti, dan hapus. File .hwt dicek dulu; jam menghapus face yang tidak ditandatangani Huawei." },
+  { Icon: Palette, name: "Watch face", note: "Daftar, pratinjau, ganti, dan hapus. File .hwt dicek dulu; jam menolak face yang tidak ditandatangani Huawei, dan aplikasi menjelaskannya." },
   { Icon: Watch, name: "Ruang di jam", note: "Meter penyimpanan jam dan perkiraan apakah face baru masih muat." },
-  { Icon: Download, name: "Kustomisasi dan face foto", note: "Ubah gaya dan widget face bawaan, atau pasang fotomu sendiri." },
+  { Icon: Download, name: "Photo face jalan", note: "Pilih fotomu sendiri dan jam menggambar waktu dan datanya di atasnya. Face buatan sendiri harus lewat Huawei Health (lihat FAQ)." },
 ];
 
 function Check2({ className }: { className?: string }) {
@@ -1365,7 +1365,87 @@ const COMING_SOON: { Icon: LucideIcon; title: string; body: string }[] = [
     title: "Data bersepeda kelas pro",
     body: "Normalized Power, TSS, FTP, kurva power, dan deteksi tanjakan dari power meter-mu.",
   },
+  {
+    Icon: Watch,
+    title: "Bahasa jam ikut bahasa aplikasi",
+    body: "JoyoFit mengirim bahasa HP (atau yang kamu pilih) ke jam setiap tersambung, supaya suara arahan latihan tidak tinggal berbahasa Mandarin. Butuh build toko; belum diuji di jam nyata.",
+  },
+  {
+    Icon: Route,
+    title: "Rute GPS ke Health Connect",
+    body: "Latihan berGPS ikut membawa rutenya ke Health Connect, jadi aplikasi lain bisa menggambar petanya. Butuh build toko, baru di tes internal.",
+  },
+  {
+    Icon: Dumbbell,
+    title: "Latihan beban mulai dari HP",
+    body: "Mulai latihan beban di HP, jam ikut memulai Latihan kekuatan, jeda, dan berhenti. Butuh build toko; belum diuji di jam nyata.",
+  },
+  {
+    Icon: MessageCircle,
+    title: "Balasan pintar dan balasan cepat",
+    body: "Balas pesan dari jam: balasan pintar ke aplikasi Android, dan daftar balasan cepat (Otw, Lagi nyetir, dan lainnya) yang bisa kamu atur sendiri. Butuh build toko, baru di tes internal.",
+  },
 ];
+
+const NEW_IN_APP: { Icon: LucideIcon; title: string; body: string }[] = [
+  {
+    Icon: LayoutDashboard,
+    title: "Bilah tab baru",
+    body: "Hari ini, Latihan, tombol Mulai di tengah, Social, dan Lainnya. Jam dan Pengaturan pindah ke Lainnya, dan tombol tengah membuka menu mulai latihan dari tab mana pun.",
+  },
+  {
+    Icon: Route,
+    title: "Rekam latihan dimulai dari peta",
+    body: "Posisimu di peta, satu pil untuk sinyal GPS dan sensor, deretan ikon olahraga, dan satu tombol Mulai. Treadmill dan olahraga dalam ruangan memakai angka besar.",
+  },
+  {
+    Icon: Download,
+    title: "Simpan file FIT dan GPX",
+    body: "Dari layar latihan, simpan .fit (dan GPX kalau ada rute) ke HP tanpa internet, bagikan, atau upload sendiri di strava.com.",
+  },
+  {
+    Icon: Palette,
+    title: "17 tema, termasuk pastel dan batik",
+    body: "Enam tema pastel baru (Sakura, Lavender, Persik, Rose Gold, Susu Stroberi, Matcha Latte) dan hiasan header, termasuk batik kawung di tema Sogan.",
+  },
+  {
+    Icon: Share2,
+    title: "Post ke JoyoRogo dengan lembar profil",
+    body: "Membagikan latihan tanpa profil JoyoRogo kini membuka lembar yang menjelaskan kenapa dan mengantarmu menyelesaikan profil, bukan pesan galat.",
+  },
+  {
+    Icon: Watch,
+    title: "Pesan jam yang lebih jelas",
+    body: "Watch face yang tidak ditandatangani Huawei dijelaskan dalam bahasamu, dan pesan GNSS kedaluwarsa saat mulai olahraga luar ruangan punya petunjuk tenang: tunggu ikon GPS di jam.",
+  },
+];
+
+function NewInAppSection() {
+  return (
+    <section id="baru" data-section="new" className="scroll-mt-16 bg-card py-20 md:py-28">
+      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
+        <div className="max-w-2xl">
+          <p className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">Sudah ada</p>
+          <SectionTitle>Baru di aplikasi</SectionTitle>
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            Perubahan tampilan dan layar ini sampai lewat pembaruan langsung, tanpa update dari toko. Yang butuh build toko ada di Segera hadir di bawah.
+          </p>
+        </div>
+        <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {NEW_IN_APP.map(({ Icon, title, body }) => (
+            <li key={title} className="rounded-[1.75rem] bg-background p-6 md:p-7">
+              <span className="flex size-12 items-center justify-center rounded-full bg-bakar-soft text-bakar-ink">
+                <Icon className="size-6" aria-hidden />
+              </span>
+              <h3 className="mt-5 text-xl font-extrabold tracking-tight">{title}</h3>
+              <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">{body}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
 
 function ComingSoonSection() {
   return (
@@ -1373,10 +1453,10 @@ function ComingSoonSection() {
       <div className="max-w-2xl">
         <SectionTitle>Segera hadir</SectionTitle>
         <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-          Tiga hal ini sudah dikerjakan di cabang pengembangan tapi belum ada di aplikasi yang kamu pasang. Belum ada tanggal.
+          Tiga hal pertama sudah dikerjakan di cabang pengembangan. Empat berikutnya sudah selesai tapi butuh build toko baru, jadi baru ada di tes internal, belum di Play atau App Store. Belum ada tanggal.
         </p>
       </div>
-      <ul className="mt-10 grid gap-4 md:grid-cols-3">
+      <ul className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {COMING_SOON.map(({ Icon, title, body }) => (
           <li key={title} className="flex flex-col rounded-[1.75rem] border border-dashed border-border bg-background p-6 md:p-7">
             <div className="flex items-center justify-between gap-3">
@@ -2417,6 +2497,7 @@ function HomePage() {
       <RideSection />
       <SendSection />
       <WatchSection />
+      <NewInAppSection />
       <ComingSoonSection />
       <RoadmapSection />
       <Testimonials items={TESTIMONIALS} />

@@ -12,7 +12,6 @@ import {
   strengthMet,
   weeklyMuscleLoad,
   weekKey,
-  wibDay,
   workoutTotals,
 } from './calc';
 import type { StrengthExercise, StrengthSet, StrengthWorkout } from './types';
@@ -188,12 +187,5 @@ describe('energy', () => {
     // 20 sets in an hour: 8 above 12 of 18 -> MET 4.611; 4.611 x 3.5 x 70 x 60 / 200 = 338.9
     const sets = Array.from({ length: 20 }, () => set(50, 10));
     expect(estimateKcal({ exercises: [exercise('a', sets)], durationSec: 3600 }, 70)).toBe(339);
-  });
-});
-
-describe('days', () => {
-  it('keys Western Indonesia time', () => {
-    expect(wibDay(Date.UTC(2026, 9, 17, 18, 0))).toBe('2026-10-18');
-    expect(wibDay(Date.UTC(2026, 9, 17, 16, 59))).toBe('2026-10-17');
   });
 });

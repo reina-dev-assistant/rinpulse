@@ -5,6 +5,7 @@
     "unavailable": "The map is not in this version of the app.",
     "loadFailed": "The map could not load.",
     "recenter": "Follow your position again",
+    "attributionToggle": "Map data sources",
     "attributionLabel": "Map data sources, opens openstreetmap.org",
     "online": "Online map, needs signal",
     "stream": "Streaming map, needs signal"

@@ -1,5 +1,6 @@
 {
   "screens": {
+    "quickReplies": "Quick replies",
     "sync": "Sync & background",
     "notifications": "Notifications & calls",
     "notificationApps": "Notification apps",
@@ -31,7 +32,7 @@
     "coach": "Coach"
   },
   "index": {
-    "title": "Settings",
+    "title": "More",
     "rows": {
       "notificationApps": {
         "title": "Notification apps",
@@ -346,7 +347,7 @@
     "missing": "Not allowed, so skipped: {{list}}.",
     "continue": "Continue",
     "writeAgain": "Write all again",
-    "details": "Sends steps, distance, calories, heart rate, blood oxygen, sleep and workouts after every sync, so other apps such as JoyoRogo can read them. Turning it on also writes what is already stored."
+    "details": "Sends steps, distance, calories, heart rate, blood oxygen, sleep and workouts (on Android with their GPS route) after every sync, so other apps such as JoyoRogo can read them. Turning it on also writes what is already stored."
   },
   "healthyLiving": {
     "notAsked": "The watch has not asked for tasks yet. Open Healthy Living on the watch once.",
@@ -642,7 +643,7 @@
   "joyorogo": {
     "title": "Exercise energy to JoyoRogo",
     "intro": "The energy of workouts from the watch, phone recordings and strength training goes to JoyoRogo's diary as burned calories. A workout JoyoRogo also reads from Health Connect or Apple Health is not counted twice.",
-    "signedOut": "Sign in with your JoyoRogo account (Settings, account) so your exercise energy reaches JoyoRogo.",
+    "signedOut": "Sign in with your JoyoRogo account (More, account) so your exercise energy reaches JoyoRogo.",
     "labels": {
       "lastSent": "Last sent",
       "sent": "Sent so far",
@@ -746,8 +747,12 @@
     "detailsAndroid": "This phone: uses the last known coarse location. In the background Android may not give a fresh one, so the last position is reused."
   },
   "hub": {
+    "watchRow": {
+      "none": "No watch yet"
+    },
     "groups": {
       "watch": "Watch",
+      "watchSettings": "Watch settings",
       "body": "Goals & body",
       "connections": "Connections",
       "app": "App"
@@ -759,10 +764,6 @@
       "pro": "Pro active, cloud sync on",
       "free": "Free, cloud sync needs Pro",
       "valuePro": "Pro"
-    },
-    "connectWatch": {
-      "title": "Connect a watch",
-      "subtitle": "Optional. Pair a Huawei or Honor watch for steps, sleep and heart rate."
     },
     "connected": "Connected"
   },
@@ -842,5 +843,27 @@
       "saved": "Saved on this phone.",
       "privacy": "Your messages and data summary go to the server you chose, not to JoyoRogo. The conversation is only stored on your phone. The app no longer screens injury questions on a server: the prompt asks the model to point you to a doctor, but that is an instruction, not a guarantee."
     }
+  },
+  "quickReplies": {
+    "title": "Quick replies",
+    "rowTitle": "Quick replies",
+    "rowSubtitle": "Short answers the watch offers when you reply to a notification",
+    "intro": "You pick one on the watch when you answer a message from WhatsApp, Telegram and other apps. The order here is the order on the watch.",
+    "count": "{{count}} of {{max}} replies",
+    "placeholder": "Write a reply",
+    "add": "Add reply",
+    "save": "Save to watch",
+    "reset": "Restore defaults",
+    "moveUp": "Move reply {{n}} up",
+    "moveDown": "Move reply {{n}} down",
+    "remove": "Delete reply {{n}}",
+    "empty": "Write at least one reply.",
+    "tooLong": "At most {{max}} characters.",
+    "multiline": "One line only.",
+    "blank": "A reply cannot be empty.",
+    "tooMany": "This watch holds only {{max}} replies.",
+    "sent": "Sent to the watch.",
+    "stored": "Saved. It goes to the watch when it connects.",
+    "needsWatch": "The connected watch does not support quick replies."
   }
 }

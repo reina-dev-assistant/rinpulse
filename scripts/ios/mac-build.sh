@@ -125,7 +125,7 @@ cat > "$OUT/ExportOptions.plist" << PLIST
   <key>signingCertificate</key><string>Apple Distribution</string>
   <key>manageAppVersionAndBuildNumber</key><false/>
   <key>stripSwiftSymbols</key><true/>
-  <key>uploadSymbols</key><false/>
+  <key>uploadSymbols</key><true/>
 </dict>
 </plist>
 PLIST
@@ -147,6 +147,13 @@ fail() { echo "CHECK FAILED: $*" >&2; exit 1; }
 [ "$(plist "$APPDIR/Info.plist" CFBundleVersion)" = "$BUILD_NUMBER" ] || fail "CFBundleVersion is not $BUILD_NUMBER"
 sdk=$(plist "$APPDIR/Info.plist" DTSDKName)
 case $sdk in iphoneos2[6-9]* | iphoneos[3-9]*) ;; *) fail "built with $sdk, App Store Connect wants the iOS 26 SDK or later" ;; esac
+# A binary linked against the iOS 27 SDK that has no UIScene manifest is aborted at launch by iOS 27 (TestFlight, 2026-10-16/17:
+# EXC_BREAKPOINT in UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption, the Linux builds made with Xcode 27's SDK).
+case $sdk in
+  iphoneos2[7-9]* | iphoneos[3-9]*)
+    plist "$APPDIR/Info.plist" UIApplicationSceneManifest > /dev/null ||
+      fail "built with $sdk but the app does not adopt the UIScene lifecycle (no UIApplicationSceneManifest): iOS 27 aborts it at launch" ;;
+esac
 
 # Entitlements and profile: an App Store profile has no device list and no get-task-allow.
 security cms -D -i "$APPDIR/embedded.mobileprovision" > "$OUT/profile.plist"

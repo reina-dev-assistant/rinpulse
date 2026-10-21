@@ -90,6 +90,15 @@ export function permissionPlan(sport: ManualSport, autoSensors: number): Permiss
   return { location: GPS_SPORTS.includes(sport), bluetooth: autoSensors > 0, steps: FOOT_SPORTS.includes(sport) };
 }
 
+/** What the GPS segment of the status pill says: the signal, or why there is none (no GPS in this sport, or location not allowed yet). */
+export type GpsChipKind = GpsStatus | 'permission' | 'off';
+
+export function gpsChip(plan: PermissionPlan, location: PermissionAnswer, fix: FixInfo | null): GpsChipKind {
+  if (!plan.location) return 'off';
+  if (location !== 'granted') return 'permission';
+  return gpsStatus(fix);
+}
+
 /**
  * Whether "Mulai" may call `prepare`. An outdoor sport cannot record without precise location, so that must be granted first. A
  * Bluetooth refusal does not stop a recording (it runs without the sensors, the next screen says so), but the question has to

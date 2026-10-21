@@ -50,8 +50,8 @@
     "today": "Today",
     "workouts": "Workouts",
     "social": "Social",
-    "watch": "Watch",
-    "settings": "Settings"
+    "more": "More",
+    "start": "Start workout"
   },
   "dbRecovery": {
     "inline": "The data on your phone is being repaired. Wait a moment, then try again.",
@@ -93,6 +93,8 @@
     "serverAnsweredCode": "Cloud server answered {{status}} ({{code}}).",
     "cloudLocked": "Cloud backup is part of JoyoRogo Pro.",
     "rogoAnswered": "JoyoRogo answered {{status}}.",
+    "rogoSlow": "JoyoRogo is slow to respond. Try again.",
+    "rogoUnreachable": "Could not reach JoyoRogo. Check your connection and try again.",
     "appleNoData": "Apple did not send sign-in data. Try again.",
     "appleNoCode": "Apple did not send an authorization code. Try again.",
     "appleFailed": "Sign in with Apple failed. Try again in a moment.",
@@ -103,7 +105,7 @@
     "dbNewer": "Database schema v{{current}} is newer than this app supports (v{{max}})."
   },
   "strava": {
-    "stravaNotConnected": "Strava is not connected. Connect it again in Settings.",
+    "stravaNotConnected": "Strava is not connected. Connect it again in More, Strava.",
     "refused": "Strava refused the file ({{status}}).",
     "rateLimit": "Strava rate limit reached; will retry later.",
     "answered": "Strava answered {{status}}.",
@@ -128,6 +130,7 @@
     "watchMealName": "Logged on the watch",
     "watchMealFailed": "a watch meal could not be written to JoyoRogo: {{error}}",
     "goalsNotRead": "goals not read: {{error}}",
+    "watchNoAnswer": "The watch link did not confirm in time. Try Push now again.",
     "withIssues": "{{note}}; {{issues}}",
     "noteSent_one": "{{count}} meal, {{kcal}} kcal, sent to the watch",
     "noteSent_other": "{{count}} meals, {{kcal}} kcal, sent to the watch",
@@ -165,7 +168,7 @@
     },
     "sogan": {
       "name": "Sogan",
-      "tagline": "Batik sogan browns, indigo and gold, serif titles. Follows the phone."
+      "tagline": "Batik sogan browns, indigo and gold, a kawung motif in the header, serif titles. Follows the phone."
     },
     "retro": {
       "name": "Retro",
@@ -182,6 +185,30 @@
     "mono": {
       "name": "Mono",
       "tagline": "Black and white, square corners, mono numbers. Follows the phone."
+    },
+    "sakura": {
+      "name": "Sakura",
+      "tagline": "Blossom pink and deep rose, serif titles, petals in the header. Follows the phone."
+    },
+    "lavender": {
+      "name": "Lavender",
+      "tagline": "Pale lilac and plum with soft rounded titles. Follows the phone."
+    },
+    "peach": {
+      "name": "Peach",
+      "tagline": "Warm peach, a coral accent and serif titles. Always light."
+    },
+    "rosegold": {
+      "name": "Rose Gold",
+      "tagline": "Dark with blush text, rose-gold accents and a copper watch panel. Always dark."
+    },
+    "strawberry": {
+      "name": "Strawberry Milk",
+      "tagline": "Milky pink, cream cards and the roundest shapes. Always light."
+    },
+    "matcha": {
+      "name": "Matcha Latte",
+      "tagline": "Cream and matcha green with gentle rounded text. Always light."
     }
   },
   "notFound": {

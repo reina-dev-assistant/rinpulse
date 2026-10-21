@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
@@ -13,6 +13,8 @@ export interface CustomDialogState {
   readonly confirmLabel: string;
   readonly confirmVariant?: 'destructive' | 'primary';
   readonly cancelLabel?: string;
+  /** Shows a close button that dismisses without running `onCancel` (for dialogs where cancel is an action). */
+  readonly closeLabel?: string;
   readonly onConfirm: () => void;
   readonly onCancel?: () => void;
 }
@@ -23,21 +25,30 @@ export function ThemedDialog({ dialog, onClose }: { dialog: CustomDialogState | 
   if (!dialog || !dialog.visible) return null;
 
   const handleConfirm = () => {
-    dialog.onConfirm();
+    // Close first: the callback may open the next dialog.
     onClose();
+    dialog.onConfirm();
   };
 
   const handleCancel = () => {
-    if (dialog.onCancel) {
-      dialog.onCancel();
-    }
     onClose();
+    dialog.onCancel?.();
   };
 
   return (
     <Modal visible={dialog.visible} animationType="fade" transparent onRequestClose={onClose}>
       <View style={styles.dialogOverlay}>
         <View style={[styles.dialogCard, { backgroundColor: colors.card, borderColor: colors.hairline }]}>
+          {dialog.closeLabel ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={dialog.closeLabel}
+              hitSlop={12}
+              onPress={onClose}
+              style={styles.dialogClose}>
+              <Ionicons name="close" size={22} color={colors.mutedForeground} />
+            </Pressable>
+          ) : null}
           {dialog.icon ? (
             <View
               style={[
@@ -92,6 +103,12 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.md,
+  },
+  dialogClose: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    zIndex: 1,
   },
   dialogIconWrap: {
     width: 64,

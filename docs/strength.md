@@ -1,7 +1,7 @@
 # Strength training (the logger)
 
 JoyoFit logs strength workouts the way Hevy does, on the same exercise ids as the coach. Everything is JavaScript (ships over the
-air, see `docs/ota.md`); there is no native module. Code: `src/features/strength/`, routes `src/app/strength/`, copy in the
+air, see `docs/ota.md`), except "the watch starts too" (below), which calls the `huawei-wear` module and needs a store build. Code: `src/features/strength/`, routes `src/app/strength/`, copy in the
 `strength`, `routines`, `lifts`, `strengthshare` and `strengthcloud` i18n namespaces. The cloud half is `docs/strength-cloud.md`.
 
 ## Who owns what
@@ -70,6 +70,25 @@ The first-run guide has a no-watch route (`flow.ts`, `route: 'none'`): welcome, 
 ## Routes
 
 `/strength` home (start, routines, recent), `/strength/active` the logger (params `routineId`, `planKey`, `planned`, `name`, `repeatWorkoutId`, `editWorkoutId`), `/strength/summary/<id>`, `/strength/routine/<id|new>`, `/strength/history` (list and calendar with the watch workouts), `/strength/exercises`, `/strength/exercise/<id>` (charts, records), `/strength/muscles` (weekly heat map), `/strength/settings`.
+
+## The watch starts too
+
+"Mulai juga di jam" (Settings > Latihan beban, `StrengthSettings.startOnWatch`, on by default): when a workout in progress opens in the
+logger and the watch is connected and lists the phone-started workout command (`17/01`), JoyoFit tells the watch to start Strength
+training (Huawei sport 140). The stopwatch's pause and resume pause and resume the watch, finishing or discarding stops it. The watch records
+heart rate and calories for that window; its workout comes with the next watch sync and `link.ts` joins it to the logged one as for a
+workout started on the watch by hand. Code: `watchWorkout.ts` (the session, framework free, `watchWorkout.test.ts`),
+`watchWorkoutInstance.ts` (the one instance and the `strength_meta` key `watch_workout`, so an app restart does not start the watch a
+second time), `useStrengthWatch.ts`, `ui/WatchSession.tsx` (the "Jam" chip and the notice), native `WatchWorkout.kt` /
+`WatchWorkoutControl.swift`, wire in `protocol/README.md`.
+
+- **Only for a fresh workout**: a draft older than 4 hours is a forgotten one and does not start the watch.
+- **Not connected**: a notice says so and the watch starts by itself once the link is up; a refusal or a failed start shows the notice with "Coba lagi". Nothing is shown when the setting is off.
+- **A watch that cannot do it**: the setting is replaced by one info line (`startOnWatchUnsupported`); a phone with no watch, and a binary without the native functions (`hasNative`), show nothing.
+- **An app restart in the middle**: the native side forgets the workout, so the logger cannot stop the watch's any more ("lost" notice); stop it on the watch.
+- **Refused on the Fit 4 Pro while it was off the wrist** (2026-10-21): every `17/01` got code 123002, whatever the sport or payload; the watch said "not worn" (`01/3D` = 2). The notice then says so ("not on your wrist", with the code); with a worn or unknown state it shows the code. Not yet seen accepted on any watch, and Huawei says a workout started from Huawei Health is stored in Huawei Health only, so the watch may keep no record to join. Details: `protocol/README.md`.
+- **UNVERIFIED on a watch**: the command is rebuilt from Huawei Health's code, and sport code 140 is the one value Huawei Health itself never sends. It needs a **store build** (native); an OTA bundle on an older binary hides the setting and does nothing.
+- Reps are not counted by the watch or the phone: `docs/strength-reps.md`.
 
 ## Not covered
 

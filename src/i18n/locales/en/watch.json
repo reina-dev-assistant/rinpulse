@@ -69,7 +69,7 @@
       "notPaired": "Android has no Bluetooth pairing with this watch (it was removed, or the watch refused to pair again). Open Android's Bluetooth settings and pair the watch, then tap Try again. If the watch does not show up there, remove this phone once in the watch's own Bluetooth settings. JoyoFit deletes nothing."
     },
     "silent": {
-      "short": "The watch connected over Bluetooth but does not answer. What to try is on the Watch tab.",
+      "short": "The watch connected over Bluetooth but does not answer. What to try is under More, Watch.",
       "title": "The watch connected but does not answer",
       "intro": "JoyoFit reached the watch over Bluetooth, but the watch did not reply to the first request. Usually another app or phone is using it. Try these one at a time, then tap Retry.",
       "step": {
@@ -243,6 +243,11 @@
   "faces": {
     "active": "Active",
     "installResult": "{{name}}: {{message}}",
+    "unsignedTitle": "This watch needs an official Huawei face",
+    "unsignedBody": "This watch only accepts watch faces signed by Huawei. This file will likely be rejected after sending. Photo faces still work.",
+    "unsignedTryAnyway": "Try anyway",
+    "unsignedUsePhoto": "Use Photo face",
+    "signatureRefused": "The watch rejected this face because it is not signed by Huawei. Try another face from the JoyoFit gallery.",
     "deleteTitle": "Delete watch face",
     "deleteMessage": "Delete \"{{name}}\" from the watch?",
     "screenSize": "Screen {{width}} x {{height}} px",
@@ -292,6 +297,8 @@
     "importHwt": "Import .hwt file",
     "noSaved": "No watch faces saved",
     "noSavedHint": "Import a .hwt file from your phone storage to build your personal offline collection.",
+    "noSavedHintIos": "Faces are sent to the watch straight from a file on iPhone and are not kept here. Use Install from file above to put one on your watch.",
+    "installFromFileHint": "Install a .hwt file straight onto your watch. On iPhone the file is sent from the picker and is not saved in this library.",
     "installed": "Installed",
     "installedOnWatch": "Installed on Watch",
     "wrongSize": "Wrong size",
@@ -492,7 +499,7 @@
     "gateSet": "Huawei's gate: set",
     "gateNotSet": "Huawei's gate: not set",
     "unverified": "Unverified: the course format comes from static analysis of Huawei Health. The watch may refuse it.",
-    "disabled": "Running courses are switched off. Turn them on in Settings, Advanced.",
+    "disabled": "Running courses are switched off. Turn them on in More, Advanced.",
     "saveError": "The draft could not be saved on this phone: {{error}}",
     "title": "Course",
     "name": "Name",

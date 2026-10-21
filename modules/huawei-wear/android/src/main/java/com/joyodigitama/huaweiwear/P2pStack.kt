@@ -33,6 +33,8 @@ internal class P2pStack(
   private val healthModelFactory: (HuaweiP2PManager) -> HealthModelService,
   /** Age for the default heart-rate zones, read at each send (the profile can change). */
   private val heartRateAge: () -> Int,
+  /** The quick replies service when this watch takes them; the controller owns the stored list. */
+  private val quickRepliesFactory: (HuaweiP2PManager) -> QuickRepliesService,
 ) : HuaweiP2PManager.Transport {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   private val inbound = Channel<HuaweiPacket>(Channel.UNLIMITED)
@@ -43,6 +45,10 @@ internal class P2pStack(
 
   @Volatile
   private var trackService: TrackService? = null
+
+  @Volatile
+  var quickReplies: QuickRepliesService? = null
+    private set
 
   @Volatile
   var dictionary: HuaweiP2PDataDictionarySyncService? = null
@@ -127,6 +133,17 @@ internal class P2pStack(
       trackService = service
       service.register()
     }
+    registerQuickReplies()
+  }
+
+  fun registerQuickReplies() {
+    if (!DeviceCaps.expandCapability(QuickRepliesPacket.CAPABILITY_BIT)) {
+      log("Quick replies: ExpandCapability ${QuickRepliesPacket.CAPABILITY_BIT} is not set; service not registered")
+      return
+    }
+    val service = quickRepliesFactory(manager)
+    quickReplies = service
+    service.register()
   }
 
   /** Re-sends the zones after the profile age changed; false when this watch takes them another way. */

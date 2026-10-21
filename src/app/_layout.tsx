@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { Tabs } from 'expo-router';
+import { getFocusedRouteNameFromRoute } from 'expo-router/react-navigation';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import * as SplashScreen from 'expo-splash-screen';
 import { SQLiteProvider, type SQLiteDatabase } from 'expo-sqlite';
@@ -11,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { AppState, StyleSheet, Text, View, type ColorValue, type StyleProp, type ViewStyle } from 'react-native';
 
 import { FloatingTabBar } from '@/components/FloatingTabBar';
+import { isTabRoot } from '@/components/tabBarRoutes';
 import { TabBarInsetProvider, useReportTabBarInset } from '@/components/tabBarInset';
 import { TabIcon } from '@/components/TabIcon';
 import { TAB_LABEL_LINE, TAB_LABEL_MAX_SCALE, TAB_LABEL_MIN_SHRINK, TAB_LABEL_SIZE } from '@/components/tabBarMetrics';
@@ -29,6 +31,7 @@ import { RoomCaptureRunner } from '@/features/thermometer/RoomCaptureRunner';
 import { UpdateBanner } from '@/features/updates/UpdateBanner';
 import { UpdateGateProvider, useUpdateGate } from '@/features/updates/UpdateGateProvider';
 import { LaunchUpdateScreen, UpdateRequiredScreen } from '@/features/updates/UpdateRequiredScreen';
+import { StartWorkoutProvider, useStartWorkout } from '@/features/workouts/StartWorkoutProvider';
 import { DeleteSnackbar } from '@/features/workouts/ui/DeleteSnackbar';
 import { CloudProvider } from '@/state/CloudProvider';
 import { LiveWorkoutProvider } from '@/state/LiveWorkoutProvider';
@@ -73,7 +76,7 @@ export default function RootLayout() {
 }
 
 /** A tab's label. It reads the language itself: the navigator keeps the options it first got, so a label built from `t` in them would stay in the old language after a switch in Settings. */
-function TabLabel({ name, color }: { name: 'today' | 'workouts' | 'social' | 'watch' | 'settings'; color: ColorValue }) {
+function TabLabel({ name, color }: { name: 'today' | 'workouts' | 'social' | 'more'; color: ColorValue }) {
   const { t } = useTranslation('common');
   const { fonts } = useTheme();
   return (
@@ -94,14 +97,22 @@ function TabLabel({ name, color }: { name: 'today' | 'workouts' | 'social' | 'wa
  * and published (`tabBarInset`), and every scrolling screen pads the end of its content by it. 0 where nothing is drawn.
  */
 function TabBarWithLive(props: BottomTabBarProps) {
+  const { t } = useTranslation('common');
+  const { open } = useStartWorkout();
   const focused = props.state.routes[props.state.index];
-  const hidden = StyleSheet.flatten(props.descriptors[focused.key].options.tabBarStyle as StyleProp<ViewStyle>)?.display === 'none';
+  const hiddenByRoute = StyleSheet.flatten(props.descriptors[focused.key].options.tabBarStyle as StyleProp<ViewStyle>)?.display === 'none';
+  // The bar is for the roots of the tabs only; anything pushed on a tab's stack is a detail screen without it.
+  const hidden = hiddenByRoute || !isTabRoot(focused.name, getFocusedRouteNameFromRoute(focused));
   const report = useReportTabBarInset();
   useEffect(() => () => report(0), [report]);
+  useEffect(() => {
+    if (hidden) report(0);
+  }, [hidden, report]);
+  if (hidden) return null;
   return (
     <View pointerEvents="box-none" style={styles.floating} onLayout={(event) => report(Math.ceil(event.nativeEvent.layout.height))}>
       <LivePill tabBarHidden={hidden} />
-      <FloatingTabBar {...props} />
+      <FloatingTabBar {...props} center={{ label: t('nav.start'), onPress: open }} />
     </View>
   );
 }
@@ -179,8 +190,11 @@ function RootNavigator() {
                   {/* The bedroom thermometer's readings (foreground scan, overnight file); idle without a paired thermometer. */}
                   <RoomCaptureRunner />
                   <TabBarInsetProvider>
+                  <StartWorkoutProvider>
                   <View style={{ flex: 1 }}>
                   <Tabs
+                    // Back from a screen opened out of More (the Watch hub) returns to the tab it came from, not always to Today.
+                    backBehavior="history"
                     tabBar={(props) => <TabBarWithLive {...props} />}
                     screenOptions={{
                       headerShown: false,
@@ -217,26 +231,19 @@ function RootNavigator() {
                         ),
                       }}
                     />
-                    <Tabs.Screen
-                      name="watch"
-                      options={{
-                        title: t('nav.watch'),
-                        tabBarLabel: ({ color }) => <TabLabel name="watch" color={color} />,
-                        tabBarIcon: ({ focused, color, size }) => (
-                          <TabIcon on="watch" off="watch-outline" focused={focused} size={size} color={color} />
-                        ),
-                      }}
-                    />
+                    {/* More: the Settings stack (its index lists the Watch section first, then the settings), so /settings and every /settings/* link keep working. */}
                     <Tabs.Screen
                       name="settings"
                       options={{
-                        title: t('nav.settings'),
-                        tabBarLabel: ({ color }) => <TabLabel name="settings" color={color} />,
+                        title: t('nav.more'),
+                        tabBarLabel: ({ color }) => <TabLabel name="more" color={color} />,
                         tabBarIcon: ({ focused, color, size }) => (
-                          <TabIcon on="settings" off="settings-outline" focused={focused} size={size} color={color} />
+                          <TabIcon on="ellipsis-horizontal-circle" off="ellipsis-horizontal-circle-outline" focused={focused} size={size} color={color} />
                         ),
                       }}
                     />
+                    {/* The Watch hub: opened from More; the bar keeps More marked while it is on screen (tabBarRoutes). `/watch` and `/watch/*` links still land here. */}
+                    <Tabs.Screen name="watch" options={{ href: null }} />
                     {/* Old deep links; each redirects to where the screen lives now. */}
                     <Tabs.Screen name="today" options={{ href: null }} />
                     <Tabs.Screen name="log" options={{ href: null }} />
@@ -253,9 +260,9 @@ function RootNavigator() {
                     <Tabs.Screen name="fitness" options={{ href: null }} />
                     {/* Opens by itself when a workout starts on the watch (LiveWorkoutProvider). */}
                     <Tabs.Screen name="workout-live" options={{ href: null, tabBarStyle: { display: 'none' } }} />
-                    {/* Family monitoring: opened from Today, Settings and notifications; its stack draws its own headers. */}
+                    {/* Family monitoring: opened from Today, More and notifications; its stack draws its own headers. */}
                     <Tabs.Screen name="family" options={{ href: null }} />
-                    {/* Watch routes: opened from the Watch tab and by shared GPX/TCX files; its stack draws its own headers. */}
+                    {/* Watch routes: opened from More (Watch section) and by shared GPX/TCX files; its stack draws its own headers. */}
                     <Tabs.Screen name="routes" options={{ href: null }} />
                     {/* Coach (Pro): plan, session details and setup; its stack draws its own headers. */}
                     <Tabs.Screen name="coach" options={{ href: null }} />
@@ -275,6 +282,7 @@ function RootNavigator() {
                   <DeleteSnackbar />
                   <DbHealthNotice />
                   </View>
+                  </StartWorkoutProvider>
                   </TabBarInsetProvider>
                   </FamilyProvider>
                   </OnboardingProvider>

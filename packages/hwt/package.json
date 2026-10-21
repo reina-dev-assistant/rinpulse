@@ -9,13 +9,14 @@
   "bin": { "hwt": "src/cli.ts" },
   "scripts": {
     "test": "bun test",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsrs --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "fflate": "^0.8.2"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "tsrs": "0.18.0-ts7.1.0-dev.20260929",
     "typescript": "^5.6.0"
   }
 }

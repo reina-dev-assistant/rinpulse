@@ -1,15 +1,10 @@
+import { rogoDay } from '@/cloud/rogoZone';
+
 import type { ScaleReading } from './types';
 
 /** `weight.checkIn` of JoyoRogo (packages/api/src/routers/weight.ts) accepts 25 to 400 kg. */
 export const ROGO_MIN_KG = 25;
 export const ROGO_MAX_KG = 400;
-
-const WIB_OFFSET_MS = 7 * 3_600_000;
-
-/** The `YYYY-MM-DD` day JoyoRogo files a weigh-in under: Jakarta (UTC+7, no daylight saving), the way its `jakartaToday()` counts. */
-export function jakartaDay(epochMs: number): string {
-  return new Date(epochMs + WIB_OFFSET_MS).toISOString().slice(0, 10);
-}
 
 /** Body fields `weight.checkIn` accepts, with the inclusive range each must sit in (a value outside is left out, the server rejects it). */
 const BODY_RANGES = {
@@ -47,7 +42,7 @@ export interface RogoWeighIn {
 export function toRogoCheckIn(weighIn: RogoWeighIn, takenAt: number): RogoCheckIn | null {
   const weightKg = Math.round(weighIn.weightKg * 10) / 10;
   if (!Number.isFinite(weightKg) || weightKg < ROGO_MIN_KG || weightKg > ROGO_MAX_KG) return null;
-  const out: RogoCheckIn = { weightKg, date: jakartaDay(takenAt), source: 'scale' };
+  const out: RogoCheckIn = { weightKg, date: rogoDay(takenAt), source: 'scale' };
   for (const key of Object.keys(BODY_RANGES) as BodyKey[]) {
     const [min, max, digits] = BODY_RANGES[key];
     const raw = weighIn.reported?.[key] ?? weighIn.estimate?.[key];

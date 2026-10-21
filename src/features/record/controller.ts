@@ -50,6 +50,8 @@ export interface RecordingSnapshot {
    * for the recorder in a row (null while the newest one is not).
    */
   fix: { accuracyM: number | null; ageSec: number; usableSec: number | null } | null;
+  /** Where the latest fix is (with the direction of travel when the platform has one), for the map on the setup and ready screens. Null before the first fix. */
+  position: { lat: number; lon: number; headingDeg: number | null } | null;
   /** The foreground service was refused (Android): the workout runs, but may stop with the screen off. */
   noService: boolean;
   /** Error code of the last failed sensor connect (ERR_BLUETOOTH_OFF, ...), null while fine. */
@@ -195,6 +197,7 @@ export class RecordingController {
           usableSec: this.usableSince === null ? null : Math.max(0, Math.floor((now - this.usableSince) / 1000)),
         }
       : null;
+    const position = this.lastFix ? { lat: this.lastFix.lat, lon: this.lastFix.lon, headingDeg: this.lastFix.bearing } : null;
     const recorder = this.recorder;
     this.snap = {
       ...this.snap,
@@ -202,6 +205,7 @@ export class RecordingController {
       live: recorder && recorder.status !== 'idle' ? recorder.live(now) : null,
       laps: recorder ? [...recorder.meta().laps] : [],
       fix,
+      position,
       ...patch,
     };
     for (const l of this.listeners) l();
@@ -687,5 +691,5 @@ export class RecordingController {
 }
 
 function idleSnapshot(): RecordingSnapshot {
-  return { phase: 'idle', sport: null, gps: false, warm: false, status: 'idle', live: null, laps: [], sensorIds: [], fix: null, noService: false, sensorError: null, phoneSteps: false };
+  return { phase: 'idle', sport: null, gps: false, warm: false, status: 'idle', live: null, laps: [], sensorIds: [], fix: null, position: null, noService: false, sensorError: null, phoneSteps: false };
 }

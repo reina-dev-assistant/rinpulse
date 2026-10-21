@@ -76,6 +76,8 @@ public final class WearRuntime: @unchecked Sendable {
     /// A workout started on the watch, followed live (and the phone's GPS for it).
     public private(set) var liveWorkout: LiveWorkout!
     public private(set) var workoutLink: WorkoutLink!
+    /// A workout started on the watch from the phone (the strength logger); `liveWorkout` does not mirror it while it is open.
+    public private(set) var watchWorkout: WatchWorkoutControl!
     /// Family monitoring, monitored side: the daily summary for the watcher, uploaded after every background watch sync.
     public private(set) var family: FamilyUploader!
     /// Satellite data (A-GPS) for the watch: the watch's 0x1F / 0x1C exchange, the phone copy kept fresh after every sync, "update now".
@@ -178,6 +180,9 @@ public final class WearRuntime: @unchecked Sendable {
         dataSync.register(liveWorkout)
         workoutLink = WorkoutLink(link: link, events: fanOut, live: liveWorkout, gps: liveGps)
         linkObservers.add(workoutLink)
+        watchWorkout = WatchWorkoutControl(link: link, events: fanOut)
+        linkObservers.add(watchWorkout)
+        liveWorkout.phoneOwned = { [watchWorkout] in watchWorkout?.owns() ?? false }
         p2p = P2pController(
             settings: P2pSettings(defaults: p2pDefaults), link: link, addSyncExtension: { [link] in link?.addSyncExtension($0) }, wearSettings: settings,
             syncStore: syncStore, events: fanOut

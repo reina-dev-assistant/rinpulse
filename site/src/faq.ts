@@ -83,4 +83,18 @@ export const FAQ: readonly FaqItem[] = [
     q: "Apa hubungannya dengan JoyoRogo?",
     a: "JoyoRogo adalah aplikasi catatan makan kami. Asupan kalori dari JoyoRogo bisa tampil di kartu kalori jam, skor Recovery dan Strain JoyoFit ikut tampil di catatan makan JoyoRogo, dan masuk ke cloud JoyoFit memakai akun JoyoRogo. JoyoFit tetap bisa dipakai sendiri tanpa JoyoRogo.",
   },
+  {
+    q: "Jam bilang data GNSS kedaluwarsa saat mulai olahraga luar ruangan. Rusak?",
+    a: "Tidak, itu wajar. GPS tetap jalan, cuma butuh 30–60 detik di luar ruangan. Tunggu ikon GPS di jam sebelum mulai. Pesan itu dari firmware jam dan tidak bisa kami ubah: data bantuan GPS jam Huawei hanya bisa datang dari Huawei Health. JoyoFit mengirim lokasi dan waktu HP-mu untuk membantu titik GPS pertama. Jamnya tidak rusak.",
+  },
+  {
+    q: "Watch face apa yang bisa dipasang dari JoyoFit?",
+    a: "Photo face jalan: kamu memilih fotomu sendiri dan jam menggambar waktu serta datanya di atasnya. Face bawaan bisa dikustomisasi. Face buatan sendiri atau dari luar (berkas .hwt) yang tidak ditandatangani Huawei ditolak jam dan JoyoFit tidak bisa menandatanganinya, jadi pasang lewat Huawei Health dengan HUAWEI ID yang punya izin designer. Langkahnya ada di panduan, tapi belum dibuktikan pengguna di firmware terbaru.",
+    link: { href: "/panduan", label: "Buka panduan dan FAQ" },
+  },
+  {
+    q: "Fitur baru apa saja yang sudah ada di aplikasi, dan mana yang menyusul?",
+    a: "Sudah ada lewat pembaruan langsung: bilah tab Hari ini, Latihan, tombol Mulai, Social, Lainnya; layar rekam dengan peta; ekspor file FIT dan GPX; 17 tema termasuk enam pastel dan batik Sogan; post ke JoyoRogo dengan lembar profil; pesan yang jelas untuk watch face yang tidak ditandatangani Huawei; petunjuk GNSS; dan photo face. Menyusul di build toko berikutnya, sekarang baru di tes internal: bahasa jam ikut bahasa aplikasi, rute GPS ke Health Connect, mulai latihan beban dari HP di jam, balasan pintar dan balasan cepat di jam. Rilis Play produksi dan App Store belum terbuka untuk umum, jadi build toko itu belum bisa kamu pasang sendiri.",
+    link: { href: "/#baru", label: "Lihat yang baru" },
+  },
 ];

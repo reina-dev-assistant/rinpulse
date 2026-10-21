@@ -104,6 +104,8 @@ import { BottomSheet, MenuSheet, TextPrompt, type MenuItem } from '@/features/st
 import { StrapCard } from '@/features/strength/ui/StrapCard';
 import { StrapChip } from '@/features/strength/ui/StrapChip';
 import { useStrengthDraft, useTicker } from '@/features/strength/ui/useStrengthDraft';
+import { WatchChip, WatchNotice } from '@/features/strength/ui/WatchSession';
+import { endStrengthWatch, strengthWatch } from '@/features/strength/watchWorkoutInstance';
 
 const one = (value: string | string[] | undefined): string | undefined => (Array.isArray(value) ? value[0] : value);
 const REST_OVER_MS = 3000;
@@ -337,8 +339,13 @@ export default function ActiveWorkoutScreen() {
   useEffect(() => {
     strengthHr.setPaused(paused);
   }, [paused]);
+  useEffect(() => {
+    void strengthWatch.setPaused(paused);
+  }, [paused]);
   /** The workout the heart rate strap records for: only one in progress, never a finished one being edited. */
   const strapWorkoutId = !editing && !closing && phase === 'ready' && draft ? draft.id : null;
+  /** The watch starts Strength training with the workout: a workout in progress, with the setting on. */
+  const watchWanted = strapWorkoutId !== null && settings.startOnWatch;
   const restExerciseName = rest && draft ? nameOf(draft.exercises.find((e) => e.key === rest.exerciseKey)?.exerciseId ?? '') : null;
   useEffect(() => {
     if (phase !== 'ready' || editing) return;
@@ -501,6 +508,7 @@ export default function ActiveWorkoutScreen() {
     handle.close();
     setClosing(true);
     void strengthHr.end();
+    void endStrengthWatch(db);
     await saveDraft(db, null);
     await cancelRestEnd();
     leave();
@@ -540,6 +548,7 @@ export default function ActiveWorkoutScreen() {
       await cancelRestEnd();
       setClosing(true);
       void strengthHr.end();
+      void endStrengthWatch(db);
       void afterStrengthSaved(db, linked, 'saved');
       router.replace(`/strength/summary/${linked.id}?fresh=1`);
     } catch {
@@ -685,6 +694,7 @@ export default function ActiveWorkoutScreen() {
             <View style={styles.clockRow}>
               <ElapsedLine draft={draft} progress={progress} />
               <StrapChip workoutId={strapWorkoutId} />
+              <WatchChip workoutId={strapWorkoutId} />
             </View>
           )}
         </View>
@@ -735,6 +745,7 @@ export default function ActiveWorkoutScreen() {
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}>
         <StrapCard workoutId={strapWorkoutId} />
+        <WatchNotice workoutId={strapWorkoutId} wanted={watchWanted} startedAt={draft.startedAt} />
         {draft.exercises.length === 0 ? (
           <View style={styles.empty}>
             <AppText variant="heading" style={styles.centered}>

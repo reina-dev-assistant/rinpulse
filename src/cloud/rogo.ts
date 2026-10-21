@@ -1,6 +1,7 @@
 import { NotSignedInError } from '@/cloud/api';
 import { authClient } from '@/cloud/auth';
 import { JOYOROGO_URL } from '@/cloud/config';
+import { RogoUnreachableError, retryOnce, withinDeadline } from '@/cloud/rogoHttp';
 import { createSleepInsightsClient } from '@/cloud/sleepInsightsClient';
 import { getLocale, t } from '@/i18n';
 import type { WorkoutAnalysis } from '@/features/workouts/analysis/types';
@@ -29,38 +30,54 @@ export class RogoError extends Error {
 
 const TIMEOUT_MS = 20_000;
 
-/** `<router>/<procedure>`, for example `food/listByDate`. */
-export async function rogoCall<T>(path: string, input: unknown): Promise<T> {
+export interface RogoCallOptions {
+  /** Deadline of one attempt, answer body included. */
+  timeoutMs?: number;
+  /** Run the call once more after a timeout, a network failure, 408, 425, 429 or 5xx. Only for calls that change nothing on the server. */
+  retry?: boolean;
+}
+
+/** The deadline for calls a screen waits on: a diary read has taken 26 s once, so the default 20 s cut it off. */
+const SLOW_OK_MS = 30_000;
+
+/** The diary, profile and weigh-in reads behind "Meals on watch": repeating them is harmless, and the person waits on the spinner. */
+const READ: RogoCallOptions = { timeoutMs: SLOW_OK_MS, retry: true };
+
+const isTransient = (error: unknown) =>
+  error instanceof RogoUnreachableError ||
+  (error instanceof RogoError && (error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500));
+
+/** `<router>/<procedure>`, for example `food/listByDate`. A failure to get any answer is a {@link RogoUnreachableError} with a sentence to show. */
+export async function rogoCall<T>(path: string, input: unknown, { timeoutMs = TIMEOUT_MS, retry = false }: RogoCallOptions = {}): Promise<T> {
   const cookie = await authClient.getCookie();
   if (!cookie) throw new NotSignedInError();
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  try {
-    const response = await fetch(`${JOYOROGO_URL}/rpc/${path}`, {
-      method: 'POST',
-      headers: { Cookie: cookie, Accept: 'application/json', 'Content-Type': 'application/json', 'x-locale': getLocale() },
-      body: JSON.stringify({ json: input }),
-      credentials: 'omit',
-      signal: controller.signal,
+  const attempt = async (): Promise<T> => {
+    const { ok, status, text } = await withinDeadline(timeoutMs, async (signal) => {
+      const response = await fetch(`${JOYOROGO_URL}/rpc/${path}`, {
+        method: 'POST',
+        headers: { Cookie: cookie, Accept: 'application/json', 'Content-Type': 'application/json', 'x-locale': getLocale() },
+        body: JSON.stringify({ json: input }),
+        credentials: 'omit',
+        signal,
+      });
+      return { ok: response.ok, status: response.status, text: await response.text() };
     });
-    const text = await response.text();
     let body: { json?: unknown } | null = null;
     try {
       body = text ? (JSON.parse(text) as { json?: unknown }) : null;
     } catch {
       body = null;
     }
-    if (!response.ok) {
+    if (!ok) {
       const error = (body?.json ?? null) as { code?: unknown; message?: unknown } | null;
       const code = typeof error?.code === 'string' ? error.code : null;
-      const message = typeof error?.message === 'string' ? error.message : t('common:errors.rogoAnswered', { status: response.status });
-      throw new RogoError(response.status, code, response.status === 401 ? t('common:errors.sessionRejectedShort') : message);
+      const message = typeof error?.message === 'string' ? error.message : t('common:errors.rogoAnswered', { status });
+      throw new RogoError(status, code, status === 401 ? t('common:errors.sessionRejectedShort') : message);
     }
     return body?.json as T;
-  } finally {
-    clearTimeout(timer);
-  }
+  };
+  return retry ? retryOnce(attempt, isTransient) : attempt();
 }
 
 /** Meal values of JoyoRogo's `food_log.meal`. */
@@ -94,6 +111,8 @@ export interface RogoMyProfile {
     startWeightKg: number;
     targetWeightKg: number;
     targetDate: string;
+    /** IANA zone JoyoRogo counts this person's days in; null = Asia/Jakarta. */
+    timezone?: string | null;
   } | null;
   targets: {
     /** Basal metabolic rate, kcal per day. */
@@ -424,11 +443,11 @@ export interface RogoMcpActivity {
 
 /** Procedures JoyoFit calls. */
 export const rogo = {
-  foodDay: (date: string) => rogoCall<RogoFoodDay>('food/listByDate', { date }),
-  myProfile: () => rogoCall<RogoMyProfile>('profile/myProfile', {}),
+  foodDay: (date: string) => rogoCall<RogoFoodDay>('food/listByDate', { date }, READ),
+  myProfile: () => rogoCall<RogoMyProfile>('profile/myProfile', {}, READ),
   /** The newest weigh-in, or null. `weight.history` returns oldest first, so the last entry is the latest. */
   async latestWeighIn(): Promise<RogoWeightEntry | null> {
-    const history = await rogoCall<{ entries: RogoWeightEntry[] }>('weight/history', { limit: 1 });
+    const history = await rogoCall<{ entries: RogoWeightEntry[] }>('weight/history', { limit: 1 }, READ);
     return history.entries.at(-1) ?? null;
   },
   /**
@@ -436,9 +455,9 @@ export const rogo = {
    * weigh-in also sends `source: 'scale'` and the body values it has (each optional, already range-checked, see `toRogoCheckIn`).
    */
   checkInWeight: (input: RogoCheckInInput) => rogoCall<RogoWeightEntry>('weight/checkIn', input),
-  /** Writes one item to the diary (a meal the watch quick-logged). */
+  /** Writes one item to the diary (a meal the watch quick-logged). Not repeated on failure (it would write the meal twice), but given the reads' deadline so a slow answer is not cut off while JoyoRogo is still saving it. */
   addFood: (input: { date: string; meal: RogoMeal; name: string; kcal: number }) =>
-    rogoCall<RogoFoodItem>('food/add', { ...input, source: 'manual' }),
+    rogoCall<RogoFoodItem>('food/add', { ...input, source: 'manual' }, { timeoutMs: SLOW_OK_MS }),
   /** Stores the day's Recovery / Strain / Sleep and body metrics (sleep hours, resting HR, HRV, VO2max, training status, recovery time) for JoyoRogo's diary and its AI connector. JoyoRogo answers 404 until it is deployed with the `fitness` router. */
   pushScores: (days: RogoScoreDay[]) => rogoCall<{ saved: number }>('fitness/upsertScores', { days }),
   /** Wawasan tidur: the server consent switch and the nightly sleep rows (JoyoRogo computes and shows the findings). Status and push treat a JoyoRogo without the router (404/405) as a typed outcome. */

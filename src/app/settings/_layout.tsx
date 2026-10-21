@@ -18,6 +18,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="import" options={{ title: t('screens.importAll') }} />
       <Stack.Screen name="sync" options={{ title: t('screens.sync') }} />
       <Stack.Screen name="notifications" options={{ title: t('screens.notifications') }} />
+      <Stack.Screen name="quick-replies" options={{ title: t('screens.quickReplies') }} />
       <Stack.Screen name="notification-apps" options={{ title: t('screens.notificationApps') }} />
       <Stack.Screen name="weather" options={{ title: t('screens.weather') }} />
       <Stack.Screen name="safety" options={{ title: t('screens.safety') }} />
