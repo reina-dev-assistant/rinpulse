@@ -27,7 +27,8 @@
     "gear": "Shoes & gear",
     "importAll": "Import data",
     "akun": "Account",
-    "homeCards": "Arrange Home cards"
+    "homeCards": "Arrange Home cards",
+    "coach": "Coach"
   },
   "index": {
     "title": "Settings",
@@ -821,5 +822,25 @@
     "keep": "Keep separate",
     "delete": "Delete old data from this phone",
     "signOut": "Sign out again"
+  },
+  "coach": {
+    "title": "Coach",
+    "noAccount": "Use Coach without an account",
+    "noAccountHint": "Running plans, the daily suggestion and the exercise library work with no JoyoRogo account.",
+    "noAccountDetails": "The plan, the suggestion and the exercise library are computed on the phone, so they need no account and no server. Only the \"Ask coach\" chat needs one; that is set up below with your own endpoint.",
+    "llm": {
+      "title": "\"Ask coach\" chat",
+      "intro": "The chat uses your own OpenAI-compatible endpoint: OpenAI, OpenRouter, Groq, DeepSeek, Ollama, LM Studio, or another server of that kind. No daily message cap; you pay for the tokens.",
+      "baseUrl": "Server address",
+      "model": "Model",
+      "apiKey": "API key",
+      "apiKeyHint": "Stored encrypted on this phone and sent only to the address above. Leave empty for a local server (Ollama, LM Studio).",
+      "apiKeyPlaceholder": "Leave empty for a local server",
+      "test": "Test connection",
+      "testOk": "Connected. Answer: {{reply}}",
+      "save": "Save",
+      "saved": "Saved on this phone.",
+      "privacy": "Your messages and data summary go to the server you chose, not to JoyoRogo. The conversation is only stored on your phone. The app no longer screens injury questions on a server: the prompt asks the model to point you to a doctor, but that is an instruction, not a guarantee."
+    }
   }
 }

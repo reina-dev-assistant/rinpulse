@@ -33,7 +33,13 @@ export function CoachSignIn() {
   );
 }
 
-/** Shows `children` to Pro accounts, the sign-in or upsell card to everyone else. */
+/**
+ * Shows `children` to Pro accounts, the sign-in or upsell card to everyone else.
+ *
+ * `local` is the account-free mode (Settings > Coach): the plan and the suggestion are computed on the
+ * phone, so it goes straight through. The chat is the one part that still needs an endpoint - it asks for
+ * one itself, because only that screen knows whether its own LLM is configured.
+ */
 export function CoachGate({ children, moment = 'coach' }: { children: ReactNode; moment?: ProMoment }) {
   const access = useCoachAccess();
   if (access === 'checking') return <Skeleton width="100%" height={140} radius="card" />;

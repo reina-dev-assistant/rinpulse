@@ -405,7 +405,9 @@
     "capReached": "Batas pesan hari ini sudah tercapai. Coba lagi besok.",
     "error": "Pesan belum terkirim: {{message}}",
     "flagged": "Kalau nyeri atau keluhanmu berlanjut, hentikan latihan dan periksakan ke dokter atau fisioterapis.",
-    "privacy": "Pesanmu dan ringkasan datamu dikirim ke AI JoyoRogo untuk dijawab, lalu tidak disimpan di server. Obrolan hanya tersimpan di ponselmu."
+    "privacy": "Pesanmu dan ringkasan datamu dikirim ke AI JoyoRogo untuk dijawab, lalu tidak disimpan di server. Obrolan hanya tersimpan di ponselmu.",
+    "needsEndpoint": "Obrolan butuh server LLM. Pasang alamat, model, dan API key dulu di Pengaturan > Coach.",
+    "openSettings": "Buka pengaturan Coach"
   },
   "feel": {
     "title": "Gimana badanmu hari ini?",

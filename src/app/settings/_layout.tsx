@@ -39,6 +39,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="goals" options={{ title: t('screens.goals') }} />
       <Stack.Screen name="cycle" options={{ title: t('screens.cycle') }} />
       <Stack.Screen name="courses" options={{ title: t('screens.courses') }} />
+      <Stack.Screen name="coach" options={{ title: t('screens.coach') }} />
       <Stack.Screen name="advanced" options={{ title: t('screens.advanced') }} />
       <Stack.Screen name="log" options={{ title: t('screens.log') }} />
       <Stack.Screen name="about" options={{ title: t('screens.about') }} />

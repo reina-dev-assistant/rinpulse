@@ -405,7 +405,9 @@
     "capReached": "Today's message limit is reached. Try again tomorrow.",
     "error": "The message was not sent: {{message}}",
     "flagged": "If the pain or symptoms continue, stop training and see a doctor or physiotherapist.",
-    "privacy": "Your message and a summary of your data go to JoyoRogo's AI to be answered, and are not stored on the server. The chat is kept only on your phone."
+    "privacy": "Your message and a summary of your data go to JoyoRogo's AI to be answered, and are not stored on the server. The chat is kept only on your phone.",
+    "needsEndpoint": "The chat needs an LLM server. Set the address, model and API key first in Settings > Coach.",
+    "openSettings": "Open Coach settings"
   },
   "feel": {
     "title": "How does your body feel today?",

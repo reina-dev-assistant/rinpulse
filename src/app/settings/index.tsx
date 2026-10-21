@@ -121,6 +121,7 @@ export default function SettingsScreen() {
     title: t('hub.groups.app'),
     data: [
       { key: 'appearance', title: t('screens.appearance'), icon: 'color-palette', onPress: go('/settings/appearance') },
+      { key: 'coach', title: t('screens.coach'), icon: 'barbell', onPress: go('/settings/coach') },
       ...(withWatch
         ? [{ key: 'home-cards', title: t('screens.homeCards'), icon: 'albums' as const, onPress: go('/home-cards') }]
         : []),

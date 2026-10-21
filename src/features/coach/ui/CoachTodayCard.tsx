@@ -41,6 +41,7 @@ function ProCard({ dataVersion, availability }: { dataVersion: number; availabil
 /**
  * The Today card of Coach: today's suggestion (rule based, see `suggest.ts`) with its reasons and a way into the Coach screen.
  * Pro accounts get the suggestion; a signed-out person is asked to sign in and a free account sees the Pro upsell.
+ * In the account-free mode (Settings > Coach) everyone gets the suggestion, since it needs no server.
  * Renders nothing while the account is still being checked.
  */
 export function CoachTodayCard({ dataVersion, availability }: { dataVersion: number; availability: NightHrvAvailability | null }) {

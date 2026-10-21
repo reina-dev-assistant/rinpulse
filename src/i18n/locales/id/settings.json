@@ -27,7 +27,8 @@
     "gear": "Sepatu & perlengkapan",
     "importAll": "Impor data",
     "akun": "Akun",
-    "homeCards": "Atur kartu Beranda"
+    "homeCards": "Atur kartu Beranda",
+    "coach": "Coach"
   },
   "index": {
     "title": "Pengaturan",
@@ -805,5 +806,25 @@
     "keep": "Simpan terpisah",
     "delete": "Hapus data lama dari HP ini",
     "signOut": "Keluar lagi"
+  },
+  "coach": {
+    "title": "Coach",
+    "noAccount": "Pakai Coach tanpa akun",
+    "noAccountHint": "Rencana lari, saran harian, dan perpustakaan latihan jalan tanpa akun JoyoRogo.",
+    "noAccountDetails": "Rencana, saran, dan perpustakaan latihan dihitung di ponsel, jadi tidak perlu akun maupun server. Hanya obrolan \"Tanya coach\" yang butuh server; itu diatur di bawah dengan endpoint milikmu sendiri.",
+    "llm": {
+      "title": "Obrolan \"Tanya coach\"",
+      "intro": "Obrolan memakai endpoint OpenAI-compatible milikmu sendiri: OpenAI, OpenRouter, Groq, DeepSeek, Ollama, LM Studio, atau server lain yang sejenis. Tanpa batas pesan harian; kamu yang menanggung biaya tokennya.",
+      "baseUrl": "Alamat server",
+      "model": "Model",
+      "apiKey": "API key",
+      "apiKeyHint": "Disimpan terenkripsi di ponsel ini dan hanya dikirim ke alamat di atas. Kosongkan untuk server lokal (Ollama, LM Studio).",
+      "apiKeyPlaceholder": "Kosongkan kalau server lokal",
+      "test": "Tes sambungan",
+      "testOk": "Tersambung. Jawaban: {{reply}}",
+      "save": "Simpan",
+      "saved": "Tersimpan di ponsel ini.",
+      "privacy": "Pesanmu dan ringkasan datamu dikirim ke server yang kamu tentukan sendiri, bukan ke JoyoRogo. Obrolan hanya tersimpan di ponselmu. Aplikasi tidak lagi menyaring pertanyaan soal cedera di server: prompt meminta model mengarahkan ke dokter, tapi itu imbauan, bukan jaminan."
+    }
   }
 }

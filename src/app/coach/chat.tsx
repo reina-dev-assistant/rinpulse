@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,7 +11,9 @@ import { Card, Screen } from '@/components/Screen';
 import { Notice, Skeleton } from '@/components/States';
 import { chatFailure, coachChat, MAX_MESSAGE_CHARS, type ChatTurn } from '@/features/coach/chat/api';
 import { clearChat, readChat, writeChat } from '@/features/coach/chat/history';
+import { LlmError, LlmNotConfiguredError, localChat } from '@/features/coach/chat/localClient';
 import { buildSnapshot } from '@/features/coach/chat/snapshot';
+import { usesLocalLlm } from '@/features/coach/localSettings';
 import { CoachGate } from '@/features/coach/ui/CoachGate';
 import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { useCoach } from '@/features/coach/useCoach';
@@ -47,6 +50,9 @@ function ChatBody() {
   const [paywall, setPaywall] = useState(false);
   const [usage, setUsage] = useState<{ used: number; cap: number } | null>(null);
   const [flagged, setFlagged] = useState(false);
+  // The chat needs an endpoint of its own in the account-free mode; this drives the hint instead of an error.
+  const [missingEndpoint, setMissingEndpoint] = useState(false);
+  const router = useRouter();
 
   if (!coach) return <Skeleton width="100%" height={220} radius="card" />;
 
@@ -59,17 +65,37 @@ function ChatBody() {
     setSending(true);
     setError(null);
     setPaywall(false);
+    setMissingEndpoint(false);
     try {
-      const answer = await coachChat(next, buildSnapshot(coach));
+      const snapshot = buildSnapshot(coach);
+      // With the account-free mode on, the question goes to the wearer's own endpoint; the JoyoRogo server is
+      // only called when it is off, exactly as before.
+      if (usesLocalLlm()) {
+        const answer = await localChat(next, snapshot);
+        const done: ChatTurn[] = [...next, { role: 'assistant', content: answer.reply }];
+        setTurns(done);
+        writeChat(done);
+        // No server accounting with a personal endpoint: `cap` is 0 and the counter stays hidden.
+        setUsage(answer.cap > 0 ? { used: answer.used, cap: answer.cap } : null);
+        setFlagged(answer.flagged !== null);
+        return;
+      }
+      const answer = await coachChat(next, snapshot);
       const done: ChatTurn[] = [...next, { role: 'assistant', content: answer.reply }];
       setTurns(done);
       writeChat(done);
       setUsage({ used: answer.used, cap: answer.cap });
       setFlagged(answer.flagged !== null);
     } catch (e) {
-      const failure = chatFailure(e);
-      setPaywall(failure.kind === 'paywall');
-      setError(failure.kind === 'cap' ? t('chat.capReached') : failure.kind === 'other' ? t('chat.error', { message: failure.message }) : null);
+      if (e instanceof LlmNotConfiguredError) {
+        setMissingEndpoint(true);
+      } else if (e instanceof LlmError) {
+        setError(t('chat.error', { message: e.message }));
+      } else {
+        const failure = chatFailure(e);
+        setPaywall(failure.kind === 'paywall');
+        setError(failure.kind === 'cap' ? t('chat.capReached') : failure.kind === 'other' ? t('chat.error', { message: failure.message }) : null);
+      }
       // Keep the question in the box so it can be sent again.
       setTurns(turns);
       setText(message);
@@ -84,6 +110,7 @@ function ChatBody() {
     setError(null);
     setPaywall(false);
     setFlagged(false);
+    setMissingEndpoint(false);
   };
 
   return (
@@ -112,6 +139,12 @@ function ChatBody() {
       ) : null}
       {flagged ? <Notice icon="medkit">{t('chat.flagged')}</Notice> : null}
       {paywall ? <UpgradeCard moment="coach-chat" /> : null}
+      {missingEndpoint ? (
+        <Notice icon="settings-outline">
+          {t('chat.needsEndpoint')}
+          <Button label={t('chat.openSettings')} variant="secondary" icon="settings-outline" onPress={() => router.push('/settings/coach')} />
+        </Notice>
+      ) : null}
       {error ? <Notice tone="danger">{error}</Notice> : null}
       <Input
         value={text}
