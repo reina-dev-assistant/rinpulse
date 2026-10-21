@@ -81,6 +81,7 @@ internal class WearRuntime private constructor(context: Context) {
       workoutLink.onLinkState(state)
       p2p.onLinkState(state)
       ephemeris.onLinkState(state)
+      music.onLinkState(state)
     }
 
     override fun battery(level: Int) {
@@ -183,7 +184,8 @@ internal class WearRuntime private constructor(context: Context) {
   }
 
   val forwarder = NotificationForwarder(appContext, settings, link, events, scope)
-  val features = PhoneFeatures(appContext, PhoneFeatureSettings(appContext), link, events, scope, forwarder::nextMessageId)
+  private val phoneSettings = PhoneFeatureSettings(appContext)
+  val features = PhoneFeatures(appContext, phoneSettings, link, events, scope, forwarder::nextMessageId)
   val voipCalls = VoipCallNotifications(appContext, settings, features.calls)
   val healthConnect = HealthConnectExporter(appContext, syncStore, events, scope)
   val weatherSettings = WeatherSettings(appContext)
@@ -205,6 +207,7 @@ internal class WearRuntime private constructor(context: Context) {
   val p2p = P2pController(appContext, P2pSettings(appContext), link, settings, syncStore, events, scope)
   val family = FamilyUploader(appContext, FamilySettings(appContext), FamilyStoreSource(syncStore), { status.value.battery }, events, scope)
   val ephemeris = EphemerisLink(appContext, link, events, scope, settings)
+  val music = WatchMusic(appContext, phoneSettings, link, events, scope)
 
   init {
     DataSyncFeatures.install(this)

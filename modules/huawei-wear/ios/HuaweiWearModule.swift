@@ -592,6 +592,8 @@ public final class HuaweiWearModule: Module {
         switchRejectingOn("setFindPhoneEnabled")
         switchRejectingOn("setCallsEnabled")
         switchRejectingOn("setCallControlEnabled")
+        // Music: iOS has no way to read another app's MediaSession, so the feature is off there.
+        switchRejectingOn("setMusicEnabled")
         switchRejectingOn("setSosRelayEnabled")
 
         // MARK: satellite data (A-GPS)

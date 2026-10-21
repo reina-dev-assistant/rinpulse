@@ -490,7 +490,11 @@
     "appSettings": "Pengaturan aplikasi",
     "callerIdDetails": "Tanpa akses log panggilan, Android menyembunyikan nomor penelepon. Tanpa akses kontak, kamu melihat nomor, bukan nama.",
     "noCallerIdDetails": "Jam menunjukkan bahwa ponsel sedang berdering. Versi JoyoFit ini tidak membaca log panggilan atau kontak, jadi tidak bisa menampilkan siapa yang menelepon.",
-    "findDetails": "Cari ponsel: tombol di jam membunyikan ponsel ini dengan keras, bahkan saat aplikasi ditutup. Hentikan dari jam atau dari notifikasi."
+    "findDetails": "Cari ponsel: tombol di jam membunyikan ponsel ini dengan keras, bahkan saat aplikasi ditutup. Hentikan dari jam atau dari notifikasi.",
+    "music": "Kontrol musik dari jam",
+    "musicUnsupported": "Kontrol musik (tidak didukung jam ini)",
+    "musicDetails": "Putar musik di ponsel, lalu jam menampilkan lagunya dan tombol putar/jeda, sebelumnya/berikutnya, serta volume mengendalikan ponsel. Tidak ada lagu yang disimpan di jam. Aplikasi pemutar musik harus mengizinkan notifikasi (Pengaturan Android > Notifikasi > akses notifikasi untuk JoyoFit).",
+    "musicHint": "Jam menampilkan lagu yang diputar di ponsel dan tombolnya mengendalikan pemutar."
   },
   "profile": {
     "sex": {

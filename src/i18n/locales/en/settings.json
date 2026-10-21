@@ -496,7 +496,11 @@
     "appSettings": "App settings",
     "callerIdDetails": "Without call log access Android hides the caller number. Without contacts access you see the number instead of the name.",
     "noCallerIdDetails": "The watch shows that the phone is ringing. This version of JoyoFit does not read your call log or contacts, so it cannot show who is calling.",
-    "findDetails": "Find my phone: the watch button rings this phone loudly, even with the app closed. Stop it on the watch or from the notification."
+    "findDetails": "Find my phone: the watch button rings this phone loudly, even with the app closed. Stop it on the watch or from the notification.",
+    "music": "Music control from the watch",
+    "musicUnsupported": "Music control (this watch does not support it)",
+    "musicDetails": "Play music on the phone and the watch shows the track; its play/pause, previous/next and volume buttons drive the phone. No songs are stored on the watch. The music player must be allowed to post notifications (Android Settings > Notifications > notification access for JoyoFit).",
+    "musicHint": "The watch shows the track playing on the phone and its buttons control the player."
   },
   "profile": {
     "sex": {

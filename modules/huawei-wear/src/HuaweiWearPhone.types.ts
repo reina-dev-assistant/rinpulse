@@ -6,6 +6,10 @@ export interface PhoneFeatures {
   callsEnabled: boolean;
   /** The watch's accept and reject buttons answer or end the call on the phone. */
   callControlEnabled: boolean;
+  /** The watch shows what the phone is playing, and its buttons drive the phone's player (Android only). */
+  musicEnabled: boolean;
+  /** The connected watch lists 25/02, so it can show the phone's track. False while disconnected. */
+  musicSupported: boolean;
   /** READ_PHONE_STATE: needed to see incoming calls. */
   readPhoneState: boolean;
   /** READ_CALL_LOG: lets Android pass the caller's number. */

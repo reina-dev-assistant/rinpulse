@@ -27,6 +27,15 @@ internal class PhoneFeatureSettings(context: Context) {
     get() = prefs.getBoolean(KEY_CALL_CONTROL, true)
     set(value) = prefs.edit().putBoolean(KEY_CALL_CONTROL, value).apply()
 
+  /**
+   * The watch shows what the phone is playing and its buttons drive the phone's player (service 25). On by
+   * default: GB's Huawei path behaves this way once the notification access exists, and this is what the
+   * Watch Fit 1's "Smartphone music control: yes" spec is about. Turning it off stops both directions.
+   */
+  var musicEnabled: Boolean
+    get() = prefs.getBoolean(KEY_MUSIC, true)
+    set(value) = prefs.edit().putBoolean(KEY_MUSIC, value).apply()
+
   /** Last alarms read from or pushed to the watch, as JSON (see [WatchAlarms]). */
   var alarmsJson: String?
     get() = prefs.getString(KEY_ALARMS, null)
@@ -37,6 +46,7 @@ internal class PhoneFeatureSettings(context: Context) {
     const val KEY_FIND_PHONE = "find_phone"
     const val KEY_CALLS = "calls"
     const val KEY_CALL_CONTROL = "call_control"
+    const val KEY_MUSIC = "music"
     const val KEY_ALARMS = "alarms"
   }
 }
