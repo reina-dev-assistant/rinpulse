@@ -268,6 +268,12 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
   setCallsEnabled(enabled: boolean): Promise<void>;
   /** Let the watch accept or reject a ringing call. Request ANSWER_PHONE_CALLS first. */
   setCallControlEnabled(enabled: boolean): Promise<void>;
+  /**
+   * When on (default), the phone sends what it is playing to the watch and the watch's play/pause/next/previous
+   * and volume buttons drive the phone's player. Needs no permission beyond the notification access the app
+   * already asks for. Android only; turning it on pushes the current track right away.
+   */
+  setMusicEnabled(enabled: boolean): Promise<void>;
 
   /** The alarms last read from or pushed to the watch (empty before the first read). */
   getAlarms(): WatchAlarms;

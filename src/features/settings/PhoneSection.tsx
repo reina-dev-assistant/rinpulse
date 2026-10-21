@@ -125,6 +125,14 @@ function PhoneSectionAndroid() {
         value={features.callControlEnabled}
         onValueChange={toggleCallControl}
       />
+      <SwitchRow
+        icon="musical-notes"
+        label={features.musicSupported ? t('phone.music') : t('phone.musicUnsupported')}
+        hint={features.musicSupported ? t('phone.musicHint') : undefined}
+        value={features.musicEnabled}
+        disabled={!features.musicSupported}
+        onValueChange={(enabled) => run(() => HuaweiWear.setMusicEnabled(enabled))}
+      />
       <PairGrid>
         <Pair label={t('phone.phoneState')} value={features.readPhoneState ? t('phone.granted') : t('phone.notGranted')} />
         <Pair label={t('phone.answerCalls')} value={features.answerPhoneCalls ? t('phone.granted') : t('phone.notGranted')} />
@@ -164,7 +172,7 @@ function PhoneSectionAndroid() {
         </ButtonRow>
       ) : null}
       <Details>
-        {`${features.callerIdSupported ? t('phone.callerIdDetails') : t('phone.noCallerIdDetails')}\n\n${t('phone.findDetails')}`}
+        {`${features.callerIdSupported ? t('phone.callerIdDetails') : t('phone.noCallerIdDetails')}\n\n${t('phone.findDetails')}\n\n${t('phone.musicDetails')}`}
       </Details>
     </Section>
   );

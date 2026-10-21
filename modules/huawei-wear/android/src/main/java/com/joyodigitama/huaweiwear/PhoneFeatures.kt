@@ -175,6 +175,9 @@ internal class PhoneFeatures(
     "findPhoneEnabled" to settings.findPhoneEnabled,
     "callsEnabled" to settings.callsEnabled,
     "callControlEnabled" to settings.callControlEnabled,
+    "musicEnabled" to settings.musicEnabled,
+    // Only known once a watch is connected: the watch lists 25/02 when it can show the phone's track.
+    "musicSupported" to (link.handle() != null && DeviceCaps.supports(0x25, 0x02)),
     "readPhoneState" to granted(Manifest.permission.READ_PHONE_STATE),
     "readCallLog" to granted(Manifest.permission.READ_CALL_LOG),
     "readContacts" to granted(Manifest.permission.READ_CONTACTS),
