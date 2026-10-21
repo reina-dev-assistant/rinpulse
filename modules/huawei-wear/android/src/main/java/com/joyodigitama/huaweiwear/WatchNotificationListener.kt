@@ -11,6 +11,9 @@ import android.service.notification.StatusBarNotification
 class WatchNotificationListener : NotificationListenerService() {
   override fun onNotificationPosted(sbn: StatusBarNotification) {
     val runtime = WearRuntime.get(this)
+    // The player's media notification is the cheapest "the track changed" signal there is, and the session
+    // callbacks miss players that only update their notification. Never forwarded, only read as a trigger.
+    runtime.music.onNotification(sbn)
     // Call notifications (VoIP) ring the watch as calls and are never forwarded as ordinary notifications.
     if (runtime.voipCalls.onPosted(sbn)) return
     runtime.forwarder.onPosted(sbn)

@@ -74,6 +74,25 @@ internal object MusicLink {
     )
   }
 
+  /**
+   * Whether a posted notification is a player's media notification, which is a second way to notice that the
+   * track or its state changed (players update it on every change, and it already arrives at the app).
+   *
+   * GB skips these as *forwarded notifications* (`NotificationPolicy`: `CATEGORY_TRANSPORT` -> "media controls"),
+   * and that stays: this only reads one as a trigger, it is never sent to the watch as a message. Both signals
+   * are checked because a player may set the category, the session extra, or both. The two flags are computed by
+   * the caller so this stays free of Android constants.
+   */
+  fun isMediaNotification(categoryIsTransport: Boolean, hasMediaSessionExtra: Boolean): Boolean =
+    categoryIsTransport || hasMediaSessionExtra
+
+  /**
+   * What counts as "the watch already knows this". Volume is in the key because the watch's screen shows it and
+   * the buttons change it: sending the same track again is skipped, but the same track at a new volume is not.
+   */
+  fun changeKey(track: MusicTrack, maxVolume: Int, volume: Int): String =
+    "${track.artist}|${track.song}|${track.playState}|$volume/$maxVolume"
+
   /** Shown when the player names the artist but not the track, so the watch never renders an empty song line. */
   const val NO_TITLE = "—"
 

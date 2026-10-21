@@ -2,7 +2,6 @@ package com.joyodigitama.huaweiwear
 
 import expo.modules.kotlin.functions.Coroutine
 import expo.modules.kotlin.modules.ModuleDefinitionBuilder
-import kotlinx.coroutines.launch
 
 /**
  * The find-my-watch / find-my-phone / calls / alarms part of the `HuaweiWear` module
@@ -36,18 +35,7 @@ internal fun ModuleDefinitionBuilder.phoneFeaturesApi(runtime: () -> WearRuntime
   }
 
   AsyncFunction("setMusicEnabled") { enabled: Boolean ->
-    val music = runtime().music
-    music.settings.musicEnabled = enabled
-    // Turning it on tells the watch what is playing right now instead of waiting for the next change.
-    if (enabled) {
-      runtime().scope.launch {
-        try {
-          music.push(force = true)
-        } catch (e: Exception) {
-          // Nothing to do: the next track change will try again.
-        }
-      }
-    }
+    runtime().music.setEnabled(enabled)
   }
 
   Function("getAlarms") {

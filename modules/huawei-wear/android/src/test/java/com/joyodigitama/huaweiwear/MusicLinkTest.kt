@@ -228,6 +228,29 @@ class MusicLinkTest {
     assertTrue("a refusal must not look like success", !refused.ok)
   }
 
+  // What counts as a change worth sending
+
+  @Test
+  fun `a media notification is recognised by either signal`() {
+    // Spotify sets both; other players set only one. Either one is enough to look at the session again.
+    assertTrue(MusicLink.isMediaNotification(categoryIsTransport = true, hasMediaSessionExtra = true))
+    assertTrue("category only", MusicLink.isMediaNotification(categoryIsTransport = true, hasMediaSessionExtra = false))
+    assertTrue("extra only", MusicLink.isMediaNotification(categoryIsTransport = false, hasMediaSessionExtra = true))
+    assertFalse("an ordinary notification is not a trigger", MusicLink.isMediaNotification(categoryIsTransport = false, hasMediaSessionExtra = false))
+  }
+
+  @Test
+  fun `the same track at a new volume is a change, the same one is not`() {
+    // The watch shows the volume and its buttons change it, so volume is part of "already known" - but a repeat
+    // of the same track at the same volume must stay a no-op (the callbacks fire in bursts).
+    val track = MusicLink.trackOf("Lagu", "Artis", 3)!!
+    val key = MusicLink.changeKey(track, maxVolume = 15, volume = 7)
+    assertEquals(key, MusicLink.changeKey(track, 15, 7))
+    assertFalse("a new volume is a change", key == MusicLink.changeKey(track, 15, 8))
+    assertFalse("a new state is a change", key == MusicLink.changeKey(track.copy(playState = 2), 15, 7))
+    assertFalse("a new track is a change", key == MusicLink.changeKey(track.copy(song = "Lain"), 15, 7))
+  }
+
   private companion object {
     val PARAMS = nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiPacket.ParamsProvider()
   }
