@@ -75,6 +75,15 @@ internal class NightSummary(
   val rmssdMedian: Double?,
   /** Beats the valid records cover, estimated as duration / median NNI; the file has no beat count. */
   val beats: Int,
+  /**
+   * The watch's own stress score for the night: the mean of [scoreRecords] only, so it covers the same records the
+   * average names. Null when the watch scored none of them (the `score` field is 0 for a record it did not judge).
+   */
+  val scoreMean: Double?,
+  /** The mean of the `level` field over [scoreRecords], Huawei's own band for the score; null when [scoreMean] is. */
+  val levelMean: Double?,
+  /** Records made while asleep that carry a score the watch actually computed. */
+  val scoreRecords: List<RriRecord>,
   /** Why no reading is stored, or null when there is one. */
   val rejected: String?,
 )
@@ -98,6 +107,15 @@ internal object NightHrv {
 
   /** Fewer usable records than this during sleep give no night reading. */
   const val MIN_RECORDS = 3
+
+  /**
+   * The `health_metrics.type` of the Stress / emotion card (`src/features/health/metrics.ts`), the same string the
+   * dictionary path and the Huawei export write (`HuaweiImportStore.STRESS_TYPE`).
+   */
+  const val STRESS_TYPE = "emotion"
+
+  /** The `values_json` `source` of a row this path wrote, to tell it from the dictionary's and the export's. */
+  const val STRESS_SOURCE = "night-stress"
 
   /** Header of a version 3 file; records of 66 bytes follow (GB `parseRri`). */
   const val HEADER_BYTES = 48
@@ -187,12 +205,17 @@ internal object NightHrv {
       val nni = r.medianNni
       if (nni == null || r.endSec <= r.startSec) 0 else ((r.endSec - r.startSec) * 1000.0 / nni).roundToInt()
     }
+    // The watch's own judgement, kept apart from the RMSSD average: a record can carry one without the other (GB drops
+    // a record whose score is 0, and its parser refuses one with no features, so the two sets genuinely differ).
+    val scored = inSleep.filter { it.score > 0 }
+    val scoreMean = scored.takeIf { it.isNotEmpty() }?.let { r -> r.sumOf { it.score }.toDouble() / r.size }
+    val levelMean = scored.takeIf { it.isNotEmpty() }?.let { r -> r.sumOf { it.level }.toDouble() / r.size }
     val rejected = when {
       inSleep.isEmpty() -> "no stress records during sleep"
       valid.size < MIN_RECORDS -> "only ${valid.size} usable records during sleep, need $MIN_RECORDS"
       else -> null
     }
-    return NightSummary(night, inSleep, valid, mean, median, beats, rejected)
+    return NightSummary(night, inSleep, valid, mean, median, beats, scoreMean, levelMean, scored, rejected)
   }
 }
 
@@ -396,9 +419,22 @@ internal class NightHrvSync(
         continue
       }
       withContext(Dispatchers.IO) { NightHrvStore.save(AndroidWatchDb(store.db()), address, night, mean, summary.beats) }
+      // The watch's own stress score rides the same records; it used to be read and dropped, which is why the
+      // Stress / emotion card stayed empty on a watch that sets no ExpandCapability 206.
+      val score = summary.scoreMean
+      if (score != null) {
+        withContext(Dispatchers.IO) {
+          NightHrvStore.saveStress(AndroidWatchDb(store.db()), address, night, score, summary.levelMean, summary.scoreRecords.size)
+        }
+        log("Night HRV: $label stored stress score=${"%.1f".format(score)} from ${summary.scoreRecords.size} scored records")
+      } else {
+        log("Night HRV: $label has no stress score (the watch scored none of its ${summary.inSleep.size} records)")
+      }
       stored++
       diag.stored = stored
-      diag.nights.add("$detail: stored rmssd ${"%.1f".format(mean)} ms")
+      diag.nights.add(
+        "$detail: stored rmssd ${"%.1f".format(mean)} ms" + (score?.let { ", stress ${"%.1f".format(it)}" } ?: ""),
+      )
       log("Night HRV: $label stored rmssd=${"%.1f".format(mean)} ms from ${summary.valid.size} records")
     }
     diag.result = if (stored > 0) "records read, $stored nights stored" else "records read, no night stored"
@@ -429,5 +465,17 @@ internal object NightHrvStore {
       db.exec(WatchSql.DELETE_NIGHT_HRV_OVERLAP, night.end, night.start, address)
       db.exec(WatchSql.INSERT_NIGHT_HRV, night.start, night.end, rmssd, beats, address)
     }
+  }
+
+  /**
+   * The night's stress score of [address], in `health_metrics` type `emotion` — the row the Stress / emotion card reads.
+   * Timestamped at the night's end (a night is one reading, and `health_metrics` is keyed `(type, ts)`), so a re-derivation
+   * of the same night overwrites its own row instead of stacking one per sync. `values_json` carries what the mean cannot:
+   * the band, the watch it came from and how many records were behind it, in the same shape the Huawei export writes.
+   */
+  fun saveStress(db: WatchDb, address: String, night: NightSpan, score: Double, level: Double?, records: Int) {
+    val levelJson = level?.let { "%.2f".format(it) } ?: "null"
+    val json = """{"score":${"%.2f".format(score)},"level":$levelJson,"records":$records,"source":"${NightHrv.STRESS_SOURCE}","device":"$address"}"""
+    db.exec(WatchSql.UPSERT_NIGHT_STRESS, NightHrv.STRESS_TYPE, night.end, night.end, score, json, address)
   }
 }

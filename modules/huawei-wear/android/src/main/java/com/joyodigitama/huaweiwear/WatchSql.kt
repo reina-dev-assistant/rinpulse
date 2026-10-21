@@ -112,6 +112,16 @@ internal object WatchSql {
   const val INSERT_NIGHT_HRV =
     "INSERT OR REPLACE INTO hrv_readings (start, end, source, rmssd, sdnn, mean_rr, beats, device) VALUES (?, ?, 'night', ?, NULL, NULL, ?, ?)"
 
+  /**
+   * (type, ts, last_ts, value, values_json, device): the watch's own stress score for a night, the mean over the records
+   * it made while asleep. Goes to the same `health_metrics` type the dictionary path and the Huawei export use, so the
+   * Stress / emotion card and its week chart show it without any change (`NightHrvStore.saveStress`).
+   */
+  const val UPSERT_NIGHT_STRESS =
+    """INSERT INTO health_metrics (type, ts, last_ts, value, values_json, device) VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(type, ts) DO UPDATE SET
+         last_ts = excluded.last_ts, value = excluded.value, values_json = excluded.values_json, device = excluded.device"""
+
   /** (start, end, rmssd, sdnn, mean_rr, beats, device): a measurement the user started on the connected watch, always stored. */
   const val INSERT_SPOT_HRV =
     "INSERT OR REPLACE INTO hrv_readings (start, end, source, rmssd, sdnn, mean_rr, beats, device) VALUES (?, ?, 'spot', ?, ?, ?, ?, ?)"

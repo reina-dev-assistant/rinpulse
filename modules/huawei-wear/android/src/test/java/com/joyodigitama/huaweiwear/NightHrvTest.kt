@@ -10,10 +10,10 @@ import org.junit.Test
 
 class NightHrvTest {
   /** One 66 byte record the way GB's `parseRri` reads it: start, end, algorithm, six bytes, twelve floats. */
-  private fun record(start: Int, end: Int, rmssd: Float, medianNni: Float, acc: Int = 0): ByteArray {
+  private fun record(start: Int, end: Int, rmssd: Float, medianNni: Float, acc: Int = 0, score: Int = 40): ByteArray {
     val b = ByteBuffer.allocate(66)
     b.putInt(start).putInt(end).putInt(1)
-    b.put(40).put(1).put(0).put(0).put(acc.toByte()).put(0)
+    b.put(score.toByte()).put(1).put(0).put(0).put(acc.toByte()).put(0)
     val features = FloatArray(12)
     features[0] = 20f
     features[1] = 4.5f
@@ -139,6 +139,26 @@ class NightHrvTest {
     // 60 s per record over 900, 1000, 1000 ms intervals: 67 + 60 + 60.
     assertEquals(187, s.beats)
     assertNull(s.rejected)
+    // Every record here carries the score 40 the helper writes, so the night's score is that, from all three.
+    assertEquals(3, s.scoreRecords.size)
+    assertEquals(40.0, s.scoreMean!!, 1e-9)
+    assertEquals(1.0, s.levelMean!!, 1e-9)
+  }
+
+  @Test
+  fun aNightWithoutAScoreStoresNoStress() {
+    val t = 100_000L
+    val night = NightSpan(t, t + 4 * hour, listOf(TimeSpan(t, t + 4 * hour)))
+    // `record` with score 0: the watch made a reading but judged none of it.
+    val records = NightHrv.parse(file(3, record((t + hour).toInt(), (t + hour + 60).toInt(), 40f, 900f, score = 0)))!!.records
+    val s = NightHrv.summarize(night, records)
+    assertEquals(1, s.inSleep.size)
+    assertEquals(1, s.valid.size)
+    assertTrue(s.scoreRecords.isEmpty())
+    assertNull(s.scoreMean)
+    assertNull(s.levelMean)
+    // The RMSSD reading is unaffected: the two are independent.
+    assertEquals(40.0, s.rmssdMean!!, 1e-9)
   }
 
   @Test
