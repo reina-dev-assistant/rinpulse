@@ -10,7 +10,8 @@ import { Skeleton } from '@/components/States';
 import type { NightHrvAvailability } from '@/features/today/nightHrv';
 import { spacing } from '@/theme';
 import { useCoach } from '../useCoach';
-import { useCoachAccess } from '../useCoachAccess';
+import { useLocalOnlyMode } from '@/features/settings/localOnly';
+import { coachVisibility, useCoachAccess } from '../useCoachAccess';
 import { AiInsightInline, AiInsightStandalone } from '@/features/ai/ui/AiInsight';
 import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { CoachSignIn } from './CoachGate';
@@ -49,13 +50,13 @@ function ProCard({ dataVersion, availability }: { dataVersion: number; availabil
  * Coach card, so the summary is its own small card above the sign-in or upsell card; it needs no JoyoRogo account.
  */
 export function CoachTodayCard({ dataVersion, availability }: { dataVersion: number; availability: NightHrvAvailability | null }) {
-  const access = useCoachAccess();
-  if (access === 'checking') return null;
-  if (access === 'signedOut' || access === 'free') {
+  const seen = coachVisibility(useCoachAccess(), useLocalOnlyMode());
+  if (seen === 'checking') return null;
+  if (seen === 'signIn' || seen === 'upgrade') {
     return (
       <>
         <AiInsightStandalone dataVersion={dataVersion} availability={availability} />
-        {access === 'signedOut' ? <CoachSignIn /> : <UpgradeCard moment="coach-today" dismissible />}
+        {seen === 'signIn' ? <CoachSignIn /> : <UpgradeCard moment="coach-today" dismissible />}
       </>
     );
   }

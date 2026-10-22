@@ -27,7 +27,7 @@ import { syncHrZonesAtLaunch } from '@/features/hrzones/settings';
 import { BikeRideProvider } from '@/features/bikecomputer/BikeRideProvider';
 import { lockPortrait } from '@/features/bikecomputer/ui/orientation';
 import { flushSupportReports } from '@/features/device/aturReports';
-import { localOnlyMode } from '@/features/settings/localOnly';
+import { useLocalOnlyMode } from '@/features/settings/localOnly';
 import { LivePill } from '@/features/record/ui/LivePill';
 import { RoomCaptureRunner } from '@/features/thermometer/RoomCaptureRunner';
 import { UpdateBanner } from '@/features/updates/UpdateBanner';
@@ -80,7 +80,7 @@ export default function RootLayout() {
 }
 
 /** A tab's label. It reads the language itself: the navigator keeps the options it first got, so a label built from `t` in them would stay in the old language after a switch in Settings. */
-function TabLabel({ name, color }: { name: 'today' | 'workouts' | 'social' | 'more'; color: ColorValue }) {
+function TabLabel({ name, color }: { name: 'today' | 'workouts' | 'social' | 'health' | 'more'; color: ColorValue }) {
   const { t } = useTranslation('common');
   const { fonts } = useTheme();
   return (
@@ -106,7 +106,8 @@ function TabBarWithLive(props: BottomTabBarProps) {
   const focused = props.state.routes[props.state.index];
   const hiddenByRoute = StyleSheet.flatten(props.descriptors[focused.key].options.tabBarStyle as StyleProp<ViewStyle>)?.display === 'none';
   // The bar is for the roots of the tabs only; anything pushed on a tab's stack is a detail screen without it.
-  const hidden = hiddenByRoute || !isTabRoot(focused.name, getFocusedRouteNameFromRoute(focused));
+  const localOnly = useLocalOnlyMode();
+  const hidden = hiddenByRoute || !isTabRoot(focused.name, getFocusedRouteNameFromRoute(focused), localOnly);
   const report = useReportTabBarInset();
   useEffect(() => () => report(0), [report]);
   useEffect(() => {
@@ -124,6 +125,8 @@ function TabBarWithLive(props: BottomTabBarProps) {
 function RootNavigator() {
   const { theme, colors, scheme } = useTheme();
   const { t } = useTranslation('common');
+  // Which tab fills the third slot: Social (JoyoRogo's feed) or Health (this phone's own metrics).
+  const localOnly = useLocalOnlyMode();
   // Only the active theme's families (4 to 6 files): the theme is fixed for the life of the JS app (a change restarts it), so
   // this map never changes, and the picker registers the others when it opens.
   const [fontsReady, fontError] = useFonts({
@@ -225,16 +228,28 @@ function RootNavigator() {
                         ),
                       }}
                     />
-                    {/* The Social feed only exists on JoyoRogo's server, so local-only mode loses the tab rather
-                        than showing a sign-in card the person never wants. */}
+                    {/* The Social feed only exists on JoyoRogo's server, so the tab's slot goes to Health instead: the
+                        health metrics are the phone's own data, and an empty gap where a tab used to be reads as broken. */}
                     <Tabs.Screen
                       name="social"
                       options={{
-                        href: localOnlyMode() ? null : undefined,
+                        href: localOnly ? null : undefined,
                         title: t('nav.social'),
                         tabBarLabel: ({ color }) => <TabLabel name="social" color={color} />,
                         tabBarIcon: ({ focused, color, size }) => (
                           <TabIcon on="people" off="people-outline" focused={focused} size={size} color={color} />
+                        ),
+                      }}
+                    />
+                    {/* Holds the third slot in local-only mode, where Social is gone. */}
+                    <Tabs.Screen
+                      name="health"
+                      options={{
+                        href: localOnly ? undefined : null,
+                        title: t('nav.health'),
+                        tabBarLabel: ({ color }) => <TabLabel name="health" color={color} />,
+                        tabBarIcon: ({ focused, color, size }) => (
+                          <TabIcon on="pulse" off="pulse-outline" focused={focused} size={size} color={color} />
                         ),
                       }}
                     />
@@ -257,7 +272,6 @@ function RootNavigator() {
                     <Tabs.Screen name="alarms" options={{ href: null }} />
                     <Tabs.Screen name="watchfaces" options={{ href: null }} />
                     {/* Pushed from Today (or Settings, for hrv); each draws its own header (HiddenTabHeader). */}
-                    <Tabs.Screen name="health" options={{ href: null }} />
                     <Tabs.Screen name="hrv" options={{ href: null }} />
                     <Tabs.Screen name="heart" options={{ href: null }} />
                     <Tabs.Screen name="home-cards" options={{ href: null }} />

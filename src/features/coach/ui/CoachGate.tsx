@@ -11,12 +11,15 @@ import type { ProMoment } from '@/features/pro/offer';
 import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { StyleSheet, View } from 'react-native';
 import { spacing } from '@/theme';
-import { useCoachAccess } from '../useCoachAccess';
+import { useLocalOnlyMode } from '@/features/settings/localOnly';
+import { coachVisibility, useCoachAccess } from '../useCoachAccess';
 
 /** Asks a signed-out person to sign in (Settings, Cloud sync, is where the JoyoRogo sign-in lives). */
 export function CoachSignIn() {
   const { t } = useTranslation('coach');
   const router = useRouter();
+  // Local-only mode never asks for an account, so callers in that mode show nothing rather than a button.
+  if (useLocalOnlyMode()) return null;
   return (
     <Card>
       <View style={styles.head}>
@@ -36,9 +39,10 @@ export function CoachSignIn() {
 /** Shows `children` to Pro accounts, the sign-in or upsell card to everyone else. */
 export function CoachGate({ children, moment = 'coach' }: { children: ReactNode; moment?: ProMoment }) {
   const access = useCoachAccess();
-  if (access === 'checking') return <Skeleton width="100%" height={140} radius="card" />;
-  if (access === 'signedOut') return <CoachSignIn />;
-  if (access === 'free') return <UpgradeCard moment={moment} />;
+  const seen = coachVisibility(access, useLocalOnlyMode());
+  if (seen === 'checking') return <Skeleton width="100%" height={140} radius="card" />;
+  if (seen === 'signIn') return <CoachSignIn />;
+  if (seen === 'upgrade') return <UpgradeCard moment={moment} />;
   return <>{children}</>;
 }
 

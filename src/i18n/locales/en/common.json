@@ -51,7 +51,8 @@
     "workouts": "Workouts",
     "social": "Social",
     "more": "More",
-    "start": "Start workout"
+    "start": "Start workout",
+    "health": "Health"
   },
   "dbRecovery": {
     "inline": "The data on your phone is being repaired. Wait a moment, then try again.",
