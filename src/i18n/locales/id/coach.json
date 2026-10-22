@@ -385,23 +385,24 @@
       "subtitle": "{{n}} gerakan dengan langkah dan kesalahan umum"
     },
     "chat": {
-      "title": "Tanya coach",
-      "subtitle": "Tanya soal latihan, pemulihan, dan rencanamu (Pro)"
+      "title": "Joyo AI",
+      "subtitle": "Tanya soal tidur, pemulihan, latihan, dan makan. Pakai kunci sendiri atau JoyoRogo Pro"
     }
   },
   "chat": {
     "emptyTitle": "Tanya apa saja soal latihanmu",
-    "emptyBody": "Coach membaca data jam, rencana, dan catatan makanmu di JoyoRogo. Dia bukan dokter: untuk nyeri atau cedera, temui tenaga medis.",
+    "emptyBody": "Joyo AI menjawab dari data jam, rencana, dan catatanmu. Dia bukan dokter: untuk nyeri atau cedera, temui tenaga medis.",
     "suggest": {
       "q1": "Apa latihan yang pas hari ini?",
       "q2": "Kenapa saranku hari ini begitu?",
-      "q3": "Makanku cukup buat latihan?"
+      "q3": "Makanku cukup buat latihan?",
+      "q4": "Kenapa aku capek?",
+      "q5": "Debrief latihan terakhir",
+      "q6": "Review minggu ini"
     },
     "placeholder": "Tulis pertanyaanmu",
     "send": "Kirim",
-    "clear": "Hapus obrolan",
-    "thinking": "Coach sedang menulis...",
-    "usage": "Pesan hari ini: {{used}} dari {{cap}}",
+    "thinking": "Joyo AI sedang menulis...",
     "capReached": "Batas pesan hari ini sudah tercapai. Coba lagi besok.",
     "error": "Pesan belum terkirim: {{message}}",
     "flagged": "Kalau nyeri atau keluhanmu berlanjut, hentikan latihan dan periksakan ke dokter atau fisioterapis.",

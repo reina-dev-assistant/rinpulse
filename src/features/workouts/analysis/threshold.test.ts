@@ -12,9 +12,10 @@ import { straightRun, T0, type Leg } from './fixtures';
 import { loadAnalysisHistory } from './history';
 import { clearEffortCache } from './threshold';
 import { thresholdPaceFromEfforts } from './zones';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 
 const DAY = 86400;
-const MAX_HR = 190;
+const ZONES = hrZonesForMax(190);
 const ALL = { includeHr: true, includeRoute: true, includeComparison: true };
 
 interface Run {
@@ -65,8 +66,8 @@ async function thresholdOf(db: SQLiteDatabase, id: number): Promise<number | nul
   if (!found) throw new Error('missing');
   const points = await listWorkoutPoints(db, id);
   const summary = parseSummary(found.summaryJson);
-  const history = await loadAnalysisHistory(db, found.workout, summary, MAX_HR);
-  const a = analyzeWorkout({ workout: found.workout, summary, points, maxHr: MAX_HR, daySamples: [], history }, ALL);
+  const history = await loadAnalysisHistory(db, found.workout, summary, ZONES);
+  const a = analyzeWorkout({ workout: found.workout, summary, points, zones: ZONES, daySamples: [], history }, ALL);
   return a.paceZones?.thresholdSecKm ?? null;
 }
 

@@ -97,7 +97,7 @@ final class WatchModelsTests: XCTestCase {
         }
         XCTAssertEqual(list("JAM_SUDAH_DIUJI"), WatchModels.all.filter { $0.tested }.map(\.name))
         XCTAssertEqual(list("JAM_EKSPERIMEN_CLASSIC"), WatchModels.all.filter { $0.transport == .br && !$0.pake && !$0.tested }.map(\.name))
-        XCTAssertEqual(list("JAM_EKSPERIMEN_LE"), WatchModels.all.filter { $0.transport == .le }.map(\.name))
+        XCTAssertEqual(list("JAM_EKSPERIMEN_LE"), WatchModels.all.filter { $0.transport == .le && !$0.tested }.map(\.name))
         XCTAssertEqual(list("JAM_BELUM_PAKE"), WatchModels.all.filter { $0.pake }.map(\.name))
     }
 }

@@ -6,7 +6,7 @@ import { analyzeWorkout } from '@/features/workouts/analysis/analyze';
 import { loadAnalysisHistory } from '@/features/workouts/analysis/history';
 import type { WorkoutAnalysis } from '@/features/workouts/analysis/types';
 import { parseSummary } from '@/features/workouts/summary';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { userHrZones } from '@/features/hrzones/settings';
 
 export interface StoredWorkout {
   workout: WorkoutRow;
@@ -26,11 +26,11 @@ export async function loadStoredWorkout(db: SQLiteDatabase, workoutId: number): 
   const points = await listWorkoutPoints(db, workoutId);
   const day = startOfLocalDay(found.workout.start);
   const daySamples = (await listStepSamplesSince(db, day)).filter((s) => s.timestamp < day + 86400);
-  const maxHr = userMaxHr();
+  const zones = userHrZones();
   const summary = parseSummary(found.summaryJson);
-  const history = await loadAnalysisHistory(db, found.workout, summary, maxHr);
+  const history = await loadAnalysisHistory(db, found.workout, summary, zones);
   const analysis = analyzeWorkout(
-    { workout: found.workout, summary, points, maxHr, daySamples, history },
+    { workout: found.workout, summary, points, zones, daySamples, history },
     { includeHr: true, includeRoute: true, includeComparison: true },
   );
   return { workout: found.workout, summaryJson: found.summaryJson, points, analysis };

@@ -9,11 +9,14 @@ const tested: string[] = [];
 const classic: string[] = [];
 const le: string[] = [];
 const pake: string[] = [];
+const seen = new Set<string>();
 
 for (const line of kt.split("\n")) {
   const m = line.match(/^\s*(br|le)\("([^"]+)"(.*)\),\s*$/);
   if (!m) continue;
   const [, kind, name, rest] = m;
+  if (seen.has(name) && !rest.includes("tested = true")) continue;
+  seen.add(name);
   if (rest.includes("tested = true")) tested.push(name);
   else if (rest.includes("pake = true")) pake.push(name);
   else (kind === "br" ? classic : le).push(name);

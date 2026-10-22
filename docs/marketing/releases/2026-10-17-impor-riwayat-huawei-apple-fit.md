@@ -8,7 +8,7 @@ post: todo
 atur: JRG-300
 ---
 
-**Apa:** Bawa riwayat lama ke JoyoFit: tombol Minta data dari Huawei dan buka ZIP ekspor Huawei, impor riwayat sekali dari Apple Health di iPhone, dan impor file FIT dari bike computer atau jam.
+**Apa:** Bawa riwayat lama ke JoyoFit: tombol Minta data dari Huawei dan buka ZIP ekspor Huawei (detak jantung, tidur, langkah, latihan dengan rute, riwayat berat badan beserta komposisi tubuh, catatan makan dan minum yang ikut masuk ke riwayat JoyoRogo di hari aslinya; layar impor memberi tahu apa yang tidak terbaca), impor riwayat sekali dari Apple Health di iPhone, dan impor file FIT dari bike computer atau jam.
 
 **Kenapa orang peduli:** Pindah aplikasi tidak berarti kehilangan riwayat.
 

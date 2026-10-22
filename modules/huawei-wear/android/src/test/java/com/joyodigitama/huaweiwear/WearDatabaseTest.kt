@@ -23,7 +23,7 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 /** [SqlConnection] on sqlite-jdbc: the transaction, locking and binding rules of [WearDatabase] run here on a real SQLite file. */
-private class JdbcSqlConnection(private val connection: Connection) : SqlConnection {
+internal class JdbcSqlConnection(private val connection: Connection) : SqlConnection {
   var closed = false
 
   override fun exec(sql: String) {
@@ -57,7 +57,7 @@ private class JdbcSqlConnection(private val connection: Connection) : SqlConnect
   }
 }
 
-private class JdbcSqlStatement(private val statement: PreparedStatement) : SqlStatement {
+internal class JdbcSqlStatement(private val statement: PreparedStatement) : SqlStatement {
   private var rows: ResultSet? = null
   private var started = false
   var isClosed = false

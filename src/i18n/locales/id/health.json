@@ -231,7 +231,15 @@
       "howNeedDebt": "Utang tidur menambah {{duration}}.",
       "howNeedNoDebt": "Utang tidur belum dihitung: butuh minimal 3 malam tercatat.",
       "navTitle": "Kebugaran",
-      "navSubtitle": "VO2max, status latihan, prediksi lomba, HRV, menit intensitas"
+      "intensity": {
+        "title": "Intensitas minggu ini",
+        "unit": "mnt",
+        "of": "dari {{target}} · pedoman WHO",
+        "left": "{{value}} mnt lagi",
+        "done": "Pedoman tercapai",
+        "dayA11y_other": "{{day}}: {{minutes}} menit intensitas",
+        "noHeartRate": "Belum ada detak jantung tersimpan minggu ini. Nyalakan detak jantung terus-menerus lalu sinkron."
+      }
     },
     "screen": {
       "loadError": "Gagal membaca data tersimpan: {{error}}",
@@ -279,9 +287,99 @@
         "breakdown": "{{moderate}} menit sedang + 2 x {{vigorous}} menit berat. Perkiraan.",
         "chart": "Menit intensitas per hari, Senin sampai Minggu",
         "endLabel": "Minggu",
-        "how": "Perkiraan JoyoFit dari detak jantung per menit yang disimpan jam (maksimal {{maxHr}} bpm). Menit di 60 sampai 80 persen maksimal (zona 2 dan 3) dihitung 1, menit di 80 persen ke atas (zona 4 dan 5) dihitung 2. Minggu dihitung Senin sampai Minggu. Target 150 menit per minggu mengikuti anjuran WHO 2020 dan ACSM 2018.",
+        "how": "Perkiraan JoyoFit dari detak jantung per menit yang disimpan jam (maksimal {{maxHr}} bpm). Menit di zona 2 dan 3 (bawaannya 60 sampai 80 persen maksimal) dihitung 1, menit di zona 4 dan 5 (80 persen ke atas) dihitung 2. Minggu dihitung Senin sampai Minggu. Target 150 menit per minggu mengikuti anjuran WHO 2020 dan ACSM 2018.",
         "minutes": "{{value}} mnt"
       }
+    }
+  },
+  "lactate": {
+    "title": "Tes ambang laktat",
+    "intro": "Tes ini mengukur ambang laktatmu dari satu lari sungguhan, bukan dari rekor pribadi. Hasilnya LTHR (detak jantung di ambang) dan pace ambang.",
+    "how": {
+      "title": "Cara tesnya",
+      "body": "1. Pilih rute datar atau lintasan tanpa berhenti. Istirahat cukup dan jangan lakukan setelah hari berat. Pasang jam atau strap detak jantung dengan rapat.\n2. Lari pelan 15 menit sebagai pemanasan.\n3. Lari 30 menit sendirian, sekeras yang bisa kamu tahan rata dari awal sampai akhir. Jangan mulai terlalu cepat.\n4. 10 menit pertama tidak dihitung. Rata-rata detak jantung dan pace dari 20 menit terakhir adalah hasilnya (protokol Joe Friel).\n5. Lari atau jalan pelan 10 menit untuk pendinginan.\nRekam larinya di jam atau lewat Rekam di JoyoFit (GPS ponsel dan strap). Panduan di sini hanya memberi tahu kapan mulai."
+    },
+    "start": "Mulai panduan",
+    "cancel": "Batalkan panduan",
+    "record": "Buka Rekam",
+    "noCues": "Notifikasi tidak diizinkan, jadi panduan tidak bisa memanggilmu saat layar mati. Biarkan layar ini terbuka.",
+    "phase": {
+      "warmup": "Pemanasan",
+      "effort": "Usaha 30 menit",
+      "cooldown": "Pendinginan",
+      "done": "Selesai",
+      "left": "tersisa"
+    },
+    "say": {
+      "warmup": "Lari pelan. Mulai rekam lari di jam atau di JoyoFit sekarang.",
+      "settle": "Naikkan ke tempo yang bisa kamu tahan 30 menit. Jangan terlalu cepat di awal. Bagian ini belum dihitung.",
+      "measure": "Tahan tempo yang sama. Detak jantung dan pace sekarang dihitung.",
+      "cooldown": "Perlambat, lari atau jalan pelan. Setelah selesai, simpan latihannya (sinkronkan jam) lalu kembali ke sini.",
+      "done": "Simpan latihannya (sinkronkan jam), lalu hitung hasilnya di bawah."
+    },
+    "cues": {
+      "channel": "Panduan tes ambang laktat",
+      "effort": {
+        "title": "Mulai usaha 30 menit",
+        "body": "Naikkan ke tempo yang bisa kamu tahan rata sampai akhir."
+      },
+      "measure": {
+        "title": "10 menit lewat",
+        "body": "Tahan tempo yang sama. 20 menit terakhir dihitung."
+      },
+      "cooldown": {
+        "title": "Usaha selesai",
+        "body": "Perlambat dan lari atau jalan pelan 10 menit."
+      }
+    },
+    "result": {
+      "title": "Hitung hasil",
+      "pick": "Pilih lari yang kamu pakai untuk tes. Hanya lari lebih dari 31 menit dalam 30 hari terakhir.",
+      "none": "Belum ada lari yang cukup panjang. Simpan larinya dulu (sinkronkan jam), lalu kembali ke sini.",
+      "runRow": "{{date}} · {{duration}}",
+      "loading": "Membaca latihan…",
+      "start": "Usaha 30 menit mulai di menit {{minute}} latihan",
+      "startGuide": "Dari panduan",
+      "startAuto": "Dicari otomatis: 30 menit terberat",
+      "earlier": "Mulai 1 menit lebih awal",
+      "later": "Mulai 1 menit lebih lambat",
+      "lthr": "LTHR",
+      "pace": "Pace ambang",
+      "halves": "Paruh pertama {{a}} bpm, paruh kedua {{b}} bpm",
+      "coverage": "Detak jantung terbaca {{percent}} persen dari 20 menit terakhir",
+      "noPace": "Tanpa pace: latihan ini tidak punya kecepatan (treadmill atau tanpa GPS).",
+      "save": "Simpan hasil",
+      "saved": "Hasil disimpan.",
+      "useZones": "Pakai LTHR untuk zona HR",
+      "zonesDone": "Zona HR sekarang memakai LTHR {{lthr}} bpm.",
+      "zonesFailed": "Zona tersimpan di ponsel, tapi jam belum menerimanya."
+    },
+    "problem": {
+      "tooShort": "Latihan ini berhenti sebelum 30 menit dari titik mulai usaha. Geser mulainya atau pilih lari lain.",
+      "hrGaps": "Detak jantung hilang lebih dari 10 persen dari 20 menit terakhir, jadi hasilnya tidak bisa dipercaya. Cek pemasangan jam atau strap.",
+      "drift": "Detak jantung naik atau turun lebih dari 5 persen antara paruh pertama dan kedua: usahamu kurang rata, hasilnya kurang andal.",
+      "paceVaries": "Pace berubah-ubah dari menit ke menit. Lari rata lebih baik untuk pace ambang.",
+      "tooEasy": "Rata-ratanya di bawah 78 persen HR maks. Sepertinya usahanya kurang keras, jadi LTHR bisa terlalu rendah.",
+      "aboveMax": "Rata-ratanya di atas HR maks di aplikasi. HR maks-mu mungkin terlalu rendah; cek di Zona HR."
+    },
+    "card": {
+      "title": "Ambang laktat",
+      "lthr": "LTHR",
+      "pace": "Pace ambang",
+      "fromTest": "Dari tes JoyoFit, {{date}}",
+      "fromWatch": "Dari jam, {{date}}",
+      "other": "{{source}}: {{lthr}} bpm",
+      "otherPace": "{{source}}: {{lthr}} bpm, {{pace}}",
+      "sourceTest": "Tes",
+      "sourceWatch": "Jam",
+      "empty": "Belum ada. Ukur dengan lari 30 menit, bukan dari rekor pribadi.",
+      "open": "Tes ambang laktat",
+      "note": "Jam yang mendukung mengirim nilai ambang laktatnya sendiri; JoyoFit memakai yang terbaru."
+    },
+    "clear": "Hapus hasil tes",
+    "unit": {
+      "bpm": "bpm",
+      "pace": "/km"
     }
   }
 }

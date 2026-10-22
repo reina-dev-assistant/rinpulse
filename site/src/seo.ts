@@ -48,7 +48,7 @@ const STATIC_PAGES = {
     ogTitle: "JoyoFit: Jam-mu. Data-mu. HP-mu.",
     name: "Beranda",
     description:
-      "Pengganti Huawei Health open source: sinkron langkah, tidur, detak jantung, SpO2, dan olahraga dari Huawei Watch Fit 4 Pro (jam lain eksperimen) ke HP Android dan iPhone. Ada pencatat latihan beban yang jalan tanpa jam, Coach, dan roadmap terbuka.",
+      "Pengganti Huawei Health open source: sinkron langkah, tidur, detak jantung, SpO2, dan olahraga dari Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2 (jam lain eksperimen) ke HP Android dan iPhone. Ada pencatat latihan beban yang jalan tanpa jam, Coach, dan roadmap terbuka.",
   },
   [PANDUAN_PATH]: {
     title: "Pakai Huawei Watch Fit 4 Pro Tanpa Huawei Health | Panduan JoyoFit",
@@ -72,7 +72,7 @@ const STATIC_PAGES = {
     title: "Jam Huawei dan Honor yang Didukung JoyoFit, Turunan Gadgetbridge",
     name: "Jam yang didukung",
     description:
-      "Daftar jam Huawei dan Honor di JoyoFit, mengikuti katalog Gadgetbridge: Watch Fit 4 Pro sudah diuji, sisanya eksperimen. Cara mengirim laporan dukungan.",
+      "Daftar jam Huawei dan Honor di JoyoFit, mengikuti katalog Gadgetbridge: Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2 sudah diuji, sisanya eksperimen. Cara mengirim laporan dukungan.",
   },
   [TIMBANGAN_PATH]: {
     title: "Timbangan Bluetooth yang Didukung JoyoFit: Xiaomi, Renpho, Yunmai, dan Lainnya",

@@ -14,9 +14,9 @@ export interface Scores {
 
 /** Strain per day and today's readiness (with recovery when HRV allows) from stored history; Today and the Readiness screen share it. */
 export function computeScores(data: TodayData, availability?: NightHrvAvailability | null): Scores {
-  const { maxHr, strain } = data;
+  const { zones, strain } = data;
   return {
-    maxHr,
+    maxHr: zones.maxHr,
     strain,
     today: strain.find((d) => d.day === data.dayStart) ?? null,
     readiness: readiness({

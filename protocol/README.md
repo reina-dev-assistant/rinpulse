@@ -65,6 +65,7 @@ ProductInfo with their own tag sets. None of this has been tried on a real band 
 | `02` Notifications | `05` | NotificationCapabilities | only asked when `supportsPromptPushMessage` and protocol version 2 (GB default capability byte `0xFF` skips it) |
 | `02` | `02` | NotificationConstraints | content format and maximum content length; asked when `02/01` is supported and protocol version is 2 |
 | `02` | `04` | NotificationState | the watch-side notification switch (`0x81{02:on,03:on}`); sent in init and when forwarding is toggled, if `02/04` is supported |
+| `02` | `0B` | AppSwitches | the per-app switch list, `0x81{0x82{03:app id string, 04:one byte}...}`, both directions; gated by ExpandCapability 161 (Huawei Health 17.0.8.300). Not in Gadgetbridge and not used by the Android app (it filters on the phone). JoyoFit iOS sends it after a test found which id string and which byte the watch takes: UNVERIFIED, `docs/ios.md`, `docs/ios-notification-app-switches.md` |
 | `02` | `01` | NotificationAction | one notification: id, type (`7F` generic, `0F` email), title/sender/text elements, source package, optional key/channel/category/timestamp tags by ExpandCapability |
 | `02` | `06` | NotificationRemoveAction | dismisses one notification on the watch; only when ExpandCapability 94 or 120 is set |
 | `02` | `10` (watch → phone) | NotificationReply | watch replies to a notification; tags: `01` type (1 = SMS, 2 = app notification), `02` encoding (3 = UTF-16, otherwise UTF-8), `03` subId, `04` key, `05` addData, `06` text. JoyoFit handles type 2 only (dispatched via RemoteInput); a ReplyAck (`07`: `FF` success, `7F` failure) is returned |
@@ -163,6 +164,33 @@ country code: GB's `SendCountryCodeRequest` (`1A/0A` AccountRelated, tag `01` co
 170) is off by default in GB and not sent by JoyoFit. (3) A voice-language option on the watch itself (not looked for in the APK); ask the
 user whether the workout settings show one. The watch's `17/0D` "voice play" request (LIVE_WORKOUT_PROTOCOL.md in the Huawei Health notes) is
 answered by Huawei Health's phone-side voice player [INFERENCE], so it is not the watch's own speaker.
+
+## Heart-rate zones (service 0x07 `13` / `21`, P2P `hw.unitedevice.track`; `HeartRateZonesCalc.kt` / `HeartRateZones.swift`)
+
+**What the watch gets.** The zones its workout screen shows: warning switch and limit, five zone limits (lowest bpm of zones 1 to 5), the
+calculation method (`0` maximum-heart-rate percentage, `1` heart-rate reserve) and the resting rate. Which way a watch takes them is what it
+declares (Gadgetbridge `HuaweiState`): ExpandCapability `0x36` ("Track") means P2P, else SupportedCommands `07/21` (extended), else `07/13` (simple),
+else nothing is sent. The connect log prints the three answers (`HR zones: ExpandCapability 0x36 (Track)=..., FitnessData 07/13=..., 07/21=...`).
+
+**FitnessData `07/13` and `07/21`** (`FitnessData.HeartRateZoneConfigPacket`): outer TLV `0x81`; inside, `0x08` warning switch (bool), and with a limit and a
+maximum above 0: `0x09` limit, `0x02..0x06` zone 1 to 5, `0x07` and `0x0B` maximum. `07/21` adds `0x0D..0x11` HRR zone 1 to 5, `0x0A` method and `0x0C`
+resting rate. All values are single bytes.
+
+**P2P `hw.unitedevice.track`** (package `hw.watch.health.p2p`, fingerprint `SystemApp`): on registration a type-2 sub-message with one TLV
+(`HuaweiP2PTrackService.getHRZonesData`), single-byte values, sent in this order. Upright: `0x02..0x06` MHR zones, `0x07` maximum, `0x08` warning switch,
+`0x09` warning limit, `0x0A` current method, `0x0B` maximum, `0x0C` resting, `0x0D..0x11` HRR zones, `0x3F` LTHR, `0x40..0x44` LTHR zones 5 to 1. Sitting
+(riding) `0x12..0x20`, swimming `0x21..0x2F`, other `0x30..0x3E`, each: switch, method, limit, five MHR zones, maximum, resting, five HRR zones. Gadgetbridge
+refuses to send when a value is not 0 to 219 or the zones are not ascending (`isValid`), and so does JoyoFit.
+
+**JoyoFit's choice.** Without a stored configuration, Gadgetbridge's defaults for the profile age (`220 - age`, the postures lowered by 0, 6, 10 and 5 bpm,
+warning on at the maximum). With `HuaweiWear.setHeartRateZones(config)` (Settings > Zona HR, docs/hr-zones.md): the app's own five limits, maximum, resting
+rate and alert go out as they are, the same in all four postures with no correction; the chosen method carries the user's limits and the other method's
+slot, and the upright LTHR set, the defaults for the same maximum and resting rate. On `07/13`, which has no method field, the effective five limits and the
+maximum go into the one array whatever the method. Sent at every connect, after a profile change, and when the setting is saved; stored natively (`WearSettings`
+`heart_rate_zones` / UserDefaults) so a connect without the app's JS still sends it. `getHeartRateZonesStatus()` reports `track`, `extended`, `simple`
+or `none` from the three capability answers above (null while no watch is connected). Unit tests: `HeartRateZonesCalcTest` (exact tag/value pairs for max 190,
+resting 55, limits 95/114/133/152/171), Swift `HealthSensorsTests`. **UNVERIFIED on any watch with edited zones**; the default zones were already sent
+before this and the packet layout is Gadgetbridge's.
 
 ## Sleep files (TruSleep / dictionary)
 
@@ -319,17 +347,30 @@ Sport codes: the workout type of tag 05 is in the watch's own sport space (the t
 a value no Huawei Health code path was seen to send, so whether a watch starts "Strength training" for it is the open question the first
 test on a watch has to answer (log lines `Watch workout: ... answered`, `status after the start`).
 
-**Observed on the Fit 4 Pro (6.1.0.117), 2026-10-21, `adb` probe, plaintext of the encrypted frames.** The watch lists `17/01 04 06 07 0B 0C 12 15 17`
+**Observed on the Fit 4 Pro (6.1.0.117), 2026-10-21 and 22, `adb` probe, plaintext of the encrypted frames.** The watch lists `17/01 04 06 07 0B 0C 12 15 17`
 and `16/01 03` (so Huawei Health's `isSupportExerciseAdvice` 22.1, `isSupportWorkoutExerciseDisplayLink` 23.11, 23.18 and 23.21 are all true, and the
-captured HH log on this watch says `setNewLinkStrategy is true`); ExpandCapability 0, 83, 84, 85, 175, 234 set. JoyoFit's start for strength (`81 32 02 01 01 03 01 01
-05 01 8C 06 04 <t> 87 12 08 04 0 09 04 0 0A 04 0 0B 01 00 0C 04 <t> 0D 01 00 0E 01 00`) has the same length (0x32) and tag order as Huawei's builder. The
+captured HH log on this watch says `setNewLinkStrategy is true`); ExpandCapability 0, 83, 84, 85, 175, 234 set, 335 clear. JoyoFit's start for strength (`81 32 02 01 01 03 01 01
+05 01 8C 06 04 <t> 87 12 08 04 0 09 04 0 0A 04 0 0B 01 00 0C 04 <t> 0D 01 00 0E 01 00`) has the same length (0x32, Huawei's own length formula) and tag order as Huawei's builder. The
 answer was `7F 04 0001E07A` (123002) to **every** `17/01`: start for sport 140, 1 (run), 137, 255, with or without `17/12` open first, with or without
 `22/01` first, kind tag 0/1/2/4, without tags 05, 87 or the optional ones, and stop, pause and resume with no workout. So the refusal does not depend
 on the payload or the sport; the sport-type question above is moot until a start is accepted. `17/03` answered `81 06 02 01 00 03 01 00` (nothing running) before
-and after. At the same time `01/3D` WearStatus answered `01 01 02`, which Huawei Health reads as **not worn** (`etj`: value 2 is false), and Huawei's own
-instructions for starting a workout from Huawei Health say to wear the watch snugly. **Not verified**: whether a worn watch accepts the start (the watch
-was off the wrist for the whole probe and nobody was available to put it on). JoyoFit therefore reads `01/3D` after a refusal, logs it and hands it to JS
-(`worn`), which says "not on your wrist" only when the watch said so.
+and after. **The cause is not known.** The watch's wear state is not known either: Huawei Health reads it with `2E/03` (request `01 00`, answer tag 01, 2 = its "not worn"
+dialog), and nobody has sent that to the watch yet. DeviceConfig `01/3D` answered `01 01 02`, but that is a different command (Huawei Health does not use it for the wear
+state); an earlier note here that it meant "not worn" was wrong. After a refusal JoyoFit now reads `2E/03` once and logs it (`worn` to JS), so the support log of the
+next failed start says. Huawei Health itself treats a non-100000 answer to its `17/01` as "no link" and carries on with a phone-only workout (`fjq.s`); it sends
+`17/12` (open report) only after the `17/01`, so that is not a prerequisite. No other phone-to-watch start route exists in Huawei Health 17.0.8.300: the HiWear P2P
+business types are run plan, course and trajectory files only, and the `37/02` linkage events the phone may send are stop, report-status and restart (ExpandCapability 335,
+clear here).
+
+**Watch-started workout probe (2026-10-22, Fit 4 Pro 6.1.0.117, `adb` probe, plaintext).** The decisive test: Strength training started **on the watch**, then `17/01` sent by the
+phone. `17/03` went from `81 06 02 01 00 03 01 00` (idle) to `81 06 02 01 00 03 01 01` (tag 03 operator 1; no sport or workout-type tag in the answer) with no `17/01` from the phone,
+so the workout was real. 20 s later the probe sent pause, resume and stop, each with JoyoFit's full payload (`81 32 02 01 02 03 01 01 05 01 8C 06 04 <t> 87 12 ... 0C 04 <start> 0D 01 00 0E 01 00`) and
+with the smallest body (`81 06 02 01 <op> 05 01 8C`): **all six got `7F 04 0001E07A` (123002)**. `2E/03` (request `01 00`) answered `01 01 01` (worn; the answer is tag 01 = 1, not 2) and
+`17/15` answered `01 04 00000007`. So the refusal is not about "no workout is running" and not about the wear state: the watch refuses `17/01` from this phone for start, pause, resume and
+stop, with a workout running or not. The most likely reading [INFERENCE]: the `17/01` channel is gated for third-party clients (Huawei Health's binding is not something a
+different app identity gets), and Huawei Health uses the same single `17/01`, so there is no other phone-to-watch route to try. `17/03` also changed on its own while the owner
+handled the watch (`..02 01 01 03 01 03`, `..02 01 00 03 01 01`), so the watch does report a pause/resume state through `17/03`; JoyoFit already reads it (`LiveWorkout`), which is how a watch-started workout is followed.
+No `17/02` notice, no `18/02` GPS request and no `17/11` frames arrived during the probe window.
 
 Huawei's own text also says a workout started from Huawei Health and synced to the watch is stored **only in Huawei Health**: the watch displays and supplies heart
 rate, it may not keep a workout of its own. So even an accepted start may give no watch workout to join with `link.ts`; check after the first accepted start.

@@ -515,6 +515,7 @@ internal class WearLink(
         pinnedLanguage = settings.watchLanguage,
         phoneLocale = LanguageSender.phoneLocale(appContext),
         deviceType = connection.deviceType,
+        heartRateZones = settings.heartRateZones,
       ).run()
 
       val name = bondedName(connection.device) ?: init.deviceName ?: address

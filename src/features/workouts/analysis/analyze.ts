@@ -1,4 +1,5 @@
 import type { WorkoutRow } from '@/db/queries';
+import type { HrZones } from '@/features/hrzones/zones';
 import { workoutStrain } from '@/features/today/strain';
 import { splitWorkout } from '@/features/workouts/substrate';
 import type { WorkoutSummary } from '@/features/workouts/summary';
@@ -45,9 +46,8 @@ export interface AnalyzeInput {
   workout: WorkoutRow;
   summary: WorkoutSummary;
   points: readonly AnalysisPoint[];
-  maxHr: number;
-  /** Where `maxHr` comes from; 'age' unless the user entered a value. */
-  maxHrSource?: 'age' | 'setting';
+  /** The person's heart-rate zones (`@/features/hrzones`): the zone limits, and where the maximum comes from. */
+  zones: HrZones;
   /** Per-minute samples of the workout's day, oldest first, for `effort.addedToDay`. */
   daySamples: readonly StepSample[];
   history: AnalysisHistory;
@@ -212,7 +212,7 @@ export function analyzeWorkout(input: AnalyzeInput, options: AnalyzeOptions): Wo
   });
 
   const hrPoints = points.filter((p) => p.hr !== null && p.hr >= MIN_BPM && p.hr <= MAX_BPM);
-  const strain = workoutStrain(hrPoints, input.maxHr);
+  const strain = workoutStrain(hrPoints, input.zones);
 
   const profile = grid.altRaw ? elevationProfile(grid.altRaw, grid.stepSec) : null;
   const splitGrid: SplitGrid = {
@@ -236,7 +236,7 @@ export function analyzeWorkout(input: AnalyzeInput, options: AnalyzeOptions): Wo
   const threshold = foot && grid.pace ? thresholdPaceFromEfforts(efforts, history.efforts) : null;
 
   const distanceM = analysisDistanceM(workout, grid);
-  const split = options.includeHr && workout.calories > 0 ? splitWorkout(workout.calories, hrPoints, input.maxHr) : null;
+  const split = options.includeHr && workout.calories > 0 ? splitWorkout(workout.calories, hrPoints, input.zones) : null;
   const e = elevationSummary(grid.alt, profile, summary);
   const similar = options.includeComparison
     ? selectSimilar(
@@ -258,10 +258,10 @@ export function analyzeWorkout(input: AnalyzeInput, options: AnalyzeOptions): Wo
     series: buildSeries(grid, options),
     splits,
     laps: buildLaps(summary.laps, workout.start, splitGrid, hasPace(kind), options.includeHr),
-    hrZones: options.includeHr && strain ? hrZones(strain, input.maxHr, input.maxHrSource ?? 'age') : null,
+    hrZones: options.includeHr && strain ? hrZones(strain, input.zones) : null,
     paceZones: threshold !== null && grid.pace ? paceZones(grid.pace, grid.stepSec, grid.elapsedSec, threshold) : null,
     bestEfforts: efforts,
-    effort: options.includeHr && strain ? buildEffort(strain, workout, input.daySamples, input.maxHr) : null,
+    effort: options.includeHr && strain ? buildEffort(strain, workout, input.daySamples, input.zones) : null,
     load: options.includeHr && strain ? buildLoad(strain.trimp, workout.start, history.trimps, summary) : null,
     calories:
       workout.calories > 0

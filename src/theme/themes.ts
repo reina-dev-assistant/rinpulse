@@ -26,8 +26,10 @@
  * - Rose Gold: warm near-black, blush text, a rose-gold primary and a copper-to-rose watch panel, DM Serif Display titles. Always dark.
  * - Strawberry Milk: milky pink and cream cards, strawberry red, the roundest shapes. Always light.
  * - Matcha Latte: cream-green canvas, matcha primary, Quicksand text, Space Grotesk numerals. Always light.
+ * - Titik: off-white and black with greys, one red for what is live, thin outlines instead of filled cards, dotted rings, Doto dot-matrix figures. Light and dark follow the phone.
  *
  * Decorations (`decoration`): Sogan draws a kawung batik, Sakura petals, Forest leaves, Neon track lanes behind the Today header.
+ * Titik also draws a dot grid, and its figures and titles are Doto, a dot-matrix face.
  *
  * Contrast (enforced in `themes.test.ts` for every palette of every theme): every `*Text` on its
  * `*Soft` and on `card` is >= 4.5; base data colors on `card` are >= 3 (non-text 3:1); `mutedForeground`
@@ -139,6 +141,7 @@ export const FONT_FAMILY_NAMES = [
   'Quicksand_600SemiBold',
   'Quicksand_700Bold',
   'DMSerifDisplay_400Regular',
+  'Doto_900Black',
 ] as const;
 
 export type FontFamilyName = (typeof FONT_FAMILY_NAMES)[number];
@@ -181,13 +184,14 @@ export type ThemeId =
   | 'peach'
   | 'rosegold'
   | 'strawberry'
-  | 'matcha';
+  | 'matcha'
+  | 'titik';
 
 /**
  * A motif drawn behind the top-right of the Today header (`decorations.ts` draws it, `ThemeDecoration` renders it). It is faint,
  * scrolls with the header, fades out toward the content and never sits under the watch hero panel.
  */
-export type DecorationId = 'kawung' | 'petals' | 'leaves' | 'lanes';
+export type DecorationId = 'kawung' | 'petals' | 'leaves' | 'lanes' | 'dots';
 
 export interface Theme {
   id: ThemeId;
@@ -199,6 +203,10 @@ export interface Theme {
   type: Typography;
   /** Optional header motif; most themes have none. */
   decoration?: DecorationId;
+  /** Cards, tiles and grouped lists draw a thin outline (`hairline`) around a canvas-colored fill instead of a filled block. */
+  outlined?: true;
+  /** Progress rings are drawn as a ring of dots instead of a continuous stroke. */
+  dottedRings?: true;
 }
 
 const JAKARTA = {
@@ -1328,6 +1336,100 @@ const strawberryLight: Colors = {
   heroAccent: '#FFC4A8',
 };
 
+/**
+ * Titik: off-white and near-black with greys for everything, one red (the primary, the heart and the awake stage) for what is live.
+ * Cards are the canvas with a thin outline. Light and dark follow the phone.
+ */
+const titikLight: Colors = {
+  background: '#F2F2F0',
+  card: '#F8F8F6',
+  foreground: '#0A0A0A',
+  muted: '#E4E4E1',
+  mutedForeground: '#55555A',
+  hairline: 'rgba(10,10,10,0.3)',
+  primary: '#D71921',
+  primaryForeground: '#FFFFFF',
+  destructive: '#BF1119',
+  destructiveSoft: '#F0DCDC',
+  warning: '#4A4A4A',
+  switchOff: '#B5B5B2',
+  steps: '#0A0A0A',
+  stepsSoft: '#E4E4E1',
+  stepsText: '#0A0A0A',
+  heart: '#D71921',
+  heartSoft: '#F0DCDC',
+  heartText: '#BF1119',
+  sleep: '#4A4A4A',
+  sleepSoft: '#E4E4E1',
+  sleepText: '#4A4A4A',
+  workouts: '#7A7A7A',
+  workoutsSoft: '#E4E4E1',
+  workoutsText: '#5A5A5A',
+  link: '#2A2A2A',
+  linkSoft: '#E4E4E1',
+  linkText: '#2A2A2A',
+  stageDeep: '#1A1A1A',
+  stageRem: '#6A6A6A',
+  stageLight: '#A8A8A8',
+  stageAwake: '#D71921',
+  hero: '#0A0A0A',
+  heroEnd: '#0A0A0A',
+  heroForeground: '#F5F5F5',
+  heroMuted: '#ABABAB',
+  heroTrack: '#333333',
+  heroDivider: 'rgba(245,245,245,0.16)',
+  heroSteps: '#F5F5F5',
+  heroHeart: '#FF4A52',
+  heroLink: '#D0D0D0',
+  heroWarn: '#BDBDBD',
+  heroAccent: '#FF3B43',
+};
+
+const titikDark: Colors = {
+  background: '#000000',
+  card: '#0B0B0B',
+  foreground: '#F5F5F5',
+  muted: '#1C1C1C',
+  mutedForeground: '#9A9A9A',
+  hairline: 'rgba(245,245,245,0.28)',
+  primary: '#E02A31',
+  primaryForeground: '#FFFFFF',
+  destructive: '#FF5A60',
+  destructiveSoft: '#2E1214',
+  warning: '#BDBDBD',
+  switchOff: '#4A4A4A',
+  steps: '#F5F5F5',
+  stepsSoft: '#1C1C1C',
+  stepsText: '#F5F5F5',
+  heart: '#FF4D55',
+  heartSoft: '#2E1214',
+  heartText: '#FF5A60',
+  sleep: '#B8B8B8',
+  sleepSoft: '#1C1C1C',
+  sleepText: '#B8B8B8',
+  workouts: '#8C8C8C',
+  workoutsSoft: '#1C1C1C',
+  workoutsText: '#9A9A9A',
+  link: '#D8D8D8',
+  linkSoft: '#1C1C1C',
+  linkText: '#D8D8D8',
+  stageDeep: '#8A8A8A',
+  stageRem: '#D0D0D0',
+  stageLight: '#555555',
+  stageAwake: '#FF4D55',
+  hero: '#111111',
+  heroEnd: '#111111',
+  heroForeground: '#F5F5F5',
+  heroMuted: '#ABABAB',
+  heroTrack: '#3A3A3A',
+  heroDivider: 'rgba(245,245,245,0.16)',
+  heroSteps: '#F5F5F5',
+  heroHeart: '#FF4A52',
+  heroLink: '#D0D0D0',
+  heroWarn: '#BDBDBD',
+  heroAccent: '#FF3B43',
+};
+
 /** Matcha Latte: cream-green canvas, cream cards and a matcha-green primary. Always light. */
 const matchaLight: Colors = {
   background: '#F1F4E4',
@@ -1684,6 +1786,25 @@ const matchaType: Typography = {
   title: { size: 28, line: 34, tracking: -0.4 },
 };
 
+/** Space Grotesk text; Doto (a dot-matrix display face) for every figure and title. Doto is monospaced (0.6 em a glyph) and its dots need size: the smallest numeral is 20. */
+const titikType: Typography = {
+  fonts: {
+    regular: SPACE_GROTESK.w500,
+    medium: SPACE_GROTESK.w600,
+    bold: SPACE_GROTESK.w700,
+    heavy: SPACE_GROTESK.w700,
+    numeral: 'Doto_900Black',
+    headline: 'Doto_900Black',
+  },
+  numeral: {
+    hero: { size: 56, line: 62, tracking: -1, unit: 15 },
+    lg: { size: 34, line: 40, tracking: -0.5, unit: 14 },
+    md: { size: 26, line: 32, tracking: -0.4, unit: 13 },
+    sm: { size: 20, line: 26, tracking: -0.2, unit: 12 },
+  },
+  title: { size: 28, line: 34, tracking: -0.4 },
+};
+
 export const THEMES: readonly Theme[] = [
   {
     id: 'classic',
@@ -1807,6 +1928,16 @@ export const THEMES: readonly Theme[] = [
     palettes: { light: matchaLight, dark: matchaLight },
     radius: { card: 18, tile: 14, input: 10, control: 999, bar: 24 },
     type: matchaType,
+  },
+  {
+    id: 'titik',
+    appearance: 'system',
+    palettes: { light: titikLight, dark: titikDark },
+    radius: { card: 24, tile: 16, input: 14, control: 999, bar: 30 },
+    type: titikType,
+    decoration: 'dots',
+    outlined: true,
+    dottedRings: true,
   },
 ];
 

@@ -12,6 +12,7 @@
  * - petals: cherry blossoms, five notched petals around a center, with a few loose petals drifting down.
  * - leaves: a branch entering from the top-right corner with pointed leaves along it, each with a midrib.
  * - lanes: the bend of a running track, concentric lane lines around the corner and one line across them.
+ * - dots: a dot grid, the dot-matrix of a display, in one grey (`a`; `b` is unused, red stays out of the header).
  */
 import type { Colors, DecorationId } from './themes';
 
@@ -25,6 +26,7 @@ export const DECORATION_COLORS: Record<DecorationId, { a: keyof Colors; b: keyof
   petals: { a: 'primary', b: 'workouts' },
   leaves: { a: 'primary', b: 'link' },
   lanes: { a: 'primary', b: 'steps' },
+  dots: { a: 'mutedForeground', b: 'primary' },
 };
 
 export type DecorationTone = 'a' | 'b';
@@ -260,11 +262,27 @@ function lanes(box: Collector, width: number, height: number, s: number): void {
   }
 }
 
+function dots(box: Collector, width: number, height: number, s: number): void {
+  const pitch = 13 * s;
+  const radius = 1.25 * s;
+  const cols = Math.ceil(width / pitch);
+  const rows = Math.ceil(height / pitch);
+  for (let col = 0; col <= cols; col++) {
+    for (let row = 0; row <= rows; row++) {
+      const x = width - col * pitch - pitch / 2;
+      const y = row * pitch + pitch / 2;
+      const f = fade(x, y, width, height);
+      box.add('a', 'fill', 0, 0.5 * f, circle(x, y, radius));
+    }
+  }
+}
+
 const DRAW: Record<DecorationId, (box: Collector, width: number, height: number, scale: number) => void> = {
   kawung,
   petals,
   leaves,
   lanes,
+  dots,
 };
 
 /**

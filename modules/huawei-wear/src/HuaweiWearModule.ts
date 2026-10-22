@@ -8,6 +8,8 @@ import type {
   HealthConnectStatus,
   HealthSensorsStatus,
   HealthSensorsUpdate,
+  HeartRateZonesConfig,
+  HeartRateZonesStatus,
   HrvReading,
   HuaweiWearModuleEvents,
   LinkState,
@@ -48,6 +50,7 @@ import type { CoursesStatus, HealthyLivingStatus, RunningCourse, RunningCoursePu
 import type { QuickRepliesStatus } from './HuaweiWearQuickReplies.types';
 import type { RoutePushResult, RoutesStatus, WatchRoute } from './HuaweiWearRoutes.types';
 import type { HuaweiImportSummary } from './HuaweiWearImport.types';
+import type { NotificationFilterStatus, NotificationFilterTest } from './HuaweiWearNotifications.types';
 import type { FamilyConfig, FamilyUploadResult, FamilyUploadStatus } from './HuaweiWearFamily.types';
 
 declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
@@ -133,6 +136,11 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
    */
   importHuaweiExport(uri: string, password: string): Promise<HuaweiImportSummary>;
   /**
+   * Android only (not defined on iOS): the name the sender gave the file at `uri` (`HUAWEI_HEALTH_20261022112019.zip`), read from the
+   * provider behind a `content://` URI whose own last segment is an opaque id. Null when the provider does not say.
+   */
+  huaweiExportDisplayName(uri: string): Promise<string | null>;
+  /**
    * iOS only (not defined on Android): the one-time import of the history Huawei Health wrote into Apple Health. Asks for READ
    * permission for steps, heart rate, resting heart rate, blood oxygen, sleep, workouts and active energy when called (the system sheet
    * shows the first time only), then reads window by window, oldest first, skipping samples JoyoFit wrote itself. Rows carry
@@ -190,9 +198,37 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
   /** The once-a-day "Morning summary" notification, posted after the first sync that stored last night's sleep. Off by default. */
   getMorningSummaryEnabled(): boolean;
   setMorningSummaryEnabled(enabled: boolean): Promise<void>;
-  /** Launcher apps with their forwarding state. Apps without an explicit choice are on unless they are system apps. */
+  /**
+   * Android: launcher apps with their forwarding state. Apps without an explicit choice are on unless they are system apps.
+   * iOS: the fixed list the watch can filter (`packageName` is the iOS bundle id, `other` the last row), all on unless turned off here.
+   */
   getNotificationApps(): Promise<NotificationApp[]>;
+  /**
+   * Android: switches forwarding of one app. iOS: stores the switch and sends the whole list to the watch (02/0B) when it is connected, or at
+   * the next connect. Rejects with ERR_UNSUPPORTED until a filter test proved how the watch takes the list (`getNotificationFilter().encoding`),
+   * with ERR_BUSY while a test runs.
+   */
   setNotificationAppEnabled(packageName: string, enabled: boolean): Promise<void>;
+  /**
+   * iOS only (not defined on Android, and not in builds from before the per-app list): the state of the per-app notification switches, see
+   * `NotificationFilterStatus`. The watch filters on the app id iOS gives it, but which id string it matches and which byte means "off" are not
+   * known for an iPhone, so the switches stay disabled until `startNotificationFilterTest` found out on this watch.
+   */
+  getNotificationFilter(): NotificationFilterStatus;
+  /**
+   * iOS only: starts the filter test for the app with bundle id `packageName` (not `other`): switches that one app off with the first candidate
+   * encoding and resolves with the step to show (`phase: 'probe'`). Needs a connected watch that lists ExpandCapability 161 and iOS sharing
+   * notifications with it; rejects ERR_NOT_CONNECTED, ERR_UNSUPPORTED, ERR_BUSY or ERR_INVALID_ARGUMENT otherwise. The probe is one entry for that
+   * app, never the whole list. If the test never ends (link lost, app killed) the app is switched back at the next connect.
+   */
+  startNotificationFilterTest(packageName: string): Promise<NotificationFilterTest>;
+  /**
+   * iOS only: the person's answer to the current step, `shown` being whether a message from the app under test still reached the watch. Resolves
+   * with the next step: the next candidate, the confirmation (the app was switched back) or the end (`phase: 'finished'`, the encoding stored on a winner).
+   */
+  answerNotificationFilterTest(shown: boolean): Promise<NotificationFilterTest>;
+  /** iOS only: ends a running test and switches the app back (leaving the screen; the native side also does it when the app goes to the background). */
+  cancelNotificationFilterTest(): Promise<void>;
 
   /** The stored profile, or null if the user never saved one (nothing is sent to the watch then). */
   getUserProfile(): UserProfile | null;
@@ -209,6 +245,17 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
    * this function lack it: check `typeof HuaweiWear.setWatchLanguage === 'function'` first.
    */
   setWatchLanguage(language: string | null): Promise<boolean>;
+
+  /**
+   * The heart-rate zones for the watch's workout screen. Stores `config` (null: back to Gadgetbridge's defaults for the profile's age, what
+   * was sent before this function) and, when a watch is connected, sends it now; it is sent again at every connect and when the profile's
+   * age changes. A set that applies to all four postures (standing, riding, swimming, other). Resolves true when the connected watch took it,
+   * false when stored only (not connected, or a watch that takes no zones). Rejects with ERR_INVALID_ARGUMENT for values outside the ranges
+   * of `HeartRateZonesConfig`. Builds from before this function lack it: check `hasNative('setHeartRateZones')` (`@/wear`) first.
+   */
+  setHeartRateZones(config: HeartRateZonesConfig | null): Promise<boolean>;
+  /** Whether a configuration is stored and how the connected watch would take it. */
+  getHeartRateZonesStatus(): HeartRateZonesStatus;
 
   /** The sensor switches as stored, plus what the connected watch supports (`supported` is null when none is connected). */
   getHealthSensors(): HealthSensorsStatus;

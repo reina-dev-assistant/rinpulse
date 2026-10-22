@@ -39,7 +39,7 @@ export const panduanAwal: Post = {
     },
     {
       kind: "note",
-      text: "Cuma Huawei Watch Fit 4 Pro yang sudah diuji. Jam Huawei dan Honor lain masih eksperimen, lihat [daftar jam](/jam).",
+      text: "Yang sudah diuji: Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2. Jam Huawei dan Honor lain masih eksperimen, lihat [daftar jam](/jam).",
     },
   ],
   more: [

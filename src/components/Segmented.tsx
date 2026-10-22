@@ -92,7 +92,9 @@ export function Segmented<T extends string | number>({
             style={[styles.option, { borderRadius: radius.control }]}>
             <Animated.Text
               style={[styles.label, { color: selectedIndex < 0 ? colors.foreground : labelColor, fontFamily: fonts.medium }]}
-              numberOfLines={1}>
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}>
               {option.label}
             </Animated.Text>
           </PressableScale>

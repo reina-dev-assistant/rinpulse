@@ -227,6 +227,36 @@ export interface UserProfile {
   dailyStepGoal: number;
 }
 
+/** How the connected watch takes heart-rate zones: `track` over P2P (ExpandCapability 0x36), `extended` FitnessData 07/21, `simple` 07/13, `none` for a watch that takes neither. */
+export type HeartRateZonesRoute = 'track' | 'extended' | 'simple' | 'none';
+
+/**
+ * The heart-rate zones JoyoFit sends to the watch for its workout screen (Huawei Health's "Heart rate zones": calculation method, maximum
+ * heart rate, resting heart rate, the five zone limits and the heart-rate limit alert). The app computes the zones; the watch gets the
+ * result as it is, so both show the same numbers.
+ */
+export interface HeartRateZonesConfig {
+  /** `max`: percentage of maximum heart rate (Huawei code 0); `hrr`: percentage of heart rate reserve (Huawei code 1). Decides which set the watch uses. */
+  method: 'max' | 'hrr';
+  /** 100..219 bpm. */
+  maxHr: number;
+  /** 30..110 bpm. */
+  restingHr: number;
+  /** The lowest bpm of zones 1 to 5, five whole numbers, strictly rising, each at least 30 and below `maxHr`. */
+  zones: number[];
+  /** The watch's heart-rate limit alert during a workout. */
+  warningEnabled: boolean;
+  /** The bpm that raises the alert, 100..219. */
+  warningLimit: number;
+}
+
+/** What the native module holds and how the connected watch takes zones. `via` is null while no watch is connected. */
+export interface HeartRateZonesStatus {
+  /** True when a configuration was stored with `setHeartRateZones`; false means the defaults for the profile's age are sent. */
+  configured: boolean;
+  via: HeartRateZonesRoute | null;
+}
+
 export type HealthConnectAvailability = 'available' | 'update-required' | 'unavailable';
 
 /**

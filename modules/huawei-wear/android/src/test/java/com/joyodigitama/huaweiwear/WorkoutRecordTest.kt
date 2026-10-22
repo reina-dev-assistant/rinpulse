@@ -60,6 +60,12 @@ class WorkoutRecordTest {
   }
 
   @Test
+  fun theWatchsLactateThresholdComesWithTheTotals() {
+    assertEquals("lthrHr", Workout.huaweiIdToKey[300010035])
+    assertEquals("lthrPace", Workout.huaweiIdToKey[300010036])
+  }
+
+  @Test
   fun heartRateMarkersAreNotReadings() {
     assertNull(WorkoutBuilder.validHeartRate(0))
     assertNull(WorkoutBuilder.validHeartRate(-1))

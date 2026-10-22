@@ -1,11 +1,9 @@
-import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Details } from '@/components/Details';
 import { CountUpText, FadeIn } from '@/components/motion';
-import { NavRow } from '@/components/NavRow';
 import { Ring } from '@/components/Ring';
 import { Card } from '@/components/Screen';
 import { Skeleton } from '@/components/States';
@@ -23,7 +21,7 @@ import { spacing, useColors } from '@/theme';
 const SIZE = 92;
 const STROKE = 8;
 
-/** Today card: Energi Tubuh, recovery time and the sleep tonight needs. The way into Kebugaran is `FitnessLinkCard`. */
+/** Today card: Energi Tubuh, recovery time and the sleep tonight needs. The way into Kebugaran is `IntensityWeekCard`. */
 export function FitnessTodayCards({ data, availability }: { data: FitnessData | null; availability: NightHrvAvailability | null }) {
   const { t } = useTranslation('health');
   const locale = useLocale();
@@ -115,17 +113,6 @@ export function FitnessTodayCards({ data, availability }: { data: FitnessData | 
         </Details>
       </Card>
     </FadeIn>
-  );
-}
-
-/** The way into the Kebugaran screen: a card of its own, so it can sit with the secondary cards of Today. */
-export function FitnessLinkCard() {
-  const { t } = useTranslation('health');
-  const router = useRouter();
-  return (
-    <Card>
-      <NavRow icon="analytics" tint="link" title={t('fitness.today.navTitle')} subtitle={t('fitness.today.navSubtitle')} onPress={() => router.push('/fitness')} />
-    </Card>
   );
 }
 

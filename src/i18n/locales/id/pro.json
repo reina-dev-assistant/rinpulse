@@ -6,8 +6,8 @@
     "managed": "Pro diaktifkan di aplikasi JoyoRogo, dengan akun yang sama.",
     "openFailed": "Tautannya tidak bisa dibuka. Cari JoyoRogo di toko aplikasi.",
     "moment": {
-      "coach-chat": "Tanya coach soal latihan dan tidurmu, dijawab dari data jam kamu. Chat ini bagian dari JoyoRogo Pro.",
-      "coach": "Saran latihan harian, rencana lari dan latihan kekuatan, dan chat Tanya coach, semuanya dari data jam kamu. Rencanamu tersimpan di akun JoyoRogo.",
+      "coach-chat": "Joyo AI dengan mesin JoyoRogo menjawab soal latihan dan tidurmu dari data jam kamu. Mesin ini bagian dari JoyoRogo Pro; kunci API sendiri tetap gratis.",
+      "coach": "Saran latihan harian, rencana lari dan latihan kekuatan, dan chat Joyo AI, semuanya dari data jam kamu. Rencanamu tersimpan di akun JoyoRogo.",
       "coach-today": "Dapat saran latihan untuk hari ini dari data jam kamu, plus rencana lari dan latihan kekuatan.",
       "cloud": "Cadangkan setiap latihan ke cloud, lengkap dengan rute dan analisisnya, lalu pulihkan di HP baru. Sekarang latihanmu hanya ada di ponsel ini.",
       "workout": "Lihat grafik detak jantung dan rute latihan orang lain. Punyamu sendiri selalu bisa dilihat gratis, dan membagikannya juga gratis.",

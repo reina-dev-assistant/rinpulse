@@ -6,7 +6,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiPacket
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.HuaweiTLV
-import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.DeviceConfig
 
 /**
  * A workout started from the phone: Huawei Health's "phone-started linkage" over the legacy workout service. Reconstructed from Huawei
@@ -117,10 +116,20 @@ internal object WatchWorkoutWire {
    */
   const val ERR_FAILED = 123_002
 
-  /** DeviceConfig `01/3D` WearStatus answer, tag 01: 2 is "not worn" (Huawei Health `etj`: `wearStatus == 2` is false), anything else is worn. */
+  /** Service 0x2E command 0x03, Huawei Health's wear state query (`mrs`: service 46, command 3, request `01 00`; listed by the Fit 4 Pro). */
+  const val WEAR_SERVICE = 0x2E
+  const val WEAR_STATUS = 0x03
+
+  /**
+   * Tag 01 of the `2E/03` answer: 2 is "not worn" (Huawei Health shows its "not worn" dialog for it, `RateControlCourseDetailFragment` / `etj`), anything
+   * else is worn. Never captured on a watch: JoyoFit has not yet seen this answer. Not the same as DeviceConfig `01/3D`, whose answer `01 01 02` on the
+   * Fit 4 Pro is something else (Huawei Health does not read the wear state from it).
+   */
   const val WEAR_NOT_WORN = 2
 
-  /** The wear state in a `01/3D` answer: false not worn, true worn, null when the answer has no state. */
+  fun wearRequest(params: HuaweiPacket.ParamsProvider): HuaweiPacket = RawPacket(params, WEAR_SERVICE, WEAR_STATUS, HuaweiTLV().put(0x01))
+
+  /** The wear state in a `2E/03` answer: false not worn, true worn, null when the answer has no state. */
   fun wornFrom(tlv: HuaweiTLV?): Boolean? {
     val state = tlv?.getBytes(0x01, null)?.firstOrNull()?.toInt() ?: return null
     return state != WEAR_NOT_WORN
@@ -320,16 +329,19 @@ internal class WatchWorkoutControl(
     }
   }
 
-  /** `01/3D` WearStatus, asked after a refusal so the support log says whether the watch was on the wrist. Null without an answer. */
-  private suspend fun readWorn(session: HuaweiSession): Boolean? = try {
-    val tlv = session.request(DeviceConfig.WearStatus.Request(session.params), REQUEST_MS, "wear status").getTlv()
-    log("Watch workout: wear status answer ${WatchWorkoutWire.plain(tlv)}")
-    WatchWorkoutWire.wornFrom(tlv)
-  } catch (e: CancellationException) {
-    throw e
-  } catch (e: Exception) {
-    log("Watch workout: wear status not read: ${e.message}")
-    null
+  /** `2E/03` wear state, asked after a refusal so the support log says whether the watch was on the wrist. Null when the watch does not list it or did not say. */
+  private suspend fun readWorn(session: HuaweiSession): Boolean? {
+    if (!DeviceCaps.supports(WatchWorkoutWire.WEAR_SERVICE, WatchWorkoutWire.WEAR_STATUS)) return null
+    return try {
+      val tlv = session.request(WatchWorkoutWire.wearRequest(session.params), REQUEST_MS, "wear status").getTlv()
+      log("Watch workout: wear status 2E/03 answer ${WatchWorkoutWire.plain(tlv)}")
+      WatchWorkoutWire.wornFrom(tlv)
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: Exception) {
+      log("Watch workout: wear status not read: ${e.message}")
+      null
+    }
   }
 
   /** `17/03` once, a moment after a start: true when the watch reports a running workout, false when it reports none, null without an answer. */

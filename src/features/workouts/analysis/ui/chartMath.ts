@@ -304,8 +304,9 @@ export function hrGradientStops(bounds: readonly number[], colors: readonly stri
   const span = domain.max - domain.min || 1;
   const offset = (v: number) => clamp((domain.max - v) / span, 0, 1);
   const stops: { offset: number; color: string }[] = [];
-  for (let zone = 4; zone >= 0; zone--) {
-    const start = zone === 4 ? 0 : offset(bounds[zone + 1]!);
+  const last = bounds.length - 2;
+  for (let zone = last; zone >= 0; zone--) {
+    const start = zone === last ? 0 : offset(bounds[zone + 1]!);
     const end = zone === 0 ? 1 : offset(bounds[zone]!);
     const color = colors[zone]!;
     stops.push({ offset: start, color }, { offset: end, color });

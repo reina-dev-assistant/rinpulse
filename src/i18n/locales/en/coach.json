@@ -385,23 +385,24 @@
       "subtitle": "{{n}} exercises with steps and common mistakes"
     },
     "chat": {
-      "title": "Ask coach",
-      "subtitle": "Ask about your training, recovery and plan (Pro)"
+      "title": "Joyo AI",
+      "subtitle": "Ask about sleep, recovery, training and food. Use your own key or JoyoRogo Pro"
     }
   },
   "chat": {
     "emptyTitle": "Ask anything about your training",
-    "emptyBody": "Coach reads your watch data, your plan and your food log in JoyoRogo. It is not a doctor: for pain or injury, see a professional.",
+    "emptyBody": "Joyo AI answers from your watch data, your plan and your notes. It is not a doctor: for pain or injury, see a professional.",
     "suggest": {
       "q1": "What is the right workout for today?",
       "q2": "Why is my suggestion what it is today?",
-      "q3": "Is my food enough for training?"
+      "q3": "Is my food enough for training?",
+      "q4": "Why am I tired?",
+      "q5": "Debrief my last workout",
+      "q6": "Review my week"
     },
     "placeholder": "Write your question",
     "send": "Send",
-    "clear": "Clear chat",
-    "thinking": "Coach is writing...",
-    "usage": "Messages today: {{used}} of {{cap}}",
+    "thinking": "Joyo AI is writing...",
     "capReached": "Today's message limit is reached. Try again tomorrow.",
     "error": "The message was not sent: {{message}}",
     "flagged": "If the pain or symptoms continue, stop training and see a doctor or physiotherapist.",

@@ -16,13 +16,17 @@ interface StatTileProps {
 
 /** Soft-tinted tile for one number: chip, label, big value with a small unit. */
 export function StatTile({ icon, tint, label, value, unit, sub }: StatTileProps) {
-  const { colors, radius } = useTheme();
+  const { theme, colors, radius } = useTheme();
   const scheme = tintColors(colors, tint);
   return (
     <View
       accessible
       accessibilityLabel={`${label}: ${value}${unit ? ` ${unit}` : ''}`}
-      style={[styles.tile, { backgroundColor: scheme.soft, borderRadius: radius.tile }]}>
+      style={[
+        styles.tile,
+        { backgroundColor: scheme.soft, borderRadius: radius.tile },
+        theme.outlined ? { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline } : null,
+      ]}>
       <View style={styles.head}>
         <IconChip icon={icon} tint={tint} size="sm" background={colors.card} />
         <AppText variant="label" color={scheme.text} numberOfLines={1} style={styles.label}>

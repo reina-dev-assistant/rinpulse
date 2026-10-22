@@ -2,6 +2,7 @@ package com.joyodigitama.huaweiwear
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -77,6 +78,22 @@ internal class OpenedHuaweiExport(val source: Zip4jExportSource, private val rel
 /** Turns what the file picker returns into a [Zip4jExportSource]. */
 internal object HuaweiExportFiles {
   private const val COPY_NAME = "huawei-export-import.zip"
+
+  /**
+   * The name the sender gave the file at [uriString]: the provider's `DISPLAY_NAME` for a `content://` URI (whose own last
+   * segment is an opaque id such as `1ec426fd-...`), the file name for a `file://` URL or path. Null when it cannot be told.
+   */
+  fun displayName(context: Context, uriString: String): String? {
+    val uri = Uri.parse(uriString)
+    if (uri.scheme == null || uri.scheme == "file") return File(uri.path ?: uriString).name.ifEmpty { null }
+    return try {
+      context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+        if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getString(0).ifEmpty { null } else null
+      }
+    } catch (e: Exception) {
+      null
+    }
+  }
 
   /**
    * [uriString] is a `content://` URI from the system file picker or a `file://` URL / path. A content URI backed by a

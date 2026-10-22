@@ -1,6 +1,7 @@
 // Port of HeartRateZonesCalc.kt and HeartRateZonesSync.kt (GB HuaweiHeartRateZones, HuaweiHeartRateZonesSpec, HeartRateZones*, the TLV of
 // HuaweiP2PTrackService.getHRZonesData and SendHeartRateZonesConfig). Without a zone configuration the watch's workout screen shows the heart
-// rate but no zone, so JoyoFit sends GB's default zones for the profile age. Only GB's defaults are ported (no user-edited zones).
+// rate but no zone, so JoyoFit sends GB's default zones for the profile age, or the zones the user configured in the app (`UserZones`, one set
+// for all four postures, no posture correction).
 import Foundation
 
 public enum HeartRateZonesCalc {
@@ -84,6 +85,58 @@ public enum HeartRateZonesCalc {
 
     public static func checkValue(_ v: Int) -> Bool { v >= 0 && v < maximumHeartRate }
 
+    /// The zones the user configured in the app (`HeartRateZonesConfig` in HuaweiWear.types.ts): `method` is `.mhr` (max) or `.hrr`.
+    public struct UserZones: Equatable, Sendable {
+        public static let maxHrRange = 100...219
+        public static let restingHrRange = 30...110
+        public static let warningLimitRange = 100...219
+        public static let zoneCount = 5
+        public static let minZone = 30
+
+        public var method: Method
+        public var maxHr: Int
+        public var restingHr: Int
+        /// The lowest bpm of zones 1 to 5.
+        public var zones: [Int]
+        public var warningEnabled: Bool
+        public var warningLimit: Int
+
+        public init(method: Method, maxHr: Int, restingHr: Int, zones: [Int], warningEnabled: Bool, warningLimit: Int) {
+            self.method = method
+            self.maxHr = maxHr
+            self.restingHr = restingHr
+            self.zones = zones
+            self.warningEnabled = warningEnabled
+            self.warningLimit = warningLimit
+        }
+
+        /// The message for the first value outside its range, nil when the configuration is usable.
+        public func validationError() -> String? {
+            if method != .mhr && method != .hrr { return "Heart-rate zone method must be max or hrr" }
+            if !Self.maxHrRange.contains(maxHr) { return "Maximum heart rate must be \(Self.maxHrRange.lowerBound) to \(Self.maxHrRange.upperBound) bpm" }
+            if !Self.restingHrRange.contains(restingHr) {
+                return "Resting heart rate must be \(Self.restingHrRange.lowerBound) to \(Self.restingHrRange.upperBound) bpm"
+            }
+            if restingHr >= maxHr { return "Resting heart rate must be below the maximum heart rate" }
+            if zones.count != Self.zoneCount { return "Heart-rate zones need \(Self.zoneCount) limits, got \(zones.count)" }
+            if zones[0] < Self.minZone { return "The lowest zone limit must be at least \(Self.minZone) bpm" }
+            if zip(zones, zones.dropFirst()).contains(where: { $0 >= $1 }) { return "The zone limits must rise strictly from zone 1 to zone 5" }
+            if zones[Self.zoneCount - 1] >= maxHr { return "The highest zone limit must be below the maximum heart rate" }
+            if !Self.warningLimitRange.contains(warningLimit) {
+                return "Heart-rate limit must be \(Self.warningLimitRange.lowerBound) to \(Self.warningLimitRange.upperBound) bpm"
+            }
+            return nil
+        }
+
+        /// The zone limits as `z1/z2/z3/z4/z5` for the log.
+        public var zonesText: String { zones.map(String.init).joined(separator: "/") }
+
+        /// A one-line description for the log.
+        public var logText: String {
+            "method \(method == .hrr ? "hrr" : "max"), max \(maxHr), rest \(restingHr), zones \(zonesText), warning \(warningEnabled ? "on" : "off") \(warningLimit)"
+        }
+    }
+
     /// `Math.round(((float) (x * pct)) / 100.0f)`, the float arithmetic of HuaweiHeartRateZones.
     private static func pct(_ x: Int, _ pct: Int) -> Int { Int(PacketsJava.round(Float(x * pct) / 100.0)) }
 
@@ -113,6 +166,21 @@ public enum HeartRateZonesCalc {
     /// The methods GB builds per posture (getUprightZone/getSittingZone/...): upright also LTHR.
     private static func methods(for posture: Posture) -> [Method] { posture == .upright ? [.mhr, .hrr, .lthr] : [.mhr, .hrr] }
 
+    /// All postures carry the user's values, no posture correction: the chosen method gets the user's zones, the other method (and LTHR)
+    /// the defaults for the same maximum and resting heart rate.
+    private static func config(_ posture: Posture, user: UserZones, methods: [Method]) -> Config {
+        Config(
+            posture: posture, warningEnable: user.warningEnabled, warningHRLimit: user.warningLimit, currentMethod: user.method,
+            zones: methods.map { method in
+                guard method == user.method else { return zones(method, threshold: user.maxHr, resting: user.restingHr) }
+                return Zones(
+                    method: method, threshold: user.maxHr, resting: user.restingHr, zone1: user.zones[0], zone2: user.zones[1],
+                    zone3: user.zones[2], zone4: user.zones[3], zone5: user.zones[4]
+                )
+            }
+        )
+    }
+
     private static func config(_ posture: Posture, age: Int, methods: [Method]) -> Config {
         let threshold = (maximumHeartRate - age) - posture.hrCorrection
         return Config(
@@ -122,8 +190,21 @@ public enum HeartRateZonesCalc {
     }
 
     /// HuaweiHeartRateZonesSpec.getDeviceConfig for `age`: with Track all four postures; without Track but with the zone command only
-    /// upright (MHR, plus HRR when `extended`); otherwise nothing.
-    public static func deviceConfig(age: Int, track: Bool, simpleCommand: Bool, extended: Bool) -> [Config] {
+    /// upright (MHR, plus HRR when `extended`); otherwise nothing. With `user`, `age` is not used: every posture carries the user's values, and
+    /// the simple 07/13 packet, which only has an MHR set, gets the user's effective zones there whatever the method.
+    public static func deviceConfig(age: Int, track: Bool, simpleCommand: Bool, extended: Bool, user: UserZones? = nil) -> [Config] {
+        if let user, user.zones.count == UserZones.zoneCount {
+            if !track && simpleCommand {
+                if extended { return [config(.upright, user: user, methods: [.mhr, .hrr])] }
+                let effective = Zones(
+                    method: .mhr, threshold: user.maxHr, resting: user.restingHr, zone1: user.zones[0], zone2: user.zones[1],
+                    zone3: user.zones[2], zone4: user.zones[3], zone5: user.zones[4]
+                )
+                return [Config(posture: .upright, warningEnable: user.warningEnabled, warningHRLimit: user.warningLimit, currentMethod: .mhr, zones: [effective])]
+            }
+            if !track { return [] }
+            return Posture.allCases.map { config($0, user: user, methods: methods(for: $0)) }
+        }
         if !track && simpleCommand { return [config(.upright, age: age, methods: extended ? [.mhr, .hrr] : [.mhr])] }
         if !track { return [] }
         return Posture.allCases.map { config($0, age: age, methods: methods(for: $0)) }
@@ -194,6 +275,13 @@ public enum HeartRateZonesSync {
     /// GB HuaweiState.supportsTrack: ExpandCapability 0x36 (when the watch sent an ExpandCapability at all).
     public static func supportsTrack(_ caps: DeviceCaps) -> Bool { caps.expandCapability(0x36) }
 
+    /// The route `getHeartRateZonesStatus` reports: `track`, `extended` (07/21), `simple` (07/13) or `none`.
+    public static func route(_ caps: DeviceCaps) -> String {
+        if supportsTrack(caps) { return "track" }
+        if supportsExtended(caps) { return "extended" }
+        return supportsSimple(caps) ? "simple" : "none"
+    }
+
     /// GB HuaweiState.supportsHeartRateZones: FitnessData command 0x13.
     public static func supportsSimple(_ caps: DeviceCaps) -> Bool { caps.supports(0x07, 0x13) }
 
@@ -217,10 +305,12 @@ public enum HeartRateZonesSync {
 
     /// SendHeartRateZonesConfig (07/13 or 07/21) for the non-Track branch; false when the watch does not use it (Track watches get the zones
     /// over P2P).
-    public static func sendFitnessData(session: HuaweiSession, caps: DeviceCaps, log: LogSink, age: Int, timeoutMs: Int = Timeouts.initMs) async throws -> Bool {
+    public static func sendFitnessData(
+        session: HuaweiSession, caps: DeviceCaps, log: LogSink, age: Int, user: HeartRateZonesCalc.UserZones? = nil, timeoutMs: Int = Timeouts.initMs
+    ) async throws -> Bool {
         if supportsTrack(caps) || !supportsSimple(caps) { return false }
         let extended = supportsExtended(caps)
-        guard let config = HeartRateZonesCalc.deviceConfig(age: age, track: false, simpleCommand: true, extended: extended).first(where: { $0.posture == .upright })
+        guard let config = HeartRateZonesCalc.deviceConfig(age: age, track: false, simpleCommand: true, extended: extended, user: user).first(where: { $0.posture == .upright })
         else { return false }
         let mhr = config.byMethod(.mhr).flatMap { $0.hasValidData() ? $0 : nil }
         let hrr = config.byMethod(.hrr).flatMap { $0.hasValidData() ? $0 : nil }
@@ -237,7 +327,7 @@ public enum HeartRateZonesSync {
         log(
             LogEntry(
                 .info, service: Int(FitnessData.id), command: extended ? 0x21 : 0x13,
-                "HR zones: sent 07/\(extended ? "21" : "13") for age \(age), MHR \(mhrText) warning \(config.warningHRLimit)\(hrrText)"
+                "HR zones: sent 07/\(extended ? "21" : "13") for \(user.map { "your zones (\($0.logText))" } ?? "age \(age)"), MHR \(mhrText) warning \(config.warningHRLimit)\(hrrText)"
             )
         )
         return true

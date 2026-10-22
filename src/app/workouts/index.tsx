@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { ChipRow } from '@/components/ChipRow';
 import { HeaderIconButton } from '@/components/HeaderIconButton';
+import { AskJoyoHeaderButton } from '@/features/ai/ui/AskJoyoButton';
 import { IconChip } from '@/components/IconChip';
 import { showsWatchUi } from '@/features/device/presence';
 import { SyncIconButton } from '@/features/device/SyncIconButton';
@@ -284,6 +285,7 @@ export default function WorkoutsScreen() {
               title={t('list.title')}
               right={
                 <View style={styles.headerActions}>
+                  <AskJoyoHeaderButton />
                   <HeaderIconButton icon="calendar-outline" label={lifts('list.history')} onPress={() => router.push('/strength/history')} />
                   {watchUi ? <SyncIconButton /> : null}
                 </View>

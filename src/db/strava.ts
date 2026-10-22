@@ -109,6 +109,28 @@ export async function getStravaUpload(db: SQLiteDatabase, workoutStart: number):
   return { ...row, error: plainStravaError(row.error) };
 }
 
+export interface StravaUploadSummary {
+  /** Unix seconds the newest upload reached Strava; null when none ever did from this phone. */
+  lastDoneAt: number | null;
+  /** Uploads that reached Strava since `sinceSec`. */
+  done: number;
+  /** Uploads Strava refused or that failed since `sinceSec` (a retry that later succeeded counts as done, not failed). */
+  failed: number;
+}
+
+/** What the Sources screen says about Strava: the last upload and how the recent ones went. */
+export async function stravaUploadSummary(db: SQLiteDatabase, sinceSec: number): Promise<StravaUploadSummary> {
+  const row = await db.getFirstAsync<{ lastDoneAt: number | null; done: number | null; failed: number | null }>(
+    `SELECT MAX(CASE WHEN status = 'done' THEN updated_at END) AS lastDoneAt,
+            SUM(CASE WHEN status = 'done' AND updated_at >= ? THEN 1 ELSE 0 END) AS done,
+            SUM(CASE WHEN status IN ('failed', 'rejected') AND updated_at >= ? THEN 1 ELSE 0 END) AS failed
+     FROM strava_upload`,
+    sinceSec,
+    sinceSec,
+  );
+  return { lastDoneAt: row?.lastDoneAt ?? null, done: row?.done ?? 0, failed: row?.failed ?? 0 };
+}
+
 export async function saveStravaUpload(
   db: SQLiteDatabase,
   row: Omit<StravaUploadRow, 'updatedAt'>,

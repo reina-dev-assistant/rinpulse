@@ -4,6 +4,7 @@ import type { HrvReadingRow, WorkoutRow } from '@/db/queries';
 import type { SleepSegment } from '@/wear';
 import { computeDailyFitness, computeFitnessOverview } from './compute';
 import type { FitnessData } from './useFitnessData';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 
 const H = 3600;
 const DAY = 86400;
@@ -13,7 +14,7 @@ const NOW = DAY_START + 10 * H;
 const empty: FitnessData = {
   nowSec: NOW,
   dayStart: DAY_START,
-  maxHr: 190,
+  zones: hrZonesForMax(190),
   strain: [],
   resting: new Map(),
   workouts: [],

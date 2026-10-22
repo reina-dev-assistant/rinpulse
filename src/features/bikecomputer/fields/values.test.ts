@@ -5,6 +5,7 @@ import type { LiveStats } from '@/features/record/recorder';
 
 import { FIELD_IDS, type BikeMetricsSnapshot, type NavSnapshot } from '../types';
 import { fieldValue, powerZoneOf, type FieldContext } from './values';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 
 const live: LiveStats = {
   status: 'recording',
@@ -52,12 +53,12 @@ const nav: NavSnapshot = {
   climb: { climb: { startM: 10_500, endM: 12_000, lengthM: 1500, ascentM: 90, avgGradePct: 6, maxGradePct: 9, category: 4 }, startsInM: 500, remainingAscentM: 90, remainingM: 2000, inProgress: false },
 };
 
-const base: FieldContext = { live, metrics, nav, maxHr: 190, ftp: 250, batteryPct: 64, nowMs: Date.UTC(2026, 9, 18, 3, 5), lapSpeedMps: null };
+const base: FieldContext = { live, metrics, nav, zones: hrZonesForMax(190), ftp: 250, batteryPct: 64, nowMs: Date.UTC(2026, 9, 18, 3, 5), lapSpeedMps: null };
 const empty: FieldContext = {
   live: { ...live, hr: null, speedMps: null, cadence: null, watts: null },
   metrics: Object.fromEntries(Object.keys(metrics).map((k) => [k, null])) as unknown as BikeMetricsSnapshot,
   nav: null,
-  maxHr: 190,
+  zones: hrZonesForMax(190),
   ftp: null,
   batteryPct: null,
   nowMs: base.nowMs,

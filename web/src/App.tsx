@@ -255,7 +255,7 @@ export function App() {
           </div>
         </section>
 
-        <aside className={cn("panel-scroll min-h-0 overflow-y-auto rounded-3xl bg-card", panel === "properties" ? "block" : "hidden lg:block")} aria-label={t("panel.properties")}>
+        <aside className={cn("min-h-0 overflow-y-auto rounded-3xl bg-card", panel === "properties" ? "block" : "hidden lg:block")} aria-label={t("panel.properties")}>
           <PropertyPanel />
         </aside>
       </main>

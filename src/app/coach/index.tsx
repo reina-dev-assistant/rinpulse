@@ -10,6 +10,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Details } from '@/components/Details';
 import { Card, Screen, Section } from '@/components/Screen';
 import { NavRow } from '@/components/NavRow';
+import { OPEN_JOYO_AI } from '@/features/ai/open';
 import { EXERCISES } from '@/features/coach/exercises';
 import { EmptyState, Notice, Skeleton } from '@/components/States';
 import { endPlan } from '@/features/coach/actions';
@@ -156,7 +157,7 @@ function LibraryRow() {
   const router = useRouter();
   return (
     <Card>
-      <NavRow icon="chatbubbles" tint="link" title={t('home.chat.title')} subtitle={t('home.chat.subtitle')} onPress={() => router.push('/coach/chat')} />
+      <NavRow icon="chatbubbles" tint="link" title={t('home.chat.title')} subtitle={t('home.chat.subtitle')} onPress={() => router.navigate('/joyo/chat', OPEN_JOYO_AI)} />
       <NavRow icon="barbell" tint="workouts" title={t('home.library.title')} subtitle={t('home.library.subtitle', { n: fmtInt(EXERCISES.length) })} onPress={() => router.push('/coach/library')} />
     </Card>
   );

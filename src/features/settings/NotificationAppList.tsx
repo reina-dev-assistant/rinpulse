@@ -12,6 +12,7 @@ import { groupedRowStyle } from '@/components/NavRow';
 import { useContentPadding } from '@/components/Screen';
 import { EmptyState, Notice, Skeleton } from '@/components/States';
 import { errorMessage } from '@/format';
+import { NotificationAppListIos } from '@/features/settings/NotificationAppListIos';
 import { spacing, useTheme } from '@/theme';
 import { HuaweiWear, type NotificationApp } from '@/wear';
 
@@ -43,16 +44,7 @@ function AppIcon({ uri }: { uri?: string | null }) {
 
 /** Per-app forwarding switches: searchable, windowed, with a sticky header. Loads the apps once. */
 export function NotificationAppList() {
-  const { t } = useTranslation('settings');
-  return isIos ? (
-    <EmptyState
-      icon="apps"
-      title={t('notifApps.iosTitle')}
-      description={t('notifApps.iosDesc')}
-    />
-  ) : (
-    <NotificationAppListAndroid />
-  );
+  return isIos ? <NotificationAppListIos /> : <NotificationAppListAndroid />;
 }
 
 function NotificationAppListAndroid() {

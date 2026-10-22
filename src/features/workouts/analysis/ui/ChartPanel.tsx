@@ -18,7 +18,7 @@ import {
 import { useAnalysisContext } from './context';
 import { Txt } from './primitives';
 import { useScrub } from './scrub';
-import type { AnalysisPalette } from './theme';
+import { hrZoneColors, type AnalysisPalette } from './theme';
 
 export const PAD_X = 6;
 
@@ -85,8 +85,8 @@ export const ChartPanel = memo(function ChartPanel({ series, metric, width, heig
   );
   const color = metricColor(palette, metric);
   const stops = useMemo(
-    () => (metric === 'hr' && hrBounds && geo ? hrGradientStops(hrBounds, palette.zones, geo.domain) : null),
-    [metric, hrBounds, geo, palette.zones],
+    () => (metric === 'hr' && hrBounds && geo ? hrGradientStops(hrBounds, hrZoneColors(palette, hrBounds.length - 1), geo.domain) : null),
+    [metric, hrBounds, geo, palette],
   );
   if (!geo) return null;
   const { plot } = geo;

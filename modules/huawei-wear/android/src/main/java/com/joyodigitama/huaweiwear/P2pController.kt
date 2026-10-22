@@ -61,6 +61,7 @@ internal class P2pController(
           handle.session, events, settings,
           { manager -> HealthModelService(manager, settings, events, scope, ::loadDay, ::goals) },
           { HeartRateZonesSync.age(wearSettings.profile) },
+          { wearSettings.heartRateZones },
           { manager ->
             QuickRepliesService(
               manager, events, { settings.quickReplies },

@@ -8,7 +8,8 @@
     "safety": "Keselamatan",
     "health": "Health Connect",
     "strava": "Strava",
-    "koneksi": "Koneksi AI",
+    "koneksi": "Hubungkan ChatGPT atau Claude",
+    "joyoAi": "Joyo AI",
     "joyorogo": "JoyoRogo",
     "scale": "Timbangan",
     "thermometer": "Termometer kamar",
@@ -28,7 +29,9 @@
     "gear": "Sepatu & perlengkapan",
     "importAll": "Impor data",
     "akun": "Akun",
-    "homeCards": "Atur kartu Beranda"
+    "homeCards": "Atur kartu Beranda",
+    "hrZones": "Zona HR",
+    "coach": "Coach"
   },
   "index": {
     "title": "Lainnya",
@@ -36,7 +39,8 @@
       "notificationApps": {
         "title": "Aplikasi notifikasi",
         "subtitleIos": "Dipilih di Pengaturan iPhone",
-        "subtitle": "Pilih aplikasi yang boleh mengirim notifikasi ke jam"
+        "subtitle": "Pilih aplikasi yang boleh mengirim notifikasi ke jam",
+        "subtitleIosFilter": "Saklar per aplikasi di jam"
       },
       "importHuawei": {
         "title": "Impor dari Huawei Health",
@@ -387,7 +391,7 @@
   },
   "huaweiImport": {
     "requestTitle": "Minta datamu dari Huawei",
-    "requestIntro": "Detak jantung, tidur, langkah, dan latihan dari akun Huawei Health kamu. Gratis, berjalan di ponsel ini, tidak mengirim apa pun.",
+    "requestIntro": "Detak jantung, tidur, langkah, latihan, dan berat badan dari akun Huawei Health kamu. Gratis, berjalan di ponsel ini, tidak mengirim apa pun.",
     "howTitle": "Cara memintanya (6 langkah)",
     "steps": {
       "1": "Ketuk tombol di bawah dan masuk dengan Huawei ID kamu.",
@@ -423,10 +427,44 @@
     "stressAdded": "Pembacaan stres ditambahkan",
     "minutes": "Menit dengan data",
     "alreadyHere": "Latihan yang sudah ada",
-    "sleepSkipped": "Tidur dilewati (data jam dipertahankan)",
+    "sleepSkipped": "Tidur dilewati (sudah ada di ponsel ini)",
+    "meals": "Makanan ditemukan",
+    "waterDays": "Hari minum ditemukan",
+    "profileFilled": "Profilmu masih kosong, jadi sekarang berisi tinggi {{height}} cm dari ekspor (beserta berat, tahun lahir, dan jenis kelaminnya). Periksa di Profil.",
+    "rogoTitle": "Di JoyoRogo",
+    "rogoSending": "Mengirim ke JoyoRogo...",
+    "rogoWeighIns": "Penimbangan",
+    "rogoMeals": "Makanan",
+    "rogoWater": "Hari minum",
+    "rogoSentOf": "{{sent}} terkirim dari {{found}}",
+    "rogoNothingNew": "JoyoRogo sudah punya semuanya, atau tidak ada yang cocok dengan hari yang lalu.",
+    "rogoError": "JoyoRogo menjawab: {{message}}. Tetap menunggu; coba lagi setelah memperbarui aplikasi.",
+    "rogoWaiting_one": "Satu item menunggu dikirim. Masuk ke JoyoRogo dan periksa koneksi.",
+    "rogoWaiting_other": "{{count}} item menunggu dikirim. Masuk ke JoyoRogo dan periksa koneksi.",
+    "rogoSend": "Kirim ke JoyoRogo",
+    "rogoDetails": "Penimbangan, makanan, dan minum dari ekspor ditambahkan ke riwayat JoyoRogo-mu pada hari aslinya, hanya untuk hari sebelum hari ini. Hari yang sudah kamu timbang atau catat minumnya, atau makanan yang sudah kamu catat dengan kalori sama, dibiarkan apa adanya, jadi mengirim lagi tidak menambah apa pun. Makanan dan penimbangan hasil impor tidak dihitung untuk streak atau tantangan, dan berat lama tidak pernah menggantikan beratmu yang terbaru.",
+    "weighIns": "Penimbangan ditambahkan",
+    "sleepScores": "Skor tidur ditambahkan",
+    "metrics": "HRV dan bacaan lain ditambahkan",
+    "dayTotals": "Hari langkah ditambahkan (total harian)",
+    "workoutsUpdated": "Latihan dilengkapi rute dan totalnya",
+    "keepOpen": "Biarkan JoyoFit tetap terbuka sampai selesai (bisa beberapa menit untuk file besar). Layar boleh redup, jangan pindah aplikasi.",
+    "unreadableTitle": "Yang tidak terbaca",
+    "unreadableLine": "{{key}}: {{reason}}, {{count}} kali (pertama: {{sample}})",
+    "unreadableLineNoSample": "{{key}}: {{reason}}, {{count}} kali",
+    "badRecordLine": "{{reason}}: {{count}} catatan",
+    "reasons": {
+      "no-time": "tanpa waktu",
+      "no-number": "tanpa angka",
+      "out-of-range": "nilai di luar rentang",
+      "bad-span": "rentang waktu tidak mungkin",
+      "no-weight": "tanpa berat yang bisa dipakai"
+    },
+    "leftOutTitle": "Ada di file tapi tidak disimpan JoyoFit",
+    "leftOutLine": "{{key}}: {{count}} bacaan",
     "unreadable": "Tak terbaca, dilewati",
     "filesFailed_other": "{{count}} file di dalam ZIP tidak bisa dibaca. Sisanya sudah diimpor; unduh ulang ekspornya untuk menutup celahnya.",
-    "summaryDetails": "Kalori per menit dan berat badan tidak diimpor. Kalori latihan ikut diimpor.",
+    "summaryDetails": "Berat badan dan komposisi tubuh masuk ke riwayat timbangan, ditandai tidak dikirim ke JoyoRogo. Hari yang hanya punya total harian (tanpa data per menit di ekspor) menampilkan langkahnya pada pukul 12.00.",
     "errors": {
       "password": "Kata sandi itu tidak bisa membuka ZIP. Pakai yang kamu atur saat meminta data dari Huawei.",
       "format": "File ini bukan ekspor Huawei Health. Pilih ZIP dari email Huawei, yang berisi data Health kamu.",
@@ -444,7 +482,52 @@
     "noMatchTitle": "Tidak ada aplikasi yang cocok",
     "noMatch": "Tidak ada yang cocok dengan \"{{query}}\".",
     "noApps": "Tidak ada aplikasi untuk ditampilkan.",
-    "clear": "Hapus saringan"
+    "clear": "Hapus saringan",
+    "ios": {
+      "intro": "Jam menyaring notifikasi iPhone sendiri, per aplikasi. Daftarnya tetap: aplikasi yang umum dan satu saklar Lainnya untuk semua aplikasi lain. Pengaturan iPhone, Notifikasi, tetap menentukan apa yang sampai ke jam sama sekali.",
+      "filterTitle": "Uji filter",
+      "appsTitle": "Aplikasi",
+      "unproven": "Saklar per aplikasi belum terbukti bekerja di jam ini, jadi masih mati. Uji filter mematikan satu aplikasi di jam dengan beberapa cara penulisan. Kamu cek apakah pesannya masih muncul, dan cara yang berhasil dipakai untuk semua saklar.",
+      "proven": "Filter terbukti di jam ini: {{how}}.",
+      "encoding": {
+        "a": "id aplikasi iOS, 1 = mati",
+        "b": "id aplikasi iOS, 0 = mati",
+        "c1": "nomor aplikasi Huawei, 1 = mati",
+        "c2": "nomor aplikasi Huawei, 0 = mati"
+      },
+      "pickApp": "Aplikasi yang diuji",
+      "start": "Uji filter",
+      "retest": "Uji ulang filter",
+      "block": {
+        "disconnected": "Hubungkan jam dulu.",
+        "noGate": "Jam ini tidak menyebut dukungan saklar per aplikasi, jadi tidak bisa diuji."
+      },
+      "probe": "Langkah {{step}} dari {{steps}}. {{app}} sedang dimatikan di jam. Kirim satu pesan ke {{app}} sekarang dari ponsel atau orang lain, bukan dari iPhone ini, dan biarkan JoyoFit terbuka: pindah aplikasi atau layar membatalkan uji. Apakah pesannya masih muncul di jam?",
+      "stillShown": "Masih muncul",
+      "hidden": "Tidak muncul",
+      "confirm": "{{app}} sudah dinyalakan lagi di jam. Kirim satu pesan lagi. Apakah sekarang muncul?",
+      "confirmYes": "Muncul",
+      "confirmNo": "Tidak muncul",
+      "cancel": "Batalkan uji",
+      "outcome": {
+        "winner": "Berhasil: jam menyaring dengan cara \"{{how}}\". Semua aplikasi dinyalakan lagi dan saklar di bawah sekarang aktif.",
+        "none": "Tidak ada cara yang menyembunyikan {{app}} di jam. Jam ini mungkin tidak menyaring dengan id aplikasi iOS. Saklar tetap mati.",
+        "inconclusive": "{{app}} tidak muncul, tetapi tidak kembali setelah dinyalakan lagi, jadi mungkin bukan karena filter. Tidak ada yang disimpan. Coba lagi.",
+        "cancelled": "Uji dibatalkan dan {{app}} dinyalakan lagi di jam.",
+        "failed": "Uji gagal: jam tidak menerima perintah atau koneksi putus. {{app}} dinyalakan lagi begitu jam terhubung."
+      },
+      "restorePending": "Ada uji yang terputus. Aplikasi yang diuji dinyalakan lagi begitu jam terhubung. Kalau notifikasinya masih hilang, jalankan uji lagi.",
+      "resultLabel": "Hasil uji, tanpa isi pesan:",
+      "sendResult": "Kirim hasil ke tim",
+      "other": "Lainnya",
+      "rowHint": {
+        "unproven": "Jalankan Uji filter dulu",
+        "noId": "Tidak ada id untuk aplikasi ini pada cara yang terbukti",
+        "other": "Semua aplikasi lain. Belum diuji, mungkin tidak berpengaruh.",
+        "offline": "Dikirim ke jam saat terhubung"
+      },
+      "details": "Saklar ini bekerja di jam, bukan di iPhone: JoyoFit tidak pernah melihat notifikasimu. Uji hanya mengirim satu aplikasi, tidak pernah seluruh daftar, dan aplikasi itu dinyalakan lagi sesudahnya, saat uji dibatalkan, atau saat jam terhubung lagi. Hasil uji berisi cara yang dicoba dan jawabanmu, tanpa isi pesan."
+    }
   },
   "notifications": {
     "disclosure": "JoyoFit membaca notifikasi di ponsel ini (nama aplikasi, judul, dan teks) agar bisa menampilkannya di jam kamu. Notifikasi dikirim ke jam lewat Bluetooth saja. JoyoFit tidak menyimpannya dan tidak mengirimnya lewat internet. Kamu bisa memilih aplikasi mana yang diteruskan, dan mematikannya kapan saja.",
@@ -742,7 +825,8 @@
       "watchSettings": "Pengaturan jam",
       "body": "Target & tubuh",
       "connections": "Koneksi",
-      "app": "Aplikasi"
+      "app": "Aplikasi",
+      "coach": "Coach & AI"
     },
     "account": {
       "signedOut": "Belum masuk",
@@ -752,7 +836,8 @@
       "free": "Gratis, sinkron cloud butuh Pro",
       "valuePro": "Pro"
     },
-    "connected": "Terhubung"
+    "koneksi": "Lewat MCP, hanya baca, khusus Pro",
+    "coach": "Saran harian, rencana latihan, perpustakaan latihan"
   },
   "account": {
     "signOutTitle": "Keluar dari JoyoRogo?",
@@ -828,5 +913,182 @@
     "sent": "Terkirim ke jam.",
     "stored": "Tersimpan. Dikirim ke jam saat tersambung.",
     "needsWatch": "Jam yang tersambung belum mendukung balasan cepat."
+  },
+  "hrZones": {
+    "method": {
+      "title": "Cara menghitung",
+      "max": "% HR maks",
+      "hrr": "Cadangan HR",
+      "maxBody": "Zona 1 sampai 5 mulai di 50, 60, 70, 80, dan 90 persen dari HR maksimal. Ini bawaan Huawei Health.",
+      "hrrBody": "Pemanasan mulai di 50 persen cadangan HR (HR maks dikurangi HR istirahat), lalu zona 2 sampai 6 mulai di 59, 74, 84, 88, dan 95 persen, semuanya ditambah HR istirahat. Urutan dan nama zona sama seperti di jam dan Huawei Health. Lebih pas kalau HR istirahatmu rendah.",
+      "lthr": "LTHR",
+      "lthrBody": "Zona Friel dari detak jantung ambang laktatmu (LTHR): zona 1 mulai di 67 persen LTHR, zona 2 di 85, zona 3 di 90, zona 4 di 95, dan zona 5 di 100 persen. Paling pas kalau LTHR-mu hasil tes, bukan perkiraan.",
+      "how": "Cara hitung"
+    },
+    "rates": {
+      "max": "Denyut jantung maksimum",
+      "maxFromAge": "Dari usiamu ({{age}} tahun)",
+      "maxSet": "Kamu yang atur",
+      "formulaClassic": "220 - usia ({{bpm}})",
+      "formulaTanaka": "Tanaka ({{bpm}})",
+      "noProfile": "Usia belum diisi di profil, jadi dipakai {{age}} tahun.",
+      "openProfile": "Isi profil tubuh",
+      "rest": "Denyut jantung istirahat",
+      "restDefault": "Bawaan Huawei Health",
+      "restSet": "Kamu yang atur",
+      "details": "HR maks dari 100 sampai {{max}} bpm. HR istirahat dari {{restMin}} sampai {{restMax}} bpm dan paling sedikit {{gap}} bpm di bawah HR maks, seperti di Huawei Health. Tanaka memakai 208 - 0,7 x usia; rumus 220 - usia agak kasar, terutama untuk yang sudah berumur atau terlatih."
+    },
+    "zones": {
+      "title": "Zona",
+      "zone": "Z{{n}} {{name}}",
+      "names": {
+        "warmup": "Pemanasan",
+        "fatBurning": "Pembakaran lemak",
+        "aerobic": "Aerobik",
+        "anaerobic": "Anaerobik",
+        "extreme": "Ekstrem",
+        "aerobicBase": "Aerobik dasar",
+        "aerobicAdvance": "Aerobik lanjutan",
+        "lacticAcid": "Asam laktat",
+        "anaerobicBase": "Anaerobik dasar",
+        "anaerobicAdvance": "Anaerobik lanjutan",
+        "lthrRecovery": "Pemulihan",
+        "lthrAerobic": "Aerobik",
+        "lthrTempo": "Tempo",
+        "lthrSubThreshold": "Sub-ambang",
+        "lthrSuperThreshold": "Super-ambang"
+      },
+      "startLabel": "Zona {{n}} mulai di (bpm)",
+      "custom": "Batas zona kamu ubah sendiri.",
+      "resetLimits": "Kembalikan",
+      "details": "Angka di kotak bpm dan persen adalah tempat tiap zona mulai: ketuk kotaknya dan ketik untuk mengubah. Mengganti metode, HR maks, atau HR istirahat menghitungnya ulang. Analisis latihan, strain, grafik detak jantung harian, Coach, dan layar latihan di jam memakai batas yang sama. Latihan yang sudah terunggah ke JoyoRogo tidak dihitung ulang.",
+      "head": {
+        "zone": "Zona",
+        "bpm": "Denyut jantung (bpm)",
+        "percent": "Persentase (%)"
+      },
+      "maxLabel": "HR maksimum (bpm)",
+      "maxPercentLabel": "HR maksimum (persen)",
+      "startPercentLabel": "Zona {{n}} mulai di (persen)"
+    },
+    "alert": {
+      "title": "Peringatan batas HR",
+      "switch": "Peringatan di jam",
+      "hint": "Jam memberi tahu saat HR melewati batas.",
+      "limit": "Batas peringatan",
+      "limitMax": "Mengikuti HR maks"
+    },
+    "suggest": {
+      "title": "Hitung dari data",
+      "body": "Hanya saran: tidak ada yang berubah sampai kamu memakainya dan menyimpan.",
+      "action": "Hitung dari data",
+      "nothing": "Belum ada latihan dengan detak jantung, dan belum ada HR istirahat dari jam.",
+      "peak": "Tertinggi di latihanmu: {{bpm}} bpm",
+      "peakAbove": "Di atas perkiraan usia ({{bpm}} bpm), jadi rumus usia mungkin terlalu rendah untukmu.",
+      "peakBelow": "Masih di bawah perkiraan usia ({{bpm}} bpm). Belum tentu itu batasmu, jadi tidak disarankan.",
+      "useMax": "Pakai",
+      "rest": "HR istirahat dari jam: {{bpm}} bpm",
+      "restBody": "Nilai tengah 14 hari terakhir. Dipakai metode HRR.",
+      "useRest": "Pakai",
+      "failed": "Data tidak bisa dibaca. Coba lagi."
+    },
+    "watch": {
+      "noNative": "Jam menerima zona setelah aplikasi diperbarui dari toko. Analisis di HP sudah memakai zona ini.",
+      "offline": "Zona dikirim ke jam saat tersambung, dan tiap kali tersambung lagi.",
+      "none": "Jam ini tidak menerima zona dari aplikasi. Zona hanya dipakai di analisis JoyoFit.",
+      "ok": "Jam ini menerima zona dari aplikasi."
+    },
+    "saved": {
+      "sent": "Tersimpan dan terkirim ke jam.",
+      "stored": "Tersimpan. Dikirim ke jam saat tersambung.",
+      "unsupported": "Tersimpan. Jam menerima zona setelah aplikasi diperbarui dari toko.",
+      "failed": "Tersimpan di HP, tapi gagal dikirim ke jam. Dicoba lagi saat tersambung.",
+      "none": "Tersimpan. Jam ini tidak menerima zona dari aplikasi."
+    },
+    "save": "Simpan",
+    "reset": "Atur ulang",
+    "less": "Kurangi 1 bpm",
+    "more": "Tambah 1 bpm",
+    "lthr": {
+      "label": "Detak jantung ambang laktat",
+      "estimate": "Perkiraan Huawei Health (85 persen cadangan HR)",
+      "set": "Kamu yang atur",
+      "fromTest": "Dari tes JoyoFit ({{bpm}})",
+      "fromWatch": "Dari jam ({{bpm}})",
+      "estimateChip": "Perkiraan ({{bpm}})",
+      "runTest": "Ukur dengan tes ambang laktat",
+      "details": "Zona ini memakai persentase Joe Friel dari LTHR. Jam menerimanya sebagai zona detak jantung biasa (lima batas bpm)."
+    },
+    "unit": "bpm"
+  },
+  "sources": {
+    "title": "Sumber & koneksi",
+    "entrySubtitle": "Jam, {{store}}, Strava, JoyoRogo, dan timbangan: lewat apa, kapan terakhir sinkron, apa yang dibawa",
+    "lead": "Dari mana datamu datang dan ke mana perginya, kapan terakhir bergerak, dan apa yang dibawanya.",
+    "connected": "Terhubung",
+    "available": "Belum terhubung",
+    "permissions": "Izin",
+    "manage": "Atur izin {{store}}",
+    "manageSubtitle": "Membuka layar sistem untuk mengizinkan atau mencabut akses.",
+    "state": {
+      "on": "Aktif",
+      "attention": "Perlu dicek",
+      "off": "Belum diatur"
+    },
+    "lastSync": "Sinkron terakhir {{time}}",
+    "week": "7 hari terakhir: {{what}}",
+    "nothing": "belum ada yang tersimpan",
+    "nothingNew": "tidak ada yang baru",
+    "watch": {
+      "title": "Jam",
+      "via": "Bluetooth, langsung dari jam",
+      "none": "Belum ada jam terpasang. Pasangkan satu untuk mengisi Hari ini.",
+      "neverSynced": "Belum pernah sinkron",
+      "stale": "Belum sinkron lebih dari 2 hari. Buka layar jam untuk sinkron.",
+      "stepDays_other": "{{count}} hari langkah",
+      "sleepNights_other": "{{count}} malam tidur",
+      "workouts_other": "{{count}} latihan"
+    },
+    "health": {
+      "via": "JoyoFit menulis ke {{store}}; aplikasi lain membacanya dari sana",
+      "unavailable": "{{store}} tidak tersedia di ponsel ini.",
+      "off": "Penulisan mati. Nyalakan agar JoyoRogo dan aplikasi lain bisa membaca data jammu.",
+      "neverWritten": "Belum ada yang ditulis",
+      "lastWrite": "Terakhir ditulis {{time}}",
+      "lastCounts": "Tulisan terakhir: {{what}}",
+      "steps": "{{value}} langkah",
+      "hr": "{{value}} bacaan detak jantung",
+      "sleep": "{{value}} catatan tidur",
+      "workouts_other": "{{count}} latihan",
+      "failed": "Penulisan terakhir gagal: {{error}}",
+      "permissions": "Izin tulis untuk {{granted}} dari {{total}} jenis; sisanya dilewati."
+    },
+    "strava": {
+      "via": "JoyoFit mengunggah latihanmu ke Strava; tidak ada yang dibaca balik",
+      "off": "Belum terhubung. Hubungkan agar latihan selesai terkirim otomatis.",
+      "never": "Belum ada yang diunggah",
+      "lastUpload": "Terakhir diunggah {{time}}",
+      "uploaded_other": "{{count}} latihan terunggah",
+      "failed_other": "{{count}} gagal",
+      "retry": "Buka Strava untuk mencoba ulang unggahan yang gagal."
+    },
+    "joyorogo": {
+      "via": "Akun JoyoRogo-mu",
+      "viaAccount": "Akun {{email}}",
+      "off": "Belum masuk. Masuk untuk mengirim energi latihan dan skor ke diary JoyoRogo.",
+      "never": "Belum ada yang terkirim",
+      "lastSent": "Terakhir terkirim {{time}}",
+      "counts": "{{sent}} terkirim seluruhnya, {{waiting}} menunggu sinkron berikutnya",
+      "failed": "Pengiriman terakhir gagal: {{error}}"
+    },
+    "scale": {
+      "via": "Timbangan Bluetooth",
+      "viaName": "Bluetooth, {{name}}",
+      "off": "Belum ada timbangan. Tambahkan agar menimbang tanpa mengetik.",
+      "never": "Belum pernah menimbang",
+      "lastWeigh": "Terakhir menimbang {{time}}",
+      "weighIns_other": "{{count}} timbangan",
+      "waiting_other": "{{count}} menunggu JoyoRogo"
+    }
   }
 }

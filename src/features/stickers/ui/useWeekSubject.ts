@@ -6,9 +6,9 @@ import { listDayHeartLoad, listStepSamplesSince, listWorkouts } from '@/db/queri
 import { mondayOf } from '@/features/fitness/intensityMinutes';
 import { listStrengthWorkoutsBetween } from '@/features/strength/store';
 import { startOfLocalDay } from '@/features/today/stats';
-import { strainFromLoads, zoneThresholds } from '@/features/today/strain';
+import { strainFromLoads } from '@/features/today/strain';
 import { addDays, dayBounds, dayStarts } from '@/features/trends/series';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { userHrZones } from '@/features/hrzones/settings';
 import { useLocale } from '@/i18n';
 
 import { buildWeekSubject, type WeekSubjectInput } from '../data/week';
@@ -38,11 +38,11 @@ export function useWeekSubject(dataVersion = 0): StickerSubject | null {
       const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
       const weekEnd = addDays(weekStart, 7);
       const loadDays = dayStarts(todayStart, LOAD_DAYS);
-      const maxHr = userMaxHr();
+      const zones = userHrZones();
       Promise.all([
         listWorkouts(db),
         listStrengthWorkoutsBetween(db, weekStart * 1000, weekEnd * 1000),
-        listDayHeartLoad(db, dayBounds(loadDays), zoneThresholds(maxHr)),
+        listDayHeartLoad(db, dayBounds(loadDays), zones.bounds),
         listStepSamplesSince(db, weekStart),
       ]).then(
         ([rows, strength, loads, samples]) => {

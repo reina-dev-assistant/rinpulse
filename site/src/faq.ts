@@ -12,7 +12,7 @@ export type FaqItem = { q: string; a: string; link?: FaqLink };
 export const FAQ: readonly FaqItem[] = [
   {
     q: "Apakah JoyoFit bisa menggantikan Huawei Health?",
-    a: "JoyoFit adalah aplikasi open source (AGPL-3.0) yang bicara langsung ke jam Huawei lewat Bluetooth dan menyimpan langkah, detak jantung, tidur, SpO2, dan olahraga di HP-mu, jadi Huawei Health tidak perlu terpasang. Baru Huawei Watch Fit 4 Pro yang sudah diuji; jam lain masih eksperimen.",
+    a: "JoyoFit adalah aplikasi open source (AGPL-3.0) yang bicara langsung ke jam Huawei lewat Bluetooth dan menyimpan langkah, detak jantung, tidur, SpO2, dan olahraga di HP-mu, jadi Huawei Health tidak perlu terpasang. Yang sudah diuji: Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2; jam lain masih eksperimen.",
   },
   {
     q: "Apakah saya perlu akun Huawei?",
@@ -21,7 +21,7 @@ export const FAQ: readonly FaqItem[] = [
   {
     q: "Jam apa saja yang didukung?",
     a:
-      "Baru Huawei Watch Fit 4 Pro yang sudah diuji. Jam dan band Huawei dan Honor lain di daftar Gadgetbridge (Bluetooth Classic maupun Bluetooth LE) masih eksperimen: jalurnya ada, tapi belum pernah dicoba dengan JoyoFit. Honor Watch 5, 5 Pro, dan 6 belum bisa. Di Android, pemindai di aplikasi sekarang juga menemukan band yang tidak muncul di pengaturan Bluetooth (Band 8, 9, 10, dan Fit), dan memberi pesan yang jelas kalau jam sedang dipegang HP lain. Daftar lengkapnya ada di halaman Jam yang didukung, dan kamu bisa membantu jam-mu masuk daftar uji di halaman Dukung jam. Aplikasinya untuk Android 10 ke atas, dan untuk iPhone dengan iOS 16.4 ke atas." +
+      "Yang sudah diuji: Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2. Jam dan band Huawei dan Honor lain di daftar Gadgetbridge (Bluetooth Classic maupun Bluetooth LE) masih eksperimen: jalurnya ada, tapi belum pernah dicoba dengan JoyoFit. Honor Watch 5, 5 Pro, dan 6 belum bisa. Di Android, pemindai di aplikasi sekarang juga menemukan band yang tidak muncul di pengaturan Bluetooth (Band 8, 9, 10, dan Fit), dan memberi pesan yang jelas kalau jam sedang dipegang HP lain. Daftar lengkapnya ada di halaman Jam yang didukung, dan kamu bisa membantu jam-mu masuk daftar uji di halaman Dukung jam. Aplikasinya untuk Android 10 ke atas, dan untuk iPhone dengan iOS 16.4 ke atas." +
       (IOS_TESTFLIGHT_LIVE
         ? " Versi iPhone ada sebagai beta publik lewat TestFlight, dan versi App Store 1.0 sedang menunggu review Apple. Baru diuji dengan Huawei Watch Fit 4 Pro."
         : ""),

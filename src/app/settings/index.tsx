@@ -8,19 +8,21 @@ import { SectionList, StyleSheet, View } from 'react-native';
 import { authClient } from '@/cloud/auth';
 import { AppText } from '@/components/AppText';
 import { Avatar } from '@/components/Avatar';
-import { BrandMark } from '@/components/BrandMark';
 import { IconChip, type IconName } from '@/components/IconChip';
-import { isIos } from '@/components/IosUnavailable';
 import { groupedRowStyle, NavRow } from '@/components/NavRow';
 import { PageHeader, useContentPadding } from '@/components/Screen';
 import { showsWatchUi } from '@/features/device/presence';
 import { useWatchPresence } from '@/features/device/useWatchPresence';
 import { linkLabel } from '@/features/device/linkState';
+import { HEALTH_STORE } from '@/features/sources/store';
 import { useAccountDialogs } from '@/features/settings/useAccountDialogs';
+import { useByokAccess } from '@/features/ai/hooks';
+import { joyoAiDestination, OPEN_JOYO_AI } from '@/features/ai/open';
+import { hubStatusLine } from '@/features/ai/ui/status';
+import { useCoachAccess } from '@/features/coach/useCoachAccess';
 import { t as tOther } from '@/i18n';
 import { useCloud } from '@/state/CloudProvider';
 import { useOnboarding } from '@/state/OnboardingProvider';
-import { useStrava } from '@/state/StravaProvider';
 import { useWatch } from '@/state/WatchProvider';
 import { spacing, useTheme, type Tint } from '@/theme';
 
@@ -51,7 +53,9 @@ export default function SettingsScreen() {
   const padding = useContentPadding(true);
   const guide = useOnboarding();
   const cloud = useCloud();
-  const strava = useStrava();
+  const { t: ta } = useTranslation('ai');
+  const ai = useByokAccess();
+  const coachAccess = useCoachAccess();
   const presence = useWatchPresence();
   const { device, linkState, watches } = useWatch();
   const user = authClient.useSession().data?.user;
@@ -87,6 +91,22 @@ export default function SettingsScreen() {
       : [],
   };
 
+  // Coach (plans, library) and Joyo AI (the chat; its settings are one tap away in the chat) sit right under the account.
+  const coachGroup: HubGroup = {
+    title: t('hub.groups.coach'),
+    data: [
+      { key: 'coach', title: t('screens.coach'), subtitle: t('hub.coach'), icon: 'flash', tint: 'workouts', onPress: go('/coach') },
+      {
+        key: 'joyo-ai',
+        title: t('screens.joyoAi'),
+        subtitle: hubStatusLine({ settings: ai.settings, access: ai.access, coachAccess }, ta),
+        icon: 'chatbubbles',
+        tint: 'link',
+        onPress: () => router.navigate(joyoAiDestination({ settings: ai.settings, access: ai.access, coachAccess }), OPEN_JOYO_AI),
+      },
+    ],
+  };
+
   const bodyGroup: HubGroup = {
     title: t('hub.groups.body'),
     data: [
@@ -94,34 +114,26 @@ export default function SettingsScreen() {
       { key: 'scale', title: t('screens.scale'), icon: 'scale-outline', onPress: go('/settings/scale') },
       { key: 'thermometer', title: t('screens.thermometer'), icon: 'thermometer-outline', onPress: go('/settings/thermometer') },
       { key: 'cycling', title: tOther('cycling:settings.title'), icon: 'bicycle', onPress: go('/settings/cycling') },
+      { key: 'hr-zones', title: t('screens.hrZones'), icon: 'pulse', tint: 'heart', onPress: go('/settings/hr-zones') },
       ...(withWatch ? [{ key: 'goals', title: t('screens.goals'), icon: 'flag' as const, onPress: go('/settings/goals') }] : []),
       { key: 'cycle', title: t('screens.cycle'), icon: 'calendar', tint: 'heart', onPress: go('/settings/cycle') },
       { key: 'gear', title: t('screens.gear'), icon: 'footsteps', tint: 'workouts', onPress: go('/settings/gear') },
     ],
   };
 
+  // One row for the sources (watch, health store, Strava, JoyoRogo, scale) with their status; the deep screens open from there.
   const connectionsGroup: HubGroup = {
     title: t('hub.groups.connections'),
     data: [
       {
-        key: 'strava',
-        title: 'Strava', // i18n-ok: product name
-        value: strava.settings.connectedAt !== null ? t('hub.connected') : undefined,
-        leading: <BrandMark brand="strava" />,
-        onPress: go('/settings/strava'),
+        key: 'sources',
+        title: t('sources.title'),
+        subtitle: t('sources.entrySubtitle', { store: HEALTH_STORE }),
+        icon: 'swap-horizontal',
+        tint: 'link',
+        onPress: go('/settings/sources'),
       },
-      ...(withWatch
-        ? [
-            {
-              key: 'health',
-              title: isIos ? t('screens.healthIos') : t('screens.health'),
-              leading: <BrandMark brand={isIos ? 'apple-health' : 'health-connect'} />,
-              onPress: go('/settings/health'),
-            },
-          ]
-        : []),
-      { key: 'joyorogo', title: t('screens.joyorogo'), icon: 'restaurant', tint: 'link', onPress: go('/settings/joyorogo') },
-      { key: 'koneksi', title: t('screens.koneksi'), icon: 'sparkles', tint: 'link', onPress: go('/settings/koneksi') },
+      { key: 'koneksi', title: t('screens.koneksi'), subtitle: t('hub.koneksi'), icon: 'link', tint: 'link', onPress: go('/settings/koneksi') },
       { key: 'family', title: tOther('family:title.family'), icon: 'people', tint: 'link', onPress: go('/family') },
       { key: 'import', title: t('screens.importAll'), icon: 'cloud-download', tint: 'heart', onPress: go('/settings/import') },
     ],
@@ -176,6 +188,7 @@ export default function SettingsScreen() {
   // Account on top, then goals and body, then the one Watch row, then the settings.
   const groups = [
     accountSummaryGroup,
+    coachGroup,
     bodyGroup,
     watchGroup,
     watchSettingsGroup,

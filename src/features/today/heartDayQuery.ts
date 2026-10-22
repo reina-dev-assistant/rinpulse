@@ -26,7 +26,7 @@ export interface HeartDayData {
   day: HeartDay;
   /** The watch's lowest resting heart rate of the day, null when it reported none. */
   resting: number | null;
-  /** Seconds the day's readings cover in Edwards zones 1..5 (`listDayHeartLoad`); all zero without readings. */
+  /** Seconds the day's readings cover in Edwards zones 1..5, 1..6 for the reserve method (`listDayHeartLoad`); all zero without readings. */
   zoneSeconds: readonly number[];
 }
 
@@ -40,6 +40,6 @@ export async function loadHeartDay(db: SQLiteDatabase, dayStart: number, dayEnd:
   return {
     day: buildHeartDay(rows, dayStart, dayEnd),
     resting: resting.get(dayStart) ?? null,
-    zoneSeconds: load[0]?.zoneSeconds ?? [0, 0, 0, 0, 0],
+    zoneSeconds: load[0]?.zoneSeconds ?? thresholds.map(() => 0),
   };
 }

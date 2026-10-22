@@ -145,7 +145,6 @@ function WatchHub() {
 
   return (
     <Screen
-      title={t('watch:title')}
       refresh={{ refreshing: bonded.loading, onRefresh: () => void bonded.refresh(), enabled: granted }}>
       <WatchStatusCard />
       <SilentWatchHelp />
@@ -188,7 +187,7 @@ export default function WatchScreen() {
   const { t } = useTranslation('watch');
   const presence = useWatchPresence();
   const [open, setOpen] = useState(false);
-  if (presence === null) return <Screen title={t('title')}>{null}</Screen>;
+  if (presence === null) return <Screen>{null}</Screen>;
   if (presence === 'none' && !open) return <WatchIntro onContinue={() => setOpen(true)} />;
   return <WatchHub />;
 }

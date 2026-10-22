@@ -19,6 +19,7 @@ const input: NightHrvInput = {
   anyNightRowInHistory: false,
 };
 const missing = (r: ReturnType<typeof recovery>) => ('missing' in r ? r.missing : '');
+const waitOf = (r: ReturnType<typeof recovery>) => ('wait' in r ? r.wait : null);
 
 describe('recovery without a reading', () => {
   it('keeps the old text when nothing is known', () => {
@@ -52,6 +53,17 @@ describe('recovery without a reading', () => {
     expect(missing(recovery([], NOW, nightHrvAvailability({ ...input, nightsSinceSetup: 2 })))).toBe(
       'HRV malam: menunggu beberapa malam pertama. Pakai jam saat tidur lalu sinkron. 2 dari 3 malam sudah dicek.',
     );
+  });
+
+  it('gives the gauge a short wait to match: switched off, 1-minute readings only, nothing yet', () => {
+    expect(waitOf(recovery([], NOW, nightHrvAvailability({ ...input, enabled: false })))).toEqual({ kind: 'off' });
+    expect(waitOf(recovery([], NOW, nightHrvAvailability({ ...input, knownSupported: false })))).toEqual({ kind: 'spot' });
+    expect(waitOf(recovery([], NOW))).toEqual({ kind: 'none' });
+  });
+
+  it('counts the baseline the gauge is waiting for', () => {
+    const night: HrvReadingRow = { start: NOW - 8 * 3600, end: NOW - 3600, source: 'night', rmssd: 50, beats: 100 };
+    expect(waitOf(recovery([night], NOW, { state: 'available' }))).toEqual({ kind: 'baseline', have: 0, need: 4, unit: 'night' });
   });
 
   it('keeps the baseline message when a reading exists', () => {

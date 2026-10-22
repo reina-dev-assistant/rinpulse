@@ -136,6 +136,9 @@ public class Workout {
         huaweiIdToKey.put(300010027, "waterType");
         huaweiIdToKey.put(300010024, "avgDepth");
         huaweiIdToKey.put(300010037, "postureType");
+        // Huawei Health's NonDictDataTransUtil: the lactate threshold heart rate and pace the watch worked out in this workout.
+        huaweiIdToKey.put(300010035, "lthrHr");
+        huaweiIdToKey.put(300010036, "lthrPace");
     }
 
     public static class WorkoutTotals {

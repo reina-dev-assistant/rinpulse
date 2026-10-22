@@ -8,7 +8,8 @@
     "safety": "Safety",
     "health": "Health Connect",
     "strava": "Strava",
-    "koneksi": "AI connections",
+    "koneksi": "Connect ChatGPT or Claude",
+    "joyoAi": "Joyo AI",
     "joyorogo": "JoyoRogo",
     "scale": "Smart scale",
     "thermometer": "Room thermometer",
@@ -28,7 +29,9 @@
     "gear": "Shoes & gear",
     "importAll": "Import data",
     "akun": "Account",
-    "homeCards": "Arrange Home cards"
+    "homeCards": "Arrange Home cards",
+    "hrZones": "HR zones",
+    "coach": "Coach"
   },
   "index": {
     "title": "More",
@@ -36,7 +39,8 @@
       "notificationApps": {
         "title": "Notification apps",
         "subtitleIos": "Chosen in iPhone Settings",
-        "subtitle": "Choose which apps notify the watch"
+        "subtitle": "Choose which apps notify the watch",
+        "subtitleIosFilter": "Per-app switches on the watch"
       },
       "importHuawei": {
         "title": "Import from Huawei Health",
@@ -392,7 +396,7 @@
   },
   "huaweiImport": {
     "requestTitle": "Request your data from Huawei",
-    "requestIntro": "Heart rate, sleep, steps and workouts from your Huawei Health account. Free, runs on this phone, sends nothing.",
+    "requestIntro": "Heart rate, sleep, steps, workouts and weight from your Huawei Health account. Free, runs on this phone, sends nothing.",
     "howTitle": "How to request it (6 steps)",
     "steps": {
       "1": "Tap the button below and sign in with your Huawei ID.",
@@ -428,11 +432,45 @@
     "stressAdded": "Stress readings added",
     "minutes": "Minutes with data",
     "alreadyHere": "Workouts already here",
-    "sleepSkipped": "Sleep skipped (watch data kept)",
+    "sleepSkipped": "Sleep skipped (already on this phone)",
     "unreadable": "Unreadable skipped",
+    "meals": "Meals found",
+    "waterDays": "Days of water found",
+    "profileFilled": "Your profile was empty, so it now has the {{height}} cm from the export (with its weight, birth year and sex). Check it in Profile.",
+    "rogoTitle": "In JoyoRogo",
+    "rogoSending": "Sending to JoyoRogo...",
+    "rogoWeighIns": "Weigh-ins",
+    "rogoMeals": "Meals",
+    "rogoWater": "Water days",
+    "rogoSentOf": "{{sent}} sent of {{found}}",
+    "rogoNothingNew": "JoyoRogo already had all of it, or none of it fits a past day.",
+    "rogoError": "JoyoRogo answered: {{message}}. It stays waiting; try again after updating the app.",
+    "rogoWaiting_one": "One item is waiting to be sent. Sign in to JoyoRogo and check the connection.",
+    "rogoWaiting_other": "{{count}} items are waiting to be sent. Sign in to JoyoRogo and check the connection.",
+    "rogoSend": "Send to JoyoRogo",
+    "rogoDetails": "Weigh-ins, meals and water from the export are added to your JoyoRogo history on their real days, only for days before today. A day you already weighed or counted water, or a meal you already logged with the same kcal, is left as it is, so sending again adds nothing. Imported meals and weigh-ins do not count toward streaks or challenges, and an old weight never replaces your newest one.",
+    "weighIns": "Weigh-ins added",
+    "sleepScores": "Sleep scores added",
+    "metrics": "HRV and other readings added",
+    "dayTotals": "Days of steps added (daily totals)",
+    "workoutsUpdated": "Workouts completed with route and totals",
+    "keepOpen": "Keep JoyoFit open until it finishes (a large file can take several minutes). The screen may dim; do not switch to another app.",
+    "unreadableTitle": "What was unreadable",
+    "unreadableLine": "{{key}}: {{reason}}, {{count}} times (first: {{sample}})",
+    "unreadableLineNoSample": "{{key}}: {{reason}}, {{count}} times",
+    "badRecordLine": "{{reason}}: {{count}} records",
+    "reasons": {
+      "no-time": "no time",
+      "no-number": "no number",
+      "out-of-range": "value out of range",
+      "bad-span": "impossible time span",
+      "no-weight": "no usable weight"
+    },
+    "leftOutTitle": "In the file but not stored by JoyoFit",
+    "leftOutLine": "{{key}}: {{count}} readings",
     "filesFailed_one": "One file in the ZIP could not be read. The rest was imported; download the export again to fill the gap.",
     "filesFailed_other": "{{count}} files in the ZIP could not be read. The rest was imported; download the export again to fill the gap.",
-    "summaryDetails": "Calories per minute and weight are not imported. Workout calories are.",
+    "summaryDetails": "Weight and body composition go to your scale history, marked as not sent to JoyoRogo. Days that have only a daily total (no per-minute data in the export) show their steps at 12:00.",
     "errors": {
       "password": "That password did not open the ZIP. Use the one you set when you requested your data from Huawei.",
       "format": "This file is not a Huawei Health export. Pick the ZIP from the Huawei email, the one with your Health data.",
@@ -450,7 +488,52 @@
     "noMatchTitle": "No apps match",
     "noMatch": "Nothing matches \"{{query}}\".",
     "noApps": "No apps to show.",
-    "clear": "Clear filter"
+    "clear": "Clear filter",
+    "ios": {
+      "intro": "The watch filters the iPhone's notifications itself, per app. The list is fixed: the common apps and one Other switch for every other app. iPhone Settings, Notifications, still decides what reaches the watch at all.",
+      "filterTitle": "Filter test",
+      "appsTitle": "Apps",
+      "unproven": "The per-app switches are not proven to work on this watch, so they stay off. The filter test turns one app off on the watch in a few ways of writing it. You check whether its message still shows up, and the way that works is used for all the switches.",
+      "proven": "Filter proven on this watch: {{how}}.",
+      "encoding": {
+        "a": "iOS app id, 1 = off",
+        "b": "iOS app id, 0 = off",
+        "c1": "Huawei app number, 1 = off",
+        "c2": "Huawei app number, 0 = off"
+      },
+      "pickApp": "App to test",
+      "start": "Test the filter",
+      "retest": "Test the filter again",
+      "block": {
+        "disconnected": "Connect the watch first.",
+        "noGate": "This watch does not list per-app switches, so it cannot be tested."
+      },
+      "probe": "Step {{step}} of {{steps}}. {{app}} is being turned off on the watch. Send one message to {{app}} now from another phone or person, not from this iPhone, and keep JoyoFit open: switching apps or screens cancels the test. Does the message still show up on the watch?",
+      "stillShown": "Still shows up",
+      "hidden": "Does not show up",
+      "confirm": "{{app}} is turned back on on the watch. Send one more message. Does it show up now?",
+      "confirmYes": "Shows up",
+      "confirmNo": "Does not show up",
+      "cancel": "Cancel the test",
+      "outcome": {
+        "winner": "It worked: the watch filters in the way \"{{how}}\". Every app was turned back on and the switches below are now active.",
+        "none": "No way hid {{app}} on the watch. This watch may not filter by iOS app id. The switches stay off.",
+        "inconclusive": "{{app}} did not show up, but did not come back after being turned on again, so it may not have been the filter. Nothing was saved. Try again.",
+        "cancelled": "The test was cancelled and {{app}} was turned back on on the watch.",
+        "failed": "The test failed: the watch did not take the command or the connection dropped. {{app}} is turned back on as soon as the watch connects."
+      },
+      "restorePending": "A test was cut off. The app that was tested is turned back on as soon as the watch connects. If its notifications are still missing, run the test again.",
+      "resultLabel": "Test result, without message content:",
+      "sendResult": "Send the result to the team",
+      "other": "Other",
+      "rowHint": {
+        "unproven": "Run the filter test first",
+        "noId": "No id for this app in the proven way",
+        "other": "Every other app. Not tested, it may have no effect.",
+        "offline": "Sent to the watch when it connects"
+      },
+      "details": "These switches work on the watch, not on the iPhone: JoyoFit never sees your notifications. The test sends one app only, never the whole list, and that app is turned back on afterwards, when the test is cancelled, or when the watch connects again. The test result holds the ways tried and your answers, no message content."
+    }
   },
   "notifications": {
     "disclosure": "JoyoFit reads the notifications on this phone (app name, title and text) so it can show them on your watch. They are sent to the watch over Bluetooth only. JoyoFit does not store them and does not send them over the internet. You can choose which apps are forwarded, and turn this off at any time.",
@@ -754,7 +837,8 @@
       "watchSettings": "Watch settings",
       "body": "Goals & body",
       "connections": "Connections",
-      "app": "App"
+      "app": "App",
+      "coach": "Coach & AI"
     },
     "account": {
       "signedOut": "Not signed in",
@@ -764,7 +848,8 @@
       "free": "Free, cloud sync needs Pro",
       "valuePro": "Pro"
     },
-    "connected": "Connected"
+    "koneksi": "Through MCP, read-only, Pro only",
+    "coach": "Daily advice, training plans, exercise library"
   },
   "account": {
     "signOutTitle": "Sign out of JoyoRogo?",
@@ -844,5 +929,190 @@
     "sent": "Sent to the watch.",
     "stored": "Saved. It goes to the watch when it connects.",
     "needsWatch": "The connected watch does not support quick replies."
+  },
+  "hrZones": {
+    "method": {
+      "title": "How zones are calculated",
+      "max": "% Max",
+      "hrr": "Reserve",
+      "maxBody": "Zones 1 to 5 start at 50, 60, 70, 80 and 90 percent of your maximum heart rate. This is Huawei Health's default.",
+      "hrrBody": "Warm-up starts at 50 percent of your heart rate reserve (max HR minus resting HR), then zones 2 to 6 start at 59, 74, 84, 88 and 95 percent, all added to your resting HR. The zone order and names match the watch and Huawei Health. A better fit when your resting HR is low.",
+      "lthr": "LTHR",
+      "lthrBody": "Friel zones from your lactate threshold heart rate (LTHR): zone 1 starts at 67 percent of LTHR, zone 2 at 85, zone 3 at 90, zone 4 at 95 and zone 5 at 100 percent. Works best when your LTHR comes from a test, not an estimate.",
+      "how": "How it works"
+    },
+    "rates": {
+      "max": "Max heart rate",
+      "maxFromAge": "From your age ({{age}} years)",
+      "maxSet": "Set by you",
+      "formulaClassic": "220 - age ({{bpm}})",
+      "formulaTanaka": "Tanaka ({{bpm}})",
+      "noProfile": "No age in your profile yet, so {{age}} years is used.",
+      "openProfile": "Fill in body profile",
+      "rest": "Resting heart rate",
+      "restDefault": "Huawei Health default",
+      "restSet": "Set by you",
+      "details": "Max HR runs from 100 to {{max}} bpm. Resting HR runs from {{restMin}} to {{restMax}} bpm and sits at least {{gap}} bpm under max HR, as in Huawei Health. Tanaka uses 208 - 0.7 x age; 220 - age is a rough rule, especially for older or well-trained people."
+    },
+    "zones": {
+      "title": "Zones",
+      "zone": "Z{{n}} {{name}}",
+      "names": {
+        "warmup": "Warm-up",
+        "fatBurning": "Fat burning",
+        "aerobic": "Aerobic",
+        "anaerobic": "Anaerobic",
+        "extreme": "Extreme",
+        "aerobicBase": "Basic aerobic",
+        "aerobicAdvance": "Advanced aerobic",
+        "lacticAcid": "Lactic acid",
+        "anaerobicBase": "Basic anaerobic",
+        "anaerobicAdvance": "Advanced anaerobic",
+        "lthrRecovery": "Recovery",
+        "lthrAerobic": "Aerobic",
+        "lthrTempo": "Tempo",
+        "lthrSubThreshold": "Sub-threshold",
+        "lthrSuperThreshold": "Super-threshold"
+      },
+      "startLabel": "Zone {{n}} starts at (bpm)",
+      "custom": "You changed the zone limits by hand.",
+      "resetLimits": "Restore",
+      "details": "The bpm and percent boxes are where each zone starts: tap a box and type to change it. Changing the method, max HR or resting HR works them out again. Workout analysis, strain, the daily heart-rate chart, Coach and the watch's workout screen use the same limits. Workouts already uploaded to JoyoRogo are not recalculated.",
+      "head": {
+        "zone": "Zone",
+        "bpm": "Heart rate (bpm)",
+        "percent": "Percentage (%)"
+      },
+      "maxLabel": "Max heart rate (bpm)",
+      "maxPercentLabel": "Max heart rate (percent)",
+      "startPercentLabel": "Zone {{n}} starts at (percent)"
+    },
+    "alert": {
+      "title": "Heart-rate limit alert",
+      "switch": "Alert on the watch",
+      "hint": "The watch alerts you when HR goes over the limit.",
+      "limit": "Alert limit",
+      "limitMax": "Follows max HR"
+    },
+    "suggest": {
+      "title": "Work out from data",
+      "body": "Only a suggestion: nothing changes until you use it and save.",
+      "action": "Work out from data",
+      "nothing": "No workout with heart rate yet, and no resting HR from the watch yet.",
+      "peak": "Highest in your workouts: {{bpm}} bpm",
+      "peakAbove": "Above the age estimate ({{bpm}} bpm), so the age formula may be too low for you.",
+      "peakBelow": "Still under the age estimate ({{bpm}} bpm). That is not necessarily your limit, so it is not suggested.",
+      "useMax": "Use",
+      "rest": "Resting HR from the watch: {{bpm}} bpm",
+      "restBody": "The median of the last 14 days. Used by the HRR method.",
+      "useRest": "Use",
+      "failed": "The data could not be read. Try again."
+    },
+    "watch": {
+      "noNative": "The watch takes zones once the app is updated from the store. Analysis on the phone already uses these zones.",
+      "offline": "Zones go to the watch when it connects, and every time it connects again.",
+      "none": "This watch does not take zones from the app. They are used in JoyoFit's analysis only.",
+      "ok": "This watch takes zones from the app."
+    },
+    "saved": {
+      "sent": "Saved and sent to the watch.",
+      "stored": "Saved. Sent to the watch when it connects.",
+      "unsupported": "Saved. The watch takes zones once the app is updated from the store.",
+      "failed": "Saved on the phone, but sending to the watch failed. It tries again when connected.",
+      "none": "Saved. This watch does not take zones from the app."
+    },
+    "save": "Save",
+    "reset": "Reset",
+    "less": "1 bpm less",
+    "more": "1 bpm more",
+    "lthr": {
+      "label": "Lactate threshold heart rate",
+      "estimate": "Huawei Health estimate (85 percent of the reserve)",
+      "set": "Set by you",
+      "fromTest": "From the JoyoFit test ({{bpm}})",
+      "fromWatch": "From the watch ({{bpm}})",
+      "estimateChip": "Estimate ({{bpm}})",
+      "runTest": "Measure it with the lactate threshold test",
+      "details": "These zones use Joe Friel's percentages of LTHR. The watch takes them as ordinary heart-rate zones (five bpm limits)."
+    },
+    "unit": "bpm"
+  },
+  "sources": {
+    "title": "Sources & connections",
+    "entrySubtitle": "Watch, {{store}}, Strava, JoyoRogo and scale: through what, when each last synced, what it carried",
+    "lead": "Where your data comes from and goes to, when each last moved, and what it carried.",
+    "connected": "Connected",
+    "available": "Not connected",
+    "permissions": "Permissions",
+    "manage": "Manage {{store}} permissions",
+    "manageSubtitle": "Opens the system screen where you allow or revoke access.",
+    "state": {
+      "on": "On",
+      "attention": "Needs a look",
+      "off": "Not set up"
+    },
+    "lastSync": "Last sync {{time}}",
+    "week": "Last 7 days: {{what}}",
+    "nothing": "nothing stored",
+    "nothingNew": "nothing new",
+    "watch": {
+      "title": "Watch",
+      "via": "Bluetooth, straight from the watch",
+      "none": "No watch paired. Pair one to fill Today.",
+      "neverSynced": "Not synced yet",
+      "stale": "No sync for more than 2 days. Open the watch screen to sync.",
+      "stepDays_one": "{{count}} day of steps",
+      "stepDays_other": "{{count}} days of steps",
+      "sleepNights_one": "{{count}} night of sleep",
+      "sleepNights_other": "{{count}} nights of sleep",
+      "workouts_one": "{{count}} workout",
+      "workouts_other": "{{count}} workouts"
+    },
+    "health": {
+      "via": "JoyoFit writes to {{store}}; other apps read it from there",
+      "unavailable": "{{store}} is not available on this phone.",
+      "off": "Writing is off. Turn it on so JoyoRogo and other apps can read your watch data.",
+      "neverWritten": "Nothing written yet",
+      "lastWrite": "Last write {{time}}",
+      "lastCounts": "Last write: {{what}}",
+      "steps": "{{value}} steps",
+      "hr": "{{value}} heart-rate readings",
+      "sleep": "{{value}} sleep records",
+      "workouts_one": "{{count}} workout",
+      "workouts_other": "{{count}} workouts",
+      "failed": "Last write failed: {{error}}",
+      "permissions": "Write permission for {{granted}} of {{total}} types; the rest are skipped."
+    },
+    "strava": {
+      "via": "JoyoFit uploads your workouts to Strava; nothing is read back",
+      "off": "Not connected. Connect to send finished workouts automatically.",
+      "never": "Nothing uploaded yet",
+      "lastUpload": "Last upload {{time}}",
+      "uploaded_one": "{{count}} workout uploaded",
+      "uploaded_other": "{{count}} workouts uploaded",
+      "failed_one": "{{count}} failed",
+      "failed_other": "{{count}} failed",
+      "retry": "Open Strava to retry the failed uploads."
+    },
+    "joyorogo": {
+      "via": "Your JoyoRogo account",
+      "viaAccount": "Account {{email}}",
+      "off": "Not signed in. Sign in to send workout energy and scores to your JoyoRogo diary.",
+      "never": "Nothing sent yet",
+      "lastSent": "Last sent {{time}}",
+      "counts": "{{sent}} sent in total, {{waiting}} waiting for the next sync",
+      "failed": "Last send failed: {{error}}"
+    },
+    "scale": {
+      "via": "Bluetooth scale",
+      "viaName": "Bluetooth, {{name}}",
+      "off": "No scale set up. Add one to weigh in without typing.",
+      "never": "No weigh-in yet",
+      "lastWeigh": "Last weigh-in {{time}}",
+      "weighIns_one": "{{count}} weigh-in",
+      "weighIns_other": "{{count}} weigh-ins",
+      "waiting_one": "{{count}} waiting for JoyoRogo",
+      "waiting_other": "{{count}} waiting for JoyoRogo"
+    }
   }
 }

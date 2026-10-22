@@ -10,6 +10,7 @@ export default function SettingsLayout() {
   const { t } = useTranslation('settings');
   const { t: tg } = useTranslation('gear');
   const { t: tc } = useTranslation('cycling');
+  const { t: ta } = useTranslation('ai');
   const { t: tb } = useTranslation('bikecomp');
   return (
     <Stack screenOptions={useStackOptions()}>
@@ -23,8 +24,13 @@ export default function SettingsLayout() {
       <Stack.Screen name="weather" options={{ title: t('screens.weather') }} />
       <Stack.Screen name="safety" options={{ title: t('screens.safety') }} />
       <Stack.Screen name="health" options={{ title: isIos ? t('screens.healthIos') : t('screens.health') }} />
+      <Stack.Screen name="sources" options={{ title: t('sources.title') }} />
       <Stack.Screen name="strava" options={{ title: t('screens.strava') }} />
       <Stack.Screen name="koneksi" options={{ title: t('screens.koneksi') }} />
+      <Stack.Screen name="ai" options={{ title: t('screens.joyoAi') }} />
+      <Stack.Screen name="ai-setup" options={{ title: ta('screens.setup') }} />
+      <Stack.Screen name="ai-notes" options={{ title: ta('screens.notes') }} />
+      <Stack.Screen name="ai-data" options={{ title: ta('screens.data') }} />
       <Stack.Screen name="joyorogo" options={{ title: t('screens.joyorogo') }} />
       <Stack.Screen name="gear" options={{ title: t('screens.gear') }} />
       <Stack.Screen name="gear-edit" options={{ title: tg('edit.newTitle') }} />
@@ -35,6 +41,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="scale" options={{ title: t('screens.scale') }} />
       <Stack.Screen name="thermometer" options={{ title: t('screens.thermometer') }} />
       <Stack.Screen name="cycling" options={{ title: tc('settings.title') }} />
+      <Stack.Screen name="hr-zones" options={{ title: t('screens.hrZones') }} />
       <Stack.Screen name="bikecomputer" options={{ title: tb('settings.title') }} />
       <Stack.Screen name="meals" options={{ title: t('screens.meals') }} />
       <Stack.Screen name="goals" options={{ title: t('screens.goals') }} />

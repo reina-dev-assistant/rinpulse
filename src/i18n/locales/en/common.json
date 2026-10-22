@@ -209,6 +209,10 @@
     "matcha": {
       "name": "Matcha Latte",
       "tagline": "Cream and matcha green with gentle rounded text. Always light."
+    },
+    "titik": {
+      "name": "Titik",
+      "tagline": "Black and off-white, thin outlines, dot-matrix figures and one red for what is live. Follows the phone."
     }
   },
   "notFound": {
@@ -219,5 +223,17 @@
   "chart": {
     "hint": "Tap a bar to see its value",
     "noValue": "No value"
+  },
+  "metric": {
+    "range": {
+      "D": "Day",
+      "W": "Week",
+      "M": "Month",
+      "3M": "3 mo",
+      "Y": "Year"
+    },
+    "previous": "Previous period",
+    "next": "Next period",
+    "backToToday": "Back to today"
   }
 }

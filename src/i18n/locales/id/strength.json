@@ -301,6 +301,7 @@
     "startOnWatch": "Mulai juga di jam",
     "startOnWatchHint": "Saat kamu memulai latihan beban di ponsel, jam ikut memulai Latihan kekuatan, ikut jeda saat kamu jeda, dan berhenti saat kamu selesai. Detak jantung dan kalori dari jam masuk ke latihanmu setelah sinkron.",
     "startOnWatchOffline": "Berlaku saat jam terhubung. Jam belum terhubung sekarang.",
+    "startOnWatchRefused": "Jam ini menolak perintah mulai dari HP, jadi tidak bisa dimulai dari sini. Mulai Latihan kekuatan di jam, JoyoFit ikut otomatis.",
     "startOnWatchUnsupported": "Jam ini belum bisa dimulai dari ponsel. Mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam."
   },
   "watch": {
@@ -313,6 +314,15 @@
     "refusedCode": "Jam menolak perintah mulai (kode {{code}}). Mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam.",
     "notWorn": "Jam bilang sedang tidak dipakai di pergelangan tangan dan menolak memulai latihan (kode {{code}}). Pakai jam dengan pas lalu ketuk Coba lagi, atau mulai Latihan kekuatan di jam kalau kamu mau detak jantungnya direkam.",
     "lost": "Latihan ini sudah dimulai di jam sebelum aplikasi dibuka ulang, jadi jam tidak bisa dihentikan dari sini. Hentikan di jam setelah selesai.",
-    "retry": "Coba lagi"
+    "gated": "Jam ini tidak bisa dimulai dari HP. Mulai Latihan kekuatan di jam, JoyoFit ikut otomatis.",
+    "recording": "Jam merekam",
+    "retry": "Coba lagi",
+    "endedOnWatch": "Latihan di jam sudah berhenti. Selesaikan latihan ini di sini kalau semua set sudah dicatat; data jam bergabung setelah sinkron."
+  },
+  "watchPick": {
+    "title": "Pilih rutinitas",
+    "intro": "Jam sedang merekam Latihan kekuatan. Pilih rutinitas untuk dicentang di sini; detak jantung dan waktu dari jam muncul di header.",
+    "start": "Mulai dengan rutinitas ini",
+    "none": "Tanpa rutinitas"
   }
 }

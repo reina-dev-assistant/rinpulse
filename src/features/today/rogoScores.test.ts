@@ -6,6 +6,7 @@ import type { Scores } from '@/features/today/scores';
 import type { DayStrain } from '@/features/today/strain';
 import type { SleepSegment } from '@/wear';
 import { cleanMetrics, rogoDailyMetrics, rogoScoreDays, rogoSleepHoursByDate, ROGO_MAX_DAYS_PER_CALL, ROGO_SLEEP_DAYS } from './rogoScores';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 
 const H = 3600;
 const DAY = 86400;
@@ -34,6 +35,7 @@ const scores = (over: Partial<Scores> = {}): Scores => ({
     signals: [{ key: 'sleep', amount: 0.874 } as Scores['readiness']['signals'][number]],
     missing: [],
     recovery: { percent: 61 } as NonNullable<Scores['readiness']['recovery']>,
+    recoveryWait: null,
     hrvNote: null,
   },
   ...over,
@@ -64,7 +66,7 @@ describe('rogoScoreDays', () => {
   });
 
   it('sends a day made of metrics alone', () => {
-    const empty = scores({ strain: [], today: null, readiness: { headline: null, signals: [], missing: [], recovery: null, hrvNote: null } });
+    const empty = scores({ strain: [], today: null, readiness: { headline: null, signals: [], missing: [], recovery: null, recoveryWait: null, hrvNote: null } });
     expect(rogoScoreDays(empty, DAY_START)).toEqual([]);
     expect(rogoScoreDays(empty, DAY_START, { recoveryHours: 12 })).toEqual([{ date: dateOf(0), recoveryHours: 12 }]);
   });
@@ -123,7 +125,7 @@ const workout = (over: Partial<WorkoutRow> = {}): WorkoutRow => ({
 const bare: FitnessData = {
   nowSec: NOW,
   dayStart: DAY_START,
-  maxHr: 190,
+  zones: hrZonesForMax(190),
   strain: [],
   resting: new Map(),
   workouts: [],

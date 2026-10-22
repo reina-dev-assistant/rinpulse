@@ -42,6 +42,15 @@ export function refusedNoticeKey(code: number | null, worn: boolean | null): 'wa
 }
 
 /**
+ * A refusal the person cannot fix by putting the watch on: the watch said "no" while worn (or did not say it is not worn). On the Fit 4 Pro
+ * (6.1.0.117) every `17/01` start, pause, resume and stop is refused with 123002 even for a workout started on the watch, so the
+ * phone cannot control that watch's workouts (`docs/strength.md`). Such a refusal is remembered per watch and the start is not tried again.
+ */
+export function isGatedRefusal(outcome: WatchWorkoutOutcome | null, worn: boolean | null): boolean {
+  return outcome === 'refused' && worn !== false;
+}
+
+/**
  * `idle`: nothing started (or the session is over). `starting`: the command is on its way. `running` / `paused`: the watch confirmed the
  * start. `unconfirmed`: the command went out and the watch did not confirm it (it may well be recording). `failed`: the watch is not
  * connected, refused, or does not support it. `lost`: the workout was started from the phone before the app restarted; the watch cannot be

@@ -5,7 +5,7 @@ import { useWatchPresence } from '@/features/device/useWatchPresence';
 import { useWatch } from '@/state/WatchProvider';
 import { hasNative, HuaweiWear, type WatchWorkoutOutcome } from '@/wear';
 
-import { endStrengthWatch, startStrengthWatch, startStrengthWatchOnce, strengthWatch, WATCH_START_MAX_AGE_MS } from './watchWorkoutInstance';
+import { endStrengthWatch, startStrengthWatch, startStrengthWatchOnce, strengthWatch, watchStartRefused, WATCH_START_MAX_AGE_MS } from './watchWorkoutInstance';
 import { watchWorkoutAvailability, type WatchSessionPhase, type WatchWorkoutAvailability, type WatchWorkoutNative } from './watchWorkout';
 
 /**
@@ -18,6 +18,28 @@ export function useWatchWorkoutAvailability(): WatchWorkoutAvailability {
   // The link state is what makes the native answer (connected, the commands the watch lists) change.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- recomputed when the link changes
   return useMemo(() => watchWorkoutAvailability(hasNative('getWatchWorkout') ? (HuaweiWear as WatchWorkoutNative) : null, presence === 'watch'), [presence, linkState]);
+}
+
+/**
+ * True once the connected watch refused the phone-started workout command while worn (`isGatedRefusal`), null until that is read. The
+ * settings replace the switch with an explanation and the logger does not try the start on such a watch.
+ */
+export function useWatchStartRefused(): boolean | null {
+  const db = useSQLiteContext();
+  const { linkState } = useWatch();
+  const session = useSyncExternalStore(strengthWatch.subscribe, strengthWatch.getSnapshot);
+  const [refused, setRefused] = useState<boolean | null>(null);
+  useEffect(() => {
+    let live = true;
+    void watchStartRefused(db).then((value) => {
+      if (live) setRefused(value);
+    });
+    return () => {
+      live = false;
+    };
+    // The link decides which watch is meant; a finished session may have just remembered a refusal.
+  }, [db, linkState, session.phase]);
+  return refused;
 }
 
 /**
@@ -39,12 +61,14 @@ export function useStrengthWatchStart(workoutId: string | null, wanted: boolean,
   const availability = useWatchWorkoutAvailability();
   const session = useSyncExternalStore(strengthWatch.subscribe, strengthWatch.getSnapshot);
   const [openedAt] = useState(() => Date.now());
+  const refusedBefore = useWatchStartRefused();
   const active = wanted && workoutId !== null && startedAt !== null && openedAt - startedAt < WATCH_START_MAX_AGE_MS;
 
   useEffect(() => {
-    if (!active || availability !== 'ready') return;
+    // A watch that refused the command before is not asked again; the answer is read first, so the first start does not race it.
+    if (!active || availability !== 'ready' || refusedBefore !== false) return;
     void startStrengthWatchOnce(db, workoutId);
-  }, [active, availability, db, workoutId]);
+  }, [active, availability, db, workoutId, refusedBefore]);
 
   // A session that belongs to another workout (the person replaced the one in progress) is over.
   useEffect(() => {

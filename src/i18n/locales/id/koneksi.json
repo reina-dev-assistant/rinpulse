@@ -1,5 +1,5 @@
 {
-  "title": "Koneksi AI",
+  "title": "Hubungkan ChatGPT atau Claude",
   "subtitle": "Aplikasi AI yang boleh membaca datamu di JoyoRogo. Hanya membaca: tidak ada yang bisa diubah atau dihapus lewat koneksi ini.",
   "connector": {
     "title": "Alamat penyambung",
@@ -75,7 +75,7 @@
     }
   },
   "row": {
-    "title": "Koneksi AI",
+    "title": "Hubungkan ChatGPT atau Claude",
     "subtitle": "Claude, ChatGPT, dan aplikasi AI lain yang boleh membaca datamu"
   },
   "signedOut": {

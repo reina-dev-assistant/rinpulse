@@ -74,7 +74,7 @@ describe('loadBalance', () => {
 });
 
 describe('readiness load signal', () => {
-  const rest = { dayStart: TODAY, resting: new Map<number, number>(), sleep: null, hrv: { missing: 'x' } as RecoveryState };
+  const rest = { dayStart: TODAY, resting: new Map<number, number>(), sleep: null, hrv: { missing: 'x', wait: { kind: 'none' } } as RecoveryState };
   const strainDay = (back: number, trimp: number) => ({ ...day(back, trimp), strain: 0, zoneMinutes: [0, 0, 0, 0, 0] as [number, number, number, number, number], coveredMinutes: 0 });
 
   it('uses the same ratio as loadBalance, from TRIMP and not from the saturated strain', () => {

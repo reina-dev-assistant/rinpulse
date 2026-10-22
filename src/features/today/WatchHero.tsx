@@ -8,6 +8,7 @@ import { HeroGradient } from '@/components/HeroGradient';
 import { Metric } from '@/components/Metric';
 import { PressableScale } from '@/components/PressableScale';
 import { Ring } from '@/components/Ring';
+import { ringInnerWidth } from '@/components/ringMath';
 import { StatusDot } from '@/components/StatusDot';
 import { isLinkLive, isLinkUp, linkLabel } from '@/features/device/linkState';
 import type { HeartReading } from '@/features/today/stats';
@@ -16,6 +17,10 @@ import { spacing, useTheme } from '@/theme';
 import type { LinkState } from '@/wear';
 
 const LOW_BATTERY = 20;
+const RING_SIZE = 120;
+const RING_STROKE = 11;
+/** What the steps in the ring's centre may take: 100,000 in a dot-matrix face is wider than the ring. */
+const RING_TEXT_WIDTH = ringInnerWidth(RING_SIZE, RING_STROKE);
 
 interface WatchHeroProps {
   linkState: LinkState;
@@ -72,15 +77,15 @@ export function WatchHero({ linkState, deviceName, steps, goal, heart, nowSec, b
 
       <View style={styles.body}>
         <Ring
-          size={120}
-          stroke={11}
+          size={RING_SIZE}
+          stroke={RING_STROKE}
           value={steps}
           max={goal}
           color={colors.heroSteps}
           track={colors.heroTrack}
           accessibilityLabel={t('hero.stepsA11y', { steps: formatCount(steps), goal: formatCount(goal) })}>
-          <Metric value={formatCount(steps)} size="md" color={colors.heroForeground} />
-          <AppText variant="caption" color={colors.heroMuted}>
+          <Metric value={formatCount(steps)} size="md" color={colors.heroForeground} fit={RING_TEXT_WIDTH} />
+          <AppText variant="caption" color={colors.heroMuted} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={styles.of}>
             {t('hero.of', { goal: formatCount(goal) })}
           </AppText>
         </Ring>
@@ -165,4 +170,5 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   sync: { flex: 1 },
+  of: { maxWidth: RING_TEXT_WIDTH, textAlign: 'center' },
 });

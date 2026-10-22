@@ -204,9 +204,30 @@ export async function deleteWeighIn(db: ScaleDb, id: number): Promise<void> {
   await db.runAsync('DELETE FROM scale_reading WHERE id = ?', id);
 }
 
-/** Weigh-ins JoyoRogo does not have yet, oldest first. */
+/** `scale_reading.scale_id` of weigh-ins read from a Huawei Health export (`SqliteHuaweiImportStore` writes it): no `scale` row belongs to it. */
+export const IMPORTED_SCALE_ID = 'huawei-health-export';
+
+/**
+ * Weigh-ins a scale took that JoyoRogo does not have yet, oldest first. Imported ones are left out: they go through
+ * `weight.importHistory` (`pendingImportedWeighIns`), never through `checkIn`, which would write over a day.
+ */
 export async function pendingWeighIns(db: ScaleDb): Promise<WeighIn[]> {
-  return (await db.getAllAsync<WeighInRow>("SELECT * FROM scale_reading WHERE rogo_state = 'pending' ORDER BY taken_at, id")).map(weighInOf);
+  return (
+    await db.getAllAsync<WeighInRow>("SELECT * FROM scale_reading WHERE rogo_state = 'pending' AND scale_id != ? ORDER BY taken_at, id", IMPORTED_SCALE_ID)
+  ).map(weighInOf);
+}
+
+/**
+ * Imported weigh-ins JoyoRogo has not been sent: `pending`, and `skipped` without an error, which is what the first version of the
+ * import wrote for every row (a later one marks a weight JoyoRogo cannot take `skipped` with its reason).
+ */
+export async function pendingImportedWeighIns(db: ScaleDb): Promise<WeighIn[]> {
+  return (
+    await db.getAllAsync<WeighInRow>(
+      "SELECT * FROM scale_reading WHERE scale_id = ? AND (rogo_state = 'pending' OR (rogo_state = 'skipped' AND rogo_error IS NULL)) ORDER BY taken_at, id",
+      IMPORTED_SCALE_ID,
+    )
+  ).map(weighInOf);
 }
 
 export async function markRogo(db: ScaleDb, id: number, state: RogoState, error: string | null): Promise<void> {

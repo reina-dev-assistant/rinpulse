@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { bucketAt, labelLeft, labelledBars, labelsFit, nextSelection, pointAt, slotCenter } from './barScrub';
+import { barHeight, bucketAt, chartPeak, labelLeft, labelledBars, labelsFit, labelWidth, nextSelection, pointAt, slotCenter } from './barScrub';
 
 describe('bucketAt', () => {
   test('maps x to equal slots', () => {
@@ -43,10 +43,18 @@ describe('nextSelection', () => {
 
 describe('labels', () => {
   test('fit only for few, wide-enough slots', () => {
-    expect(labelsFit(7, 300, 5)).toBe(true);
-    expect(labelsFit(12, 300, 5)).toBe(false);
-    expect(labelsFit(13, 900, 2)).toBe(false);
-    expect(labelsFit(0, 300, 2)).toBe(false);
+    expect(labelsFit(7, 300, labelWidth('7,825'))).toBe(true);
+    expect(labelsFit(12, 300, labelWidth('7,825'))).toBe(false);
+    expect(labelsFit(13, 900, labelWidth('12'))).toBe(false);
+    expect(labelsFit(0, 300, labelWidth('12'))).toBe(false);
+  });
+  test('steps labels: four digits fit a week of bars, five and six digits give way to the highlighted bar only', () => {
+    // 7 bars in a 280 px chart: 40 px a slot.
+    const week = (...labels: string[]) => [...labelledBars(7, 280, labels, 6)];
+    expect(week('7,825', '8,000', '9,999', '1,000', '500', '0', '7,825')).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(week('7,825', '8,000', '10,000', '1,000', '500', '0', '7,825')).toEqual([6]);
+    expect(week('7,825', '30,000', '8,000', '1,000', '500', '0', '7,825')).toEqual([6]);
+    expect(week('7,825', '100,000', '8,000', '1,000', '500', '0', '7,825')).toEqual([6]);
   });
   test('falls back to the highlighted bar only', () => {
     expect([...labelledBars(24, 300, ['1', '2'], 5)]).toEqual([5]);
@@ -103,5 +111,55 @@ describe('pointAt', () => {
     expect(pointAt(50, 5, 100, 1)).toBe(0);
     expect(pointAt(300, 5, 100, 5)).toBe(-1);
     expect(pointAt(50, 5, 100, 0)).toBe(-1);
+  });
+});
+
+describe('labelWidth', () => {
+  test('a separator is narrower than a digit, so 100,000 is less than seven digits', () => {
+    expect(labelWidth('')).toBe(0);
+    expect(labelWidth('0')).toBe(8);
+    expect(labelWidth('7,825')).toBe(36);
+    expect(labelWidth('100,000')).toBe(52);
+    expect(labelWidth('100.000')).toBe(52);
+    expect(labelWidth('100,000')).toBeLessThan(7 * 8);
+  });
+  test('never narrower for a longer figure', () => {
+    expect(labelWidth('1,000')).toBeLessThan(labelWidth('10,000'));
+    expect(labelWidth('10,000')).toBeLessThan(labelWidth('100,000'));
+  });
+});
+
+describe('chartPeak', () => {
+  test('the tallest value or the goal line', () => {
+    expect(chartPeak([7825, 30_000, 100_000], 8000)).toBe(100_000);
+    expect(chartPeak([1000, 2000], 8000)).toBe(8000);
+    expect(chartPeak([1000, 2000])).toBe(2000);
+    expect(chartPeak([])).toBe(0);
+  });
+  test('NaN, Infinity and a goal of 0 or NaN do not take part', () => {
+    expect(chartPeak([NaN, 5000, Infinity], NaN)).toBe(5000);
+    expect(chartPeak([5000], 0)).toBe(5000);
+    expect(chartPeak([5000], Infinity)).toBe(5000);
+  });
+});
+
+describe('barHeight', () => {
+  const H = 96;
+  test('proportional to the peak', () => {
+    expect(barHeight(50_000, 100_000, H, 3)).toBe(48);
+    expect(barHeight(100_000, 100_000, H, 3)).toBe(H);
+  });
+  test('7,825 next to a day of 100,000 is still a bar of 7.5 px; a day of 1 step is the stub', () => {
+    expect(barHeight(7825, 100_000, H, 3)).toBeCloseTo(7.512, 3);
+    expect(barHeight(1, 100_000, H, 3)).toBe(3);
+  });
+  test('0, a negative and NaN are the stub', () => {
+    for (const v of [0, -4, NaN]) expect(barHeight(v, 8000, H, 3)).toBe(3);
+  });
+  test('a value over the peak, or with no peak, is a full bar and never taller', () => {
+    expect(barHeight(30_000, 8000, H, 3)).toBe(H);
+    expect(barHeight(5000, 0, H, 3)).toBe(H);
+    expect(barHeight(5000, NaN, H, 3)).toBe(H);
+    expect(barHeight(Infinity, 8000, H, 3)).toBe(H);
   });
 });

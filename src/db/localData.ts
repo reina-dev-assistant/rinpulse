@@ -5,6 +5,7 @@ import Storage from 'expo-sqlite/kv-store';
 import { resetSyncedPrefs } from '@/cloud/prefsSync';
 import { baselineRecordSync } from '@/cloud/recordSync';
 import { loadCoachDoc } from '@/features/coach/store';
+import { aiDeleteEverything } from '@/features/ai/stores';
 
 import { deleteLocalRows, detachLocalData as detachRows, keepApart as keepApartRows } from './localDataCore';
 
@@ -25,7 +26,8 @@ const TEMPLATE_PREFIX = 'joyofit.stickers.user.';
 
 /**
  * Deletes everything the person made or the cloud restored on this phone, as if the app were new: the database tables of
- * `USER_DATA_TABLES`, the saved route files and gear photos, Sticker Studio templates, Coach chat, every synced preference back
+ * `USER_DATA_TABLES`, the saved route files and gear photos, Sticker Studio templates, Coach chat, everything Joyo AI keeps (the API
+ * keys in the secure store, consents, notes, saved conversation, insights; `aiDeleteEverything`), every synced preference back
  * to its default, and all sync bookkeeping (cursors, account id, restore flags). The cloud is not touched.
  *
  * Kept on purpose: the watch pairing (`device` rows and the native BLE keys), what a paired watch supports, watch faces, the
@@ -35,6 +37,7 @@ const TEMPLATE_PREFIX = 'joyofit.stickers.user.';
 export async function deleteAllLocalData(db: SQLiteDatabase): Promise<void> {
   // Preferences first: if clearing one leaves a sync record behind, the table delete below removes it.
   await resetSyncedPrefs();
+  await aiDeleteEverything();
   for (const name of DATA_FOLDERS) {
     const folder = new Directory(Paths.document, name);
     if (folder.exists) folder.delete();

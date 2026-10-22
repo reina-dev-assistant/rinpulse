@@ -397,7 +397,7 @@ export function analyzeRide(input: RideInput): RideAnalysis {
 
   const trimp = workoutStrain(
     input.points.map((p) => ({ ts: p.ts, hr: p.hr ?? null })),
-    profile.maxHr,
+    profile.zones,
   )?.trimp ?? null;
   const tssTrimp = power?.tss != null ? power.tss * TSS_TO_TRIMP : null;
   const load: RideLoad = {

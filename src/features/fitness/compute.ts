@@ -44,7 +44,7 @@ export function computeDailyFitness(d: FitnessData, availability?: NightHrvAvail
       asleepSec: last.asleepSeconds,
       needSec: sleepNeedSec(yesterday),
       recoveryZ: 'recovery' in rec ? rec.recovery.z : null,
-      maxHr: d.maxHr,
+      zones: d.zones,
       samples: d.samples,
       stress: d.stress,
       naps: nights.filter((n) => n.nap && n.start >= last.end).map((n) => ({ start: n.start, end: n.end })),
@@ -85,11 +85,11 @@ export function computeFitnessOverview(d: FitnessData, efforts: readonly EffortS
       dayStart: d.dayStart,
       workouts: d.workouts.map(({ workout, summary }) => ({ start: workout.start, vo2max: summary.vo2max })),
       resting: d.resting,
-      maxHr: d.maxHr,
+      maxHr: d.zones.maxHr,
     }),
     load: loadBalance(d.strain, d.dayStart),
     races: predictRaces(efforts),
     hrv: hrvStatus(d.hrv, d.nowSec),
-    intensity: intensityMinutes(d.strain, mondayOf(d.dayStart)),
+    intensity: intensityMinutes(d.strain, mondayOf(d.dayStart), d.zones.method),
   };
 }

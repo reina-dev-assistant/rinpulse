@@ -11,6 +11,7 @@ import { isIos } from '@/components/IosUnavailable';
 import { quickRepliesSupport } from '@/features/settings/quickReplies';
 import { useWatch } from '@/state/WatchProvider';
 import { useTheme } from '@/theme';
+import { hasNative } from '@/wear';
 
 export default function NotificationsSettingsScreen() {
   const { t } = useTranslation('settings');
@@ -27,7 +28,7 @@ export default function NotificationsSettingsScreen() {
         <NavRow
           icon="apps"
           title={t('index.rows.notificationApps.title')}
-          subtitle={isIos ? t('index.rows.notificationApps.subtitleIos') : t('index.rows.notificationApps.subtitle')}
+          subtitle={isIos ? t(hasNative('getNotificationFilter') ? 'index.rows.notificationApps.subtitleIosFilter' : 'index.rows.notificationApps.subtitleIos') : t('index.rows.notificationApps.subtitle')}
           onPress={() => router.push('/settings/notification-apps')}
           style={groupedRowStyle(theme, 0, 1)}
         />

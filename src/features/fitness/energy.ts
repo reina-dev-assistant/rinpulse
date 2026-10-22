@@ -1,4 +1,5 @@
 import { t } from '@/i18n';
+import type { HrZones } from '@/features/hrzones/zones';
 import { dailyStrain, strainFromTrimp, STRAIN_MAX } from '@/features/today/strain';
 import type { StepSample } from '@/wear';
 
@@ -41,7 +42,8 @@ export interface EnergyInput {
   needSec: number;
   /** HRV recovery z-score (`Recovery.z`), when there is one. */
   recoveryZ: number | null;
-  maxHr: number;
+  /** The person's heart-rate zones (training load since waking). */
+  zones: HrZones;
   /** Per-minute samples since waking, oldest first (today's are enough). */
   samples: readonly Pick<StepSample, 'timestamp' | 'steps' | 'heartRate'>[];
   /** Stress readings (`health_metrics` type `emotion`, 0..100). */
@@ -74,10 +76,10 @@ export function wakeLevel(asleepSec: number, needSec: number, recoveryZ: number 
 }
 
 function partsAt(input: EnergyInput, t: number): Energy['parts'] {
-  const { wakeSec, maxHr, samples, stress, naps, restingHr } = input;
+  const { wakeSec, zones, samples, stress, naps, restingHr } = input;
   const hours = Math.max(0, t - wakeSec) / 3600;
   const since = samples.filter((s) => s.timestamp >= wakeSec && s.timestamp < t);
-  const trimp = dailyStrain(since, maxHr).reduce((a, d) => a + d.trimp, 0);
+  const trimp = dailyStrain(since, zones).reduce((a, d) => a + d.trimp, 0);
   const strain = (STRAIN_DRAIN * strainFromTrimp(trimp)) / STRAIN_MAX;
 
   const readings = stress.filter((r) => r.ts >= wakeSec && r.ts < t);

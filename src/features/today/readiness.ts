@@ -1,5 +1,5 @@
 import type { NightHrvAvailability } from '@/features/today/nightHrv';
-import type { Recovery, RecoveryState } from '@/features/today/recovery';
+import type { Recovery, RecoveryState, RecoveryWait } from '@/features/today/recovery';
 import { type SleepSummary } from '@/features/today/stats';
 import type { DayStrain } from '@/features/today/strain';
 import { loadBalance, MIN_LOAD_DAYS } from '@/features/fitness/trainingLoad';
@@ -41,6 +41,8 @@ export interface Readiness {
   missing: string[];
   /** HRV against your baseline, when there is a reading and a baseline. */
   recovery: Recovery | null;
+  /** Why `recovery` is null (baseline filling up, night HRV off, ...); null when there is one. */
+  recoveryWait: RecoveryWait | null;
   /** Says HRV is not a night reading in this readiness; null when it is, or nothing is known. */
   hrvNote: string | null;
 }
@@ -187,6 +189,7 @@ export function readiness(input: {
     signals,
     missing,
     recovery: 'recovery' in hrv ? hrv.recovery : null,
+    recoveryWait: 'wait' in hrv ? hrv.wait : null,
     hrvNote: hrvNote(hrv, availability),
   };
 }

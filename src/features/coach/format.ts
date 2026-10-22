@@ -1,5 +1,4 @@
 import { t, fmtDecimal, fmtDistance, fmtDuration, fmtInt } from '@/i18n';
-import { zoneThresholds } from '@/features/today/strain';
 import type { PlannedExercise, PlannedSession, SessionType } from './plans/types';
 import type { Effective, Reason, Suggestion } from './suggest';
 
@@ -7,14 +6,6 @@ import type { Effective, Reason, Suggestion } from './suggest';
 export function spanText(sec: number): string {
   if (sec % 60 === 0) return t('coach:unit.min', { value: fmtInt(sec / 60) });
   return t('coach:unit.sec', { value: fmtInt(sec) });
-}
-
-/** The bpm range of heart-rate zone `zone` (1..5) at `maxHr`. */
-export function zoneBpm(zone: number, maxHr: number): { from: number; to: number } {
-  const lows = zoneThresholds(maxHr);
-  const from = lows[zone - 1] ?? maxHr;
-  const to = zone >= 5 ? maxHr : (lows[zone] ?? maxHr) - 1;
-  return { from, to };
 }
 
 /** One line for what to do: "Lari santai 30 menit, zona 2". `session` supplies the structure of tempo, interval and walk/run types. */

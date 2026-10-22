@@ -295,7 +295,8 @@ public final class WearLink: @unchecked Sendable {
             let result = try await HuaweiInitializer(
                 session: session, caps: connection.caps, log: log, bondedName: bondedName,
                 protocolVersion: authenticator.protocolVersion, profile: settings.profile, healthSensors: settings.healthSensors,
-                deviceType: connection.deviceType, pinnedLanguage: settings.watchLanguage, phoneLanguage: LanguageSender.phoneLanguage()
+                deviceType: connection.deviceType, pinnedLanguage: settings.watchLanguage, phoneLanguage: LanguageSender.phoneLanguage(),
+                heartRateZones: settings.heartRateZones
             ).run()
 
             let finalName = bondedName ?? result.deviceName ?? address

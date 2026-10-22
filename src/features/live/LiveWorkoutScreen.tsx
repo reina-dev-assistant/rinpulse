@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -12,17 +12,20 @@ import { Metric } from '@/components/Metric';
 import { Card, Screen, Section } from '@/components/Screen';
 import { StatTile } from '@/components/StatTile';
 import { EmptyState } from '@/components/States';
+import { useHrZones } from '@/features/hrzones/settings';
 import { BurnFigure, FuelBar } from '@/features/live/FuelBar';
 import {
   distanceParts,
   elapsedSec,
   endPromptVisible,
   heartZone,
+  isActive,
   livePhase,
   paceValue,
   prefersSpeed,
   showsClock,
 } from '@/features/live/liveWorkout';
+import { isStrengthSport } from '@/features/strength/watchLive';
 import { sportIcon } from '@/features/workouts/sportIcon';
 import { formatElapsed } from '@/features/workouts/summary';
 import { fmtDecimal, fmtInt } from '@/i18n';
@@ -63,9 +66,15 @@ export function LiveWorkoutScreen() {
     );
   }
 
+  // A strength workout belongs in the strength logger, not here.
+  if (isActive(live) && isStrengthSport(live.sportType)) return <Redirect href="/strength/watch-pick" />;
+
   return (
     <Screen>
       <HiddenTabHeader title={live.sportName ? sportLabel(live.sportName) : t('live.title')} />
+      {isActive(live) && live.sportType === null ? (
+        <Button label={t('live.logStrength')} icon="barbell" onPress={() => router.push('/strength/watch-pick')} />
+      ) : null}
       {endPromptVisible(live, kept) ? (
         <Card>
           <AppText variant="bodyStrong">{t('live.endPrompt.title')}</AppText>
@@ -110,10 +119,11 @@ function Pair({ label, value }: { label: string; value: string }) {
 function LiveBody({ live }: { live: LiveWorkout }) {
   const { t } = useTranslation('sharing');
   const colors = useColors();
+  const zones = useHrZones();
   const nowMs = useNow(TICK_MS);
   const seconds = elapsedSec(live, nowMs);
   const phase = livePhase(live);
-  const zone = live.heartRate !== null ? heartZone(live.heartRate, live.maxHeartRate) : null;
+  const zone = live.heartRate !== null ? heartZone(live.heartRate, zones) : null;
   const distance = live.distanceM !== null ? distanceParts(live.distanceM) : null;
   const speed = prefersSpeed(live);
   const statusColor = live.status === 'running' ? colors.link : live.status === 'paused' ? colors.warning : colors.mutedForeground;

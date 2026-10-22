@@ -1,6 +1,6 @@
 // Port of the connection-essential part of HuaweiInitializer.kt (GB HuaweiSupportProvider.initializeDeviceConfigure): ProductInfo,
 // SetTime, BatteryLevel, SupportedServices -> SupportedCommands, ExpandCapability, ExtendedAccount, SettingRelated, AcceptAgreement,
-// ReverseCapabilities, SetUpDeviceStatus (+ WearStatus), ConnectStatus, the saved profile, the heart-rate zones (FitnessData branch) and the
+// ReverseCapabilities, SetUpDeviceStatus (+ WearStatus), ConnectStatus, the saved profile, the heart-rate zones (FitnessData branch; the user's or GB's defaults) and the
 // saved health sensor switches, and last the phone's language (SetLanguageSetting).
 // Not ported on purpose: notification capabilities/constraints/state; the P2P (Track) branch of the heart-rate zones.
 import Foundation
@@ -43,6 +43,8 @@ public final class HuaweiInitializer {
     private let pinnedLanguage: String?
     /// The phone's first language as a BCP-47 tag (`Locale.preferredLanguages`).
     private let phoneLanguage: String
+    /// The heart-rate zones the user configured in the app; nil sends GB's defaults for the profile age.
+    private let heartRateZones: HeartRateZonesCalc.UserZones?
 
     /// Replaced by tests: the phase timeouts, the clock SetTime reads and the zone it reports.
     var timeouts = LinkTimeouts()
@@ -54,7 +56,8 @@ public final class HuaweiInitializer {
     public init(
         session: HuaweiSession, caps: DeviceCaps, log: @escaping LogSink, bondedName: String?, protocolVersion: Int,
         profile: UserProfileData? = nil, healthSensors: HealthSensorConfig = HealthSensorConfig(), deviceType: HuaweiDeviceType = .ble,
-        pinnedLanguage: String? = nil, phoneLanguage: String = LanguageSender.phoneLanguage()
+        pinnedLanguage: String? = nil, phoneLanguage: String = LanguageSender.phoneLanguage(),
+        heartRateZones: HeartRateZonesCalc.UserZones? = nil
     ) {
         self.session = session
         self.caps = caps
@@ -66,6 +69,7 @@ public final class HuaweiInitializer {
         self.deviceType = deviceType
         self.pinnedLanguage = pinnedLanguage
         self.phoneLanguage = phoneLanguage
+        self.heartRateZones = heartRateZones
     }
 
     private func info(_ message: String) {
@@ -237,7 +241,8 @@ public final class HuaweiInitializer {
         info(HeartRateZonesSync.capsLine(caps))
         try await soft("HeartRateZones") {
             _ = try await HeartRateZonesSync.sendFitnessData(
-                session: session, caps: caps, log: log, age: HeartRateZonesSync.age(profile: profile, now: now()), timeoutMs: timeouts.initMs
+                session: session, caps: caps, log: log, age: HeartRateZonesSync.age(profile: profile, now: now()), user: heartRateZones,
+                timeoutMs: timeouts.initMs
             )
         }
 

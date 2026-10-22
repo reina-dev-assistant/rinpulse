@@ -2,7 +2,7 @@ import { useContext, useMemo } from 'react';
 
 import { useNow } from '@/hooks/useNow';
 
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { userHrZones } from '@/features/hrzones/settings';
 import { getFtp } from '@/features/cycling/settings';
 import { useRecorder } from '@/state/RecorderProvider';
 
@@ -60,7 +60,7 @@ export function useBikeRide(): BikeRide {
             live,
             metrics: bike.metrics,
             nav: bike.nav,
-            maxHr: userMaxHr(),
+            zones: userHrZones(),
             ftp: getFtp(),
             batteryPct,
             nowMs,

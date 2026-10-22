@@ -69,17 +69,29 @@ export function NavRow({ icon, sport, tint, leading, destructive, title, subtitl
  * Takes what `useTheme()` returns.
  */
 export function groupedRowStyle(
-  { colors, radius }: { colors: Colors; radius: Theme['radius'] },
+  { theme, colors, radius }: { theme: Theme; colors: Colors; radius: Theme['radius'] },
   index: number,
   count: number,
 ): ViewStyle {
+  // An outlined theme draws the group as one thin-bordered card: side borders on every row, the top on the first, the bottom on all.
+  const outline: ViewStyle = theme.outlined
+    ? {
+        borderLeftWidth: StyleSheet.hairlineWidth,
+        borderRightWidth: StyleSheet.hairlineWidth,
+        borderTopWidth: index === 0 ? StyleSheet.hairlineWidth : 0,
+        borderLeftColor: colors.hairline,
+        borderRightColor: colors.hairline,
+        borderTopColor: colors.hairline,
+      }
+    : {};
   return {
+    ...outline,
     backgroundColor: colors.card,
     borderTopLeftRadius: index === 0 ? radius.card : 0,
     borderTopRightRadius: index === 0 ? radius.card : 0,
     borderBottomLeftRadius: index === count - 1 ? radius.card : 0,
     borderBottomRightRadius: index === count - 1 ? radius.card : 0,
-    borderBottomWidth: index < count - 1 ? StyleSheet.hairlineWidth : 0,
+    borderBottomWidth: index < count - 1 || theme.outlined ? StyleSheet.hairlineWidth : 0,
     borderBottomColor: colors.hairline,
   };
 }

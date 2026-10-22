@@ -445,4 +445,33 @@ final class WearRuntimeTests: XCTestCase {
         }
         XCTAssertEqual(settings.profile, good, "an invalid profile is not stored")
     }
+
+    // MARK: heart-rate zones
+
+    func testHeartRateZonesAreValidatedStoredClearedAndNotSentWithoutAWatch() async throws {
+        let runtime = makeRuntime()
+        let zones = HeartRateZonesCalc.UserZones(
+            method: .hrr, maxHr: 190, restingHr: 55, zones: [100, 120, 140, 160, 180], warningEnabled: false, warningLimit: 200
+        )
+        XCTAssertEqual(runtime.heartRateZonesStatus()["configured"] as? Bool, false)
+        let sent = try await runtime.setHeartRateZones(zones)
+        XCTAssertFalse(sent, "stored only: no watch is connected")
+        XCTAssertEqual(settings.heartRateZones, zones)
+        XCTAssertEqual(runtime.heartRateZonesStatus()["configured"] as? Bool, true)
+        XCTAssertTrue(runtime.heartRateZonesStatus()["via"] is NSNull)
+
+        var bad = zones
+        bad.zones = [100, 120, 120, 160, 180]
+        do {
+            _ = try await runtime.setHeartRateZones(bad)
+            XCTFail("expected ERR_INVALID_ARGUMENT")
+        } catch let e as WearError {
+            XCTAssertEqual(e.code, .invalidArgument)
+        }
+        XCTAssertEqual(settings.heartRateZones, zones, "invalid zones are not stored")
+
+        _ = try await runtime.setHeartRateZones(nil)
+        XCTAssertNil(settings.heartRateZones)
+        XCTAssertEqual(runtime.heartRateZonesStatus()["configured"] as? Bool, false)
+    }
 }

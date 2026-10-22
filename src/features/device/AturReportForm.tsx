@@ -20,11 +20,12 @@ type Outcome = { kind: 'sent'; sequenceId: number } | { kind: 'queued'; reason: 
  * "Kirim laporan": what went wrong in the person's words, an email to answer to (the account's, until changed or cleared),
  * and the support report as a file. It goes to the JoyoFit board in Atur, so the maintainers get the whole log, the phone,
  * the watch and the disconnect history in one issue, and can write back. Offline, the report waits in the queue.
+ * `initialMessage` starts the text with something the app knows (a test result), which the person can still edit.
  */
-export function AturReportForm({ onClose }: { onClose: () => void }) {
+export function AturReportForm({ onClose, initialMessage = '' }: { onClose: () => void; initialMessage?: string }) {
   const { t } = useTranslation(['watch', 'common']);
   const user = authClient.useSession().data?.user;
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialMessage);
   // Filled from the account once; after that the person's edit, including an empty field, wins.
   const [typedEmail, setTypedEmail] = useState<string | null>(null);
   const email = typedEmail ?? user?.email ?? '';

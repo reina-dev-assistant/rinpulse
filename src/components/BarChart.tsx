@@ -1,10 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GestureResponderEvent, LayoutChangeEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
+import Svg, { Line } from 'react-native-svg';
 
 import { AppText } from '@/components/AppText';
-import { bucketAt, labelLeft, labelledBars, LABEL_CHAR_WIDTH, nextSelection, pointAt, slotCenter } from '@/components/barScrub';
+import { bucketAt, labelLeft, barHeight as heightOf, chartPeak, labelledBars, labelWidth, nextSelection, pointAt, slotCenter } from '@/components/barScrub';
 import { spacing, useColors } from '@/theme';
 
 const LABEL_HEIGHT = 16;
@@ -133,6 +135,8 @@ export interface BarDatum {
   short: string;
   /** Draws the bar dimmed, like a past period. */
   dim?: boolean;
+  /** The bar reached the chart's `goal`: a check is drawn at its top when the bars are wide enough to hold one. */
+  hit?: boolean;
 }
 
 interface BarValueProps {
@@ -150,7 +154,7 @@ interface BarValueProps {
  */
 function BarValue({ text, center, chartWidth, bottom }: BarValueProps) {
   const [measured, setMeasured] = useState<number | null>(null);
-  const width = measured ?? text.length * LABEL_CHAR_WIDTH;
+  const width = measured ?? labelWidth(text);
   return (
     <View pointerEvents="none" importantForAccessibility="no-hide-descendants" style={[styles.valueRow, { bottom }]}>
       <AppText
@@ -176,21 +180,27 @@ interface BarChartProps {
   tickWidth: number;
   /** The bar that gets a value label when labels do not fit for all; the newest by default. null for none: use it when the screen already states that bar's value next to the chart. */
   current?: number | null;
+  /** A target value drawn as a dashed line across the chart; the bars are scaled so the line is always inside it. */
+  goal?: number;
 }
+
+/** Narrowest slot that still holds a goal check. */
+const MIN_HIT_SLOT = 22;
 
 /**
  * Bars made of plain Views, scaled to the tallest. Touch highlights a bar and reads its date and value out above the
  * chart. Value labels over the bars: the current bar (every bar when they fit) while nothing is selected, none for the
  * selected bar, since the readout already shows it. Labels are printed in full, centred on the bar and kept inside the chart.
  */
-export function BarChart({ data, color, height, gap, tick, tickWidth, current }: BarChartProps) {
+export function BarChart({ data, color, height, gap, tick, tickWidth, current, goal }: BarChartProps) {
   const colors = useColors();
   const scrub = useBarScrub(data.length, data);
-  const peak = Math.max(0, ...data.map((d) => d.value));
+  const peak = chartPeak(data.map((d) => d.value), goal);
+  const slotWidth = data.length > 0 && scrub.width > 0 ? (scrub.width - gap * (data.length - 1)) / data.length : 0;
   const highlighted = scrub.selected === null ? (current === undefined ? data.length - 1 : current) : null;
   const labelled = labelledBars(data.length, scrub.width, data.map((d) => d.short), highlighted, scrub.selected);
   const picked = scrub.selected !== null ? data[scrub.selected]! : null;
-  const barHeight = (d: BarDatum) => (d.value > 0 ? Math.max(MIN_BAR, (d.value / peak) * height) : MIN_BAR);
+  const barHeight = (d: BarDatum) => heightOf(d.value, peak, height, MIN_BAR);
 
   return (
     <View style={styles.wrap}>
@@ -206,11 +216,21 @@ export function BarChart({ data, color, height, gap, tick, tickWidth, current }:
                   d.value > 0
                     ? { height: barHeight(d), backgroundColor: color, opacity: dimmed ? 0.5 : 1 }
                     : { height: MIN_BAR, backgroundColor: colors.muted },
-                ]}
-              />
+                ]}>
+                {d.hit && d.value > 0 && slotWidth >= MIN_HIT_SLOT ? (
+                  <View style={styles.hit} pointerEvents="none">
+                    <Ionicons name="checkmark" size={13} color={colors.card} />
+                  </View>
+                ) : null}
+              </View>
             </View>
           );
         })}
+        {goal !== undefined && Number.isFinite(goal) && goal > 0 && scrub.width > 0 ? (
+          <Svg pointerEvents="none" width={scrub.width} height={3} style={[styles.goal, { bottom: (goal / peak) * height - 1.5 }]}>
+            <Line x1={0} x2={scrub.width} y1={1.5} y2={1.5} stroke={colors.foreground} strokeWidth={1.5} strokeDasharray="4 3" opacity={0.7} />
+          </Svg>
+        ) : null}
         {scrub.width > 0
           ? data.map((d, i) =>
               labelled.has(i) && d.value > 0 ? (
@@ -256,6 +276,8 @@ const styles = StyleSheet.create({
   slot: { flex: 1, justifyContent: 'flex-end', alignItems: 'center' },
   valueRow: { position: 'absolute', left: 0, right: 0, flexDirection: 'row' },
   value: { flexShrink: 0, fontSize: 11, lineHeight: 14, fontVariant: ['tabular-nums'] },
+  goal: { position: 'absolute', left: 0 },
+  hit: { alignItems: 'center', paddingTop: 2 },
   bar: { alignSelf: 'stretch', borderTopLeftRadius: 3, borderTopRightRadius: 3, borderBottomLeftRadius: 1, borderBottomRightRadius: 1 },
   axis: { flexDirection: 'row' },
   tick: { textAlign: 'center', fontSize: 11, lineHeight: 15 },

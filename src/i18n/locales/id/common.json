@@ -203,6 +203,10 @@
     "matcha": {
       "name": "Matcha Latte",
       "tagline": "Krem dan hijau matcha dengan teks membulat lembut. Selalu terang."
+    },
+    "titik": {
+      "name": "Titik",
+      "tagline": "Hitam dan putih tulang, garis tipis, angka dot-matrix dan satu warna merah untuk yang sedang aktif. Mengikuti HP."
     }
   },
   "notFound": {
@@ -213,5 +217,17 @@
   "chart": {
     "hint": "Ketuk batang untuk melihat nilainya",
     "noValue": "Tidak ada nilai"
+  },
+  "metric": {
+    "range": {
+      "D": "Hari",
+      "W": "Minggu",
+      "M": "Bulan",
+      "3M": "3 bln",
+      "Y": "Tahun"
+    },
+    "previous": "Periode sebelumnya",
+    "next": "Periode berikutnya",
+    "backToToday": "Kembali ke hari ini"
   }
 }

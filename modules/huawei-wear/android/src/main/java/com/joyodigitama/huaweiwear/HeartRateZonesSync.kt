@@ -1,6 +1,6 @@
 // Derived from Gadgetbridge (AGPL-3.0-or-later; see NOTICE): service/devices/huawei/requests/SendHeartRateZonesConfig and
 // service/devices/huawei/p2p/HuaweiP2PTrackService. Without a zone configuration the watch's workout screen shows the heart
-// rate but no zone, so JoyoFit sends GB's default zones for the profile age.
+// rate but no zone, so JoyoFit sends the zones the user set in the app, or GB's defaults for the profile age.
 package com.joyodigitama.huaweiwear
 
 import java.time.LocalDate
@@ -17,6 +17,19 @@ internal object HeartRateZonesSync {
 
   fun age(profile: UserProfileData?): Int =
     profile?.birthYear?.takeIf { it > 0 }?.let { ProfileSender.age(it, LocalDate.now()) } ?: DEFAULT_AGE
+
+  /** Which way the watch takes zones: `track`, `extended` (07/21), `simple` (07/13) or `none`. */
+  fun route(): String = when {
+    supportsTrack -> "track"
+    supportsExtended -> "extended"
+    supportsSimple -> "simple"
+    else -> "none"
+  }
+
+  /** The log text of a user's zones: method, max, rest, zone bounds, warning. */
+  fun describe(user: HeartRateZonesCalc.UserZones): String =
+    "method ${if (user.method == HeartRateZonesCalc.Method.HRR) "hrr" else "max"}, max ${user.maxHr}, rest ${user.restingHr}, " +
+      "zones ${user.zones.joinToString("/")}, warning ${if (user.warningEnabled) user.warningLimit.toString() else "off"}"
 
   /** GB HuaweiState.supportsTrack: ExpandCapability 0x36 (when the watch sent an ExpandCapability at all). */
   val supportsTrack: Boolean get() = DeviceCaps.expandCapability(0x36)
@@ -40,10 +53,10 @@ internal object HeartRateZonesSync {
    * SendHeartRateZonesConfig (07/13 or 07/21) for the non-Track branch; false when the watch does not use it
    * (Track watches get the zones over P2P, [TrackService]).
    */
-  suspend fun sendFitnessData(session: HuaweiSession, events: WearEvents, age: Int): Boolean {
+  suspend fun sendFitnessData(session: HuaweiSession, events: WearEvents, age: Int, user: HeartRateZonesCalc.UserZones? = null): Boolean {
     if (supportsTrack || !supportsSimple) return false
     val extended = supportsExtended
-    val config = HeartRateZonesCalc.deviceConfig(age, track = false, simpleCommand = true, extended = extended)
+    val config = HeartRateZonesCalc.deviceConfig(age, track = false, simpleCommand = true, extended = extended, user = user)
       .firstOrNull { it.posture == HeartRateZonesCalc.Posture.UPRIGHT } ?: return false
     val mhr = config.byMethod(HeartRateZonesCalc.Method.MHR)?.takeIf { it.hasValidData() }
     val hrr = config.byMethod(HeartRateZonesCalc.Method.HRR)?.takeIf { it.hasValidData() }
@@ -57,7 +70,7 @@ internal object HeartRateZonesSync {
     session.request(packet, Timeouts.INIT_MS, "HeartRateZones")
     events.log(
       LogDirection.INFO, FitnessData.id.toInt(), if (extended) 0x21 else 0x13, null,
-      "HR zones: sent 07/${if (extended) "21" else "13"} for age $age, MHR ${mhr?.let { "${it.zone1}/${it.zone2}/${it.zone3}/${it.zone4}/${it.zone5} of ${it.threshold}" }} " +
+      "HR zones: sent 07/${if (extended) "21" else "13"} for ${if (user != null) "user zones (${describe(user)}), route ${route()}" else "age $age"}, MHR ${mhr?.let { "${it.zone1}/${it.zone2}/${it.zone3}/${it.zone4}/${it.zone5} of ${it.threshold}" }} " +
         "warning ${config.warningHRLimit}${hrr?.let { ", HRR ${it.zone1}/${it.zone2}/${it.zone3}/${it.zone4}/${it.zone5} resting ${it.resting}" } ?: ""}",
     )
     return true
@@ -67,12 +80,14 @@ internal object HeartRateZonesSync {
 /**
  * P2P module `hw.unitedevice.track` (package `hw.watch.health.p2p`, fingerprint `SystemApp`): on registration the phone sends the
  * zone TLV in a type-2 [HuaweiP2PSubMsg], like GB's `HuaweiP2PTrackService`. [age] is read at each send, so [resend] picks up a
- * changed profile.
+ * changed profile; [user] likewise a changed zone configuration.
  */
 internal class TrackService(
   manager: HuaweiP2PManager,
   private val events: WearEvents,
   private val age: () -> Int,
+  /** The zones the user set in the app, read at each send; null = defaults for [age]. */
+  private val user: () -> HeartRateZonesCalc.UserZones? = { null },
 ) : HuaweiBaseP2PService(manager) {
   override fun getModule() = MODULE
 
@@ -80,7 +95,9 @@ internal class TrackService(
 
   override fun getFingerprint() = FINGERPRINT
 
-  override fun registered() = resend()
+  override fun registered() {
+    resend()
+  }
 
   override fun unregister() = Unit
 
@@ -89,13 +106,14 @@ internal class TrackService(
   }
 
   /** GB `sendHeartZoneConfig`. */
-  fun resend() {
+  fun resend(): Boolean {
     val years = age()
-    val configs = HeartRateZonesCalc.deviceConfig(years, track = true, simpleCommand = false, extended = false)
+    val zones = user()
+    val configs = HeartRateZonesCalc.deviceConfig(years, track = true, simpleCommand = false, extended = false, user = zones)
     val pairs = HeartRateZonesCalc.trackTlv(configs)
     if (pairs == null) {
-      events.log(LogDirection.ERROR, 0x34, 0x01, null, "HR zones: not sent, the zones for age $years are not valid")
-      return
+      events.log(LogDirection.ERROR, 0x34, 0x01, null, "HR zones: not sent, the zones for ${if (zones != null) "the user's configuration" else "age $years"} are not valid")
+      return false
     }
     val tlv = HuaweiTLV()
     for ((tag, value) in pairs) tlv.put(tag, value.toByte())
@@ -105,9 +123,10 @@ internal class TrackService(
     val mhr = upright.byMethod(HeartRateZonesCalc.Method.MHR)!!
     val hrr = upright.byMethod(HeartRateZonesCalc.Method.HRR)!!
     log(
-      "HR zones: sent via $MODULE for age $years, upright MHR ${mhr.zone1}/${mhr.zone2}/${mhr.zone3}/${mhr.zone4}/${mhr.zone5} of ${mhr.threshold}, " +
+      "HR zones: sent via $MODULE for ${if (zones != null) "user zones (${HeartRateZonesSync.describe(zones)}), route track" else "age $years"}, upright MHR ${mhr.zone1}/${mhr.zone2}/${mhr.zone3}/${mhr.zone4}/${mhr.zone5} of ${mhr.threshold}, " +
         "HRR ${hrr.zone1}/${hrr.zone2}/${hrr.zone3}/${hrr.zone4}/${hrr.zone5} resting ${hrr.resting}, warning ${upright.warningHRLimit}, ${packet.bytes.size} bytes",
     )
+    return true
   }
 
   private fun log(message: String) = events.log(LogDirection.INFO, 0x34, 0x01, null, message)

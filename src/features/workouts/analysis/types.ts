@@ -72,14 +72,20 @@ export interface AnalysisLap {
   gainM: number | null;
 }
 
-/** Zones 1 to 5 are 50-60, 60-70, 70-80, 80-90 and 90-100 percent of the maximum heart rate. */
+/**
+ * The person's heart-rate zones for this workout: `bounds` are the limits they had when the analysis was made. By default zones 1 to 5 are
+ * 50-60, 60-70, 70-80, 80-90 and 90-100 percent of the maximum heart rate; the person may use the reserve method (six zones: warm-up, then
+ * Huawei's five from 59 percent of the reserve) or their own limits.
+ */
 export interface AnalysisHrZones {
+  /** The calculation method, which names the zones. Absent in analyses made before the reserve method had its warm-up zone (read as 'max'). */
+  method?: 'max' | 'hrr' | 'lthr';
   maxHr: number;
   /** Where the maximum comes from: the profile's age formula or an explicit setting. */
   source: "age" | "setting";
-  /** Six bpm bounds: lower bound of Z1..Z5, then maxHr. */
+  /** Lower bound of every zone, then maxHr: six bpm for five zones, seven for the reserve method's six. */
   bounds: number[];
-  /** Seconds in Z1..Z5. */
+  /** Seconds in every zone, Z1 first. */
   sec: number[];
   /** Seconds under Z1's lower bound. */
   belowSec: number;

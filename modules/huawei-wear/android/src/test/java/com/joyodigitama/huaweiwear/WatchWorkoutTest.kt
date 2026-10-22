@@ -91,7 +91,7 @@ class WatchWorkoutTest {
 
   @Test
   fun theFit4ProRefusalAndIdleStatusAsCapturedOn2026_10_21() {
-    // Every 17/01 on the Fit 4 Pro (6.1.0.117), whatever the operator, sport or tag subset, answered this while its WearStatus said not worn
+    // Every 17/01 on the Fit 4 Pro (6.1.0.117), whatever the operator, sport or tag subset, answered this
     // (plaintext of the encrypted frame 5A00090017017F040001E07A6157).
     val refusal = HuaweiTLV().parse(hex("7f 04 0001e07a"))
     assertEquals(WatchWorkoutWire.ERR_FAILED, WatchWorkoutWire.resultCode(refusal))
@@ -101,6 +101,14 @@ class WatchWorkoutTest {
     assertEquals(0, idle.operator)
     assertFalse(idle.running)
     assertEquals("(empty)", WatchWorkoutWire.plain(null))
+  }
+
+  @Test
+  fun wearRequestIsHuaweiHealthsEmptyTagOne() {
+    val packet = WatchWorkoutWire.wearRequest(plain)
+    assertEquals(0x2E.toByte(), packet.serviceId)
+    assertEquals(0x03.toByte(), packet.commandId)
+    assertArrayEquals(hex("01 00"), packet.getTlv().serialize())
   }
 
   @Test

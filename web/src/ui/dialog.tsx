@@ -61,7 +61,7 @@ export function Dialog({
             <X className="size-5" />
           </button>
         </header>
-        <div className="panel-scroll min-h-0 flex-1 overflow-y-auto px-6 pb-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">{children}</div>
         {footer && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-border px-6 py-4">{footer}</footer>}
       </div>
     </dialog>

@@ -12,8 +12,9 @@ import { Card, Screen, Section } from '@/components/Screen';
 import { Notice, Skeleton } from '@/components/States';
 import { StatTile } from '@/components/StatTile';
 import { elapsedSec, formatGrams, isActive, livePhase } from '@/features/live/liveWorkout';
-import { HourlyBars } from '@/features/today/HourlyBars';
 import { scoreFor } from '@/features/sleep/nights';
+import { SetupChecklistCard } from '@/features/setup/SetupChecklistCard';
+import { StepsWeekCard } from '@/features/steps/StepsWeekCard';
 import { SleepSummaryView } from '@/features/today/SleepSummaryView';
 import { ownTotalsOf } from '@/features/device/watchDayTotals';
 import { isLinkUp } from '@/features/device/linkState';
@@ -21,7 +22,6 @@ import { activeWatchName } from '@/features/device/watchName';
 import { SyncButton } from '@/features/device/SyncButton';
 import {
   heartRateStats,
-  hourlySteps,
   lastSleepSession,
   pickHeartReading,
   sumTotals,
@@ -33,7 +33,8 @@ import { useTodayData } from '@/features/today/useTodayData';
 import { WatchHero } from '@/features/today/WatchHero';
 import { computeScores } from '@/features/today/scores';
 import { MorningCheckin } from '@/features/today/MorningCheckin';
-import { FitnessLinkCard, FitnessTodayCards } from '@/features/fitness/FitnessTodayCards';
+import { FitnessTodayCards } from '@/features/fitness/FitnessTodayCards';
+import { IntensityWeekCard } from '@/features/fitness/IntensityWeekCard';
 import { CoachTodayCard } from '@/features/coach/ui/CoachTodayCard';
 import { LoopShortcut } from '@/features/loops/ui/LoopShortcut';
 import { FamilyCard } from '@/features/today/FamilyCard';
@@ -45,7 +46,9 @@ import { useSleepNightsPush } from '@/features/sleep/useSleepNightsPush';
 import { useRogoActiveKcal } from '@/features/today/useRogoActiveKcal';
 import { rogoDailyMetrics, rogoSleepHoursByDate } from '@/features/today/rogoScores';
 import { useFitnessData } from '@/features/fitness/useFitnessData';
+import { AskJoyoHeaderButton } from '@/features/ai/ui/AskJoyoButton';
 import { ShareTodayButton } from '@/features/stickers/ui/ShareTodayButton';
+import { isStrengthSport } from '@/features/strength/watchLive';
 import { formatElapsed } from '@/features/workouts/summary';
 import { formatClock, formatCount, formatDistance } from '@/format';
 import { useNow } from '@/hooks/useNow';
@@ -77,7 +80,7 @@ function WatchToday() {
   const { linkState, device, battery, lastSync, totals, watches, error, dataVersion, sync } = useWatch();
   const { data, error: loadError } = useTodayData(dataVersion);
   const nightHrv = useNightHrvAvailability(dataVersion);
-  const goal = useStepGoal();
+  const { goal, isDefault: goalIsDefault } = useStepGoal();
   const live = useLiveHeartRate(isLinkUp(linkState));
   const liveWorkout = useLiveWorkout();
   const liveSearching = liveWorkout !== null && livePhase(liveWorkout) === 'searching';
@@ -93,7 +96,6 @@ function WatchToday() {
       share: { steps: dayTotals.steps, sleep, readiness: scores.readiness, strain: scores.today },
       totalsFromWatch: watchTotals !== null,
       heart: heartRateStats(data.samples),
-      hourly: hourlySteps(data.samples),
       sleep,
       sleepScore: sleep ? scoreFor(sleep.start, sleep.end, data.sleepScores) : null,
       hasSamples: data.samples.length > 0,
@@ -163,9 +165,13 @@ function WatchToday() {
       </Section>
     ),
     steps: (
-      <Section title={t('home.stepsTitle')} icon="footsteps" tint="steps">
-        <HourlyBars steps={view?.hourly ?? new Array<number>(24).fill(0)} />
-      </Section>
+      <StepsWeekCard
+        dayStart={data?.dayStart ?? null}
+        todaySteps={view?.totals.steps ?? 0}
+        goal={goal}
+        goalIsDefault={goalIsDefault}
+        dataVersion={dataVersion}
+      />
     ),
     sleep: (
       <Section title={t('home.sleepTitle')} icon="moon" tint="sleep" onPress={() => router.push('/sleep')}>
@@ -173,7 +179,7 @@ function WatchToday() {
       </Section>
     ),
     energy: <FitnessTodayCards data={fitness} availability={nightHrv} />,
-    fitness: <FitnessLinkCard />,
+    fitness: <IntensityWeekCard data={fitness} />,
     coach: <CoachTodayCard dataVersion={dataVersion} availability={nightHrv} />,
     checkin: data ? (
       <MorningCheckin hrv={data.hrv} dayStart={data.dayStart} nowMs={nowMs} connected={isLinkUp(linkState)} onMeasure={() => router.push('/hrv')} />
@@ -193,9 +199,10 @@ function WatchToday() {
       decorated
       caption={new Date().toLocaleDateString(INTL_TAG[getLocale()], WEEKDAY_FORMAT)}
       right={
-        data && view ? (
-          <ShareTodayButton day={view.share} nowMs={data.nowSec * 1000} stepGoal={goal} restingHr={data.resting.get(data.dayStart) ?? null} />
-        ) : null
+        <View style={styles.headerActions}>
+          <AskJoyoHeaderButton />
+          {data && view ? <ShareTodayButton day={view.share} nowMs={data.nowSec * 1000} stepGoal={goal} restingHr={data.resting.get(data.dayStart) ?? null} /> : null}
+        </View>
       }
       refresh={{ refreshing: syncing, onRefresh: () => void sync(), enabled: canSync }}>
       <View style={styles.stack}>
@@ -222,10 +229,13 @@ function WatchToday() {
             <NavRow
               icon="pulse"
               tint="workouts"
-              title={t(
-                liveSearching ? 'home.workoutSearching' : liveWorkout.status === 'paused' ? 'home.workoutPaused' : 'home.workoutInProgress',
-                { sport: liveWorkout.sportName ? sportLabel(liveWorkout.sportName) : t('home.workoutDefault') },
-              )}
+              title={
+                isStrengthSport(liveWorkout.sportType)
+                  ? t('home.strengthOnWatch')
+                  : t(liveSearching ? 'home.workoutSearching' : liveWorkout.status === 'paused' ? 'home.workoutPaused' : 'home.workoutInProgress', {
+                      sport: liveWorkout.sportName ? sportLabel(liveWorkout.sportName) : t('home.workoutDefault'),
+                    })
+              }
               subtitle={
                 liveSearching
                   ? t('home.workoutSearchingSubtitle')
@@ -236,11 +246,12 @@ function WatchToday() {
                       carbs: formatGrams(liveWorkout.carbGrams),
                     })
               }
-              onPress={() => router.push('/workout-live')}
+              onPress={() => router.push(isStrengthSport(liveWorkout.sportType) ? '/strength/watch-pick' : '/workout-live')}
             />
           </Card>
         ) : null}
         {error ? <Notice tone="danger">{error}</Notice> : null}
+        <SetupChecklistCard />
         {loadError ? <Notice tone="danger">{t('home.loadError', { error: loadError })}</Notice> : null}
       </View>
 
@@ -276,6 +287,7 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   stack: { gap: spacing.md },
   tiles: { flexDirection: 'row', gap: spacing.md },
   heartRow: { flexDirection: 'row', gap: spacing.md },

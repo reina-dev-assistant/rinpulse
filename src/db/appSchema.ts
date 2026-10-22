@@ -4,6 +4,7 @@ import { migrate } from '@/db/migrations';
 import { ensureCoachSchema } from '@/features/coach/store';
 import { ensureCyclingSchema } from '@/features/cycling/store';
 import { ensureGearSchema } from '@/features/gear/store';
+import { ensureRogoImportQueueSchema } from '@/features/huaweiimport/rogoQueue';
 import { ensureRecordingSchema } from '@/features/record/journal';
 import { ensureScaleSchema } from '@/features/scale/store';
 import { ensureSensorSchema } from '@/features/sensors/store';
@@ -27,4 +28,5 @@ export async function buildAppSchema(db: SQLiteDatabase): Promise<void> {
   await ensureScaleSchema(db);
   await ensureCyclingSchema(db);
   await ensureRecordingSchema(db);
+  await ensureRogoImportQueueSchema(db);
 }

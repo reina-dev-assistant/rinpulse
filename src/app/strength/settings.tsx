@@ -23,7 +23,7 @@ import {
   setRestPref,
   type StrengthSettings,
 } from '@/features/strength/store';
-import { useWatchWorkoutAvailability } from '@/features/strength/useStrengthWatch';
+import { useWatchStartRefused, useWatchWorkoutAvailability } from '@/features/strength/useStrengthWatch';
 
 /** Logger settings: the default rest, the switches, and the rest timers saved per exercise. */
 export default function StrengthSettingsScreen() {
@@ -33,6 +33,7 @@ export default function StrengthSettingsScreen() {
   const colors = useColors();
   const [settings, setSettings] = useState<StrengthSettings | null>(null);
   const watchStart = useWatchWorkoutAvailability();
+  const watchRefused = useWatchStartRefused();
   const [prefs, setPrefs] = useState<Map<string, number>>(new Map());
   const [catalog, setCatalog] = useState<Catalog>(() => buildCatalog([]));
 
@@ -100,9 +101,9 @@ export default function StrengthSettingsScreen() {
 
           {watchStart !== 'unavailable' ? (
             <Section title={t('settings.watchTitle')} icon="watch-outline" tint="link">
-              {watchStart === 'unsupported' ? (
+              {watchStart === 'unsupported' || watchRefused ? (
                 <AppText variant="caption" muted>
-                  {t('settings.startOnWatchUnsupported')}
+                  {t(watchStart === 'unsupported' ? 'settings.startOnWatchUnsupported' : 'settings.startOnWatchRefused')}
                 </AppText>
               ) : (
                 <SwitchRow

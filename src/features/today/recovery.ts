@@ -32,10 +32,28 @@ export interface Recovery {
   baselineCount: number;
 }
 
-export type RecoveryState = { recovery: Recovery } | { missing: string };
+/**
+ * Why there is no recovery yet, in a form a gauge can word in a few syllables: the baseline is still filling (`have` of `need`
+ * earlier readings of this kind), night HRV is switched off, only a 1-minute reading can give one on this watch, or last night
+ * simply has no reading yet.
+ */
+export type RecoveryWait =
+  | { kind: 'baseline'; have: number; need: number; unit: 'night' | 'reading' }
+  | { kind: 'off' }
+  | { kind: 'spot' }
+  | { kind: 'none' };
+
+export type RecoveryState = { recovery: Recovery } | { missing: string; wait: RecoveryWait };
 
 export function bandOf(percent: number): RecoveryBand {
   return percent >= 67 ? 'green' : percent >= 34 ? 'yellow' : 'red';
+}
+
+/** The short form of `missingText`, for the Today gauge. */
+function waitOf(availability: NightHrvAvailability | null | undefined): RecoveryWait {
+  if (availability?.state === 'off') return { kind: 'off' };
+  if (availability && ['ios', 'unsupported', 'none-recorded'].includes(availability.state)) return { kind: 'spot' };
+  return { kind: 'none' };
 }
 
 /** Why there is no reading for today, from what is known about night HRV on this watch. */
@@ -64,7 +82,7 @@ export function recovery(
   const latest = (source: HrvReadingRow['source'], freshSec: number) =>
     [...readings].reverse().find((r) => r.source === source && r.end >= nowSec - freshSec) ?? null;
   const today = latest('night', NIGHT_FRESH_SEC) ?? latest('spot', SPOT_FRESH_SEC);
-  if (!today) return { missing: missingText(readings, availability) };
+  if (!today) return { missing: missingText(readings, availability), wait: waitOf(availability) };
   const history = readings.filter(
     (r) => r.source === today.source && r.end < today.start && r.end >= today.end - BASELINE_DAYS * 86400 && r.rmssd > 0,
   );
@@ -74,6 +92,7 @@ export function recovery(
         have: history.length,
         count: MIN_BASELINE_READINGS,
       }),
+      wait: { kind: 'baseline', have: history.length, need: MIN_BASELINE_READINGS, unit: today.source === 'night' ? 'night' : 'reading' },
     };
   }
   const { mean, sd } = meanSd(history.map((r) => Math.log(r.rmssd)));

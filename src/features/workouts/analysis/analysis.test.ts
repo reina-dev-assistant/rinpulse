@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
+import { DEFAULT_HR_ZONE_SETTINGS, resolveHrZones } from '@/features/hrzones/zones';
 import { workoutStrain } from '@/features/today/strain';
 import type { WorkoutSummary } from '@/features/workouts/summary';
 
@@ -15,6 +16,8 @@ import { paceBlockSplits } from './splits';
 import { ANALYSIS_LIMITS, kmMarkers, type WorkoutAnalysis } from './types';
 
 const MAX_HR = 190;
+/** Age 30: `220 - age` is the 190 the tests use, so the maximum comes from the age. */
+const ZONES = resolveHrZones(DEFAULT_HR_ZONE_SETTINGS, 220 - MAX_HR);
 const ALL: AnalyzeOptions = { includeHr: true, includeRoute: true, includeComparison: true };
 const NO_HISTORY: AnalysisHistory = { efforts: [], trimps: [], similar: [] };
 
@@ -37,7 +40,7 @@ function analyze(
     }),
     summary: over.summary ?? {},
     points: synth.points,
-    maxHr: MAX_HR,
+    zones: ZONES,
     daySamples: [],
     history: over.history ?? NO_HISTORY,
   };
@@ -136,7 +139,7 @@ describe('constant 5:00/km run', () => {
     const z = a.hrZones!;
     const strain = workoutStrain(
       steady5k().points.filter((p) => p.hr !== null),
-      MAX_HR,
+      ZONES,
     )!;
     expect(z.sec.reduce((s, v) => s + v, 0) + z.belowSec).toBe(Math.round(strain.coveredMinutes * 60));
     expect(z.bounds).toHaveLength(6);
@@ -478,7 +481,7 @@ describe('cadence and step length series from the watch minutes', () => {
         workout: workoutRow({ end: T0 + synth.elapsed, duration: synth.elapsed, distance: Math.round(synth.distance), steps: 4000 }),
         summary,
         points: synth.points,
-        maxHr: MAX_HR,
+        zones: ZONES,
         daySamples,
         history: NO_HISTORY,
       },
@@ -517,7 +520,7 @@ describe('cadence and step length series from the watch minutes', () => {
         workout: workoutRow({ end: T0 + synth.elapsed, duration: synth.elapsed, sportName: 'Biking', distance: Math.round(synth.distance) }),
         summary: {},
         points: synth.points,
-        maxHr: MAX_HR,
+        zones: ZONES,
         daySamples: minutes(170, 0, 25),
         history: NO_HISTORY,
       },
@@ -773,7 +776,7 @@ describe('effort', () => {
       workout: workoutRow({ end: T0 + synth.elapsed, duration: synth.elapsed, distance: Math.round(synth.distance) }),
       summary: {},
       points: synth.points,
-      maxHr: MAX_HR,
+      zones: ZONES,
       daySamples: [{ timestamp: T0 - 3600, steps: 0, calories: 0, distance: 0, heartRate: 120, spo2: null, restingHeartRate: null }],
       history: NO_HISTORY,
     };

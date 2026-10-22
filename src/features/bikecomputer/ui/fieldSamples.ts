@@ -2,6 +2,7 @@
  * Made-up readings for the editor's preview, the picker's examples and the screenshots. Never shown as a rider's data: the editor labels
  * them "Contoh" / "Sample". Pure; the instant is fixed so the same call gives the same text.
  */
+import { hrZonesForMax } from '@/features/hrzones/zones';
 import type { FieldContext } from '../fields/values';
 import { fieldValue } from '../fields/values';
 import type { FieldId, FieldValue } from '../types';
@@ -62,7 +63,7 @@ export function sampleContext(): FieldContext {
         inProgress: true,
       },
     },
-    maxHr: 190,
+    zones: hrZonesForMax(190),
     ftp: 220,
     batteryPct: 76,
     nowMs: SAMPLE_NOW,

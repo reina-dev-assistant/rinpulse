@@ -26,6 +26,8 @@ internal class HuaweiImportController(
     cancelRequested = true
   }
 
+  fun displayName(uri: String): String? = HuaweiExportFiles.displayName(context, uri)
+
   fun run(uri: String, password: String): Map<String, Any?> {
     if (!running.compareAndSet(false, true)) throw WearException(ErrorCodes.BUSY, "An import is already running")
     cancelRequested = false
@@ -33,7 +35,7 @@ internal class HuaweiImportController(
     try {
       HuaweiExportFiles.open(context, uri, chars).use { opened ->
         val importer = HuaweiExportImporter(
-          store = SqliteHuaweiImportStore(syncStore),
+          store = SqliteHuaweiImportStore { syncStore.db() },
           onProgress = { emit(it.toJs()) },
           isCancelled = { cancelRequested },
         )
@@ -65,6 +67,10 @@ internal fun ModuleDefinitionBuilder.huaweiImportApi(runtime: () -> WearRuntime,
 
   AsyncFunction("importHuaweiExport") Coroutine { uri: String, password: String ->
     withContext(Dispatchers.IO) { controller.run(uri, password) }
+  }
+
+  AsyncFunction("huaweiExportDisplayName") Coroutine { uri: String ->
+    withContext(Dispatchers.IO) { controller.displayName(uri) }
   }
 
   Function("cancelHuaweiImport") {

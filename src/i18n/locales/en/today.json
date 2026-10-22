@@ -36,21 +36,19 @@
     "low": "Low",
     "high": "High",
     "noHeart": "No heart rate stored today.",
-    "stepsTitle": "Steps per hour",
+    "stepsTitle": "Steps",
     "sleepTitle": "Sleep summary",
     "healthTitle": "Health metrics",
     "healthSubtitle": "Skin temp, HRV, stress and more",
     "aboutTitle": "About these numbers",
     "aboutWatch": "Calories and distance are as reported by the watch at the last sync. Pull down to sync.",
     "aboutSamples": "Calories and distance are added up from stored one-minute samples. Pull down to sync.",
-    "aboutNone": "Nothing stored for today yet. Sync to pull today from the watch. Pull down to sync."
+    "aboutNone": "Nothing stored for today yet. Sync to pull today from the watch. Pull down to sync.",
+    "strengthOnWatch": "Strength training running on the watch"
   },
   "hourly": {
     "peak_one": "Busiest hour {{hour}}, {{steps}} step",
-    "peak_other": "Busiest hour {{hour}}, {{steps}} steps",
-    "empty": "No steps recorded yet today.",
-    "bar_one": "{{steps}} step",
-    "bar_other": "{{steps}} steps"
+    "peak_other": "Busiest hour {{hour}}, {{steps}} steps"
   },
   "sleep": {
     "emptyTitle": "No sleep stored",
@@ -79,7 +77,19 @@
     "recovery": "Recovery",
     "readiness": "Readiness",
     "strain": "Strain",
-    "sleep": "Sleep"
+    "sleep": "Sleep",
+    "hint": {
+      "nights_one": "{{count}} more night needed",
+      "nights_other": "{{count}} more nights needed",
+      "readings_one": "{{count}} more reading needed",
+      "readings_other": "{{count}} more readings needed",
+      "hrvOff": "Night HRV is off",
+      "spot": "Needs a 1-minute HRV reading",
+      "recoveryNone": "No HRV from last night yet",
+      "recoveryPrefix": "Recovery: {{hint}}",
+      "strainNone": "No heart rate yet today",
+      "sleepNone": "No sleep stored for last night"
+    }
   },
   "readiness": {
     "title": "Readiness",
@@ -344,9 +354,9 @@
     "emptyToday": "No heart rate stored yet today. Sync to fetch it from the watch.",
     "emptyPast": "No heart rate stored for this date.",
     "zonesTitle": "Time in each zone",
-    "zone": "Zone {{n}}",
+    "zone": "Z{{n}} {{name}}",
     "zoneRange": "{{from}} bpm and up",
-    "zonesNote": "The line colour follows the zones, worked out from your estimated maximum heart rate ({{max}} bpm). A gap in the chart means the watch recorded nothing.",
+    "zonesNote": "The line colour follows your heart-rate zones (max HR {{max}} bpm; change it in Settings > HR zones). A gap in the chart means the watch recorded nothing.",
     "loadError": "Could not read heart rate: {{error}}",
     "chartLabel": "Heart rate chart, {{day}}"
   },
@@ -363,15 +373,72 @@
       "scores": "Recovery, strain and sleep",
       "activity": "Calories and distance",
       "heart": "Heart rate",
-      "steps": "Steps per hour",
+      "steps": "Steps, last 7 days",
       "sleep": "Sleep summary",
       "energy": "Body Energy",
-      "fitness": "Fitness",
+      "fitness": "Weekly intensity and Fitness",
       "coach": "Coach suggestion",
       "checkin": "Morning check-in",
       "family": "Family check-ins",
       "loop": "New loop from home",
       "health": "Health metrics"
+    }
+  },
+  "week": {
+    "bar_one": "{{steps}} step",
+    "bar_other": "{{steps}} steps",
+    "detail": "Details",
+    "detailA11y": "Open steps by day, week, month and year",
+    "left": "{{value}} to go today",
+    "reached": "Today's goal reached",
+    "total": "{{value}} in 7 days",
+    "legend": "Dashed line: your daily step goal",
+    "legendDefault": "Dashed line: the default daily goal. Set your own in Profile."
+  },
+  "steps": {
+    "title": "Steps",
+    "unit": "steps",
+    "unitPerDay": "steps / day",
+    "perDay": "{{value}} steps / day",
+    "steps_one": "{{value}} step",
+    "steps_other": "{{value}} steps",
+    "average_one": "Average per day, over {{count}} day with stored steps",
+    "average_other": "Average per day, over {{count}} days with stored steps",
+    "daysAtGoal_one": "{{hit}} of {{days}} day at goal",
+    "daysAtGoal_other": "{{hit}} of {{days}} days at goal",
+    "empty": "No steps stored for this period. Sync the watch to fill it.",
+    "noData": "No data",
+    "loadError": "Could not read stored steps: {{error}}",
+    "goalTitle": "Daily goal",
+    "goalValue": "{{value}} steps",
+    "goalDefault": "Default. Tap to set your own.",
+    "about": "Steps are summed from the minutes the watch stored; a day with no stored minute is no data, not zero steps. Weeks start on Monday. The goal line is today's goal applied to every day, because goal changes are not stored."
+  },
+  "setup": {
+    "title": "Finish setting up",
+    "dismiss": "Hide the setup checklist",
+    "done": "done",
+    "rows": {
+      "pair": {
+        "title": "Pair your watch",
+        "hint": "Without a watch there is no daily data to show."
+      },
+      "sync": {
+        "title": "Run the first sync",
+        "hint": "Pulls steps, sleep and heart rate from the watch."
+      },
+      "health": {
+        "title": "Write to {{store}}",
+        "hint": "Lets JoyoRogo and other apps read your watch data."
+      },
+      "account": {
+        "title": "Sign in to JoyoRogo",
+        "hint": "Sends workout energy and scores to your JoyoRogo diary."
+      },
+      "profile": {
+        "title": "Set your profile and goal",
+        "hint": "Height, weight and birth year fit heart-rate zones and calories to you."
+      }
     }
   }
 }
