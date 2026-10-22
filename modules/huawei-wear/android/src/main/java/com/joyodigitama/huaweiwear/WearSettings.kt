@@ -56,6 +56,24 @@ internal class WearSettings(context: Context) {
     get() = BuildConfig.DEBUG && prefs.getBoolean(KEY_FORCE_BLE, false)
     set(value) = prefs.edit().putBoolean(KEY_FORCE_BLE, value).apply()
 
+  /**
+   * The link to open for this watch, chosen by hand (`null` = automatic). It exists for one reason: Android 14 and newer
+   * silently discard the watch's 514-byte notifications on Bluetooth LE (gatt_cl.cc GATT_MAX_ATTR_LEN), so replies that
+   * travel as one notification — a workout's per-interval frames, the GPS file's blocks — never reach the app. RFCOMM has
+   * no such limit, and the same watch answers over it (a Band 11 Pro did, and the Watch Fit's own split frames do), so a
+   * person on such a phone can pin the watch to Classic instead of waiting for the app to guess.
+   *
+   * Applied like a remembered link ([TransportChoice]): it only decides which link is opened *first*, and a connect that
+   * had to move to the other one keeps the override (the move is not remembered over it).
+   */
+  var linkOverride: ModelTransport?
+    get() = prefs.getString(KEY_LINK_OVERRIDE, null)?.let { stored ->
+      ModelTransport.values().firstOrNull { it.name == stored }
+    }
+    set(value) = prefs.edit().apply {
+      if (value == null) remove(KEY_LINK_OVERRIDE) else putString(KEY_LINK_OVERRIDE, value.name)
+    }.apply()
+
   var syncIntervalMinutes: Int
     get() = prefs.getInt(KEY_INTERVAL, DEFAULT_SYNC_INTERVAL_MIN)
     set(value) = prefs.edit().putInt(KEY_INTERVAL, value).apply()
@@ -212,6 +230,7 @@ internal class WearSettings(context: Context) {
     private const val KEY_NAME = "watch_name"
     private const val KEY_BACKGROUND = "background_enabled"
     private const val KEY_FORCE_BLE = "force_ble"
+    private const val KEY_LINK_OVERRIDE = "link_override"
     private const val KEY_INTERVAL = "sync_interval_min"
     private const val KEY_NOTIFICATIONS = "notifications_enabled"
     private const val KEY_MORNING_SUMMARY = "morning_summary_enabled"

@@ -108,6 +108,29 @@ class TransportChoiceTest {
     assertNull(fallback(ModelTransport.LE, remembered = ModelTransport.LE, bonded = true, allowPairing = true))
   }
 
+  /**
+   * The Watch Fit 1 is listed as an LE model, and on Android 14+ that costs it every reply that travels as one
+   * notification: the watch answers with packets of ATT MTU - 3 (514 bytes) and the stack discards them, so a workout's
+   * GPS file never arrives. RFCOMM has no such limit and the same watch answers over it, so the person can pin the link
+   * by hand (Settings > Advanced). The pin is applied like a remembered link, and nothing else may override it.
+   */
+  @Test
+  fun aPinnedLinkOutranksTheTableForAnLeModel() {
+    val fit = WatchModels.match("HUAWEI WATCH FIT-02C")
+    assertEquals(ModelTransport.LE, first(fit))
+    assertEquals(ModelTransport.BR, first(fit, remembered = ModelTransport.BR))
+  }
+
+  @Test
+  fun thePinIsNotRememberedOrTheSwitchCouldNeverBeUndone() {
+    // A link the person chose is already stored; remembering it would keep the watch on it after the switch is off.
+    assertFalse(TransportChoice.shouldRemember(ModelTransport.BR, movedFrom = null, forceBle = false, pinned = true))
+    assertFalse(TransportChoice.shouldRemember(ModelTransport.LE, movedFrom = null, forceBle = false, pinned = true))
+    // Without a pin the rule is unchanged.
+    assertTrue(TransportChoice.shouldRemember(ModelTransport.BR, movedFrom = null, forceBle = false))
+    assertTrue(TransportChoice.shouldRemember(ModelTransport.LE, movedFrom = null, forceBle = false))
+  }
+
   @Test
   fun permissionProblemsCancelsAndTheDeveloperSwitchNeverMoveToTheOtherLink() {
     val denied = WearException(ErrorCodes.BLUETOOTH_PERMISSION, "denied")

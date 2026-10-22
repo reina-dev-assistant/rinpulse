@@ -1,4 +1,4 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { NativeModule, type NativeModulesStatic } from 'expo';
 import type {
   BackgroundRestrictions,
   BackgroundStatus,
@@ -52,6 +52,9 @@ import type { RoutePushResult, RoutesStatus, WatchRoute } from './HuaweiWearRout
 import type { HuaweiImportSummary } from './HuaweiWearImport.types';
 import type { NotificationFilterStatus, NotificationFilterTest } from './HuaweiWearNotifications.types';
 import type { FamilyConfig, FamilyUploadResult, FamilyUploadStatus } from './HuaweiWearFamily.types';
+
+/** A Bluetooth link a Huawei watch can be opened over. */
+export type LinkTransport = 'BR' | 'LE';
 
 declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
   /**
@@ -195,6 +198,13 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
    */
   getForceBle(): boolean;
   setForceBle(enabled: boolean): Promise<void>;
+  /**
+   * The link the next connect opens for this watch, pinned by hand: `'BR'` (Bluetooth Classic / RFCOMM), `'LE'` (Bluetooth LE
+   * GATT) or `null` to let the app choose. It exists because Android 14+ silently drops the watch's 514-byte LE notifications,
+   * which loses any reply that travels as one — the GPS file's blocks included — while RFCOMM has no such limit.
+   */
+  getLinkOverride(): LinkTransport | null;
+  setLinkOverride(link: LinkTransport | null): Promise<void>;
   /** The once-a-day "Morning summary" notification, posted after the first sync that stored last night's sleep. Off by default. */
   getMorningSummaryEnabled(): boolean;
   setMorningSummaryEnabled(enabled: boolean): Promise<void>;

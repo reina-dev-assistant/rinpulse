@@ -580,7 +580,8 @@ internal class WearLink(
       val name = bondedName(device)
       val model = WatchModels.match(name)
       if (!model.connectable) throw WearException(ErrorCodes.UNSUPPORTED, "${name ?: address}: ${model.reason}")
-      Connection(address, device, adapter, model, store.forDevice(address).linkTransport, allowPairing)
+      // A link the person pinned by hand outranks the one that was remembered; `TransportChoice` handles the rest.
+      Connection(address, device, adapter, model, settings.linkOverride ?: store.forDevice(address).linkTransport, allowPairing)
     } catch (e: WearException) {
       throw e
     } catch (e: Exception) {
@@ -640,7 +641,7 @@ internal class WearLink(
    * stored, the model table would send every later reconnect to LE, where this watch (a Band 11 Pro) never answers.
    */
   private fun rememberLink(identity: DeviceIdentity, connection: Connection) {
-    if (!TransportChoice.shouldRemember(connection.transportKind, connection.movedFrom, settings.forceBle)) return
+    if (!TransportChoice.shouldRemember(connection.transportKind, connection.movedFrom, settings.forceBle, settings.linkOverride != null)) return
     if (identity.linkTransport != connection.transportKind) {
       events.log(LogDirection.INFO, null, null, null, "Remembered for this watch: ${connection.transportKind.label}")
     }

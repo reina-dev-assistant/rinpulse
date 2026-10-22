@@ -441,6 +441,14 @@ internal class WearRuntime private constructor(context: Context) {
 
   fun forceBle(): Boolean = settings.forceBle
 
+  /** The link pinned for this watch by hand; null when the app picks it ([WearSettings.linkOverride]). */
+  fun linkOverride(): String? = settings.linkOverride?.name
+
+  /** Pins the link (`LE`, `BR`) or clears it (null) for the next connect. A live link keeps the transport it was opened with. */
+  fun setLinkOverride(link: String?) {
+    settings.linkOverride = link?.let { name -> ModelTransport.values().firstOrNull { it.name == name } }
+  }
+
   /** Takes effect on the next connect; a live link keeps the transport it was opened with. */
   fun setForceBle(enabled: Boolean) {
     settings.forceBle = enabled

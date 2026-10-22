@@ -88,7 +88,9 @@
       "title": "Local mode",
       "label": "Use without an account",
       "hint": "Hide every sign-in prompt and the JoyoRogo features (feed, groups, cloud backup). The app runs fully without an account — your data stays on this phone."
-    }
+    },
+    "classicLink": "Use Bluetooth Classic",
+    "classicLinkHint": "If workout files (the GPS track included) fail to download, turn this on: Android 14 and newer discards the watch's large Bluetooth LE packets, Classic does not. Takes effect on the next connect."
   },
   "log": {
     "filters": {

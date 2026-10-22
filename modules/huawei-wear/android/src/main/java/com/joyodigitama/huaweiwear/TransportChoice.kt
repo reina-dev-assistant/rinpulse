@@ -42,7 +42,10 @@ internal object TransportChoice {
    * True when the link of a connect that worked says something about the watch. LE reached only because Classic did not open is the
    * degraded way (Android 14+ drops the watch's longest notifications on LE): it must not replace the Classic link the watch is meant
    * to use, or a pairing fixed later would never be used again.
+   *
+   * [pinned] is a link the person chose by hand ([WearSettings.linkOverride]). That choice is already stored, so the connect says
+   * nothing new; remembering it would outlive the switch and keep the watch on a link its owner turned off.
    */
-  fun shouldRemember(opened: ModelTransport, movedFrom: ModelTransport?, forceBle: Boolean): Boolean =
-    !forceBle && !(opened == ModelTransport.LE && movedFrom == ModelTransport.BR)
+  fun shouldRemember(opened: ModelTransport, movedFrom: ModelTransport?, forceBle: Boolean, pinned: Boolean = false): Boolean =
+    !forceBle && !pinned && !(opened == ModelTransport.LE && movedFrom == ModelTransport.BR)
 }

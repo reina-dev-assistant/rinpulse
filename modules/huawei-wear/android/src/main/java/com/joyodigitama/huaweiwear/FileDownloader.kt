@@ -324,6 +324,15 @@ internal class FileDownloader(
     accept: (packet: HuaweiPacket, position: Int) -> ByteArray,
   ): ByteArray {
     if (maxBlockSize <= 0) throw protocol("$name: device reported max block size $maxBlockSize")
+    // Never ask for a block whose answer cannot arrive. Over LE on Android 14+ the watch sends file data as
+    // notifications of ATT MTU - 3 (514 bytes on this phone) and the stack silently discards any notification
+    // longer than one ATT attribute value (512, gatt_cl.cc GATT_MAX_ATTR_LEN). The watch reports a block size of
+    // its own (2200 for sleep, often more for a GPS file), so a full block would come back in a notification
+    // that never reaches the app: the download then times out with no data at all. A smaller block always fits.
+    val block = blockCap(maxBlockSize)
+    if (block != maxBlockSize) {
+      log("$name: device offers $maxBlockSize-byte blocks, asking for $block (a longer answer is dropped over LE)")
+    }
     val timeoutMs = (if (timeoutSec > 0) timeoutSec else DEFAULT_BLOCK_TIMEOUT_SEC) * 1000L
     val buffer = ByteBuffer.allocate(fileSize)
     val incoming = Channel<HuaweiPacket>(Channel.UNLIMITED)
@@ -331,11 +340,11 @@ internal class FileDownloader(
     try {
       while (buffer.position() < fileSize) {
         val blockStart = buffer.position()
-        val blockSize = minOf(fileSize - blockStart, maxBlockSize)
+        val blockSize = minOf(fileSize - blockStart, block)
         newBlock()
         session.send(requestBlock(blockStart, blockSize), "FileBlock $name offset=$blockStart size=$blockSize")
 
-        while (buffer.position() < fileSize && buffer.position() - blockStart < maxBlockSize) {
+        while (buffer.position() < fileSize && buffer.position() - blockStart < block) {
           val packet = withTimeoutOrNull(timeoutMs) { incoming.receive() }
             ?: throw WearException(
               ErrorCodes.TIMEOUT,
@@ -372,7 +381,7 @@ internal class FileDownloader(
 
   private fun log(message: String) = events.log(LogDirection.INFO, null, null, null, message)
 
-  private companion object {
+  internal companion object {
     const val REQUEST_MS = 10_000L
 
     /** Both file download services answer block requests with command 0x05. */
@@ -383,5 +392,19 @@ internal class FileDownloader(
 
     /** GB parses sequence files up to 20 MiB ("To avoid of downloading of very big file and OOM"). */
     const val MAX_FILE_SIZE = 32 * 1024 * 1024
+
+    /**
+     * The largest block the watch is asked for, so its answer fits one ATT notification.
+     *
+     * Android refuses a characteristic value over 512 bytes ([BleTransport.MAX_ATTRIBUTE_BYTES]) and, from Android 14,
+     * asks for ATT MTU 517 whatever the app requests: the watch then answers with notifications of MTU - 3 (514) and
+     * the stack discards them (gatt_cl.cc GATT_MAX_ATTR_LEN), so the reply is lost before the app can see it. The
+     * enclosing HuaweiPacket costs a 3-byte ATT header, a 5-byte slice header, the 2-byte service+command on the first
+     * slice and a 2-byte CRC16; 480 leaves room for all of that plus the block's own number byte.
+     */
+    const val MAX_BLOCK_BYTES = 480
+
+    /** The block size to ask for: the device's own offer, never more than one notification can carry. */
+    fun blockCap(deviceMaxBlockSize: Int): Int = minOf(deviceMaxBlockSize, MAX_BLOCK_BYTES)
   }
 }

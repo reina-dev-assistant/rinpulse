@@ -16,7 +16,7 @@ import { localOnlyMode, setLocalOnlyMode } from '@/features/settings/localOnly';
 import { dbHealth, useDbHealth } from '@/db/recovery';
 import { errorMessage } from '@/format';
 import { useTheme } from '@/theme';
-import { HuaweiWear } from '@/wear';
+import { hasNative, HuaweiWear } from '@/wear';
 
 export default function AdvancedScreen() {
   const { t } = useTranslation('settings');
@@ -30,13 +30,33 @@ export default function AdvancedScreen() {
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const [forceBle, setForceBle] = useState(() => HuaweiWear.getForceBle());
   const [bleError, setBleError] = useState<string | null>(null);
+  // An OTA bundle can run on an installed binary that predates this switch (see `hasNative`), so the row is hidden there.
+  const canPinLink = hasNative('getLinkOverride') && hasNative('setLinkOverride');
+  const [classicLink, setClassicLink] = useState(() => canPinLink && HuaweiWear.getLinkOverride() === 'BR');
 
   useNativeRefresh(
     useCallback(() => {
       setCourses(HuaweiWear.getCourses());
       setForceBle(HuaweiWear.getForceBle());
-    }, []),
+      if (canPinLink) setClassicLink(HuaweiWear.getLinkOverride() === 'BR');
+    }, [canPinLink]),
   );
+
+  /**
+   * Pins the watch to Bluetooth Classic (RFCOMM), or back to the app's own choice. Android 14+ drops the watch's
+   * 514-byte LE notifications, which loses any reply that travels as one — the GPS file's blocks among them — while
+   * RFCOMM has no such limit. Bluetooth permission is not needed: the watch is already bonded.
+   */
+  const toggleClassicLink = async (enabled: boolean) => {
+    setBleError(null);
+    try {
+      await HuaweiWear.setLinkOverride(enabled ? 'BR' : null);
+    } catch (e) {
+      setBleError(errorMessage(e));
+    } finally {
+      setClassicLink(HuaweiWear.getLinkOverride() === 'BR');
+    }
+  };
 
   const toggleForceBle = async (enabled: boolean) => {
     setBleError(null);
@@ -125,6 +145,16 @@ export default function AdvancedScreen() {
             onValueChange={(enabled) => void toggleCourses(enabled)}
           />
           {coursesError ? <Notice tone="danger">{coursesError}</Notice> : null}
+          {canPinLink ? (
+            <>
+              <SwitchRow
+                label={t('advanced.classicLink')}
+                value={classicLink}
+                onValueChange={(enabled) => void toggleClassicLink(enabled)}
+              />
+              <Notice icon="information-circle">{t('advanced.classicLinkHint')}</Notice>
+            </>
+          ) : null}
           {__DEV__ ? (
             <SwitchRow
               label={t('advanced.bleLink')}

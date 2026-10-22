@@ -304,6 +304,15 @@ class HuaweiWearModule : Module() {
       runtime().setForceBle(enabled)
     }
 
+    // The link pinned by hand ('LE' | 'BR' | null). See WearSettings.linkOverride for why it exists.
+    Function("getLinkOverride") {
+      runtime().linkOverride()
+    }
+
+    AsyncFunction("setLinkOverride") { link: String? ->
+      runtime().setLinkOverride(link)
+    }
+
     Function("getMorningSummaryEnabled") {
       runtime().morningSummaryEnabled()
     }

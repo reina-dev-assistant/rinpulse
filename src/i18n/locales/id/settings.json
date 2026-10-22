@@ -88,7 +88,9 @@
       "title": "Mode lokal",
       "label": "Pakai tanpa akun",
       "hint": "Sembunyikan semua ajakan masuk dan fitur JoyoRogo (feed, grup, cadangan awan). Aplikasi jalan penuh tanpa akun — data kamu tetap di HP ini."
-    }
+    },
+    "classicLink": "Pakai Bluetooth Classic",
+    "classicLinkHint": "Kalau file latihan (termasuk rute GPS) gagal terunduh, nyalakan ini: Android 14 ke atas membuang paket besar dari Bluetooth LE, sedangkan Classic tidak. Berlaku mulai koneksi berikutnya."
   },
   "log": {
     "filters": {
