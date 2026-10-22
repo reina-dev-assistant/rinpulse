@@ -42,9 +42,24 @@ class WorkoutSyncTest {
     }
   }
 
-  private class MemorySink(val storedComplete: Set<Pair<Long, Long>> = emptySet()) : WorkoutSink {
+  /**
+   * [storedComplete] is a stored copy with **no GPS point** whose summary says the GPS was never attempted (`none`,
+   * the pre-GPS-build shape). [storedWithGpsFailure] is one that already tried and failed. Both are `complete = 1`.
+   */
+  private class MemorySink(
+    val storedComplete: Set<Pair<Long, Long>> = emptySet(),
+    val storedWithGpsFailure: Set<Pair<Long, Long>> = emptySet(),
+  ) : WorkoutSink {
     val saved = ArrayList<WorkoutRecord>()
-    override suspend fun isComplete(start: Long, end: Long) = (start to end) in storedComplete
+    val askedHasGps = ArrayList<Boolean>()
+
+    override suspend fun isComplete(start: Long, end: Long, watchHasGps: Boolean): Boolean {
+      askedHasGps.add(watchHasGps)
+      if ((start to end) in storedComplete) return !watchHasGps
+      if ((start to end) in storedWithGpsFailure) return true
+      return false
+    }
+
     override suspend fun save(record: WorkoutRecord): Boolean {
       saved.add(record)
       return true
@@ -252,8 +267,59 @@ class WorkoutSyncTest {
 
   @Test
   fun alreadyStoredWorkoutIsNotDownloadedAgain() = runBlocking {
-    val (watch, session, events) = setup { respondTo(it, trajectories = 1, gps = gpsFile()) }
+    // The watch sends no 0x0e tag here: it does not claim a track, so the stored copy stays as it is.
+    val (watch, session, events) = setup { respondTo(it, trajectories = null, gps = gpsFile()) }
     val sink = MemorySink(setOf(start.toLong() to end.toLong()))
+
+    WorkoutSync(session, events).sync(start - 1000, end + 1000, sink)
+
+    assertTrue(sink.saved.isEmpty())
+    assertEquals(0, watch.requests.count { it.command == 0x0a })
+    assertNull(watch.requests.firstOrNull { it.service == 0x2c })
+  }
+
+  /**
+   * The point of the backfill: a workout stored by a build that did not download GPS files is `complete = 1` with no
+   * point, and a complete row is normally never revisited — so when the watch itself says it has a track, it is
+   * fetched once more instead of being skipped for ever.
+   */
+  @Test
+  fun aStoredWorkoutTheWatchSaysHasGpsIsFetchedOnceMore() = runBlocking {
+    val (watch, session, events) = setup { respondTo(it, trajectories = 1, gps = gpsFile()) }
+    val sink = MemorySink(storedComplete = setOf(start.toLong() to end.toLong()))
+
+    WorkoutSync(session, events).sync(start - 1000, end + 1000, sink)
+
+    assertTrue(sink.askedHasGps.single())
+    assertEquals("the stored workout was not re-fetched", 1, watch.requests.count { it.command == 0x0a })
+    val record = sink.saved.single()
+    assertTrue(record.complete)
+    assertEquals("ok", JSONObject(record.summaryJson).getString("gps"))
+    assertTrue(record.points.any { it.lat != null })
+  }
+
+  /**
+   * The loop guard: once an attempt has been recorded the row carries `gps` `ok`/`empty`/`failed`, and the next sync
+   * must stop asking — a genuine failure (an oversized block the phone drops) is not a reason to re-download a
+   * workout every 15 minutes.
+   */
+  @Test
+  fun aStoredWorkoutWhoseGpsAttemptFailedIsNotAskedAgain() = runBlocking {
+    val (watch, session, events) = setup { respondTo(it, trajectories = 1, gps = gpsFile()) }
+    val sink = MemorySink(storedWithGpsFailure = setOf(start.toLong() to end.toLong()))
+
+    WorkoutSync(session, events).sync(start - 1000, end + 1000, sink)
+
+    assertTrue(sink.saved.isEmpty())
+    assertEquals(0, watch.requests.count { it.command == 0x0a })
+    assertNull(watch.requests.firstOrNull { it.service == 0x2c })
+  }
+
+  /** A watch that does not send 0x0e at all must not start a retry loop on principle. */
+  @Test
+  fun aStoredWorkoutIsNotRefetchedWhenTheWatchSendsNoTrajectoryTag() = runBlocking {
+    val (watch, session, events) = setup { respondTo(it, trajectories = 0, gps = gpsFile()) }
+    val sink = MemorySink(storedComplete = setOf(start.toLong() to end.toLong()))
 
     WorkoutSync(session, events).sync(start - 1000, end + 1000, sink)
 

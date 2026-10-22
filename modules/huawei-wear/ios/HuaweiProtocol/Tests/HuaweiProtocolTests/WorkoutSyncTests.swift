@@ -110,11 +110,22 @@ final class WorkoutWatchScript {
 }
 
 final class MemorySink: WorkoutSink {
+    /// A stored copy with **no GPS point** whose summary says the GPS was never attempted (`none`, the pre-GPS-build
+    /// shape). It is only "done" while the watch does not claim a track.
     var storedComplete: Set<String> = []
+    /// A stored copy that already attempted the GPS and did not get one: never asked again.
+    var storedWithGpsFailure: Set<String> = []
     private(set) var saved: [WorkoutRecord] = []
+    private(set) var askedHasGps: [Bool] = []
     var failSave = false
 
-    func isComplete(start: Int64, end: Int64) throws -> Bool { storedComplete.contains("\(start)|\(end)") }
+    func isComplete(start: Int64, end: Int64, watchHasGps: Bool) throws -> Bool {
+        askedHasGps.append(watchHasGps)
+        let key = "\(start)|\(end)"
+        if storedWithGpsFailure.contains(key) { return true }
+        if storedComplete.contains(key) { return !watchHasGps }
+        return false
+    }
 
     func save(_ record: WorkoutRecord) throws -> Bool {
         if failSave { throw WearError(.storage, "disk full") }

@@ -37,11 +37,38 @@ public final class WorkoutStore: WorkoutSink {
         return overlap > 0 && overlap * 2 >= shorter
     }
 
-    /// True when a complete workout with this start and end is stored, or when this watch's copy lost to another watch's (`workout_shadow`).
-    public func isComplete(start: Int64, end: Int64) throws -> Bool {
+    /// True when a complete copy of this session is stored and there is nothing left to fetch, or this watch's copy
+    /// was dropped for another watch's (`workout_shadow`).
+    ///
+    /// A complete row with **no GPS point** is only "done" while the watch does not claim a track for it. A workout
+    /// stored by a build that did not download GPS files yet is `complete = 1` with no points and would otherwise
+    /// never be revisited; with `watchHasGps` (the watch's own 17/07 tag 0x0e answer) it is fetched once more. The
+    /// stored copy's own `summary_json.gps` stops that from looping: `none` (or a row written before the field
+    /// existed) means the GPS was never attempted, so it is asked for again; `empty`/`failed` means it was tried and
+    /// the watch did not deliver, and a genuine failure must not become a retry on every sync.
+    public func isComplete(start: Int64, end: Int64, watchHasGps: Bool) throws -> Bool {
         try store.read { db in
-            try !db.query("SELECT 1 FROM workouts WHERE start = ? AND end = ? AND complete = 1", [.int(start), .int(end)]) { _ in true }.isEmpty
-                || !db.query("SELECT 1 FROM workout_shadow WHERE device = ? AND start = ? AND end = ?", [.text(address), .int(start), .int(end)]) { _ in true }.isEmpty
+            if !db.query(
+                "SELECT 1 FROM workout_shadow WHERE start = ? AND end = ? AND device = ?",
+                [.int(start), .int(end), .text(address)]
+            ) { _ in true }.isEmpty {
+                return true
+            }
+            let rows = try db.query(
+                "SELECT w.imported, w.summary_json, EXISTS (SELECT 1 FROM workout_points p WHERE p.workout_id = w.id AND p.lat IS NOT NULL AND p.lon IS NOT NULL)"
+                    + " FROM workouts w WHERE w.start = ? AND w.end = ? AND w.complete = 1 LIMIT 1",
+                [.int(start), .int(end)]
+            ) { row in (row.int(0) != 0, row.text(1), row.int(2) != 0) }
+            guard let (imported, summary, hasPoint) = rows.first else { return false }
+            // An imported row comes from a Huawei export: there is no watch track to fetch for it.
+            if imported { return true }
+            if hasPoint { return true }
+            if !watchHasGps { return true }
+            guard let summary, let data = summary.data(using: .utf8),
+                  let gps = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                  let status = gps["gps"] as? String, !status.isEmpty
+            else { return false }
+            return status != "none"
         }
     }
 
