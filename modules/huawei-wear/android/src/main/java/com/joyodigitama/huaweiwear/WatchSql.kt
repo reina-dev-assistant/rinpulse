@@ -131,11 +131,23 @@ internal object WatchSql {
   /** (start) -> complete */
   const val SELECT_WORKOUT_COMPLETE = "SELECT complete FROM workouts WHERE start = ?"
 
-  /** (start, end, device): a complete copy is stored, or this watch's copy was dropped for another watch's (workout_shadow). */
-  const val SELECT_WORKOUT_DONE =
-    """SELECT 1 FROM workouts WHERE start = ? AND end = ? AND complete = 1
-       UNION ALL
-       SELECT 1 FROM workout_shadow WHERE start = ? AND end = ? AND device = ?"""
+  /**
+   * (start, end) -> imported, summary_json, has a GPS point. A stored copy of this watch that is finished.
+   *
+   * `summary_json.gps` is what the last attempt recorded (`none` was never attempted, `empty`/`failed` tried and did
+   * not get a track, `ok` has one). It is what stops a genuine failure from being retried on every sync. `imported`
+   * rows come from a Huawei export and have no watch track to fetch, so they are always treated as done.
+   */
+  const val SELECT_WORKOUT_STORED =
+    """SELECT w.imported, w.summary_json,
+         EXISTS (SELECT 1 FROM workout_points p WHERE p.workout_id = w.id AND p.lat IS NOT NULL AND p.lon IS NOT NULL)
+       FROM workouts w
+       WHERE w.start = ? AND w.end = ? AND w.complete = 1
+       LIMIT 1"""
+
+  /** (start, end, device): this watch's copy of the session was dropped for another watch's. */
+  const val SELECT_WORKOUT_SHADOWED =
+    "SELECT 1 FROM workout_shadow WHERE start = ? AND end = ? AND device = ?"
 
   /** () -> address of the primary watch, none when no watch is primary. */
   const val SELECT_PRIMARY_DEVICE = "SELECT address FROM device WHERE is_primary = 1"

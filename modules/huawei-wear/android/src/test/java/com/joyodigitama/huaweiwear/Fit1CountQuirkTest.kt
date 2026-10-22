@@ -49,7 +49,7 @@ class Fit1CountQuirkTest {
 
   private class MemorySink : WorkoutSink {
     val saved = ArrayList<WorkoutRecord>()
-    override suspend fun isComplete(start: Long, end: Long) = false
+    override suspend fun isComplete(start: Long, end: Long, watchHasGps: Boolean) = false
     override suspend fun save(record: WorkoutRecord): Boolean {
       saved.add(record)
       return true

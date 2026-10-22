@@ -305,7 +305,7 @@ class MultiWatchSqlTest {
 
   // workouts
 
-  private fun record(start: Long, end: Long, gps: Boolean = false, complete: Boolean = true) = WorkoutRecord(
+  private fun record(start: Long, end: Long, gps: Boolean = false, complete: Boolean = true, summaryGps: String = "ok") = WorkoutRecord(
     number = 1,
     start = start,
     end = end,
@@ -317,7 +317,7 @@ class MultiWatchSqlTest {
     steps = 5,
     avgHr = null,
     maxHr = null,
-    summaryJson = "{}",
+    summaryJson = if (summaryGps.isEmpty()) "{}" else "{\"gps\":\"$summaryGps\"}",
     points = listOf(
       WorkoutPoint(start, if (gps) 1.5 else null, if (gps) 2.5 else null, null, 120),
       WorkoutPoint(start + 10, if (gps) 1.6 else null, if (gps) 2.6 else null, null, 125),
@@ -337,8 +337,45 @@ class MultiWatchSqlTest {
     assertTrue(WorkoutWriter(db, b).save(record(1_000, 2_000, gps = true)))
     assertEquals(listOf(listOf(1_000L, 2_000L, b)), workouts())
     assertEquals(listOf(listOf(1L, 2L)), points())
-    assertTrue(WorkoutWriter(db, b).isComplete(1_000, 2_000))
-    assertFalse(WorkoutWriter(db, b).isComplete(1_000, 2_001))
+    assertTrue(WorkoutWriter(db, b).isComplete(1_000, 2_000, false))
+    assertFalse(WorkoutWriter(db, b).isComplete(1_000, 2_001, false))
+  }
+
+  /**
+   * The GPS backfill rule, on the real schema and the real statement. A workout stored by a build that did not
+   * download GPS files is `complete = 1` with no point: it must be offered for a re-fetch once when the watch itself
+   * claims a track, and never again once an attempt has been recorded (a genuine failure must not loop).
+   */
+  @Test
+  fun aStoredWorkoutWithoutGpsIsRefetchedOnceOnlyWhenTheWatchClaimsATrack() {
+    threeWatches()
+    val writer = WorkoutWriter(db, b)
+
+    // Stored complete, no point, and the summary says the GPS was never attempted (the pre-GPS-build shape).
+    writer.save(record(1_000, 2_000, gps = false, summaryGps = "none"))
+    assertFalse("watch claims a track and none was attempted -> fetch", writer.isComplete(1_000, 2_000, watchHasGps = true))
+    assertTrue("watch claims nothing -> done", writer.isComplete(1_000, 2_000, watchHasGps = false))
+
+    // An attempt that failed: the row records it, so it is never asked for again.
+    writer.save(record(1_000, 2_000, gps = false, summaryGps = "failed"))
+    assertTrue(writer.isComplete(1_000, 2_000, watchHasGps = true))
+
+    // A row written before the field existed (no `gps` key at all) is the same as `none`.
+    db.exec(WatchSql.UPSERT_WORKOUT, 1, 3_000L, 4_000L, 1, "run", 1000, 100, 10, null, null, 5, "{}", 1, b)
+    assertFalse(writer.isComplete(3_000, 4_000, watchHasGps = true))
+
+    // With a point: nothing left to fetch, whatever the watch says.
+    writer.save(record(5_000, 6_000, gps = true, summaryGps = "ok"))
+    assertTrue(writer.isComplete(5_000, 6_000, watchHasGps = true))
+  }
+
+  /** An imported export has no watch track to fetch, so it must never be re-fetched for GPS. */
+  @Test
+  fun anImportedWorkoutIsNeverRefetchedForGps() {
+    threeWatches()
+    db.exec(WatchSql.UPSERT_WORKOUT, 1, 7_000L, 8_000L, 1, "run", 1000, 100, 10, null, null, 5, "{\"gps\":\"none\"}", 1, b)
+    db.exec("UPDATE workouts SET imported = 1 WHERE start = 7000")
+    assertTrue(WorkoutWriter(db, b).isComplete(7_000, 8_000, watchHasGps = true))
   }
 
   @Test
@@ -346,9 +383,9 @@ class MultiWatchSqlTest {
     threeWatches()
     val writer = WorkoutWriter(db, b)
     assertTrue(writer.save(record(1_000, 2_000, complete = false)))
-    assertFalse(writer.isComplete(1_000, 2_000))
+    assertFalse(writer.isComplete(1_000, 2_000, false))
     assertTrue(writer.save(record(1_000, 2_000)))
-    assertTrue(writer.isComplete(1_000, 2_000))
+    assertTrue(writer.isComplete(1_000, 2_000, false))
     assertFalse(writer.save(record(1_000, 2_000)))
     assertEquals(listOf(listOf(2L)), db.query("SELECT COUNT(*) FROM workout_points"))
   }
@@ -360,7 +397,7 @@ class MultiWatchSqlTest {
     assertFalse(WorkoutWriter(db, a).save(record(1_020, 1_990)))
     assertEquals(listOf(listOf(1_000L, 2_000L, b)), workouts())
     assertEquals(listOf(listOf(a, 1_020L, 1_990L, 1_000L)), shadows())
-    assertTrue(WorkoutWriter(db, a).isComplete(1_020, 1_990))
+    assertTrue(WorkoutWriter(db, a).isComplete(1_020, 1_990, false))
   }
 
   @Test
@@ -371,7 +408,7 @@ class MultiWatchSqlTest {
     assertEquals(listOf(listOf(1_050L, 2_100L, b)), workouts())
     assertEquals(listOf(listOf(a, 1_000L, 2_000L, 1_050L)), shadows())
     assertEquals(listOf(listOf(2L)), db.query("SELECT COUNT(*) FROM workout_points"))
-    assertTrue(WorkoutWriter(db, a).isComplete(1_000, 2_000))
+    assertTrue(WorkoutWriter(db, a).isComplete(1_000, 2_000, false))
   }
 
   @Test
@@ -383,7 +420,7 @@ class MultiWatchSqlTest {
     assertEquals(listOf(listOf(b, 1_000L, 2_000L, 1_000L)), shadows())
     assertEquals(1, points().size)
     // b does not download it again
-    assertTrue(WorkoutWriter(db, b).isComplete(1_000, 2_000))
+    assertTrue(WorkoutWriter(db, b).isComplete(1_000, 2_000, false))
   }
 
   @Test

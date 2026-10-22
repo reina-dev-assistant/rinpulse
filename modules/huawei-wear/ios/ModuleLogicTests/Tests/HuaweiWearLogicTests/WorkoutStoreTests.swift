@@ -98,10 +98,10 @@ final class ScriptedWorkoutWatch: FrameSink, @unchecked Sendable {
 final class WorkoutStoreTests: XCTestCase {
     private let start: Int32 = 1_700_000_000
 
-    private func record(start: Int64 = 1_700_000_000, end: Int64 = 1_700_000_600, complete: Bool = true, points: [WorkoutPoint] = [], steps: Int = 100) -> WorkoutRecord {
+    private func record(start: Int64 = 1_700_000_000, end: Int64 = 1_700_000_600, complete: Bool = true, points: [WorkoutPoint] = [], steps: Int = 100, summaryGps: String? = nil) -> WorkoutRecord {
         WorkoutRecord(
             number: 5, start: start, end: end, sportType: 1, sportName: "Running", duration: 600, distance: 5000, calories: 321, steps: steps, avgHr: 135, maxHr: nil,
-            summaryJson: "{\"kind\":\"RUNNING\"}", points: points, complete: complete
+            summaryJson: summaryGps.map { "{\"kind\":\"RUNNING\",\"gps\":\"\($0)\"}" } ?? "{\"kind\":\"RUNNING\"}", points: points, complete: complete
         )
     }
 
@@ -225,10 +225,28 @@ final class WorkoutStoreTests: XCTestCase {
         _ = try workouts.save(record(complete: true))
         _ = try workouts.save(record(start: 5_000, end: 5_600, complete: false))
 
-        XCTAssertTrue(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_600))
-        XCTAssertFalse(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_601))
-        XCTAssertFalse(try workouts.isComplete(start: 5_000, end: 5_600))
-        XCTAssertFalse(try workouts.isComplete(start: 9, end: 9))
+        XCTAssertTrue(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_600, watchHasGps: false))
+        XCTAssertFalse(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_601, watchHasGps: false))
+        XCTAssertFalse(try workouts.isComplete(start: 5_000, end: 5_600, watchHasGps: false))
+        XCTAssertFalse(try workouts.isComplete(start: 9, end: 9, watchHasGps: false))
+    }
+
+    /// A workout stored by a build that did not download GPS files is `complete = 1` with no point. When the watch
+    /// itself says it has a track it must be fetched once more, and once an attempt is recorded it must not be asked
+    /// again — a genuine failure is not a reason to re-download every sync.
+    func testAStoredWorkoutIsOnlyRefetchedForGpsWhenTheWatchClaimsOneAndItWasNeverAttempted() throws {
+        let store = SyncStore(url: temporaryDatabaseURL())
+        let workouts = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
+        _ = try workouts.save(record(complete: true, summaryGps: "none"))
+
+        XCTAssertFalse(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_600, watchHasGps: true), "never attempted -> fetch once")
+        XCTAssertTrue(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_600, watchHasGps: false), "no watch claim -> done")
+
+        _ = try workouts.save(record(complete: true, summaryGps: "failed"))
+        XCTAssertTrue(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_600, watchHasGps: true), "attempted and failed -> not again")
+
+        _ = try workouts.save(record(complete: true, summaryGps: "ok", points: [WorkoutPoint(ts: 1_700_000_005, lat: -6.2, lon: 106.8, alt: nil, hr: nil)]))
+        XCTAssertTrue(try workouts.isComplete(start: 1_700_000_000, end: 1_700_000_600, watchHasGps: true), "has a point -> done")
     }
 
     func testSyncStartIsTheGbDefaultThenAfterTheNewestWorkoutOrTheOldestIncomplete() throws {

@@ -5,8 +5,12 @@ import Foundation
 /// Where `WorkoutSync` reads what is already stored and writes each finished workout. Synchronous: the sync's own cancellation must not stop a
 /// workout from being stored once its parts are downloaded.
 public protocol WorkoutSink: AnyObject {
-    /// True when a complete workout with this start and end is stored (nothing left to download for it).
-    func isComplete(start: Int64, end: Int64) throws -> Bool
+    /// True when there is nothing left to download for this start/end: a complete copy is stored — **unless** the
+    /// watch says it has a `_gps.bin` (`watchHasGps`) and the stored copy has no point and never attempted one.
+    ///
+    /// `watchHasGps` is the watch's own answer (17/07 tag 0x0e), never a guess from the sport type. A workout stored
+    /// before this app downloaded GPS files is `complete = 1` with no points and would otherwise never be revisited.
+    func isComplete(start: Int64, end: Int64, watchHasGps: Bool) throws -> Bool
 
     /// Stores the workout and its points, replacing an earlier copy with the same start. True if it is new or was incomplete.
     func save(_ record: WorkoutRecord) throws -> Bool
@@ -154,7 +158,11 @@ public final class WorkoutSync: @unchecked Sendable {
         )
         let start = Int64(UInt32(bitPattern: totals.startTime))
         let end = Int64(UInt32(bitPattern: totals.endTime))
-        if try sink.isComplete(start: start, end: end) {
+        // The watch's own answer for this workout (17/07 tag 0x0e): it is the gate for re-fetching a stored workout
+        // that has no GPS point. Never inferred from the sport — a firmware that omits the tag gets no backfill.
+        let hasTrajectoryTag = (try? HuaweiTLV(parsing: numbers.rawData))?.contains(0x0e) ?? false
+        let watchHasGps = hasTrajectoryTag && numbers.trajectoriesData == 1
+        if try sink.isComplete(start: start, end: end, watchHasGps: watchHasGps) {
             info("\(label): already stored (start=\(start)), skipped")
             return
         }

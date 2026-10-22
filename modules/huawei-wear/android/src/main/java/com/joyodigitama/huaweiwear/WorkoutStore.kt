@@ -2,6 +2,7 @@ package com.joyodigitama.huaweiwear
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 /**
  * Writes workouts into the shared database (`workouts`, `workout_points`; migration 3 in
@@ -12,8 +13,8 @@ import kotlinx.coroutines.withContext
  * another watch already recorded is stored once ([WorkoutWriter], docs/multi-watch.md section 3).
  */
 internal class WorkoutStore(private val store: SyncStore, private val address: String) : WorkoutSink {
-  override suspend fun isComplete(start: Long, end: Long): Boolean = withContext(Dispatchers.IO) {
-    WorkoutWriter(AndroidWatchDb(store.db()), address).isComplete(start, end)
+  override suspend fun isComplete(start: Long, end: Long, watchHasGps: Boolean): Boolean = withContext(Dispatchers.IO) {
+    WorkoutWriter(AndroidWatchDb(store.db()), address).isComplete(start, end, watchHasGps)
   }
 
   override suspend fun save(record: WorkoutRecord): Boolean = withContext(Dispatchers.IO) {
@@ -37,9 +38,29 @@ internal class WorkoutStore(private val store: SyncStore, private val address: S
 
 /** The workout statements of one watch on one [WatchDb]; [WorkoutStore] is the Android wrapper. */
 internal class WorkoutWriter(private val db: WatchDb, private val address: String) {
-  /** True when a complete copy with this start and end is stored, or this watch's copy was dropped for another watch's. */
-  fun isComplete(start: Long, end: Long): Boolean =
-    db.query(WatchSql.SELECT_WORKOUT_DONE, start, end, start, end, address).isNotEmpty()
+  /**
+   * True when a complete copy of this session is stored and there is nothing left to fetch, or this watch's copy was
+   * dropped for another watch's (`workout_shadow`).
+   *
+   * A complete row with **no GPS point** is only "done" while the watch does not claim a track for it. A workout
+   * stored by a build that did not download GPS files yet is `complete = 1` with no points and would otherwise never
+   * be revisited; with [watchHasGps] (the watch's own 17/07 tag 0x0e answer) it is fetched once more. The stored
+   * copy's own `summary_json.gps` stops that from looping: `none` (or a row written before the field existed) means
+   * the GPS was never attempted, so it is asked for again; `empty`/`failed` means it was tried and the watch did not
+   * deliver, and a genuine failure must not become a retry on every 15-minute sync.
+   */
+  fun isComplete(start: Long, end: Long, watchHasGps: Boolean): Boolean {
+    if (db.query(WatchSql.SELECT_WORKOUT_SHADOWED, start, end, address).isNotEmpty()) return true
+    val row = db.query(WatchSql.SELECT_WORKOUT_STORED, start, end).firstOrNull() ?: return false
+    // An imported row comes from a Huawei export: there is no watch track to fetch for it.
+    if ((row[0] as Long) != 0L) return true
+    if ((row[2] as Long) != 0L) return true
+    if (!watchHasGps) return true
+    val gpsStatus = (row[1] as String?)
+      ?.let { summary -> runCatching { JSONObject(summary).optString("gps", "") }.getOrNull() }
+      ?.takeIf { it.isNotEmpty() }
+    return gpsStatus != null && gpsStatus != "none"
+  }
 
   /**
    * Stores the workout and its points, replacing an earlier copy with the same start. True if it is new or was incomplete;

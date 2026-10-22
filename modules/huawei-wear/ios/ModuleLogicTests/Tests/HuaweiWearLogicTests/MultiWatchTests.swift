@@ -363,12 +363,12 @@ final class MultiWatchTests: XCTestCase {
         let store = try store()
         let wa = WorkoutStore(store, address: a)
         let wb = WorkoutStore(store, address: b)
-        XCTAssertFalse(try wb.isComplete(start: 1000, end: 4600))
+        XCTAssertFalse(try wb.isComplete(start: 1000, end: 4600, watchHasGps: false))
         XCTAssertTrue(try wa.save(workout(start: 1010, end: 4610)))
         XCTAssertFalse(try wb.save(workout(start: 1000, end: 4600)))
         // b's copy lost and is in the shadow: nothing left to download for b, and not for a's own either.
-        XCTAssertTrue(try wb.isComplete(start: 1000, end: 4600))
-        XCTAssertFalse(try wa.isComplete(start: 1000, end: 4600))
+        XCTAssertTrue(try wb.isComplete(start: 1000, end: 4600, watchHasGps: false))
+        XCTAssertFalse(try wa.isComplete(start: 1000, end: 4600, watchHasGps: false))
         // b's window starts after what b saw (its shadowed end), a's after its own newest.
         XCTAssertEqual(try wb.syncStart(), 4601)
         XCTAssertEqual(try wa.syncStart(), 4611)

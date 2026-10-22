@@ -13,8 +13,15 @@ import nodomain.freeyourgadget.gadgetbridge.devices.huawei.packets.Workout
 
 /** Where [WorkoutSync] reads what is already stored and writes each finished workout. */
 internal interface WorkoutSink {
-  /** True when a complete workout with this start and end is stored (nothing left to download for it). */
-  suspend fun isComplete(start: Long, end: Long): Boolean
+  /**
+   * True when there is nothing left to download for this start/end: a complete copy is stored — **unless** the watch
+   * says it has a `_gps.bin` ([watchHasGps]) and the stored copy has no point and never attempted one.
+   *
+   * [watchHasGps] is the watch's own answer (17/07 tag 0x0e), never a guess from the sport type, so the retry only
+   * ever fires for a workout the watch itself says has a track. A workout stored before this app downloaded GPS is
+   * `complete = 1` with no points and would otherwise never be revisited.
+   */
+  suspend fun isComplete(start: Long, end: Long, watchHasGps: Boolean): Boolean
 
   /** Stores the workout and its points, replacing an earlier copy with the same start. True if it is new or was incomplete. */
   suspend fun save(record: WorkoutRecord): Boolean
@@ -170,7 +177,14 @@ internal class WorkoutSync(
       log("$label: totals have no times (start=$start end=$end), the watch has no such workout; skipped")
       return
     }
-    if (sink.isComplete(start, end)) {
+    // The watch's own answer for this workout (17/07 tag 0x0e): it is the gate for re-fetching a stored workout that
+    // has no GPS point. Never inferred from the sport — a firmware that omits the tag simply gets no backfill.
+    val watchHasGps = try {
+      HuaweiTLV().parse(numbers.rawData).contains(0x0e) && numbers.trajectoriesData.toInt() == 1
+    } catch (e: Exception) {
+      false
+    }
+    if (sink.isComplete(start, end, watchHasGps)) {
       log("$label: already stored (start=$start), skipped")
       return
     }
