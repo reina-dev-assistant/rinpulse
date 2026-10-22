@@ -1,4 +1,4 @@
-import { NativeModule, type NativeModulesStatic } from 'expo';
+import { NativeModule, requireNativeModule } from 'expo';
 import type {
   BackgroundRestrictions,
   BackgroundStatus,
