@@ -83,7 +83,12 @@
     "coursesSubtitle": "Buat rute lalu kirim ke jam",
     "bleLink": "Tautan Bluetooth LE (developer)",
     "details": "Rute lari: belum terverifikasi, format rute berasal dari analisis statis Huawei Health. Jam bisa saja menolaknya.",
-    "detailsDev": "Rute lari: belum terverifikasi, format rute berasal dari analisis statis Huawei Health. Jam bisa saja menolaknya. Tautan Bluetooth LE: terhubung lewat Bluetooth LE GATT (layanan FE86), bukan tautan bawaan jam. Putuskan lalu hubungkan lagi agar berlaku. Langkahnya masuk ke logcat dengan tag JoyoFitBle."
+    "detailsDev": "Rute lari: belum terverifikasi, format rute berasal dari analisis statis Huawei Health. Jam bisa saja menolaknya. Tautan Bluetooth LE: terhubung lewat Bluetooth LE GATT (layanan FE86), bukan tautan bawaan jam. Putuskan lalu hubungkan lagi agar berlaku. Langkahnya masuk ke logcat dengan tag JoyoFitBle.",
+    "localOnly": {
+      "title": "Mode lokal",
+      "label": "Pakai tanpa akun",
+      "hint": "Sembunyikan semua ajakan masuk dan fitur JoyoRogo (feed, grup, cadangan awan). Aplikasi jalan penuh tanpa akun — data kamu tetap di HP ini."
+    }
   },
   "log": {
     "filters": {

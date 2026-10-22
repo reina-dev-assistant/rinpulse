@@ -23,7 +23,8 @@
   },
   "gate": {
     "title": "Masuk dengan JoyoRogo",
-    "description": "Feed, grup, dan membagikan latihan memakai akun JoyoRogo kamu, akun yang sama dengan catatan makan."
+    "description": "Feed, grup, dan membagikan latihan memakai akun JoyoRogo kamu, akun yang sama dengan catatan makan.",
+    "localOnly": "Fitur ini hanya jalan dengan akun JoyoRogo. Karena mode lokal aktif, bagian ini tidak dipakai."
   },
   "post": {
     "visibilityPublic": "Publik",

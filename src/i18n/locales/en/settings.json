@@ -83,7 +83,12 @@
     "coursesSubtitle": "Build a course and send it to the watch",
     "bleLink": "Bluetooth LE link (developer)",
     "details": "Running courses: unverified, the course format comes from static analysis of Huawei Health. The watch may refuse it.",
-    "detailsDev": "Running courses: unverified, the course format comes from static analysis of Huawei Health. The watch may refuse it. Bluetooth LE link: connect over Bluetooth LE GATT (service FE86) instead of the watch's own link. Disconnect and connect again to apply. Steps go to logcat tag JoyoFitBle."
+    "detailsDev": "Running courses: unverified, the course format comes from static analysis of Huawei Health. The watch may refuse it. Bluetooth LE link: connect over Bluetooth LE GATT (service FE86) instead of the watch's own link. Disconnect and connect again to apply. Steps go to logcat tag JoyoFitBle.",
+    "localOnly": {
+      "title": "Local mode",
+      "label": "Use without an account",
+      "hint": "Hide every sign-in prompt and the JoyoRogo features (feed, groups, cloud backup). The app runs fully without an account — your data stays on this phone."
+    }
   },
   "log": {
     "filters": {

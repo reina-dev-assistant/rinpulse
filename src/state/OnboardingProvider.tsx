@@ -6,6 +6,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { isIos } from '@/components/IosUnavailable';
 import { CLOUD_CONFIGURED } from '@/cloud/config';
 import { rememberedWatch } from '@/features/device/rememberedWatch';
+import { localOnlyMode } from '@/features/settings/localOnly';
 import {
   advance,
   back,
@@ -61,7 +62,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   // Navigating before the tabs are mounted throws; the key appears once they are.
   const navigatorReady = useRootNavigationState()?.key !== undefined;
-  const ctx = useMemo<StepContext>(() => ({ platform: isIos ? 'ios' : 'android', cloudConfigured: CLOUD_CONFIGURED }), []);
+  const ctx = useMemo<StepContext>(
+    () => ({ platform: isIos ? 'ios' : 'android', cloudConfigured: CLOUD_CONFIGURED, localOnly: localOnlyMode() }),
+    [],
+  );
   const [state, setState] = useState<OnboardingState | null>(null);
   const [pendingOpen, setPendingOpen] = useState(false);
   const launched = useRef(false);

@@ -16,6 +16,7 @@ import { useWatchPresence } from '@/features/device/useWatchPresence';
 import { linkLabel } from '@/features/device/linkState';
 import { HEALTH_STORE } from '@/features/sources/store';
 import { useAccountDialogs } from '@/features/settings/useAccountDialogs';
+import { localOnlyMode } from '@/features/settings/localOnly';
 import { useByokAccess } from '@/features/ai/hooks';
 import { joyoAiDestination, OPEN_JOYO_AI } from '@/features/ai/open';
 import { hubStatusLine } from '@/features/ai/ui/status';
@@ -186,8 +187,11 @@ export default function SettingsScreen() {
   };
 
   // Account on top, then goals and body, then the one Watch row, then the settings.
+  // Local-only mode drops the account card and the social tab: both are JoyoRogo-server features this phone
+  // does not use. Everything else (watch, health, sleep, workouts, coach plans, own-key AI) stays.
+  const localOnly = localOnlyMode();
   const groups = [
-    accountSummaryGroup,
+    ...(localOnly ? [] : [accountSummaryGroup]),
     coachGroup,
     bodyGroup,
     watchGroup,

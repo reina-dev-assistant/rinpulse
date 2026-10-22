@@ -27,6 +27,7 @@ import { syncHrZonesAtLaunch } from '@/features/hrzones/settings';
 import { BikeRideProvider } from '@/features/bikecomputer/BikeRideProvider';
 import { lockPortrait } from '@/features/bikecomputer/ui/orientation';
 import { flushSupportReports } from '@/features/device/aturReports';
+import { localOnlyMode } from '@/features/settings/localOnly';
 import { LivePill } from '@/features/record/ui/LivePill';
 import { RoomCaptureRunner } from '@/features/thermometer/RoomCaptureRunner';
 import { UpdateBanner } from '@/features/updates/UpdateBanner';
@@ -224,9 +225,12 @@ function RootNavigator() {
                         ),
                       }}
                     />
+                    {/* The Social feed only exists on JoyoRogo's server, so local-only mode loses the tab rather
+                        than showing a sign-in card the person never wants. */}
                     <Tabs.Screen
                       name="social"
                       options={{
+                        href: localOnlyMode() ? null : undefined,
                         title: t('nav.social'),
                         tabBarLabel: ({ color }) => <TabLabel name="social" color={color} />,
                         tabBarIcon: ({ focused, color, size }) => (

@@ -23,7 +23,8 @@
   },
   "gate": {
     "title": "Sign in with JoyoRogo",
-    "description": "The feed, your groups and sharing a workout use your JoyoRogo account, the same one as the food diary."
+    "description": "The feed, your groups and sharing a workout use your JoyoRogo account, the same one as the food diary.",
+    "localOnly": "This part only works with a JoyoRogo account. Local mode is on, so this screen stays unused."
   },
   "post": {
     "visibilityPublic": "Public",

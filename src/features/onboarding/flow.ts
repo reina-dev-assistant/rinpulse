@@ -48,6 +48,12 @@ export interface StepContext {
   platform: Platform;
   /** The cloud server is set in this build; without it the Pro step (cloud backup) is hidden. */
   cloudConfigured: boolean;
+  /**
+   * Local-only mode: this phone is the whole app. The account, Pro and cloud steps all belong to the JoyoRogo
+   * server, so none of them is shown — the guide then runs welcome → … → done without ever asking for a login.
+   * Optional so existing callers and tests keep the account-by-default behaviour.
+   */
+  localOnly?: boolean;
 }
 
 /** `watch`: the run for someone with a watch to pair. `none`: no watch, or one that is not supported; the phone-only run. */
@@ -56,6 +62,8 @@ export type Route = 'watch' | 'none';
 interface StepRule {
   platforms?: readonly Platform[];
   needsCloud?: boolean;
+  /** Needs a JoyoRogo account, which local-only mode never has. */
+  needsAccount?: boolean;
   /** Shown on this route only. */
   route?: Route;
 }
@@ -69,8 +77,9 @@ const RULES: Partial<Record<StepId, StepRule>> = {
   health: { route: 'watch' },
   weather: { route: 'watch' },
   background: { platforms: ['android'], route: 'watch' },
-  pro: { needsCloud: true },
-  cloud: { needsCloud: true },
+  account: { needsAccount: true },
+  pro: { needsCloud: true, needsAccount: true },
+  cloud: { needsCloud: true, needsAccount: true },
 };
 
 export type OnboardingStatus = 'active' | 'completed' | 'dismissed' | 'bypassed';
@@ -96,6 +105,7 @@ function applies(id: StepId, ctx: StepContext, route: Route): boolean {
   if (rule.route && rule.route !== route) return false;
   if (rule.platforms && !rule.platforms.includes(ctx.platform)) return false;
   if (rule.needsCloud && !ctx.cloudConfigured) return false;
+  if (rule.needsAccount && ctx.localOnly) return false;
   return true;
 }
 

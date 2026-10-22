@@ -12,6 +12,7 @@ import { showsWatchUi } from '@/features/device/presence';
 import { useWatchPresence } from '@/features/device/useWatchPresence';
 import { ensureBluetoothConnect, ensureBluetoothScan } from '@/features/device/useBluetoothPermission';
 import { useNativeRefresh } from '@/features/settings/useNativeRefresh';
+import { localOnlyMode, setLocalOnlyMode } from '@/features/settings/localOnly';
 import { dbHealth, useDbHealth } from '@/db/recovery';
 import { errorMessage } from '@/format';
 import { useTheme } from '@/theme';
@@ -66,6 +67,12 @@ export default function AdvancedScreen() {
 
   const { repairing } = useDbHealth();
   const [repairHealthy, setRepairHealthy] = useState(false);
+  const [localOnly, setLocalOnly] = useState(localOnlyMode);
+
+  const toggleLocalOnly = (enabled: boolean) => {
+    setLocalOnlyMode(enabled);
+    setLocalOnly(enabled);
+  };
 
   const repairNow = async () => {
     setRepairHealthy(false);
@@ -100,6 +107,15 @@ export default function AdvancedScreen() {
         />
       </View>
       {repairHealthy ? <Notice>{t('advanced.repairHealthy')}</Notice> : null}
+      {/* Always shown, watch or not: this is the switch that makes the app stop offering an account. */}
+      <Section title={t('advanced.localOnly.title')} icon="person-circle" tint="link">
+        <SwitchRow
+          label={t('advanced.localOnly.label')}
+          value={localOnly}
+          onValueChange={toggleLocalOnly}
+        />
+        <Notice icon="information-circle">{t('advanced.localOnly.hint')}</Notice>
+      </Section>
       {withWatch ? (
         <Section title={t('advanced.experimental')} icon="flask" tint="workouts">
           <SwitchRow
