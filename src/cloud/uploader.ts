@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import { CloudHttpError, CloudLockedError, cloudRequest } from '@/cloud/api';
+import { CloudHttpError, CloudLockedError, NotSignedInError, cloudRequest } from '@/cloud/api';
 import { cloudLog as log } from '@/cloud/log';
 import {
   adoptAccount,
@@ -113,6 +113,8 @@ export async function runUpload(db: SQLiteDatabase): Promise<UploadReport> {
       await setCloudState(db, { last_error: null }).catch(() => undefined);
       throw error;
     }
+    // No session is a state, not a failure: it must not be kept as an error that shows up again after the next sign-in.
+    if (error instanceof NotSignedInError) throw error;
     const message = errorMessage(error);
     log(`upload failed: ${message}`, 'error');
     await setCloudState(db, { last_error: message }).catch(() => undefined);

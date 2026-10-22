@@ -3,7 +3,7 @@ import { describe, expect, it } from 'bun:test';
 
 import { ensureScaleSchema, IMPORTED_SCALE_ID, insertWeighIn, listWeighIns, pendingWeighIns } from '@/features/scale/store';
 
-import { ensureRogoImportQueueSchema, IMPORT_BATCH, pendingImportCounts, pushImportedToRogo, type ImportClient, type QueueDb } from './rogoQueue';
+import { ensureRogoImportQueueSchema, IMPORT_BATCH, pendingImportCounts, pushImportedToRogo, syncImportedToRogo, type ImportClient, type QueueDb } from './rogoQueue';
 
 async function openDb(): Promise<{ db: QueueDb; raw: Database }> {
   const raw = new Database(':memory:');
@@ -67,16 +67,52 @@ describe('pushImportedToRogo', () => {
     expect(calls.weights.length).toBe(1);
   });
 
-  it('treats the first version\'s skipped imported rows as waiting, and a weight JoyoRogo cannot take as skipped with its reason', async () => {
-    const { db } = await openDb();
+  it('turns the first version\'s skipped imported rows into waiting when the database opens, and a weight JoyoRogo cannot take is skipped with its reason', async () => {
+    const { db, raw } = await openDb();
     await insertWeighIn(db, weighIn(T, 80, 'skipped'));
     await insertWeighIn(db, weighIn(T - 86_400_000, 5, 'pending'));
+    // a row refused with a reason stays refused, and a Bluetooth scale's skipped row (push switched off) stays skipped
+    await insertWeighIn(db, weighIn(T - 2 * 86_400_000, 81, 'skipped'));
+    raw.query("UPDATE scale_reading SET rogo_error = 'out of range' WHERE weight_kg = 81").run();
+    await insertWeighIn(db, { ...weighIn(T - 3 * 86_400_000, 70, 'skipped'), scaleId: 'AA:BB' });
+    await ensureScaleSchema(db);
+    expect(await pendingImportCounts(db)).toEqual({ weighIns: 2, meals: 0, water: 0 });
     const { client, calls } = fakeClient();
     const out = await pushImportedToRogo(db, client, online);
     expect(calls.weights[0]).toHaveLength(1);
     expect(out.weighIns.added).toBe(1);
     const rows = await listWeighIns(db);
     expect(rows.find((w) => w.weightKg === 5)).toMatchObject({ rogoState: 'skipped', rogoError: 'out of range' });
+    expect(rows.find((w) => w.weightKg === 80)?.rogoState).toBe('sent');
+    expect(rows.find((w) => w.weightKg === 81)).toMatchObject({ rogoState: 'skipped', rogoError: 'out of range' });
+    expect(rows.find((w) => w.scaleId === 'AA:BB')?.rogoState).toBe('skipped');
+  });
+
+  it('syncImportedToRogo runs one push at a time, so a run that starts during another sees the rows the first had not read', async () => {
+    const { db } = await openDb();
+    await insertWeighIn(db, weighIn(T, 80));
+    const gate = Promise.withResolvers<void>();
+    const sending = Promise.withResolvers<void>();
+    const sent: number[][] = [];
+    const { client } = fakeClient({
+      importWeights: async (entries) => {
+        sent.push(entries.map((e) => e.weightKg));
+        if (sent.length === 1) {
+          sending.resolve();
+          await gate.promise;
+        }
+        return { added: entries.length, skipped: 0 };
+      },
+    });
+    const first = syncImportedToRogo(db, client, online);
+    const second = syncImportedToRogo(db, client, online);
+    // the import wrote another weigh-in while the first run was sending
+    await sending.promise;
+    await insertWeighIn(db, weighIn(T - 86_400_000, 81));
+    gate.resolve();
+    expect((await first).weighIns.added).toBe(1);
+    expect((await second).weighIns.added).toBe(1);
+    expect(sent).toEqual([[80], [81]]);
   });
 
   it('counts what JoyoRogo already had as skipped', async () => {

@@ -15,7 +15,7 @@ import {
   type ProMoment,
 } from './offer';
 
-const MOMENTS: ProMoment[] = ['coach-chat', 'coach', 'coach-today', 'cloud', 'workout', 'koneksi', 'family'];
+const MOMENTS: ProMoment[] = ['coach-chat', 'coach', 'coach-today', 'cloud', 'workout', 'koneksi', 'family', 'onboarding', 'onboarding-cloud'];
 
 describe('proUpgradeAction: store rules per platform and distribution', () => {
   test('Google Play: the Play listing only, no price, no web checkout', () => {

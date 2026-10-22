@@ -1,4 +1,3 @@
-import type { HrZones } from '@/features/hrzones/zones';
 import { strainAddedToDay, type WorkoutStrain } from '@/features/today/strain';
 import type { WorkoutSummary } from '@/features/workouts/summary';
 import type { StepSample } from '@/wear';
@@ -24,9 +23,9 @@ export function buildEffort(
   strain: WorkoutStrain,
   workout: { start: number; end: number },
   daySamples: readonly StepSample[],
-  zones: HrZones,
+  maxHr: number,
 ): AnalysisEffort {
-  const added = daySamples.length > 0 ? strainAddedToDay(daySamples, workout, strain.trimp, zones).added : null;
+  const added = daySamples.length > 0 ? strainAddedToDay(daySamples, workout, strain.trimp, maxHr).added : null;
   const value = round(strain.strain, 1);
   return { strain: value, trimp: round(strain.trimp, 1), band: effortBand(value), addedToDay: roundOrNull(added, 1) };
 }

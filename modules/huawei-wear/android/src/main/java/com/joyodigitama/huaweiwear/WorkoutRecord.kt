@@ -379,7 +379,11 @@ internal class SampleStats private constructor() {
   private val averages = LinkedHashMap<String, Double>()
   private val extremes = LinkedHashMap<String, Int>()
 
+  /** Per-minute running form for the chart (`summary_json.dynamics`); null without enough readings. */
+  private var dynamics: JSONObject? = null
+
   fun putAverages(json: JSONObject) {
+    dynamics?.let { json.put("dynamics", it) }
     if (averages.isEmpty() && extremes.isEmpty()) return
     val out = JSONObject()
     for ((k, v) in averages) out.put(k, v)
@@ -506,6 +510,11 @@ internal class SampleStats private constructor() {
       if (minPower != Int.MAX_VALUE) s.extremes["minPower"] = minPower
       if (maxPower != Int.MIN_VALUE) s.extremes["maxPower"] = maxPower
       if (maxFrequency > 0) s.extremes["maxJumpRate"] = maxFrequency
+      // Running form: means over the readings that exist (replaces the contact-time mean above, which also counted zeros) and the chart series.
+      RunDynamics.of(samples)?.let {
+        s.averages.putAll(it.averages)
+        s.dynamics = it.series
+      }
       return s
     }
   }

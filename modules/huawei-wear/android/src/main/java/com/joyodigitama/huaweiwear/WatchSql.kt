@@ -196,6 +196,15 @@ internal object WatchSql {
   /** (start) -> id */
   const val SELECT_WORKOUT_ID = "SELECT id FROM workouts WHERE start = ?"
 
+  /** (start, device) -> start, end, workout_number: a workout this watch recorded (not imported), what a refetch needs to find it on the watch again. */
+  const val SELECT_WORKOUT_TARGET = "SELECT start, end, workout_number FROM workouts WHERE start = ? AND device = ? AND imported = 0"
+
+  /** (start, device) -> summary_json of a workout this watch recorded. */
+  const val SELECT_WORKOUT_SUMMARY = "SELECT summary_json FROM workouts WHERE start = ? AND device = ? AND imported = 0"
+
+  /** (summary_json, start): the row's `rev` moves with the update (migration trigger), so only this workout goes to the cloud again. */
+  const val UPDATE_WORKOUT_SUMMARY = "UPDATE workouts SET summary_json = ? WHERE start = ?"
+
   /** (workout_id, ts, lat, lon, alt, hr, speed, cadence, stride, power) */
   const val INSERT_WORKOUT_POINT =
     "INSERT INTO workout_points (workout_id, ts, lat, lon, alt, hr, speed, cadence, stride, power) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"

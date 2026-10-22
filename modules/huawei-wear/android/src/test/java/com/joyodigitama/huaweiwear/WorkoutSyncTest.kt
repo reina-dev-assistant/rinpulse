@@ -431,4 +431,143 @@ class WorkoutSyncTest {
     assertTrue(error is WearException && error.errorCode == ErrorCodes.TIMEOUT)
     assertFalse(sink.saved.single().complete)
   }
+
+  // refetchDynamics: only the data samples are read again, and only the running form reaches the sink.
+
+  private class MemoryDynamics(val results: Map<Long, DynamicsMerge> = emptyMap()) : DynamicsSink {
+    val merged = ArrayList<Pair<Long, RunDynamics.Result>>()
+    override suspend fun merge(start: Long, dynamics: RunDynamics.Result): DynamicsMerge {
+      merged.add(start to dynamics)
+      return results[start] ?: DynamicsMerge.UPDATED
+    }
+  }
+
+  /** A count that lists [numbers] (each with [dataFrames] data frames, no pace, swim, SpO2 or sections). */
+  private fun listCount(numbers: List<Int>, dataFrames: Int = 1): HuaweiTLV {
+    val container = HuaweiTLV().put(0x02, numbers.size.toShort())
+    for (n in numbers) container.put(0x85, HuaweiTLV().put(0x06, n.toShort()).put(0x07, dataFrames.toShort()).put(0x08, 0.toShort()))
+    return HuaweiTLV().put(0x81, container)
+  }
+
+  private fun totalsOf(number: Int, from: Int): HuaweiTLV = HuaweiTLV().put(
+    0x81,
+    HuaweiTLV().put(0x02, number.toShort()).put(0x03, 1.toByte()).put(0x04, from).put(0x05, from + 600).put(0x12, 600).put(0x14, 1.toByte()),
+  )
+
+  /** Two samples a minute apart with ground contact 240/260 ms, vertical oscillation 8.4/9.0 cm, ratio 7.1/7.5 %, balance 50.2/49.8 %, hang 120/130 ms. */
+  private fun formTlv(number: Int, frame: Int): HuaweiTLV {
+    val header = ByteBuffer.allocate(14).putShort(number.toShort()).putShort(frame.toShort()).putInt(start).put(60).putShort(2).put(10).putShort(0x0040).array()
+    val raw = ByteBuffer.allocate(20)
+    for ((gct, hang, vo, gtb, vr) in listOf(listOf(240, 120, 84, 5020, 71), listOf(260, 130, 90, 4980, 75))) {
+      raw.putShort(gct.toShort()).putShort(hang.toShort()).putShort(vo.toShort()).putShort(gtb.toShort()).putShort(vr.toShort())
+    }
+    return HuaweiTLV().put(
+      0x81,
+      HuaweiTLV().put(0x02, number.toShort()).put(0x03, frame.toShort()).put(0x04, header).put(0x05, raw.array()).put(0x08, 10).put(0x09, 57860),
+    )
+  }
+
+  /** A watch holding [held] workouts (number to start); data frames come from [data]. */
+  private fun holding(held: Map<Int, Int>, data: (Int, Int) -> List<ByteArray>): (Request) -> List<ByteArray> = { r ->
+    if (r.service != 0x17) emptyList()
+    else when (r.command) {
+      0x07 -> listOf(tlvFrame(0x17, 0x07, listCount(held.keys.toList())))
+      0x08 -> {
+        val n = r.tlv.getObject(0x81).getShort(0x02).toInt()
+        listOf(tlvFrame(0x17, 0x08, totalsOf(n, held.getValue(n))))
+      }
+      0x0a -> {
+        val c = r.tlv.getObject(0x81)
+        data(c.getShort(0x02).toInt(), c.getShort(0x03).toInt())
+      }
+      else -> emptyList()
+    }
+  }
+
+  @Test
+  fun refetchReadsOnlyTheDataFramesAndHandsTheRunningFormToTheSink() = runBlocking {
+    val (watch, session, events) = setup(holding(mapOf(5 to start)) { n, f -> listOf(tlvFrame(0x17, 0x0a, formTlv(n, f))) })
+    val sink = MemoryDynamics()
+
+    val outcomes = WorkoutSync(session, events).refetchDynamics(listOf(RefetchTarget(start.toLong(), end.toLong(), 5)), sink)
+
+    assertEquals(mapOf(start.toLong() to RefetchOutcome.UPDATED), outcomes)
+    val (mergedStart, form) = sink.merged.single()
+    assertEquals(start.toLong(), mergedStart)
+    val averages = form.averages
+    assertEquals(250.0, averages.getValue("avgGroundContactTime"), 1e-9)
+    assertEquals(8.7, averages.getValue("avgVerticalOscillation"), 1e-6)
+    assertEquals(7.3, averages.getValue("avgVerticalRatio"), 1e-6)
+    assertEquals(50.0, averages.getValue("avgGroundContactBalance"), 1e-6)
+    assertEquals(125.0, averages.getValue("avgHangTimeMs"), 1e-9)
+    assertEquals(2, form.series!!.getJSONArray("gct").length())
+    // Count, totals and data: no pace, swim, SpO2, sections or GPS file.
+    assertEquals(setOf(0x07, 0x08, 0x0a), watch.requests.filter { it.service == 0x17 }.map { it.command }.toSet())
+    assertTrue(watch.requests.none { it.service != 0x17 })
+    // The window is the stored start..end with a minute to spare on both sides.
+    val window = watch.requests.first { it.command == 0x07 }.tlv.getObject(0x81)
+    assertEquals(start - 60, window.getInteger(0x03))
+    assertEquals(end + 60, window.getInteger(0x04))
+  }
+
+  @Test
+  fun refetchAsksTheStoredNumberFirstAndNeverMergesAnotherRun() = runBlocking {
+    // The watch reused number 5 for a later run; the run stored as number 5 is listed under number 9 now.
+    val (watch, session, events) = setup(holding(mapOf(5 to start + 99_000, 9 to start)) { n, f -> listOf(tlvFrame(0x17, 0x0a, formTlv(n, f))) })
+    val sink = MemoryDynamics()
+
+    val outcomes = WorkoutSync(session, events).refetchDynamics(listOf(RefetchTarget(start.toLong(), end.toLong(), 5)), sink)
+
+    assertEquals(RefetchOutcome.UPDATED, outcomes.getValue(start.toLong()))
+    assertEquals(listOf(5, 9), watch.requests.filter { it.command == 0x08 }.map { it.tlv.getObject(0x81).getShort(0x02).toInt() })
+    assertEquals(listOf(9), watch.requests.filter { it.command == 0x0a }.map { it.tlv.getObject(0x81).getShort(0x02).toInt() }.distinct())
+  }
+
+  @Test
+  fun aWorkoutTheWatchNoLongerListsIsGoneAndNothingIsRead() = runBlocking {
+    val (watch, session, events) = setup(holding(emptyMap()) { _, _ -> emptyList() })
+    val sink = MemoryDynamics()
+
+    val outcomes = WorkoutSync(session, events).refetchDynamics(listOf(RefetchTarget(start.toLong(), end.toLong(), 5)), sink)
+
+    assertEquals(RefetchOutcome.GONE, outcomes.getValue(start.toLong()))
+    assertTrue(sink.merged.isEmpty())
+    assertEquals(0, watch.requests.count { it.command == 0x0a })
+  }
+
+  @Test
+  fun aWorkoutWithoutRunningFormInItsSamplesIsReportedAndNotMerged() = runBlocking {
+    val (_, session, events) = setup(holding(mapOf(5 to start)) { _, f -> listOf(tlvFrame(0x17, 0x0a, dataTlv(f))) })
+    val sink = MemoryDynamics()
+
+    val outcomes = WorkoutSync(session, events).refetchDynamics(listOf(RefetchTarget(start.toLong(), end.toLong(), 5)), sink)
+
+    assertEquals(RefetchOutcome.NO_DYNAMICS, outcomes.getValue(start.toLong()))
+    assertTrue(sink.merged.isEmpty())
+  }
+
+  @Test
+  fun aLostDataFrameLeavesTheStoredWorkoutAsItWas() = runBlocking {
+    val (_, session, events) = setup(holding(mapOf(5 to start)) { n, f -> if (f == 0) emptyList() else listOf(tlvFrame(0x17, 0x0a, formTlv(n, f))) })
+    val sink = MemoryDynamics()
+
+    val outcomes = WorkoutSync(session, events, requestTimeoutMs = 150).refetchDynamics(listOf(RefetchTarget(start.toLong(), end.toLong(), 5)), sink)
+
+    assertEquals(RefetchOutcome.FAILED, outcomes.getValue(start.toLong()))
+    assertTrue(sink.merged.isEmpty())
+  }
+
+  @Test
+  fun refetchReportsWhatTheSinkSaidAndCountsTheUnknownStartsAsGone() = runBlocking {
+    val (_, session, events) = setup(holding(mapOf(5 to start)) { n, f -> listOf(tlvFrame(0x17, 0x0a, formTlv(n, f))) })
+    val sink = MemoryDynamics(mapOf(start.toLong() to DynamicsMerge.UNCHANGED))
+
+    val read = WorkoutSync(session, events).refetchDynamics(listOf(RefetchTarget(start.toLong(), end.toLong(), 5)), sink)
+    val report = RefetchReport(listOf(start.toLong(), 42L), read)
+
+    assertEquals(1, report.count(RefetchOutcome.UNCHANGED))
+    assertEquals(1, report.count(RefetchOutcome.GONE))
+    assertEquals(2, report.toJs()["requested"])
+    assertEquals(listOf("unchanged", "gone"), (report.toJs()["results"] as List<*>).map { (it as Map<*, *>)["outcome"] })
+  }
 }

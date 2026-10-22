@@ -78,7 +78,9 @@
     "pending": "Menunggu dikirim ke JoyoRogo",
     "skipped": "Tidak dikirim ke JoyoRogo",
     "waiting": "{{count}} timbangan belum terkirim ke JoyoRogo",
-    "retry": "Kirim ulang"
+    "retry": "Kirim ulang",
+    "imported": "Dari ekspor Huawei Health",
+    "more": "Tampilkan {{count}} lagi"
   },
   "body": {
     "measured": "Dari timbangan",

@@ -245,6 +245,11 @@ class HuaweiWearModule : Module() {
       runtime().link.syncActivity(fullHistory = true).toJs()
     }
 
+    // The running form of stored runs read from the watch again, merged into their summaries (WorkoutSync.refetchDynamics).
+    AsyncFunction("refetchWorkoutData") Coroutine { starts: List<Double> ->
+      runtime().link.refetchWorkoutData(starts.map { it.toLong() }).toJs()
+    }
+
     AsyncFunction("forgetDevice") { address: String ->
       runtime().forget(address)
     }

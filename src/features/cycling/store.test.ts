@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 
-import { listDayHeartLoad, listWorkoutPoints } from '@/db/queries';
+import { listDayStrainLoad, listWorkoutPoints } from '@/db/queries';
 import { openDb } from '@/features/record/testDb';
 import { startOfLocalDay } from '@/features/today/stats';
 import { strainFromLoads, workoutStrain } from '@/features/today/strain';
@@ -97,14 +97,14 @@ describe('training load of rides does not double count', () => {
     await seed(db, { start: day(3), name: 'Outdoor Run', type: 1, secs: 2400, hr: 160, speed: 3 });
     await syncRideMetrics(db, PROFILE, { sinceSec: 0, limit: 10 });
     const bounds = [startOfLocalDay(day(0)), startOfLocalDay(day(1)), startOfLocalDay(day(2)), startOfLocalDay(day(3)), startOfLocalDay(day(4))];
-    const base = strainFromLoads(await listDayHeartLoad(db, bounds, PROFILE.zones.bounds));
+    const base = strainFromLoads(await listDayStrainLoad(db, bounds, PROFILE.maxHr));
     const rows = await listRideMetrics(db);
     return { base, rows, db, hard, bounds };
   }
 
   it('a power ride is scored by TSS instead of its heart rate, a run keeps its heart rate, and the ride is counted once', async () => {
     const { base, rows, db, hard, bounds } = await days();
-    const rideTrimp = workoutStrain(await listWorkoutPoints(db, hard), PROFILE.zones)?.trimp ?? 0;
+    const rideTrimp = workoutStrain(await listWorkoutPoints(db, hard), PROFILE.maxHr)?.trimp ?? 0;
     const tssTrimp = analyzeRide({
       workout: { start: day(0) + 4 * 3600, end: day(0) + 4 * 3600 + 3600, duration: 3600, distance: 32400, calories: 0, sportType: 3, sportName: 'Cycling' },
       summary: {},

@@ -72,12 +72,12 @@ Definitions of Andrew Coggan and Hunter Allen, *Training and Racing with a Power
 ### Cadence and heart rate
 
 - Average and maximum cadence are over pedalling seconds (cadence above 0): coasting is left out, as Garmin does, and counted apart. Bands: coasting, 1 to 59, 60, 70, 80, 90, 100, 110 and over rpm.
-- HR zones are the existing ones (percent of maximum heart rate, `hrZones`).
+- HR zones in the ride view are the person's zones (`hrZones`, Settings > Zona HR); the ride's heart-rate load is Edwards' fixed percent-of-maximum zones and does not follow them (docs/hr-zones.md).
 - **Aerobic decoupling** (Joe Friel, *The Cyclist's Training Bible*; TrainingPeaks "Pw:Hr" and "Pa:Hr"): the moving seconds after a 10 minute warm-up, at least 40 minutes, with heart rate on 90 % of them, split in two halves; efficiency factor = NP over average heart rate (Pa:Hr: average speed over heart rate when there is no power); decoupling = (EF1 - EF2) / EF1. Under 5 % is a good aerobic base (Friel).
 
 ### Training load (`store.ts`, `load.ts`)
 
-The load model of JoyoFit is Edwards TRIMP from the heart rate in `step_samples` (per day, `listDayHeartLoad`), which feeds strain, ACWR (readiness, Kebugaran) and recovery. A ride already reaches it through its heart rate minutes (the watch's, or a phone recording's or FIT import's own `step_samples` rows). Two gaps, both closed here:
+The load model of JoyoFit is Edwards TRIMP from the heart rate in `step_samples` (per day, `listDayStrainLoad`, fixed percent-of-maximum zones), which feeds strain, ACWR (readiness, Kebugaran) and recovery. A ride already reaches it through its heart rate minutes (the watch's, or a phone recording's or FIT import's own `step_samples` rows). Two gaps, both closed here:
 
 1. A ride with a power meter and **no heart rate** counted for nothing (days without heart rate are rest).
 2. A ride scored by power should be scored by power.

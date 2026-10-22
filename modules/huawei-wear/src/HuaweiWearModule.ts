@@ -22,6 +22,7 @@ import type {
   UserProfile,
   WatchWorkoutResult,
   WatchWorkoutStatus,
+  WorkoutRefetchReport,
   WeatherLocationMode,
   WeatherPlace,
   WeatherStatus,
@@ -124,6 +125,16 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
    * `device.last_sync`. Rows already stored are upserted, so only what is missing is added.
    */
   syncFullHistory(): Promise<SyncSummary>;
+  /**
+   * Reads the running dynamics (vertical oscillation, vertical ratio, ground contact balance, hang time) of workouts that are already
+   * stored from the watch again, for the runs synced before the app kept them. `starts` are the `workouts.start` values (unix seconds).
+   * Only the sample data of each workout is requested, and only the means under `summary.samples` and the series `summary.dynamics`
+   * of the stored summary change (so only those workouts go to the cloud again); a workout the watch no longer holds is counted as
+   * `gone`, not an error. Resolves with counts and an outcome per start. Works for workouts this watch recorded; rejects with
+   * ERR_NOT_CONNECTED, ERR_TIMEOUT or ERR_DISCONNECTED when the link is not there. Waits for a sync that is running. Absent on builds
+   * older than the change: check with `hasNative('refetchWorkoutData')`.
+   */
+  refetchWorkoutData(starts: number[]): Promise<WorkoutRefetchReport>;
   /** Drops the stored auth key / fake identity so the next connect performs a first-time bind. */
   forgetDevice(address: string): Promise<void>;
 
@@ -139,8 +150,8 @@ declare class HuaweiWearModule extends NativeModule<HuaweiWearModuleEvents> {
    */
   importHuaweiExport(uri: string, password: string): Promise<HuaweiImportSummary>;
   /**
-   * Android only (not defined on iOS): the name the sender gave the file at `uri` (`HUAWEI_HEALTH_20261022112019.zip`), read from the
-   * provider behind a `content://` URI whose own last segment is an opaque id. Null when the provider does not say.
+   * The name the sender gave the file at `uri` (`HUAWEI_HEALTH_20261022112019.zip`). Android reads it from the provider behind a
+   * `content://` URI whose own last segment is an opaque id; iOS returns the file URL's last path component. Null when there is none.
    */
   huaweiExportDisplayName(uri: string): Promise<string | null>;
   /**

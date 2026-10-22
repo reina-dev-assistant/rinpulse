@@ -9,12 +9,39 @@
   },
   "card": {
     "empty": "No thermometer yet. Find yours below.",
-    "reading": "{{temp}} °C, humidity {{rh}}%",
+    "a11y": "{{temp}} °C, {{tempStatus}}. {{rh}}% RH, {{rhStatus}}.",
+    "tempUnit": "°C",
+    "rhUnit": "% RH",
     "noReading": "No reading yet. Bring your phone close to the thermometer and keep JoyoFit open for a moment.",
     "lastAt": "Last reading {{ago}}",
+    "lastAtBattery": "Last reading {{ago}} · {{battery}}",
     "forget": "Forget",
     "forgetTitle": "Forget this thermometer?",
-    "forgetMessage": "The temperature and humidity readings kept on this phone are deleted too. Nightly averages already sent to Sleep insights stay as they are."
+    "forgetMessage": "The temperature and humidity readings kept on this phone are deleted too. Nightly averages already sent to Sleep insights stay as they are.",
+    "noReadingKey": "No reading yet. The thermometer broadcasts temperature and humidity separately; it usually appears within a minute with your phone close and JoyoFit open.",
+    "noReadingGatt": "No reading yet. Tap Read now with your phone close to the thermometer.",
+    "readNow": "Read now",
+    "link": {
+      "bindkey": "Read from its encrypted broadcasts with your bind key, without connecting.",
+      "gatt": "Read over a short connection every 10 minutes while JoyoFit is open."
+    }
+  },
+  "ideal": {
+    "temp": {
+      "cold": "Too cold for sleep",
+      "cool": "A bit cool for sleep",
+      "ideal": "Right for sleep",
+      "warm": "A bit warm for sleep",
+      "hot": "Too hot for sleep"
+    },
+    "humidity": {
+      "dry": "Too dry",
+      "ideal": "Right",
+      "damp": "A bit humid",
+      "wet": "Too humid"
+    },
+    "tempRange": "Ideal {{from}}–{{to}} °C",
+    "humidityRange": "Ideal {{from}}–{{to}}% RH"
   },
   "picker": {
     "title": "Find thermometer",
@@ -28,12 +55,12 @@
     "pick": "Use this one",
     "chosen": "In use",
     "unnamed": "No name",
-    "reading": "Reads {{temp}} °C, {{rh}}%",
-    "unreadable": "Cannot be read yet: the stock Xiaomi firmware does not broadcast its numbers openly. Flash the community firmware (see below)."
+    "reading": "Reads {{temp}} °C · {{rh}}% RH",
+    "unreadable": "Stock Xiaomi firmware: its numbers are not broadcast openly. Pick a way below, or flash the community firmware."
   },
   "firmware": {
     "title": "What the thermometer needs",
-    "body": "JoyoFit reads a Xiaomi LYWSD03MMC (or similar) running the community firmware pvvx/ATC_MiThermometer, from its broadcasts only, without connecting. The format is ATC1441, PVVX custom or BTHome v2. The stock Xiaomi firmware broadcasts its data encrypted and the key lives in the Xiaomi app, so it cannot be read. The community firmware is flashed from a browser over Bluetooth. Check the hardware version first: units sold since March 2025 (B1.5 and B1.6) are not recommended by the firmware author."
+    "body": "JoyoFit reads a Xiaomi LYWSD03MMC (and the similar MHO-C401, CGG1) in three ways. Community firmware pvvx/ATC_MiThermometer (ATC1441, PVVX custom, BTHome v2): from its broadcasts, without connecting. Stock Xiaomi firmware: its broadcasts are encrypted with a bind key Xiaomi holds, so JoyoFit can open them if you enter that bind key, or it connects briefly every 10 minutes while the app is open, without a key. The community firmware is flashed from a browser over Bluetooth; check the hardware version first, units sold since March 2025 (B1.5 and B1.6) are not recommended by the firmware author."
   },
   "night": {
     "title": "Watch overnight",
@@ -46,7 +73,9 @@
     "oldBuild": "Overnight watching needs an app update from the store, not a quick update. Until then JoyoFit only reads the thermometer while the app is open.",
     "auto": "Start automatically at night",
     "autoHint": "When you open JoyoFit between 7 PM and the morning, watching starts by itself. A notification stays up while it runs.",
-    "until": "Stop at"
+    "until": "Stop at",
+    "gatt": "This thermometer is read over a connection, only while JoyoFit is open. To watch overnight, use a bind key.",
+    "oldBuildKey": "Overnight watching with a bind key needs an app update from the store, not a quick update. Until then JoyoFit only reads the thermometer while the app is open."
   },
   "privacy": {
     "title": "Your room data",
@@ -57,6 +86,47 @@
       "title": "Watching the room temperature",
       "text": "JoyoFit is listening to your room thermometer until morning.",
       "stop": "Stop"
+    }
+  },
+  "stock": {
+    "choose": "This thermometer runs the stock Xiaomi firmware. Pick how to read it:",
+    "direct": "Connect directly",
+    "bindkey": "Use bind key",
+    "connecting": "Connecting…",
+    "gatt": {
+      "unreachable": "Could not connect. The thermometer serves one connection at a time: close Mi Home / Xiaomi Home (or turn off Bluetooth on any other phone holding it), bring your phone close, and try again.",
+      "noService": "Connected, but this thermometer has no stock Xiaomi reading service. Try Use bind key, or flash the community firmware.",
+      "noData": "Connected, but the thermometer sent no numbers. Try again in a moment.",
+      "bluetooth": "Bluetooth is off. Turn it on, then try again.",
+      "permission": "JoyoFit is not allowed to use Bluetooth yet. Open your phone's settings to allow it.",
+      "error": "Could not read the thermometer. Try again."
+    },
+    "key": {
+      "label": "Bind key (32 hexadecimal digits)",
+      "length": "{{length}} of 32 digits",
+      "show": "Show",
+      "hide": "Hide",
+      "save": "Save and use",
+      "back": "Back",
+      "invalid": "That is not a bind key. A bind key is 32 hexadecimal digits (0-9 and a-f).",
+      "wrongKey": "This bind key does not belong to this thermometer: its broadcasts do not open with it. Check it again, a single wrong digit fails.",
+      "noFrames": "No broadcast to check against yet. Bring your phone close to the thermometer, wait a few seconds, and try again.",
+      "unsupported": "This thermometer uses an old MiBeacon version (24 digit key) or leaves out its address, which is not supported yet. Try Connect directly."
+    },
+    "help": {
+      "title": "How to get the bind key",
+      "where": "Xiaomi makes the bind key when the thermometer is added in Mi Home / Xiaomi Home. Only you hold it, and you can get it in one of two ways:",
+      "extractor": "1. Xiaomi Cloud Tokens Extractor: a script on a computer. Sign in with your Xiaomi account and it lists each device's BLE key. It changes nothing on the thermometer.",
+      "openExtractor": "Open Xiaomi Cloud Tokens Extractor",
+      "flasher": "2. Telink Flasher (in Chrome, over Bluetooth): connect the thermometer and choose Get Mi Bind Key.",
+      "openFlasher": "Open Telink Flasher",
+      "warning": "Telink Flasher unpairs the thermometer from Mi Home. Afterwards Mi Home no longer shows it; if you add it again, Xiaomi makes a new bind key and the one saved in JoyoFit stops working.",
+      "privacy": "The bind key is a secret. JoyoFit keeps it only in this phone's Keychain / Keystore and never writes it to the log, sends it or syncs it."
+    },
+    "compare": {
+      "title": "Which one fits?",
+      "direct": "Connect directly: no key. JoyoFit connects for a few seconds every 10 minutes while the app is open, then lets go. It does not run overnight, and while it is connected Mi Home cannot read the thermometer.",
+      "bindkey": "Use bind key: JoyoFit only listens to broadcasts and never connects, so Mi Home keeps working. It also runs overnight with the store app. You need the bind key from the steps above."
     }
   }
 }

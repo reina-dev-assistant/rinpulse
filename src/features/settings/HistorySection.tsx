@@ -7,6 +7,7 @@ import { isIos } from '@/components/IosUnavailable';
 import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
 import { useWatch } from '@/state/WatchProvider';
+import { RefetchDynamicsBulk } from '@/features/workouts/ui/RefetchDynamics';
 
 /**
  * The first sync after binding already pulls everything the watch still holds; this re-runs that pull, for a watch
@@ -37,6 +38,7 @@ export function HistorySection() {
       <Details>
         {isIos ? t('history.detailsIos') : t('history.details')}
       </Details>
+      <RefetchDynamicsBulk />
     </Section>
   );
 }

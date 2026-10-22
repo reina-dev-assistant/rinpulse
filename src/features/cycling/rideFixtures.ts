@@ -1,5 +1,3 @@
-import { hrZonesForMax } from '@/features/hrzones/zones';
-
 import type { RideInput } from './analyzeRide';
 import type { RidePointInput } from './series';
 import type { RideProfile } from './types';
@@ -9,7 +7,7 @@ export const T0 = 1_760_000_000;
 /** Metres per degree of latitude on the sphere `haversineM` uses, so a northward leg measures exactly what it was built as. */
 const M_PER_DEG = (6_371_000 * Math.PI) / 180;
 
-export const PROFILE: RideProfile = { weightKg: 75, age: 35, sex: 'male', zones: hrZonesForMax(185), ftp: 250 };
+export const PROFILE: RideProfile = { weightKg: 75, age: 35, sex: 'male', maxHr: 185, ftp: 250 };
 
 export interface SyntheticRide {
   /** Seconds the recording runs. */

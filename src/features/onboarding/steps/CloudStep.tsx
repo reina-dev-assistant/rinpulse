@@ -1,5 +1,5 @@
 import * as Linking from 'expo-linking';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -13,16 +13,13 @@ import { cloudStepState } from '@/features/onboarding/cloudStep';
 import { proOffer } from '@/features/onboarding/pro';
 import { Bullet, StepIntro } from '@/features/onboarding/StepIntro';
 import { SignInButtons } from '@/features/settings/SignInButtons';
+import { openProUpgrade, proUpgradeAction } from '@/features/pro/offer';
 import { useCloud } from '@/state/CloudProvider';
 import { spacing } from '@/theme';
 import { HuaweiWear } from '@/wear';
 
-/** utm convention: docs/utm.md in the joyorogo repo. The Play listing takes the tags in `referrer`. */
-const PRO_URL = 'https://joyorogo.com/pro?from=joyofit&utm_source=joyofit&utm_medium=app&utm_campaign=evergreen-onboarding-cloud';
-const PLAY_URL =
-  'https://play.google.com/store/apps/details?id=com.joyodigitama.joyorogo&referrer=utm_source%3Djoyofit%26utm_medium%3Dapp%26utm_campaign%3Devergreen-onboarding-cloud';
-
-const OFFER = proOffer(isIos ? 'ios' : 'android', HuaweiWear.distribution);
+const PLATFORM = isIos ? 'ios' : 'android';
+const OFFER = proOffer(PLATFORM, HuaweiWear.distribution);
 
 /**
  * JoyoRogo Cloud: every workout, with its analysis, kept in the person's JoyoRogo account. Three faces (see `cloudStepState`): the
@@ -31,6 +28,7 @@ const OFFER = proOffer(isIos ? 'ios' : 'android', HuaweiWear.distribution);
 export function CloudStep() {
   const { t } = useTranslation('onboarding');
   const cloud = useCloud();
+  const action = useMemo(() => proUpgradeAction(PLATFORM, HuaweiWear.distribution, 'onboarding-cloud'), []);
   const state = cloudStepState({ signedIn: cloud.signedIn, unlocked: cloud.cloudWorkouts?.unlocked ?? null, locked: cloud.locked });
 
   // Pro: the switch is on from the start. Turning it on also starts the sync (a Wi-Fi only choice is respected), which is the backfill
@@ -108,11 +106,11 @@ export function CloudStep() {
               <AppText variant="caption" muted>
                 {t('cloud.managedStore')}
               </AppText>
-              <Button label={t('cloud.openOnPlay')} variant="secondary" icon="logo-google-playstore" onPress={() => void Linking.openURL(PLAY_URL)} />
+              <Button label={t('cloud.openOnPlay')} variant="secondary" icon="logo-google-playstore" onPress={() => void openProUpgrade(action, Linking.openURL)} />
             </>
           ) : null}
           {OFFER === 'web' ? (
-            <Button label={t('cloud.see')} variant="secondary" icon="open-outline" onPress={() => void Linking.openURL(PRO_URL)} />
+            <Button label={t('cloud.see')} variant="secondary" icon="open-outline" onPress={() => void openProUpgrade(action, Linking.openURL)} />
           ) : null}
         </>
       ) : null}

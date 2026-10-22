@@ -131,6 +131,9 @@ class BleSensorsModule : Module() {
 
     AsyncFunction("stopRoomCapture") { RoomCapture.stop(context()) }
 
+    // The service data UUIDs the overnight scan keeps; a build that lacks this function keeps only the community firmware formats.
+    Function("roomCaptureServices") { RoomScanLogic.KEPT_SERVICES }
+
     AsyncFunction("roomCaptureState") { RoomCapture.state(context()) }
 
     AsyncFunction("roomAdverts") { RoomCapture.adverts(context()) }

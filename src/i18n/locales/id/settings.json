@@ -968,7 +968,8 @@
       "startLabel": "Zona {{n}} mulai di (bpm)",
       "custom": "Batas zona kamu ubah sendiri.",
       "resetLimits": "Kembalikan",
-      "details": "Angka di kotak bpm dan persen adalah tempat tiap zona mulai: ketuk kotaknya dan ketik untuk mengubah. Mengganti metode, HR maks, atau HR istirahat menghitungnya ulang. Analisis latihan, strain, grafik detak jantung harian, Coach, dan layar latihan di jam memakai batas yang sama. Latihan yang sudah terunggah ke JoyoRogo tidak dihitung ulang.",
+      "scope": "Berlaku juga untuk latihan lama (waktu per zona, Coach). Strain dan menit intensitas selalu pakai % HR maks.",
+      "details": "Angka di kotak bpm dan persen adalah tempat tiap zona mulai: ketuk kotaknya dan ketik untuk mengubah. Mengganti metode, HR maks, atau HR istirahat menghitungnya ulang. Waktu per zona di latihan, grafik detak jantung harian, Coach, dan layar latihan di jam memakai batas ini. Strain, beban latihan, dan menit intensitas selalu memakai persentase tetap dari HR maks (Edwards: 50, 60, 70, 80, 90), jadi mengubah zona tidak mengubahnya. Latihan yang sudah terunggah ke JoyoRogo tetap membawa waktu per zona saat diunggah.",
       "head": {
         "zone": "Zona",
         "bpm": "Denyut jantung (bpm)",

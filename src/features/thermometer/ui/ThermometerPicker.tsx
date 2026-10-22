@@ -5,12 +5,15 @@ import { StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { Button } from '@/components/Button';
 import { Divider, Section } from '@/components/Screen';
-import { fmtDecimal, fmtInt } from '@/i18n/format';
+import { fmtDecimal } from '@/i18n/format';
 import type { Granted } from '@/features/sensors/permissions';
 import { Signal } from '@/features/sensors/ui/parts';
 import { spacing } from '@/theme';
 
 import type { FoundThermometer } from '../discovery';
+import type { GattResult } from '../gattRead';
+import type { BindkeyPairResult } from '../useThermometer';
+import { StockOptions } from './StockOptions';
 import type { ThermometerDiscovery } from './useThermometerDiscovery';
 
 interface ThermometerPickerProps {
@@ -19,10 +22,14 @@ interface ThermometerPickerProps {
   currentId: string | null;
   onPermission: (granted: Granted) => void;
   onPick: (device: FoundThermometer) => void;
+  /** A stock-firmware unit, read over a connection. */
+  onPairGatt: (device: FoundThermometer) => Promise<GattResult>;
+  /** A stock-firmware unit, read from its encrypted broadcasts with the typed-in bind key. */
+  onPairBindkey: (device: FoundThermometer, text: string) => Promise<BindkeyPairResult>;
 }
 
 /** Search for the room thermometer and pick it. The first search is preceded by what it does and a "Lanjut" (it is what raises the iOS prompt). */
-export function ThermometerPicker({ discovery, currentId, onPermission, onPick }: ThermometerPickerProps) {
+export function ThermometerPicker({ discovery, currentId, onPermission, onPick, onPairGatt, onPairBindkey }: ThermometerPickerProps) {
   const { t } = useTranslation('thermometer');
   const [explained, setExplained] = useState(false);
   const startedOnce = discovery.searching || discovery.devices.length > 0;
@@ -72,7 +79,7 @@ export function ThermometerPicker({ discovery, currentId, onPermission, onPick }
                       <AppText variant="bodyStrong">{device.name ?? t('picker.unnamed')}</AppText>
                       {device.reading ? (
                         <AppText variant="caption">
-                          {t('picker.reading', { temp: fmtDecimal(device.reading.tempC, 1), rh: fmtInt(device.reading.rhPct) })}
+                          {t('picker.reading', { temp: fmtDecimal(device.reading.tempC, 1), rh: fmtDecimal(device.reading.rhPct, 1) })}
                         </AppText>
                       ) : (
                         <AppText variant="caption" muted>
@@ -90,6 +97,17 @@ export function ThermometerPicker({ discovery, currentId, onPermission, onPick }
                       />
                     ) : null}
                   </View>
+                  {!device.readable && device.id !== currentId ? (
+                    <StockOptions
+                      device={device}
+                      onPairGatt={async (d) => {
+                        // The sensor serves one connection at a time and the radio does better without a scan running beside it.
+                        discovery.stop();
+                        return onPairGatt(d);
+                      }}
+                      onPairBindkey={onPairBindkey}
+                    />
+                  ) : null}
                 </View>
               ))}
             </View>

@@ -170,11 +170,14 @@ function Indonesian() {
         </p>
         <p>
           Termometer kamar (opsional): bila kamu memasangkan termometer Bluetooth (Xiaomi LYWSD03MMC dengan firmware
-          komunitas) di Pengaturan, JoyoFit memindai siaran Bluetooth-nya dan menyimpan suhu dan kelembapan kamar tiap
+          komunitas atau bawaan) di Pengaturan, JoyoFit memindai siaran Bluetooth-nya (atau, untuk firmware bawaan tanpa
+          bindkey, tersambung singkat tiap 10 menit saat aplikasi terbuka) dan menyimpan suhu dan kelembapan kamar tiap
           5 menit di HP-mu saja. Pembacaan itu dihapus setelah 120 hari atau saat kamu melupakan termometernya. Di
           Android, pemindaian semalaman berjalan sebagai layanan latar dengan notifikasi yang bisa kamu hentikan. Yang
           bisa keluar dari HP hanya rata-rata, terendah, dan tertinggi suhu dan kelembapan per malam beserta jumlah
-          pembacaannya, dan hanya bila Wawasan tidur menyala. Tanpa itu, tidak ada data kamar yang dikirim.
+          pembacaannya, dan hanya bila Wawasan tidur menyala. Tanpa itu, tidak ada data kamar yang dikirim. Bindkey
+          termometer yang kamu masukkan disimpan hanya di penyimpanan aman HP ini, tidak dikirim, tidak ikut tersinkron,
+          dan tidak dicatat di log.
         </p>
       </Block>
 
@@ -686,11 +689,13 @@ function English() {
         </p>
         <p>
           Room thermometer (optional): if you pair a Bluetooth thermometer (a Xiaomi LYWSD03MMC running the community
-          firmware) in Settings, JoyoFit scans its Bluetooth broadcasts and keeps the room temperature and humidity
+          or the stock firmware) in Settings, JoyoFit scans its Bluetooth broadcasts (or, for the stock firmware without a
+          bind key, connects briefly every 10 minutes while the app is open) and keeps the room temperature and humidity
           every 5 minutes on your phone only. Those readings are deleted after 120 days or when you forget the
           thermometer. On Android the overnight scan runs as a foreground service with a notification you can stop.
           All that can leave the phone is the mean, lowest and highest temperature and humidity per night with the
-          number of readings, and only when Sleep insights is on. Without it, no room data is sent.
+          number of readings, and only when Sleep insights is on. Without it, no room data is sent. A thermometer bind key
+          you enter is kept only in this phone's secure storage; it is never sent, synced or written to the log.
         </p>
       </Block>
 

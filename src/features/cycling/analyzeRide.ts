@@ -33,8 +33,12 @@ import type {
   RideSplit,
 } from './types';
 
-/** Bump when a figure changes, so cached curves and load numbers are recomputed. */
-export const RIDE_ENGINE_REV = 1;
+/**
+ * Bump when a figure changes, so cached curves and load numbers are recomputed.
+ *
+ * 2: the heart-rate load (`trimpHr`) is Edwards' fixed %HRmax zones again; rows saved between the zone settings (95fd4fa) and this fix counted in the person's zones.
+ */
+export const RIDE_ENGINE_REV = 2;
 
 /**
  * Elevation gain and loss of a ride: a 15 s mean of the altitude and a 2.5 m hysteresis. The running method (60 s and 1 m, fitted to
@@ -397,7 +401,7 @@ export function analyzeRide(input: RideInput): RideAnalysis {
 
   const trimp = workoutStrain(
     input.points.map((p) => ({ ts: p.ts, hr: p.hr ?? null })),
-    profile.zones,
+    profile.maxHr,
   )?.trimp ?? null;
   const tssTrimp = power?.tss != null ? power.tss * TSS_TO_TRIMP : null;
   const load: RideLoad = {

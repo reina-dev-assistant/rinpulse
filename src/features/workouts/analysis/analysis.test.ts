@@ -139,7 +139,7 @@ describe('constant 5:00/km run', () => {
     const z = a.hrZones!;
     const strain = workoutStrain(
       steady5k().points.filter((p) => p.hr !== null),
-      ZONES,
+      ZONES.maxHr,
     )!;
     expect(z.sec.reduce((s, v) => s + v, 0) + z.belowSec).toBe(Math.round(strain.coveredMinutes * 60));
     expect(z.bounds).toHaveLength(6);

@@ -91,6 +91,8 @@
     "stageEstimate": "Fase diperkirakan di HP dari gerakan dan denyut nadi, bukan dari jam.",
     "napsIncluded": "termasuk tidur siang {{duration}}",
     "needSummary": "butuh {{need}}, tercapai {{percent}}%",
+    "room": "Kamar {{temp}} °C ({{tempMin}}–{{tempMax}}) · {{rh}}% RH ({{rhMin}}–{{rhMax}})",
+    "roomA11y": "Kamar: suhu rata-rata {{temp}} derajat Celsius, {{tempMin}} sampai {{tempMax}}; kelembapan rata-rata {{rh}} persen, {{rhMin}} sampai {{rhMax}}",
     "detailsAsleep": "Waktu tidur tidak termasuk waktu terjaga.",
     "detailsScore": "Skor ini dari jam.",
     "detailsScoreEfficiency": "Skor ini dari jam; {{efficiency}}% waktu di tempat tidur kamu habiskan untuk tidur.",
@@ -287,7 +289,7 @@
         "breakdown": "{{moderate}} menit sedang + 2 x {{vigorous}} menit berat. Perkiraan.",
         "chart": "Menit intensitas per hari, Senin sampai Minggu",
         "endLabel": "Minggu",
-        "how": "Perkiraan JoyoFit dari detak jantung per menit yang disimpan jam (maksimal {{maxHr}} bpm). Menit di zona 2 dan 3 (bawaannya 60 sampai 80 persen maksimal) dihitung 1, menit di zona 4 dan 5 (80 persen ke atas) dihitung 2. Minggu dihitung Senin sampai Minggu. Target 150 menit per minggu mengikuti anjuran WHO 2020 dan ACSM 2018.",
+        "how": "Perkiraan JoyoFit dari detak jantung per menit yang disimpan jam (maksimal {{maxHr}} bpm). Menit di 60 sampai 80 persen maksimal (zona 2 dan 3) dihitung 1, menit di 80 persen ke atas (zona 4 dan 5) dihitung 2. Batasnya persentase tetap dari maksimalmu, apa pun zona detak jantung yang kamu atur. Minggu dihitung Senin sampai Minggu. Target 150 menit per minggu mengikuti anjuran WHO 2020 dan ACSM 2018.",
         "minutes": "{{value}} mnt"
       }
     }

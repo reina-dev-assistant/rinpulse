@@ -2,7 +2,7 @@ import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
 
 import { drainRoomAdverts } from './drain';
-import { pickRoomCapture } from './roomNative';
+import { keepsMiBeacon, pickRoomCapture } from './roomNative';
 import { ThermometerSampler } from './sampler';
 import { ensureEnvSchema, listEnvSamples } from './store';
 
@@ -102,3 +102,38 @@ describe('pickRoomCapture', () => {
     expect(pickRoomCapture(undefined)).toBeNull();
   });
 });
+
+describe('keepsMiBeacon', () => {
+  it('is true only for a build whose overnight scan lists fe95', () => {
+    expect(keepsMiBeacon({ roomCaptureServices: () => ['181a', 'fcd2', 'fe95'] })).toBe(true);
+    expect(keepsMiBeacon({ roomCaptureServices: () => ['181a', 'fcd2'] })).toBe(false);
+    expect(keepsMiBeacon({})).toBe(false);
+    expect(
+      keepsMiBeacon({
+        roomCaptureServices: () => {
+          throw new Error('boom');
+        },
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('draining stock-firmware frames', () => {
+  it('stores the reading two overnight frames make, under the bind key', async () => {
+    const db = await openDb();
+    const MI = 'A4:C1:38:02:83:F4';
+    const sampler = new ThermometerSampler();
+    sampler.setPaired([MI]);
+    sampler.setBindkey(MI, '00112233445566778899aabbccddeeff');
+    const native = fakeNative([
+      { id: MI, ts: T0, uuid: 'fe95', hex: '58585b050af4830238c1a41126c09dcb010204cc9db9a4' }, // 25.4 C
+      { id: MI, ts: T0 + 2000, uuid: 'fe95', hex: '58585b050bf4830238c1a4867216e301020580628699' }, // battery 90 %
+      { id: MI, ts: T0 + 3000, uuid: 'fe95', hex: '58585b050cf4830238c1a445871853e8010206e5a78aa5' }, // 46.7 %
+    ]);
+    const stored = await drainRoomAdverts(native, sampler, db);
+    expect(stored).toEqual([{ sensorId: MI, ts: T0 + 3000, tempC: 25.4, rhPct: 46.7, batteryPct: 90 }]);
+    expect(native.cleared).toEqual([T0 + 3000]);
+    expect(await listEnvSamples(db, 0, T0 + 10 * MIN)).toHaveLength(1);
+  });
+});
+

@@ -12,7 +12,7 @@ import org.json.JSONObject
  * [address] is the watch that is writing (the connected one): it is stored in `workouts.device`, and a session that
  * another watch already recorded is stored once ([WorkoutWriter], docs/multi-watch.md section 3).
  */
-internal class WorkoutStore(private val store: SyncStore, private val address: String) : WorkoutSink {
+internal class WorkoutStore(private val store: SyncStore, private val address: String) : WorkoutSink, DynamicsSink {
   override suspend fun isComplete(start: Long, end: Long, watchHasGps: Boolean): Boolean = withContext(Dispatchers.IO) {
     WorkoutWriter(AndroidWatchDb(store.db()), address).isComplete(start, end, watchHasGps)
   }
@@ -28,6 +28,16 @@ internal class WorkoutStore(private val store: SyncStore, private val address: S
    */
   suspend fun syncStart(fullHistory: Boolean = false): Int = withContext(Dispatchers.IO) {
     WorkoutWriter(AndroidWatchDb(store.db()), address).syncStart(fullHistory)
+  }
+
+  /** The stored workouts of this watch among [starts] (unix seconds), in the order given; a start this watch has no copy of is left out. */
+  suspend fun refetchTargets(starts: List<Long>): List<RefetchTarget> = withContext(Dispatchers.IO) {
+    val writer = WorkoutWriter(AndroidWatchDb(store.db()), address)
+    starts.mapNotNull { writer.refetchTarget(it) }
+  }
+
+  override suspend fun merge(start: Long, dynamics: RunDynamics.Result): DynamicsMerge = withContext(Dispatchers.IO) {
+    WorkoutWriter(AndroidWatchDb(store.db()), address).mergeDynamics(start, dynamics)
   }
 
   companion object {
@@ -91,6 +101,26 @@ internal class WorkoutWriter(private val db: WatchDb, private val address: Strin
     db.exec(WatchSql.DELETE_WORKOUT_POINTS, id)
     db.insertPoints(id, record.points)
     wasComplete != true
+  }
+
+  /** The workout this watch recorded that started at [start], as the watch has to be asked for it; null for another watch's, an imported or an unknown one. */
+  fun refetchTarget(start: Long): RefetchTarget? =
+    db.query(WatchSql.SELECT_WORKOUT_TARGET, start, address).firstOrNull()?.let {
+      RefetchTarget(it[0] as Long, it[1] as Long, (it[2] as Long).toInt())
+    }
+
+  /**
+   * Puts the running form read from the watch into the stored summary of the workout at [start] and nothing else (points, totals and
+   * every other summary field stay). The row is only written when the form differs, so a second refetch does not move its `rev` and
+   * the cloud copy is replaced for the workouts that changed only.
+   */
+  fun mergeDynamics(start: Long, dynamics: RunDynamics.Result): DynamicsMerge = db.transaction {
+    val stored = db.query(WatchSql.SELECT_WORKOUT_SUMMARY, start, address).firstOrNull()?.get(0) as String?
+      ?: return@transaction DynamicsMerge.NOT_STORED
+    val merged = RunDynamics.merge(stored, dynamics) ?: return@transaction DynamicsMerge.NOT_STORED
+    if (!merged.changed) return@transaction DynamicsMerge.UNCHANGED
+    db.exec(WatchSql.UPDATE_WORKOUT_SUMMARY, merged.json, start)
+    DynamicsMerge.UPDATED
   }
 
   /**

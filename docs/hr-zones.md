@@ -1,7 +1,8 @@
 # Heart-rate zones (Settings > Zona HR)
 
-JoyoFit lets the person choose how heart-rate zones are calculated, edit the five zone limits in bpm, and sends the result to the watch. Every
-figure of the app that depends on zones reads the same settings, so the analysis, the strain and the watch's workout screen agree.
+JoyoFit lets the person choose how heart-rate zones are calculated, edit the five zone limits in bpm, and sends the result to the watch. The zone-time displays,
+the Coach and the watch's workout screen read those zones. Strain, training load and intensity minutes do not: they count in Edwards' fixed percent-of-maximum
+zones, whatever method is chosen ("What the zones do not change").
 
 The screen is `src/features/hrzones/ui/HrZonesSettings.tsx` (route `/settings/hr-zones`, row "Zona HR" under "Target & tubuh"). The math is
 `src/features/hrzones/zones.ts` (pure, tested in `zones.test.ts`), the stored setting and the watch hand-over `settings.ts`, the data suggestion
@@ -30,7 +31,7 @@ resources `IDS_rate_zone_*`, `IDS_hrr_heart_rate_description`). Notes: `~/re/hua
 | | |
 | --- | --- |
 | Methods | `max` (default), `hrr` and `lthr`. |
-| Zones | `max`: five zones (warm-up, fat burning, aerobic, anaerobic, extreme). `hrr`: **six** zones, Huawei's names: Pemanasan / Warm-up from 50 % of the reserve plus rest up to the first limit (fixed start, pulled down only if a hand-edited first limit falls under it), then Aerobik dasar, Aerobik lanjutan, Asam laktat, Anaerobik dasar, Anaerobik lanjutan. `HrZones.limits` stays Huawei's five limits (what the steppers edit and what the watch gets); `HrZones.bounds` is the lowest bpm of every zone (five or six) and is what every consumer counts with. |
+| Zones | `max`: five zones (warm-up, fat burning, aerobic, anaerobic, extreme). `hrr`: **six** zones, Huawei's names: Pemanasan / Warm-up from 50 % of the reserve plus rest up to the first limit (fixed start, pulled down only if a hand-edited first limit falls under it), then Aerobik dasar, Aerobik lanjutan, Asam laktat, Anaerobik dasar, Anaerobik lanjutan. `HrZones.limits` stays Huawei's five limits (what the steppers edit and what the watch gets); `HrZones.bounds` is the lowest bpm of every zone (five or six) and is what the zone-time displays, the Coach and the live screens count with (strain and intensity minutes do not: they use the fixed Edwards zones of the maximum). |
 | Maximum heart rate | Default `220 - age` from the profile's birth year (35 years without one), as before. One tap on "Tanaka" fills `208 - 0.7 x age`. Plain rows with the value and a chevron (the maximum, the resting rate, the LTHR, the alert limit); a tap opens the stepper and the formula chips right under the row, one row open at a time. Editable from 100 to 219 (the watch protocol, like Gadgetbridge, takes values below 220). |
 | Resting heart rate | Default 60 (Huawei Health's), 30 to `min(110, max - 15)`; only the HRR method uses it. |
 | Zone limits | The zone table is Huawei Health's own layout: the highest zone on top, the boundaries *between* the zones as two boxes side by side (bpm and percent, the percent of the method's own base: max HR, reserve above rest, or LTHR), joined to the zones above and below by a bracket, so each boundary is one pair of boxes and is typed where it is read (a number pad, applied on done or blur; a percent is turned into the lowest whole bpm at or above it). Each limit is kept at least 1 bpm above the zone before it, at least 30, and below the maximum. The maximum (`≥`) on top and the reserve method's warm-up start at the bottom are fixed. Above the table one thin band shows where the zones sit (a segment per zone, as wide as the zone is in bpm, from 30 % of the base) with percent ticks under it (every 10 %, every 20, 25 or 50 when the labels would touch at a large font scale). Changing the method, the maximum or the resting rate derives the limits again, so hand-edited limits never outlive the numbers they were set against. "Kembalikan" returns to the method's limits. The layout maths (boundaries, band, ticks, row sizes) is `src/features/hrzones/layout.ts`, tested in `layout.test.ts`. |
@@ -44,18 +45,61 @@ JoyoFit's limits as they are, so app and watch agree.
 
 ### Where the zones are used
 
-`userHrZones()` / `useHrZones()` (`settings.ts`) return the zones in force; there is no other source of a maximum heart rate.
+`userHrZones()` / `useHrZones()` (`settings.ts`) return the zones in force; `userMaxHr()` / `useMaxHr()` the maximum heart rate alone. There is no other source of a maximum heart rate.
 
-- Workout analysis (zone time, strain, effort, load, fat and carbohydrate split by zone) and its upload; `analyzeWorkout` takes `zones`.
-- Daily strain, Today, Readiness, Trends, Kebugaran (fitness load, energy), the heart-rate day screen (SQL day load takes `zones.limits`), the sleep need.
+- Zone time of a workout (`analyzeWorkout` takes `zones`; the numbers of `analysis.hrZones`) and its upload; the burn split by zone.
+- The heart-rate day screen (`listDayHeartLoad` with `zones.bounds`).
 - Coach: the bpm range of a planned run's zone and the post-workout feedback.
 - Live workout screens (zone label and colour), the strength logger's strap chip, the recorder's live view, the bike computer's zone field.
-- Cycling: the heart-rate load of a ride without power (`ride_metrics` is emptied on save, so it is worked out again).
+- The watch (`watchConfig`).
 
-**Weights and thresholds that depend on the zone number.** Strain is Edwards' TRIMP, zone number times minutes, so with the reserve method the aerobic base counts 2 (it counted 1 before the warm-up zone existed), the aerobic advance 3 and so on to 6; the maximum method is unchanged. Intensity minutes (WHO 2020 / ACSM 2018, `intensityZones`): maximum method zones 2-3 (60-80 %) moderate and 4-5 vigorous, unchanged; reserve method warm-up and aerobic base (50-74 % of the reserve, about 66-81 % of the maximum for a typical resting rate) moderate and aerobic advance up (74 % of the reserve is about 80 % of the maximum) vigorous. The coach's plan zones 1 to 5 keep their number: zone 2 (easy) is the aerobic base in either method. The sticker templates draw five zones, so the sixth is added to the fifth there.
+Not read from the zones (only `zones.maxHr`): strain, training load, readiness, energy, sleep need, ride heart-rate load, intensity minutes. See "What the zones do not change".
 
-Not recalculated: workouts already uploaded to JoyoRogo keep the zones they were uploaded with; the workout screen on the phone always works out the
-analysis again.
+### What the zones do not change
+
+Strain, the strain-based training load (acute/chronic ratio, readiness, recovery time), Energi Tubuh, the sleep need, a ride's heart-rate load and the weekly
+intensity minutes use one fixed definition that does not read the person's zone method, resting rate, LTHR or limits:
+
+- Edwards' summated-zone TRIMP on percent of maximum heart rate: 50-60, 60-70, 70-80, 80-90 and 90-100 % count 1 to 5 times the minutes (`edwardsZone`,
+  `zoneThresholds` in `src/features/today/strain.ts`; SQL: `listDayStrainLoad`). The only input is the maximum heart rate (`userMaxHr()`): the person's typed
+  value, else `220 - age`. Changing the zone method, resting rate, LTHR or a limit never moves a strain figure; changing the maximum does, because it is the
+  quantity the method is defined on.
+- Intensity minutes: minutes at 60-80 % of the maximum count once, 80 % and above twice (`intensityMinutes.ts`, same zones as strain), target 150 a week.
+
+The person's zones (`HrZones.bounds`, `userHrZones()` / `useHrZones()`) feed the zone-time displays: the workout zone bars (`hrZones` in
+`workouts/analysis/zones.ts`, from the same stretches of heart rate strain reads, `heartStretches`), the heart-rate day screen, the live screens, the strap
+chip, the bike computer's zone field, the burn split by zone (grams use only the maximum), the Coach (plan zone ranges and post-workout feedback) and the watch.
+
+**Why.** Edwards' method is defined on percent of maximum heart rate with five zones and weights 1 to 5. A reserve or LTHR set has a different base and
+(for the reserve method) six zones, so counting TRIMP in it changes the formula, not the zones: with a max 190 / resting 55 runner the reserve warm-up starts at
+123 bpm (Edwards zone 1 starts at 95) and an hour at 140 bpm weighs 120 instead of 180. A tester reported exactly that after the reserve and LTHR methods
+arrived (commits 95fd4fa, ef5ae77, 6443d62); strain and intensity minutes were put back on the fixed definition.
+
+**Past workouts.** No zones are stored per workout. Strain, TRIMP, effort and intensity minutes are always computed from the stored samples with the fixed
+definition, so they cannot change when zones change. Zone time of a past workout is worked out with the zones in force now (the zone screen says so in one
+line). Derived rows made while strain followed the zones were recomputed by revision bumps: `RIDE_ENGINE_REV` 2 (`ride_metrics.trimp_hr`, which is no longer
+emptied on a zone save) and `ANALYSIS_ENGINE_REV` 7 (cloud documents are uploaded again once).
+
+### Literature
+
+- **Edwards TRIMP** (summated heart-rate zones): Edwards S., *The Heart Rate Monitor Book*, Fleet Feet Press, 1993. Zones 50-59/60-69/70-79/80-89/90-100 % of the
+  individual's maximum heart rate, weights 1 to 5 (as reproduced in Scantlebury et al., Sports Med Int Open 2017;1(6):E195, doi 10.1055/s-0043-118650).
+  Maximum heart rate only; no resting rate, no LTHR. This is what the app's strain is made of.
+- **Banister TRIMP**: Banister E.W., "Modeling elite athletic performance", in Green & Gledhill (eds), *Physiological Testing of Elite Athletes*, Human Kinetics, 1991,
+  403-424: duration x dHR x 0.64 e^(1.92 dHR) (men) or 0.86 e^(1.67 dHR) (women), dHR = (HRex - HRrest) / (HRmax - HRrest). Heart-rate reserve, continuous weight, no
+  zones. Polar's cardio load is this formula with the user's HRmax and HRrest (Polar Training Load Pro white paper, 2019/2025). A reserve-based strain would be this
+  formula, not Edwards' weights on reserve zones.
+- **Intensity minutes**: WHO 2020 (Bull F.C. et al., Br J Sports Med 2020;54:1451-1462) defines moderate and vigorous by METs and perceived exertion and gives
+  150-300 min moderate or 75-150 min vigorous a week, hence the doubling; it gives no heart-rate thresholds. Heart-rate thresholds are ACSM's: Garber C.E. et al.,
+  Med Sci Sports Exerc 2011;43(7):1334-1359 (doi 10.1249/MSS.0b013e318213fefb) and Norton K. et al., J Sci Med Sport 2010;13:496-502: moderate 64-76 % of the maximum or
+  40-59 % of the reserve, vigorous 77-95 % of the maximum or 60-89 % of the reserve. Either scale is fixed percentages; neither follows a person's zone method. JoyoFit
+  uses 60-80 % and 80 % and above of the maximum, as it always did.
+- **WHOOP**: Strain (0-21, "inspired by the Borg RPE scale", logarithmic) is proprietary. Its zones use heart-rate reserve by default and "changes apply going forward"
+  (WHOOP Locker, "WHOOP Heart Rate Zones Explained"). Not documented: whether Strain follows a changed method. JoyoFit's 21 x (1 - e^(-TRIMP/250)) copies the idea of the
+  scale, not WHOOP's model.
+- **Garmin**: intensity minutes compare heart rate with the resting rate and count vigorous minutes twice (owner's manuals, "Intensity Minutes"); Training Effect is tied to
+  the profile's maximum and resting heart rate. **Huawei**: zones (maximum %, reserve %, LTHR) are for workout display and alerts; moderate/high exercise minutes are
+  "determined by cadence and heart rate data" with no documented link to the zone method. No vendor documents recalculating history when the zone method changes.
 
 ### Account
 
@@ -106,10 +150,12 @@ the capability line and a look at the workout screen says otherwise.
 - One zone set for every sport (the watch's four postures all get it). Huawei Health's per-posture sets are not offered, and neither is its LTHR set (67, 80, 89, 97, 102 %): the LTHR method uses Friel's percentages.
 - The warm-up zone of the reserve method is JoyoFit's reading of the tester's report: the watch payload carries only Huawei's five limits, so the warm-up is a phone-side band.
 - The suggestion cannot find a true maximum: it only sees what the workouts reached.
-- Cached cloud analyses (see above) and the Huawei Health app's own zones are not touched; the watch shows whichever was sent last.
+- The cloud copy of a workout (JoyoRogo) is a snapshot: its zone-time bars keep the zones it was uploaded with, and a zone change does not upload it again. Its strain, effort and load do not depend on zones. The Huawei Health app's own zones are not touched; the watch shows whichever was sent last.
 
 ## Tests
 
 `bun test src/features/hrzones` (limits for both methods, monotonic and clamped for every allowed maximum and resting rate, the default limits against
-the old percentage rule for every maximum, SQL day load against the JS day strain with custom limits, suggestions); Kotlin
-`HeartRateZonesCalcTest` (`bun run test:native`); Swift `HealthSensorsTests` and `WearRuntimeTests` (`bun run test:ios-protocol`).
+the old percentage rule for every maximum, zone time and the SQL day load in the person's zones, suggestions);
+`bun test src/features/today/strainFixed.test.ts` (strain, SQL day strain, what a workout adds to its day, intensity minutes and a full workout analysis are
+identical under the maximum, reserve, LTHR and hand-edited zones of a max 190 / resting 55 runner, while the zone bars differ; `edwardsZone` against the old rule bpm
+by bpm); Kotlin `HeartRateZonesCalcTest` (`bun run test:native`); Swift `HealthSensorsTests` and `WearRuntimeTests` (`bun run test:ios-protocol`).

@@ -698,6 +698,11 @@
       "huawei": "A Huawei watch cannot take an external strap. A strap is used by workouts recorded on the phone."
     }
   },
+  "gpsAssist": {
+    "body": "Precise location is not allowed yet. Without it the phone cannot lend its position to the watch during an outdoor run, so the watch's GPS can take several minutes to lock. Location is only used during a workout and is not stored.",
+    "allow": "Allow location",
+    "openSettings": "Open settings"
+  },
   "agps": {
     "title": "Satellite data (A-GPS)",
     "lastUpdated": "Last updated",

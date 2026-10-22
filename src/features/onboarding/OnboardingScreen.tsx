@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, type ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,6 +52,8 @@ export function OnboardingScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { state, ctx } = guide;
+  // Scrolled content ends in a hard edge under the progress bar; a hairline there says it continues above.
+  const [scrolledStep, setScrolledStep] = useState<StepId | null>(null);
 
   // Finished or left: go to Today. A run opened from Settings arrives here already active.
   const status = state?.status;
@@ -62,17 +64,20 @@ export function OnboardingScreen() {
   if (!state || state.status !== 'active') return null;
 
   const step = currentStep(state, ctx);
+  const scrolled = scrolledStep === step;
   const { index, total } = progress(state, ctx);
   const footer = footerFor(step, { linkState: watch.linkState, signedIn: cloud.signedIn });
   const hasButtons = footer.primary !== null || footer.skip !== null || footer.back;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.progress}>
+      <View style={[styles.progress, scrolled && { borderBottomColor: colors.hairline, borderBottomWidth: StyleSheet.hairlineWidth }]}>
         <StepProgress index={index} total={total} />
       </View>
       <ScrollView
         key={step}
+        onScroll={(event) => setScrolledStep(event.nativeEvent.contentOffset.y > 2 ? step : null)}
+        scrollEventThrottle={64}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"

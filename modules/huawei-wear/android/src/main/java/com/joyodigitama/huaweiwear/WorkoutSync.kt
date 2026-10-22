@@ -27,6 +27,57 @@ internal interface WorkoutSink {
   suspend fun save(record: WorkoutRecord): Boolean
 }
 
+/** What [DynamicsSink.merge] did with the running form of one stored workout. */
+internal enum class DynamicsMerge { UPDATED, UNCHANGED, NOT_STORED }
+
+/** Where [WorkoutSync.refetchDynamics] puts the running form it read again; only the dynamics of the stored summary are touched. */
+internal interface DynamicsSink {
+  suspend fun merge(start: Long, dynamics: RunDynamics.Result): DynamicsMerge
+}
+
+/** A stored workout to read from the watch again: its start (unix seconds, the key), end and the watch's own number when it was stored. */
+internal class RefetchTarget(val start: Long, val end: Long, val number: Int)
+
+/** How one workout of [WorkoutSync.refetchDynamics] ended. */
+internal enum class RefetchOutcome {
+  /** The watch sent running form and the stored summary now has it. */
+  UPDATED,
+
+  /** The watch sent running form and the summary already had exactly that. */
+  UNCHANGED,
+
+  /** The watch still has the workout but its samples carry no running form (a walk, an older sport mode). */
+  NO_DYNAMICS,
+
+  /** The watch no longer lists the workout (or this phone has no copy recorded by this watch). */
+  GONE,
+
+  /** The watch did not answer usably, or the workout could not be stored; asking again may work. */
+  FAILED,
+}
+
+/**
+ * What a refetch did, per requested start (`WorkoutRefetchReport` in `HuaweiWear.types.ts`). A start the phone has no copy of that this
+ * watch recorded is [RefetchOutcome.GONE] too: there is nothing on the phone to merge into.
+ */
+internal class RefetchReport(requested: List<Long>, read: Map<Long, RefetchOutcome>) {
+  val outcomes: Map<Long, RefetchOutcome> = LinkedHashMap<Long, RefetchOutcome>().also { out ->
+    for (start in requested) out[start] = read[start] ?: RefetchOutcome.GONE
+  }
+
+  fun count(outcome: RefetchOutcome) = outcomes.values.count { it == outcome }
+
+  fun toJs(): Map<String, Any?> = mapOf(
+    "requested" to outcomes.size,
+    "updated" to count(RefetchOutcome.UPDATED),
+    "unchanged" to count(RefetchOutcome.UNCHANGED),
+    "noDynamics" to count(RefetchOutcome.NO_DYNAMICS),
+    "gone" to count(RefetchOutcome.GONE),
+    "failed" to count(RefetchOutcome.FAILED),
+    "results" to outcomes.map { (start, outcome) -> mapOf("start" to start, "outcome" to outcome.name.lowercase()) },
+  )
+}
+
 /**
  * Port of HuaweiWorkoutSyncManager. GB drives callbacks through a request queue; here each step is a suspend
  * call with the same order and the same retry rules:
@@ -63,10 +114,87 @@ internal class WorkoutSync(
   private class Range(val start: Int, val end: Int, val depth: Int)
 
   suspend fun sync(startSec: Int, endSec: Int, sink: WorkoutSink) {
+    if (!serviceOffered()) return
+    val newSteps = queryNewSteps()
+    log("Workout: from=$startSec to=$endSec newSteps=$newSteps")
+    listWorkouts(startSec, endSec) { numbers ->
+      for (n in numbers) syncWorkout(n, newSteps, sink)
+    }
+  }
+
+  /**
+   * Reads only the data samples (17/0A) of the stored workouts in [targets] again and hands the running form in them to [sink], which
+   * leaves everything else of the stored workout alone. A workout is found with a WorkoutCount (17/07) over its own time (the watch
+   * keeps the list of what it holds; one that rolled off is not in it), then the watch's totals (17/08) must say the same start, so a
+   * recycled workout number never merges another run's form. Nothing but the dynamics is downloaded: no pace, sections, SpO2 or GPS.
+   * A workout whose frames did not all arrive is left as it was ([RefetchOutcome.FAILED]): a series built from a gap would start in
+   * the wrong minute. A lost link throws, as in [sync].
+   */
+  suspend fun refetchDynamics(targets: List<RefetchTarget>, sink: DynamicsSink): Map<Long, RefetchOutcome> {
+    val outcomes = LinkedHashMap<Long, RefetchOutcome>()
+    if (!serviceOffered()) {
+      for (t in targets) outcomes[t.start] = RefetchOutcome.GONE
+      return outcomes
+    }
+    val newSteps = queryNewSteps()
+    for (target in targets) {
+      outcomes[target.start] = refetchOne(target, newSteps, sink)
+    }
+    return outcomes
+  }
+
+  private suspend fun refetchOne(target: RefetchTarget, newSteps: Boolean, sink: DynamicsSink): RefetchOutcome {
+    val from = (target.start - REFETCH_SLACK_SEC).coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
+    val to = (target.end + REFETCH_SLACK_SEC).coerceIn(0, Int.MAX_VALUE.toLong()).toInt()
+    var unreadable = false
+    var match: Pair<Workout.WorkoutCount.Response.WorkoutNumbers, Workout.WorkoutTotals.Response>? = null
+    try {
+      listWorkouts(from, to) { listed ->
+        // The stored number first: nearly always the one, so the totals of the others are not asked for.
+        for (n in listed.sortedByDescending { it.workoutNumber.toInt() == target.number }) {
+          if (match != null) return@listWorkouts
+          val totals = readTotals(n)
+          if (totals == null) {
+            unreadable = true
+            continue
+          }
+          if ((totals.startTime.toLong() and 0xFFFFFFFFL) == target.start) match = n to totals
+        }
+      }
+    } catch (e: WearException) {
+      // A watch that answers the count with errors all the way down ends here; a lost link is not this and still throws.
+      if (e.errorCode != ErrorCodes.PROTOCOL) throw e
+      log("refetch ${target.start}: ${e.message}")
+      return RefetchOutcome.FAILED
+    }
+    val (numbers, totals) = match ?: return if (unreadable) RefetchOutcome.FAILED else RefetchOutcome.GONE
+
+    val parts = WorkoutParts(totals)
+    parts.newSteps = newSteps
+    val loss = FrameLoss()
+    downloadData(numbers, parts, loss)
+    if (loss.lost > 0) confirmLinkAlive(numbers.workoutNumber)
+    if (parts.missingData) {
+      log("refetch ${target.start}: some data frames did not arrive, the stored workout is left as it was")
+      return RefetchOutcome.FAILED
+    }
+    val dynamics = RunDynamics.of(parts.samples)
+    if (dynamics == null) {
+      log("refetch ${target.start}: ${parts.samples.size} samples, no running form in them")
+      return RefetchOutcome.NO_DYNAMICS
+    }
+    return when (sink.merge(target.start, dynamics)) {
+      DynamicsMerge.UPDATED -> RefetchOutcome.UPDATED
+      DynamicsMerge.UNCHANGED -> RefetchOutcome.UNCHANGED
+      DynamicsMerge.NOT_STORED -> RefetchOutcome.FAILED
+    }
+  }
+
+  private fun serviceOffered(): Boolean {
     val supportedServices = DeviceCaps.supportedCommands
     if (supportedServices.isNotEmpty() && supportedServices[SERVICE] == null) {
       log("Workout: service 0x17 not offered by the watch, workout sync skipped")
-      return
+      return false
     }
     log(
       "Workout gates: 17/07=${DeviceCaps.supports(SERVICE, 0x07)} 17/08=${DeviceCaps.supports(SERVICE, 0x08)} " +
@@ -74,10 +202,15 @@ internal class WorkoutSync(
         "gpsNewSync(SettingRelated)=${DeviceCaps.gpsNewSync} " +
         "commands17=[${supportedServices[SERVICE]?.joinToString(" ") { it.hex2() } ?: "none"}]",
     )
+    return true
+  }
 
-    val newSteps = queryNewSteps()
-    log("Workout: from=$startSec to=$endSec newSteps=$newSteps")
-
+  /**
+   * WorkoutCount (17/07) over a window, as the sync asks it: an error answer or a count that does not match the list asks twice for
+   * each half of the window instead (at most [MAX_SMALLER_TIMESLOT_DEPTH] levels deep). [onRange] gets the listed workouts of every
+   * range that answered, sorted by workout number (GB: the timestamp based sync state depends on it).
+   */
+  private suspend fun listWorkouts(startSec: Int, endSec: Int, onRange: suspend (List<Workout.WorkoutCount.Response.WorkoutNumbers>) -> Unit) {
     val queue = ArrayDeque<Range>()
     queue.add(Range(startSec, endSec, 0))
     while (queue.isNotEmpty()) {
@@ -115,10 +248,9 @@ internal class WorkoutSync(
         )
       }
 
-      // GB: sorted by workout number, the timestamp based sync state depends on it.
       val numbers = listed.sortedBy { it.workoutNumber.toInt() }
       log("Workout: ${numbers.size} workouts in ${range.start}..${range.end}: ${numbers.joinToString { describe(it) }}")
-      for (n in numbers) syncWorkout(n, newSteps, sink)
+      onRange(numbers)
     }
   }
 
@@ -148,10 +280,11 @@ internal class WorkoutSync(
     return response?.supportNewStep == true
   }
 
-  private suspend fun syncWorkout(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, newSteps: Boolean, sink: WorkoutSink) {
+  /** The watch's totals (17/08) of one listed workout, repeated up to [MAX_RETRIES] times on an error answer; null when it never answered usably. */
+  private suspend fun readTotals(numbers: Workout.WorkoutCount.Response.WorkoutNumbers): Workout.WorkoutTotals.Response? {
     val wn = numbers.workoutNumber
     val label = "workout ${wn.toInt()}"
-    val totals = retrying("WorkoutTotals ${wn.toInt()}") { attempt ->
+    return retrying("WorkoutTotals ${wn.toInt()}") { attempt ->
       val r = requestOrNull<Workout.WorkoutTotals.Response>(Workout.WorkoutTotals.Request(params, wn), "WorkoutTotals ${wn.toInt()}")
       when {
         r == null -> null
@@ -160,6 +293,12 @@ internal class WorkoutSync(
         else -> r
       }
     }
+  }
+
+  private suspend fun syncWorkout(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, newSteps: Boolean, sink: WorkoutSink) {
+    val wn = numbers.workoutNumber
+    val label = "workout ${wn.toInt()}"
+    val totals = readTotals(numbers)
     if (totals == null) {
       log("$label: totals failed after $MAX_RETRIES retries, moving to the next workout")
       return
@@ -239,11 +378,10 @@ internal class WorkoutSync(
     return true
   }
 
-  private suspend fun downloadParts(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, parts: WorkoutParts) {
+  /** The data samples (17/0A) of one workout, frame by frame; a frame the watch refused or never answered flags `missingData`. */
+  private suspend fun downloadData(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, parts: WorkoutParts, loss: FrameLoss) {
     val wn = numbers.workoutNumber
     val label = "workout ${wn.toInt()}"
-    val loss = FrameLoss()
-
     for (i in 0 until numbers.dataCount) {
       if (stalled(loss, "$label data")) break
       val l = "WorkoutData ${wn.toInt()}/$i"
@@ -263,6 +401,14 @@ internal class WorkoutSync(
       log("$l: ${r.dataList.size} samples, interval ${r.header.interval}s, bitmap ${r.header.bitmap}, inner bitmap ${r.innerBitmap}")
       parts.samples.addAll(r.dataList)
     }
+  }
+
+  private suspend fun downloadParts(numbers: Workout.WorkoutCount.Response.WorkoutNumbers, parts: WorkoutParts) {
+    val wn = numbers.workoutNumber
+    val label = "workout ${wn.toInt()}"
+    val loss = FrameLoss()
+
+    downloadData(numbers, parts, loss)
     loss.nextPart()
 
     for (i in 0 until numbers.paceCount) {
@@ -470,5 +616,8 @@ internal class WorkoutSync(
 
     /** Lost frames in a row after which the rest of that part of a workout is left out. */
     const val MAX_LOST_FRAMES = 3
+
+    /** A refetch lists the workouts of its stored start..end padded by this much, whether the watch filters the count by start or by end. */
+    const val REFETCH_SLACK_SEC = 60L
   }
 }

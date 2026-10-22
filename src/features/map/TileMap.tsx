@@ -52,7 +52,8 @@ import {
   type MapPalette,
   type MapTheme,
 } from './palette';
-import { simplifyFlat, type RenderedTile } from './renderTile';
+import type { RenderedTile } from './renderTile';
+import { pickKmPills, routePath, type FixedBox, type KmCandidate } from './routeOverlay';
 import { tileSource } from './tileCache';
 import {
   MAX_VIEW_ZOOM,
@@ -73,6 +74,8 @@ export interface MapMarker {
   pos: LatLon;
   /** km: the number shown in the pill. */
   label?: string;
+  /** km: the whole kilometre. Give every kilometre of the route: the map shows only as many as fit at the current zoom. Without it the pill is always drawn. */
+  km?: number;
   kind: 'start' | 'finish' | 'km';
 }
 
@@ -114,6 +117,10 @@ const FETCH_DEBOUNCE_MS = 80;
 const ANIMATION_MS = 200;
 const ROUTE_WIDTH = 4;
 const ROUTE_CASING_WIDTH = 7.5;
+const KM_PILL_HEIGHT = 18;
+
+/** The pill's drawn width: 10 px bold digits (about 6 px each) plus 5 px padding and 1 px border on both sides, 18 px at least. */
+const kmPillWidth = (label = ''): number => Math.max(KM_PILL_HEIGHT, label.length * 6 + 12);
 
 interface ShownTile {
   key: string;
@@ -176,33 +183,6 @@ const TileGroup = memo(function TileGroup({ tile, left, top, scale, zoom, palett
     </G>
   );
 });
-
-/** Projects, de-duplicates and simplifies a route segment to an SVG path in layer px. */
-function routePath(
-  seg: readonly LatLon[],
-  zoom: number,
-  originX: number,
-  originY: number,
-): string | null {
-  const flat: number[] = [];
-  let lx = Infinity;
-  let ly = Infinity;
-  for (const [lat, lon] of seg) {
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-    const w = lonLatToWorld(lat, lon, zoom);
-    const x = w.x - originX;
-    const y = w.y - originY;
-    if (Math.abs(x - lx) < 0.4 && Math.abs(y - ly) < 0.4) continue;
-    flat.push(x, y);
-    lx = x;
-    ly = y;
-  }
-  if (flat.length < 4) return null;
-  const s = simplifyFlat(flat, 0.5);
-  let d = `M${s[0].toFixed(1)} ${s[1].toFixed(1)}`;
-  for (let i = 2; i < s.length; i += 2) d += `L${s[i].toFixed(1)} ${s[i + 1].toFixed(1)}`;
-  return d;
-}
 
 const dist = (a: NativeTouchEvent, b: NativeTouchEvent) => Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
 
@@ -678,15 +658,27 @@ export function TileMap({
     p.x > -marginX - 20 && p.x < width + marginX + 20 && p.y > -marginY - 20 && p.y < height + marginY + 20;
 
   const markerNodes: ReactNode[] = [];
-  (markers ?? []).forEach((m, i) => {
-    const p = project(m.pos);
-    if (!Number.isFinite(p.x) || !inRect(p)) return;
+  const placed = (markers ?? []).map((m) => ({ m, p: project(m.pos) })).filter(({ p }) => Number.isFinite(p.x) && inRect(p));
+  // A ride has a pill per kilometre; which of them are drawn depends on the zoom and on what would overlap (see pickKmPills).
+  const fixedBoxes: FixedBox[] = [];
+  const kmCandidates: KmCandidate[] = [];
+  for (const { m, p } of placed) {
     if (m.kind === 'km') {
+      if (m.km !== undefined) kmCandidates.push({ km: m.km, x: p.x, y: p.y, w: kmPillWidth(m.label), h: KM_PILL_HEIGHT });
+    } else {
+      const size = m.kind === 'start' ? 16 : 20;
+      fixedBoxes.push({ x: p.x, y: p.y, w: size, h: size });
+    }
+  }
+  const shownKm = new Set(pickKmPills(kmCandidates, fixedBoxes));
+  placed.forEach(({ m, p }, i) => {
+    if (m.kind === 'km') {
+      if (m.km !== undefined && !shownKm.has(m.km)) return;
       markerNodes.push(
         <View
           key={`m${i}`}
           pointerEvents="none"
-          style={[styles.kmWrap, { left: p.x - 20, top: p.y - 9 }]}>
+          style={[styles.kmWrap, { left: p.x - 20, top: p.y - KM_PILL_HEIGHT / 2 }]}>
           <View
             style={[styles.kmPill, { backgroundColor: colors.surface, borderColor: colors.routeCasing }]}>
             <Text style={[styles.kmText, { color: colors.text }]}>{m.label ?? ''}</Text>

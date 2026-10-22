@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { NotSignedInError } from '@/cloud/api';
 import { RogoError, rogo } from '@/cloud/rogo';
-import { pendingImportCounts, pushImportedToRogo, type ImportPushOutcome } from '@/features/huaweiimport/rogoQueue';
+import { pendingImportCounts, syncImportedToRogo, type ImportPushOutcome } from '@/features/huaweiimport/rogoQueue';
 import { profileFromExport } from '@/features/huaweiimport/profileFromExport';
 import { DEFAULT_STEP_GOAL } from '@/features/today/stepGoal';
 import { holdScreenOn, releaseScreen } from '@/features/strength/keepAwake';
@@ -76,7 +76,7 @@ export function useHuaweiImport() {
   const sendToRogo = useCallback(async () => {
     setRogoSend((s) => ({ ...s, sending: true }));
     try {
-      const outcome = await pushImportedToRogo(db, rogo, isUnavailable);
+      const outcome = await syncImportedToRogo(db, rogo, isUnavailable);
       setRogoSend({ waiting: await countWaiting(), sending: false, outcome });
     } catch {
       setRogoSend({ waiting: await countWaiting().catch(() => 0), sending: false, outcome: null });

@@ -8,8 +8,9 @@ import { Details } from '@/components/Details';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Screen, Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
-import { fmtAgo, fmtDecimal, fmtInt } from '@/i18n/format';
+import { fmtAgo } from '@/i18n/format';
 import type { Granted } from '@/features/sensors/permissions';
+import type { GattFailure } from '../gattRead';
 import { sensorLabel } from '@/features/sensors/store';
 import { batteryLabel } from '@/features/sensors/ui/format';
 import { spacing } from '@/theme';
@@ -18,6 +19,7 @@ import { NightSection } from './NightSection';
 import { ThermometerPicker } from './ThermometerPicker';
 import { useThermometer } from '../useThermometer';
 import { useThermometerDiscovery } from './useThermometerDiscovery';
+import { ReadingFigures } from './ReadingFigure';
 
 type Problem = 'permission' | 'off' | 'unavailable' | 'notAllowed';
 
@@ -32,6 +34,8 @@ export function ThermometerScreen() {
   const [permission, setPermission] = useState<Granted | null>(null);
   const [nightProblem, setNightProblem] = useState<Problem | null>(null);
   const [forgetting, setForgetting] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [readFailed, setReadFailed] = useState<GattFailure | null>(null);
 
   const code = discovery.error;
   const searchProblem: Problem | null =
@@ -44,7 +48,18 @@ export function ThermometerScreen() {
           : null;
   const problem = nightProblem ?? searchProblem;
 
-  const { sensor, last } = thermometer;
+  const { sensor, last, link } = thermometer;
+  const problemNow = readFailed ?? thermometer.problem;
+  const readNow = async () => {
+    setReading(true);
+    setReadFailed(null);
+    try {
+      const result = await thermometer.readNow();
+      if (result && !result.ok) setReadFailed(result.reason);
+    } finally {
+      setReading(false);
+    }
+  };
   const battery = sensor ? batteryLabel(sensor.battery) : null;
 
   return (
@@ -62,22 +77,34 @@ export function ThermometerScreen() {
           <View style={styles.reading} accessibilityLiveRegion="polite">
             {last ? (
               <>
-                <AppText variant="display">{t('card.reading', { temp: fmtDecimal(last.tempC, 1), rh: fmtInt(last.rhPct) })}</AppText>
-                <AppText variant="caption" muted>
-                  {t('card.lastAt', { ago: fmtAgo(Math.floor(last.ts / 1000), Math.floor(Date.now() / 1000)) })}
+                <ReadingFigures last={last} />
+                <AppText variant="caption" muted numberOfLines={1}>
+                  {t(battery ? 'card.lastAtBattery' : 'card.lastAt', {
+                    ago: fmtAgo(Math.floor(last.ts / 1000), Math.floor(Date.now() / 1000)),
+                    battery,
+                  })}
                 </AppText>
               </>
             ) : (
-              <AppText variant="caption" muted>
-                {t('card.noReading')}
-              </AppText>
+              <>
+                <AppText variant="caption" muted>
+                  {t(link === 'bindkey' ? 'card.noReadingKey' : link === 'gatt' ? 'card.noReadingGatt' : 'card.noReading')}
+                </AppText>
+                {battery ? (
+                  <AppText variant="caption" muted numberOfLines={1}>
+                    {battery}
+                  </AppText>
+                ) : null}
+              </>
             )}
-            {battery ? (
-              <AppText variant="caption" muted>
-                {battery}
-              </AppText>
-            ) : null}
           </View>
+          {link !== 'advert' ? (
+            <AppText variant="caption" muted>
+              {t(`card.link.${link}`)}
+            </AppText>
+          ) : null}
+          {link === 'gatt' && problemNow ? <Notice tone="danger">{t(`stock.gatt.${problemNow}`)}</Notice> : null}
+          {link === 'gatt' ? <Button label={t('card.readNow')} icon="refresh" loading={reading} onPress={() => void readNow()} /> : null}
           <Button label={t('card.forget')} icon="trash-outline" variant="ghost" onPress={() => setForgetting(true)} />
         </Section>
       ) : (
@@ -93,9 +120,11 @@ export function ThermometerScreen() {
         currentId={sensor?.id ?? null}
         onPermission={setPermission}
         onPick={(device) => void thermometer.pair(device)}
+        onPairGatt={thermometer.pairGatt}
+        onPairBindkey={thermometer.pairBindkey}
       />
 
-      {sensor ? <NightSection ids={[sensor.id]} onProblem={setNightProblem} /> : null}
+      {sensor ? <NightSection ids={[sensor.id]} link={link} onProblem={setNightProblem} /> : null}
 
       <Section title={t('firmware.title')} icon="information-circle">
         <Details>{t('firmware.body')}</Details>
@@ -122,5 +151,5 @@ export function ThermometerScreen() {
 }
 
 const styles = StyleSheet.create({
-  reading: { alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.md },
+  reading: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md },
 });

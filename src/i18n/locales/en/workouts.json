@@ -87,7 +87,7 @@
     "zones": {
       "maxHrAge": "Max HR {{value}} bpm (from your age)",
       "maxHrSetting": "Max HR {{value}} bpm (your setting)",
-      "hrNote": "Zones 1 to 5 follow the workout owner's heart-rate zones; by default they are 50-60, 60-70, 70-80, 80-90 and 90-100 percent of max heart rate. Percentages are shares of the time spent in a zone.",
+      "hrNote": "Zones 1 to 5 follow your heart-rate zones as set now; by default they are 50-60, 60-70, 70-80, 80-90 and 90-100 percent of max heart rate. Percentages are shares of the time spent in a zone.",
       "below": "Below zone 1: {{time}}",
       "thresholdPace": "Threshold pace {{pace}} /km",
       "slowerThan": "slower than {{pace}}",
@@ -313,6 +313,21 @@
       "bpm": "bpm"
     },
     "gpsFailed": "The watch did not provide a GPS file for this workout.",
+    "dynamics": {
+      "title": "Running dynamics",
+      "gct": "Ground contact time",
+      "gctValue": "{{value}} ms",
+      "vo": "Vertical oscillation",
+      "voValue": "{{value}} cm",
+      "vr": "Vertical ratio",
+      "vrValue": "{{value}} %",
+      "gtb": "Left/right balance",
+      "gtbValue": "{{left}} / {{right}} %",
+      "chartLabel": "{{metric}}, average per minute",
+      "minute": "Minute {{n}}",
+      "how": "Where do these numbers come from?",
+      "explain": "The watch sends these while you run, and JoyoFit averages them per minute. They only show when your watch sends them. For workouts synced before this feature, the figures can be fetched again from the watch for as long as it still holds them. Balance: the first figure is the left side as the watch sends it; we have not matched it against Huawei Health yet."
+    },
     "effect": {
       "title": "Training effect",
       "aerobic": "Aerobic effect",
@@ -717,7 +732,39 @@
     "saved": "Saved to {{folder}}",
     "otherFolder": "Save to another folder"
   },
+  "refetch": {
+    "action": "Fetch again from the watch",
+    "hint": "This run was synced before running dynamics were kept. If the watch still holds its data, JoyoFit can read it again.",
+    "running": "Fetching the run data from the watch...",
+    "progress": "Fetching {{done}} of {{total}}",
+    "single": {
+      "updated": "Running dynamics updated from the watch.",
+      "unchanged": "The watch sent the same figures that are already stored. Nothing changed.",
+      "no_dynamics": "The watch still holds this workout, but without running dynamics. The watch or its sport mode may not measure them.",
+      "gone": "The watch no longer holds this workout, so it cannot be fetched again.",
+      "failed": "The watch did not answer properly. Bring it closer to the phone and try again."
+    },
+    "result": {
+      "updated_one": "{{count}} run updated",
+      "updated_other": "{{count}} runs updated",
+      "unchanged_one": "{{count}} already complete",
+      "unchanged_other": "{{count}} already complete",
+      "noDynamics_one": "{{count}} without dynamics on the watch",
+      "noDynamics_other": "{{count}} without dynamics on the watch",
+      "gone_one": "{{count}} no longer on the watch",
+      "gone_other": "{{count}} no longer on the watch",
+      "failed_one": "{{count}} failed, try again",
+      "failed_other": "{{count}} failed, try again",
+      "none": "Nothing was fetched.",
+      "stopped": "Stopped part way: {{message}}"
+    },
+    "bulkHint": "For runs synced before running dynamics were kept: JoyoFit asks the watch to send their data again, only for the ones still on the watch. Only the dynamics figures are added, nothing else changes.",
+    "bulkAction": "Fetch running dynamics again",
+    "bulkCount_one": "{{count}} run can be tried",
+    "bulkCount_other": "{{count}} runs can be tried",
+    "bulkNone": "No runs need fetching again."
+  },
   "zones": {
-    "hrNote": "Zones follow the workout owner's heart-rate zones. By default there are five, at 50-60, 60-70, 70-80, 80-90 and 90-100 percent of max heart rate; with the heart rate reserve method there are six, as on the watch (warm-up from 50 percent of the reserve, then basic aerobic and so on). Percentages are shares of the time spent in a zone."
+    "hrNote": "Zones follow your heart-rate zones as set now, also for past workouts. By default there are five, at 50-60, 60-70, 70-80, 80-90 and 90-100 percent of max heart rate; with the heart rate reserve method there are six, as on the watch (warm-up from 50 percent of the reserve, then basic aerobic and so on). Percentages are shares of the time spent in a zone. Strain does not use these zones: it always counts fixed percentages of max heart rate."
   }
 }

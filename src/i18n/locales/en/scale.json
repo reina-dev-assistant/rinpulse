@@ -78,7 +78,9 @@
     "pending": "Waiting to be sent to JoyoRogo",
     "skipped": "Not sent to JoyoRogo",
     "waiting": "{{count}} weigh-ins not sent to JoyoRogo yet",
-    "retry": "Send again"
+    "retry": "Send again",
+    "imported": "From Huawei Health export",
+    "more": "Show {{count}} more"
   },
   "body": {
     "measured": "From the scale",

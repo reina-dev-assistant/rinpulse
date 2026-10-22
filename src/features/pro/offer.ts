@@ -5,7 +5,7 @@ import { proOffer } from '@/features/onboarding/pro';
  * Where in the app a Pro upgrade card sits. It names the copy and the `utm_campaign` / store campaign of the link, so the moment that
  * converts is visible in RevKlik, Play Console and App Store Connect.
  */
-export type ProMoment = 'coach-chat' | 'coach' | 'coach-today' | 'cloud' | 'workout' | 'koneksi' | 'family';
+export type ProMoment = 'coach-chat' | 'coach' | 'coach-today' | 'cloud' | 'workout' | 'koneksi' | 'family' | 'onboarding' | 'onboarding-cloud';
 
 export type Distribution = 'play' | 'sideload';
 

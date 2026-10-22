@@ -481,6 +481,31 @@ public final class WearLink: @unchecked Sendable {
         return summary
     }
 
+    /// Reads the running form of workouts this watch recorded and the phone already holds (`starts`, unix seconds) from the watch again and
+    /// merges it into their stored summaries (`refetchWorkoutData`). Nothing else of a workout changes; one the watch no longer holds is
+    /// reported, not an error. Runs under the operation lock like a sync, so it waits for one in progress. A lost link throws; workouts
+    /// done before it stay merged.
+    public func refetchWorkoutData(_ starts: [Int64]) async throws -> RefetchReport {
+        let connection = try requireConnected()
+        return try await connection.operationLock.withLock {
+            let workouts = WorkoutStore(syncStore, address: connection.address)
+            let targets = try storage { try workouts.refetchTargets(starts) }
+            let sync = WorkoutSync(session: connection.session!, caps: connection.caps, log: events.sink)
+            let read: [Int64: RefetchOutcome]
+            do {
+                read = try await sync.refetchDynamics(targets: targets, sink: workouts)
+            } catch let e as SQLiteError {
+                throw WearError(.storage, "Database error: \(e.message)", underlying: e)
+            }
+            let report = RefetchReport(requested: starts, read: read)
+            events.info(
+                "Workout refetch: \(starts.count) asked, \(report.count(.updated)) updated, \(report.count(.unchanged)) unchanged, "
+                    + "\(report.count(.noDynamics)) without running form, \(report.count(.gone)) gone, \(report.count(.failed)) failed"
+            )
+            return report
+        }
+    }
+
     private func beginSync(_ connection: Connection) throws {
         try lock.locked {
             if current !== connection || state != .connected {

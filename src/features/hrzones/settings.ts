@@ -91,6 +91,14 @@ export function userHrZones(): HrZones {
   return cache.zones;
 }
 
+/**
+ * The maximum heart rate (the person's entry, or 220 - age): the only part of the zone settings strain, the strain-based load and the
+ * intensity minutes read. They count in Edwards' fixed percent-of-maximum zones whatever method, resting rate, LTHR or limits are set.
+ */
+export function userMaxHr(): number {
+  return userHrZones().maxHr;
+}
+
 function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return () => {
@@ -101,4 +109,9 @@ function subscribe(listener: () => void): () => void {
 /** `userHrZones()` for a component: re-renders when the settings change, also when a sync pulls new ones. */
 export function useHrZones(): HrZones {
   return useSyncExternalStore(subscribe, userHrZones);
+}
+
+/** `userMaxHr()` for a component. */
+export function useMaxHr(): number {
+  return useSyncExternalStore(subscribe, userMaxHr);
 }

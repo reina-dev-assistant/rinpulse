@@ -27,7 +27,7 @@ export function IntensityWeekCard({ data }: { data: FitnessData | null }) {
 
   const week = useMemo(() => {
     if (!data) return null;
-    const intensity = intensityMinutes(data.strain, mondayOf(data.dayStart), data.zones.method);
+    const intensity = intensityMinutes(data.strain, mondayOf(data.dayStart));
     const hasHeartRate = data.strain.some((d) => d.day >= intensity.weekStart && d.coveredMinutes > 0);
     return { intensity, hasHeartRate, dayStart: data.dayStart };
   }, [data]);

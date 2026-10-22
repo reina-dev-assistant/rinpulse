@@ -1,6 +1,11 @@
 /**
  * Heart-rate zones: the one place that turns the person's settings into the five zone limits every screen and the watch use.
  *
+ * What reads these zones: the zone-time displays (workout zone bars, Detak jantung hari ini, live screens, strap chip, the bike computer's
+ * zone field, the burn split by zone), the coach's zone feedback and the watch. What does not: strain, the strain-based training load,
+ * readiness, energy, intensity minutes and ride load are Edwards' fixed percent-of-maximum zones (`@/features/today/strain`), which take
+ * only `HrZones.maxHr`; changing the method, resting rate, LTHR or limits never changes them (docs/hr-zones.md).
+ *
  * The model is Huawei Health's (`HeartRateThresholdConfig`, decompiled from 17.0.8.300; docs/hr-zones.md): zones 1..5 start at 50, 60, 70,
  * 80 and 90 % of the maximum heart rate ("max" method), or the five limits at 59, 74, 84, 88 and 95 % of the heart rate reserve added to the
  * resting rate ("hrr" method), under which sits a warm-up from 50 % of the reserve: six zones, the aerobic base being Z2. A limit is the lowest whole bpm at or above the exact value, so a reading is in zone k exactly when its share reaches the
@@ -167,16 +172,6 @@ export const ZONE_NAME_KEYS = {
   hrr: ['warmup', 'aerobicBase', 'aerobicAdvance', 'lacticAcid', 'anaerobicBase', 'anaerobicAdvance'],
   lthr: ['lthrRecovery', 'lthrAerobic', 'lthrTempo', 'lthrSubThreshold', 'lthrSuperThreshold'],
 } as const satisfies Record<HrZoneMethod, readonly string[]>;
-
-/**
- * Which zones count as moderate and which as vigorous intensity minutes (WHO 2020, ACSM 2018: about 64 to 76 % of the maximum is moderate, 77 % and
- * more vigorous). Maximum method: 60-80 % (zones 2, 3) moderate, 80 % and more (zones 4, 5) vigorous. Reserve method: 74 % of the reserve is where
- * a typical person reaches 80 % of the maximum, so the warm-up and the aerobic base (zones 1, 2: 50-74 %) are moderate and every zone from
- * the aerobic advance up (zones 3 to 6) is vigorous. Indexes are zero-based.
- */
-export function intensityZones(method: HrZoneMethod): { moderate: readonly number[]; vigorous: readonly number[] } {
-  return method === 'hrr' ? { moderate: [0, 1], vigorous: [2, 3, 4, 5] } : { moderate: [1, 2], vigorous: [3, 4] }; // the LTHR zones read like the maximum's: 85-94 % of the threshold moderate, from 95 % vigorous
-}
 
 function validLimits(value: unknown): value is number[] {
   return Array.isArray(value) && value.length === HR_ZONE_COUNT && value.every(isWholeNumber);

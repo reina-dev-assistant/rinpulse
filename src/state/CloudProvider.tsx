@@ -13,7 +13,7 @@ import {
 import { AppState } from 'react-native';
 
 import { appleSignInAvailable, deleteJoyoRogoAccount, signInWithApple } from '@/cloud/account';
-import { CloudLockedError } from '@/cloud/api';
+import { CloudLockedError, NotSignedInError } from '@/cloud/api';
 import { authClient } from '@/cloud/auth';
 import { APP_BUILD } from '@/cloud/build';
 import { CLOUD_CONFIGURED } from '@/cloud/config';
@@ -238,6 +238,11 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       return;
     }
     let live = true;
+    setError(null);
+    // A new session starts clean: an error stored before this sign-in (for instance "not signed in") says nothing about it.
+    void setCloudState(db, { last_error: null })
+      .then(() => refresh())
+      .catch(() => {});
     reviewAccount(accountId).then(
       (blocked) => {
         if (live && !blocked && !holdingSync.current) resumeSync();
@@ -247,7 +252,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     return () => {
       live = false;
     };
-  }, [accountId, reviewAccount]);
+  }, [accountId, reviewAccount, db, refresh]);
 
   /**
    * The first sync of an account on this phone also restores its recent steps and sleep (`restoreHealthWindow`), in the
@@ -327,6 +332,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         if (e instanceof CloudLockedError) {
           markLocked(true);
           await setCloudState(db, { last_error: null }).catch(() => {});
+        } else if (e instanceof NotSignedInError) {
+          // The session is read from the hook and the cookie from storage; the sign-in state is shown by `signedIn`, never as an error.
+          cloudLog('sync skipped: no session cookie yet', 'error');
         } else setError(errorMessage(e));
       } finally {
         setUploading(false);
@@ -596,7 +604,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       locked,
       pro,
       restoring,
-      error: error ?? overview?.state.lastError ?? null,
+      // A stored error belongs to the last account that synced; it is not shown while nobody is signed in.
+      error: error ?? (signedIn ? (overview?.state.lastError ?? null) : null),
       lastSyncAt: overview?.state.lastSyncAt ?? null,
       pendingRows: overview?.pendingRows ?? null,
       pendingWorkouts: overview?.pendingWorkouts ?? null,

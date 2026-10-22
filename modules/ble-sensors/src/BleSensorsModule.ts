@@ -103,6 +103,12 @@ declare class BleSensorsModule extends NativeModule<BleSensorsModuleEvents> {
   /** Stops the overnight scan. What it already kept stays for `roomAdverts`. Resolves even when none ran. */
   stopRoomCapture(): Promise<void>;
   roomCaptureState(): Promise<RoomCaptureState>;
+  /**
+   * ANDROID ONLY, store build only, and absent on a build older than the stock-firmware thermometer support: the service data UUIDs the
+   * overnight scan keeps (`181a`, `fcd2` and, from that build on, `fe95`, the MiBeacon frames of a stock Xiaomi unit). JS opens them with
+   * the bind key; an older build ignores such a unit while the app is closed, so check `includes('fe95')` before relying on it.
+   */
+  roomCaptureServices(): string[];
   /** What the overnight scan kept and JS has not removed yet, oldest first. Reading does not remove. */
   roomAdverts(): Promise<RoomAdvert[]>;
   /** Removes the advertisements heard at `upToTs` (epoch ms) or earlier: call it after they were stored. */

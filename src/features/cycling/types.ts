@@ -2,8 +2,6 @@
 // The generic `WorkoutAnalysis` (analysis/types.ts) is a contract shared verbatim with JoyoRogo, so nothing cycling-only is added
 // to it: everything here is computed on the phone from the stored 1 Hz points and never leaves it.
 
-import type { HrZones } from '@/features/hrzones/zones';
-
 /** Where the speed (and so the distance shape) of the ride comes from. `power` is a model estimate (indoor, no wheel sensor). */
 export type SpeedSource = 'sensor' | 'gps' | 'power' | 'none';
 
@@ -12,8 +10,8 @@ export interface RideProfile {
   weightKg: number;
   age: number;
   sex: 'male' | 'female' | 'unknown';
-  /** The person's heart-rate zones, for the heart-rate load of a ride without power. */
-  zones: HrZones;
+  /** Maximum heart rate, for the heart-rate load of a ride without power (Edwards' fixed %HRmax zones, whatever zones the person set). */
+  maxHr: number;
   /** Functional threshold power set by the person, watts; null until set. */
   ftp: number | null;
 }

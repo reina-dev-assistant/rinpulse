@@ -13,6 +13,12 @@ internal object RoomScanLogic {
   const val SERVICE_ENVIRONMENT = "181a"
   const val SERVICE_BTHOME = "fcd2"
 
+  /** MiBeacon, the encrypted frames of the stock Xiaomi firmware (bind key held by JS, which does the decrypting). */
+  const val SERVICE_MIBEACON = "fe95"
+
+  /** What `roomCaptureServices` tells JS this build keeps; JS checks it before it relies on the overnight scan for a stock-firmware unit. */
+  val KEPT_SERVICES = listOf(SERVICE_ENVIRONMENT, SERVICE_BTHOME, SERVICE_MIBEACON)
+
   /** One advertisement per sensor per this long is kept; the sensor itself advertises every few seconds. */
   const val SAMPLE_INTERVAL_MS = 5 * 60_000L
 
@@ -22,9 +28,9 @@ internal object RoomScanLogic {
   /** The longest a capture runs from the moment it starts, whatever end time JS asks for. */
   const val MAX_WINDOW_MS = 18 * 3_600_000L
 
-  /** The service data of an advertisement to keep: the environmental one first, else BTHome; null when it has neither. [serviceData] maps normalised UUID to lowercase hex. */
+  /** The service data of an advertisement to keep: the environmental one first, else BTHome, else MiBeacon; null when it has none. [serviceData] maps normalised UUID to lowercase hex. */
   fun pickServiceData(serviceData: Map<String, String>): Pair<String, String>? {
-    for (uuid in listOf(SERVICE_ENVIRONMENT, SERVICE_BTHOME)) {
+    for (uuid in KEPT_SERVICES) {
       val hex = serviceData[uuid]
       if (hex != null) return uuid to hex
     }
@@ -68,6 +74,35 @@ internal class RoomAdvertThrottle(private val intervalMs: Long = RoomScanLogic.S
   }
 
   fun clear() = lastKept.clear()
+}
+
+/**
+ * The throttle of the stock firmware's MiBeacon frames. The LYWSD03MMC sends temperature, humidity and battery in separate advertisements
+ * (one object each, encrypted: nothing here can tell them apart), so one frame per five minutes would keep, say, only the battery and no
+ * reading ever. Per sensor and window of [intervalMs] this keeps up to [burst] frames that differ from every frame already kept in the
+ * window; the repeats of one frame (same payload) are dropped. About 6 lines per sensor per five minutes: well inside the file's cap.
+ */
+internal class MiBeaconThrottle(private val intervalMs: Long = RoomScanLogic.SAMPLE_INTERVAL_MS, private val burst: Int = BURST) {
+  private class Window(var start: Long, val seen: MutableSet<String> = HashSet())
+
+  private val windows = HashMap<String, Window>()
+
+  fun shouldKeep(id: String, ts: Long, hex: String): Boolean {
+    val window = windows[id]
+    if (window == null || ts < window.start || ts - window.start >= intervalMs) {
+      // A frame heard before the window started (a batch is not always in order) opens a window of its own, like the single-frame throttle.
+      windows[id] = Window(ts).also { it.seen.add(hex) }
+      return true
+    }
+    if (window.seen.size >= burst || !window.seen.add(hex)) return false
+    return true
+  }
+
+  fun clear() = windows.clear()
+
+  companion object {
+    const val BURST = 6
+  }
 }
 
 /** What the capture was asked to do, kept across a restart of the process (the service is sticky) in the form [toMap] / [fromMap] give. */

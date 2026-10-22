@@ -87,7 +87,7 @@
     "zones": {
       "maxHrAge": "HR maks {{value}} bpm (dari usiamu)",
       "maxHrSetting": "HR maks {{value}} bpm (pengaturanmu)",
-      "hrNote": "Zona 1 sampai 5 mengikuti zona detak jantung pemilik latihan; bawaannya 50-60, 60-70, 70-80, 80-90, dan 90-100 persen dari HR maksimal. Persentase menunjukkan porsi waktu yang dihabiskan di tiap zona.",
+      "hrNote": "Zona 1 sampai 5 mengikuti zona detak jantungmu yang sekarang; bawaannya 50-60, 60-70, 70-80, 80-90, dan 90-100 persen dari HR maksimal. Persentase menunjukkan porsi waktu yang dihabiskan di tiap zona.",
       "below": "Di bawah zona 1: {{time}}",
       "thresholdPace": "Pace ambang {{pace}} /km",
       "slowerThan": "lebih lambat dari {{pace}}",
@@ -310,6 +310,21 @@
       "bpm": "bpm"
     },
     "gpsFailed": "Jam tidak menyediakan file GPS untuk latihan ini.",
+    "dynamics": {
+      "title": "Dinamika lari",
+      "gct": "Waktu kontak tanah",
+      "gctValue": "{{value}} ms",
+      "vo": "Osilasi vertikal",
+      "voValue": "{{value}} cm",
+      "vr": "Rasio vertikal",
+      "vrValue": "{{value}} %",
+      "gtb": "Keseimbangan kiri/kanan",
+      "gtbValue": "{{left}} / {{right}} %",
+      "chartLabel": "{{metric}}, rata-rata per menit",
+      "minute": "Menit {{n}}",
+      "how": "Dari mana angka ini?",
+      "explain": "Jam mengirim angka ini saat kamu berlari, dan JoyoFit merata-ratakannya per menit. Hanya tampil kalau jam kamu mengirimnya. Untuk latihan yang disinkronkan sebelum fitur ini ada, angkanya bisa diambil ulang dari jam selama jam masih menyimpannya. Keseimbangan: angka pertama adalah sisi kiri sesuai kiriman jam; belum kami cocokkan dengan Huawei Health."
+    },
     "effect": {
       "title": "Efek latihan",
       "aerobic": "Efek aerobik",
@@ -710,7 +725,33 @@
     "saved": "Tersimpan di {{folder}}",
     "otherFolder": "Simpan di folder lain"
   },
+  "refetch": {
+    "action": "Ambil ulang dari jam",
+    "hint": "Lari ini disinkronkan sebelum dinamika lari disimpan. Kalau jam masih menyimpan datanya, JoyoFit bisa membacanya lagi.",
+    "running": "Mengambil data lari dari jam...",
+    "progress": "Mengambil {{done}} dari {{total}}",
+    "single": {
+      "updated": "Dinamika lari diperbarui dari jam.",
+      "unchanged": "Jam mengirim angka yang sama dengan yang sudah tersimpan. Tidak ada yang berubah.",
+      "no_dynamics": "Jam masih menyimpan latihan ini, tetapi tanpa dinamika lari. Mungkin jam atau mode olahraganya tidak mengukurnya.",
+      "gone": "Latihan ini sudah tidak ada di jam, jadi tidak bisa diambil ulang.",
+      "failed": "Jam tidak menjawab dengan benar. Dekatkan jam ke ponsel lalu coba lagi."
+    },
+    "result": {
+      "updated_other": "{{count}} lari diperbarui",
+      "unchanged_other": "{{count}} sudah lengkap",
+      "noDynamics_other": "{{count}} tanpa dinamika di jam",
+      "gone_other": "{{count}} sudah tidak ada di jam",
+      "failed_other": "{{count}} gagal diambil, coba lagi",
+      "none": "Tidak ada yang diambil.",
+      "stopped": "Berhenti di tengah jalan: {{message}}"
+    },
+    "bulkHint": "Untuk lari yang disinkronkan sebelum dinamika lari disimpan: JoyoFit meminta jam mengirim ulang datanya, hanya untuk yang masih ada di jam. Yang ditambahkan hanya angka dinamikanya, data lain tidak berubah.",
+    "bulkAction": "Ambil ulang dinamika lari",
+    "bulkCount_other": "{{count}} lari bisa dicoba",
+    "bulkNone": "Tidak ada lari yang perlu diambil ulang."
+  },
   "zones": {
-    "hrNote": "Zona mengikuti zona detak jantung pemilik latihan. Bawaannya lima zona di 50-60, 60-70, 70-80, 80-90, dan 90-100 persen dari HR maksimal; dengan metode cadangan HR ada enam zona seperti di jam (pemanasan dari 50 persen cadangan, lalu aerobik dasar dan seterusnya). Persentase menunjukkan porsi waktu yang dihabiskan di tiap zona."
+    "hrNote": "Zona mengikuti zona detak jantungmu yang sekarang, juga untuk latihan lama. Bawaannya lima zona di 50-60, 60-70, 70-80, 80-90, dan 90-100 persen dari HR maksimal; dengan metode cadangan HR ada enam zona seperti di jam (pemanasan dari 50 persen cadangan, lalu aerobik dasar dan seterusnya). Persentase menunjukkan porsi waktu yang dihabiskan di tiap zona. Strain tidak memakai zona ini: strain selalu menghitung persentase tetap dari HR maksimal."
   }
 }

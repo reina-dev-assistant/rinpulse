@@ -66,7 +66,7 @@ function MapSectionImpl({ analysis, mapTheme }: Props) {
     const first = segs[0]?.[0];
     const lastSeg = segs[segs.length - 1];
     const last = lastSeg?.[lastSeg.length - 1];
-    for (const m of kmMarkers(series)) out.push({ pos: m.pos, kind: 'km', label: String(m.km) });
+    for (const m of kmMarkers(series)) out.push({ pos: m.pos, kind: 'km', km: m.km, label: String(m.km) });
     if (first) out.push({ pos: first, kind: 'start' });
     if (last) out.push({ pos: last, kind: 'finish' });
     return { segments: segs, markers: out };

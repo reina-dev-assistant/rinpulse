@@ -79,6 +79,8 @@ export async function ensureScaleSchema(db: Pick<SQLiteDatabase, 'execAsync'>): 
       rogo_error TEXT
     );
     CREATE INDEX IF NOT EXISTS scale_reading_taken_at ON scale_reading (taken_at);
+    UPDATE scale_reading SET rogo_state = 'pending'
+      WHERE scale_id = '${IMPORTED_SCALE_ID}' AND rogo_state = 'skipped' AND rogo_error IS NULL;
   `);
 }
 
@@ -218,15 +220,12 @@ export async function pendingWeighIns(db: ScaleDb): Promise<WeighIn[]> {
 }
 
 /**
- * Imported weigh-ins JoyoRogo has not been sent: `pending`, and `skipped` without an error, which is what the first version of the
- * import wrote for every row (a later one marks a weight JoyoRogo cannot take `skipped` with its reason).
+ * Imported weigh-ins JoyoRogo has not been sent. The first version of the import wrote every row `skipped` without an error;
+ * `ensureScaleSchema` turns those into `pending`, so a row is either waiting (`pending`), done (`sent`) or refused with its reason.
  */
 export async function pendingImportedWeighIns(db: ScaleDb): Promise<WeighIn[]> {
   return (
-    await db.getAllAsync<WeighInRow>(
-      "SELECT * FROM scale_reading WHERE scale_id = ? AND (rogo_state = 'pending' OR (rogo_state = 'skipped' AND rogo_error IS NULL)) ORDER BY taken_at, id",
-      IMPORTED_SCALE_ID,
-    )
+    await db.getAllAsync<WeighInRow>("SELECT * FROM scale_reading WHERE scale_id = ? AND rogo_state = 'pending' ORDER BY taken_at, id", IMPORTED_SCALE_ID)
   ).map(weighInOf);
 }
 

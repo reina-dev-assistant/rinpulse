@@ -152,8 +152,6 @@ export function HrZonesSettings() {
     try {
       const next: HrZoneSettings = { ...draft, limits: zones.custom ? [...zones.limits] : null };
       const outcome = await saveHrZoneSettings(next);
-      // Heart-rate load of a ride is cached per ride; it follows the zones, so it is worked out again.
-      await db.runAsync('DELETE FROM ride_metrics');
       setStored(next);
       setDraft(next);
       show(outcomeText(outcome));
@@ -277,6 +275,9 @@ export function HrZonesSettings() {
             {t('hrZones.zones.custom')}
           </Notice>
         ) : null}
+        <AppText variant="caption" muted>
+          {t('hrZones.zones.scope')}
+        </AppText>
         <Details>{t('hrZones.zones.details')}</Details>
       </Section>
 

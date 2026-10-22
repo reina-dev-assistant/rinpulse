@@ -226,7 +226,7 @@ export function FitnessScreen() {
                 endLabel={t('fitness.screen.intensity.endLabel')}
               />
               <Details title={t('fitness.screen.howTitle')}>
-                {t('fitness.screen.intensity.how', { maxHr: data.zones.maxHr })}
+                {t('fitness.screen.intensity.how', { maxHr: data.maxHr })}
               </Details>
             </Section>
           </FadeIn>

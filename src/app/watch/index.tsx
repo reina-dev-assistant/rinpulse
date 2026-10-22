@@ -12,6 +12,7 @@ import { isIos } from '@/components/IosUnavailable';
 import { AvailableWatchesSection } from '@/features/device/AvailableWatchesSection';
 import { AgpsSection } from '@/features/device/AgpsSection';
 import { BatteryHelp } from '@/features/device/BatteryHelp';
+import { GpsAssistNotice } from '@/features/device/GpsAssistNotice';
 import { BindConfirmDialog } from '@/features/device/BindConfirmDialog';
 import { FindWatchSection } from '@/features/device/FindWatchSection';
 import { GuideLink } from '@/features/device/GuideLink';
@@ -149,6 +150,7 @@ function WatchHub() {
       <WatchStatusCard />
       <SilentWatchHelp />
       <BatteryHelp />
+      <GpsAssistNotice />
       <WatchesSection onAdd={addWatch} />
       <SensorsSection />
       {/* Connected, the list is only needed to disconnect or switch, so the watch's own pages come first. */}

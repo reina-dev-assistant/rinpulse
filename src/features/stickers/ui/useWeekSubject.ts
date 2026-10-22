@@ -2,13 +2,13 @@ import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useMemo, useState } from 'react';
 
-import { listDayHeartLoad, listStepSamplesSince, listWorkouts } from '@/db/queries';
+import { listDayStrainLoad, listStepSamplesSince, listWorkouts } from '@/db/queries';
 import { mondayOf } from '@/features/fitness/intensityMinutes';
 import { listStrengthWorkoutsBetween } from '@/features/strength/store';
 import { startOfLocalDay } from '@/features/today/stats';
 import { strainFromLoads } from '@/features/today/strain';
 import { addDays, dayBounds, dayStarts } from '@/features/trends/series';
-import { userHrZones } from '@/features/hrzones/settings';
+import { userMaxHr } from '@/features/hrzones/settings';
 import { useLocale } from '@/i18n';
 
 import { buildWeekSubject, type WeekSubjectInput } from '../data/week';
@@ -38,11 +38,11 @@ export function useWeekSubject(dataVersion = 0): StickerSubject | null {
       const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
       const weekEnd = addDays(weekStart, 7);
       const loadDays = dayStarts(todayStart, LOAD_DAYS);
-      const zones = userHrZones();
+      const maxHr = userMaxHr();
       Promise.all([
         listWorkouts(db),
         listStrengthWorkoutsBetween(db, weekStart * 1000, weekEnd * 1000),
-        listDayHeartLoad(db, dayBounds(loadDays), zones.bounds),
+        listDayStrainLoad(db, dayBounds(loadDays), maxHr),
         listStepSamplesSince(db, weekStart),
       ]).then(
         ([rows, strength, loads, samples]) => {

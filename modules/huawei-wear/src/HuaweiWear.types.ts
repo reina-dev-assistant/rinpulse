@@ -136,6 +136,31 @@ export interface SyncSummary {
   address?: string | null;
 }
 
+/** What happened to one workout of `refetchWorkoutData`. */
+export type WorkoutRefetchOutcome =
+  /** The watch sent running form and the stored summary now has it. */
+  | 'updated'
+  /** The watch sent running form and the summary already had exactly that. */
+  | 'unchanged'
+  /** The watch still has the workout, but its samples carry no running form. */
+  | 'no_dynamics'
+  /** The watch no longer lists the workout (or this phone has no copy this watch recorded). */
+  | 'gone'
+  /** The watch did not answer usably or the workout could not be stored; asking again may work. */
+  | 'failed';
+
+/** What `refetchWorkoutData` did, in counts and per requested start. */
+export interface WorkoutRefetchReport {
+  requested: number;
+  updated: number;
+  unchanged: number;
+  noDynamics: number;
+  gone: number;
+  failed: number;
+  /** One entry per requested start, in the order asked. */
+  results: { start: number; outcome: WorkoutRefetchOutcome }[];
+}
+
 export type LogDirection = 'tx' | 'rx' | 'info' | 'error';
 
 export interface LogEvent {

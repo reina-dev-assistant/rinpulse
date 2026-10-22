@@ -1,5 +1,5 @@
-import type { HrZones } from '@/features/hrzones/zones';
-import type { WorkoutStrain } from '@/features/today/strain';
+import { zoneIndex, type HrZones } from '@/features/hrzones/zones';
+import { heartStretches } from '@/features/today/strain';
 
 import type { EffortSeconds } from './efforts';
 import { BEST_EFFORT_DISTANCES, type AnalysisBestEffort, type AnalysisHrZones, type AnalysisPaceZones, type BestEffortKey, type PaceZoneKey } from './types';
@@ -12,13 +12,21 @@ const THRESHOLD_EFFORT_SEC = 3600;
 const THRESHOLD_KEYS: readonly BestEffortKey[] = ['1mi', '5k', '10k', 'half'];
 
 /**
- * Heart-rate zones from the workout's `workoutStrain`, so the zone time and the strain always agree: every reading counts
- * until the next one, a gap over two minutes is a pause. The limits are the person's zones; `source` is 'age' while the
- * maximum comes from the profile's birth year (or the default age), 'setting' when the user entered it.
+ * Time in the person's heart-rate zones, from the same stretches of heart rate strain reads (`heartStretches`: every reading counts
+ * until the next one, a gap over two minutes is a pause), so the covered time of the two always agrees. Display only: strain and the
+ * load do not use these zones. The limits are the zones in force when the analysis is made (past workouts are not snapshotted);
+ * `source` is 'age' while the maximum comes from the profile's birth year (or the default age), 'setting' when the user entered it.
  */
-export function hrZones(strain: WorkoutStrain, zones: HrZones): AnalysisHrZones {
-  const sec = strain.zoneMinutes.map((m) => Math.round(m * 60));
-  const covered = Math.round(strain.coveredMinutes * 60);
+export function hrZones(points: readonly { ts: number; hr: number | null }[], zones: HrZones): AnalysisHrZones {
+  const minutes = zones.bounds.map(() => 0);
+  let coveredMinutes = 0;
+  for (const stretch of heartStretches(points)) {
+    coveredMinutes += stretch.minutes;
+    const zone = zoneIndex(stretch.hr, zones);
+    if (zone > 0) minutes[zone - 1] += stretch.minutes;
+  }
+  const sec = minutes.map((m) => Math.round(m * 60));
+  const covered = Math.round(coveredMinutes * 60);
   return {
     method: zones.method,
     maxHr: zones.maxHr,

@@ -279,6 +279,31 @@ altitude is present), start time, longitude, latitude (degrees, plus altitude), 
 15 / 19-byte records `(time delta s, ?, lon delta f32, lat delta f32, ?, ?, pause[, altitude i16, ?])`. GB's loop
 leaves out a final record that would end exactly at the end of the file.
 
+### Reading a stored workout again (running dynamics; `WorkoutSync.refetchDynamics`, iOS `WorkoutSync.refetchDynamics`; UNVERIFIED on a watch)
+
+The watch has no "give me workout N again" request: a workout is addressed by its **number** (tag `02` of `17/08` totals and of every `17/0A` data request),
+and the numbers are only known from the `17/07` list for a time window. `HuaweiWear.refetchWorkoutData(starts)` therefore does, per stored workout
+(`workouts.start`, this watch's, not imported):
+
+1. `17/07` WorkoutCount for `[start - 60 s, end + 60 s]` (a minute of slack, because it is not known whether the watch filters the window by a workout's start or its end;
+   the answer splits on an error exactly like the sync). Not listed = the watch no longer holds it.
+2. `17/08` totals of the listed workouts, the **stored number first** (usually the only one asked for), until one has the same start second. A workout number is a counter
+   that can restart (a reset watch, a reused slot), so the start decides, never the number alone.
+3. `17/0A` data frames `0..dataCount-1` only. No pace, swim, SpO2, sections or GPS file are asked for. A frame that errors 3 times or never arrives leaves the stored
+   workout untouched (a series built from a gap would start in the wrong minute); a link check (totals again) tells a lost frame from a dead link as in the sync.
+4. `RunDynamics.of` over the samples, then `RunDynamics.merge` into the stored `summary_json`: the five means under `samples` are replaced (including the older
+   `avgGroundContactTime`, which counted zero readings) and `dynamics` is replaced, every other field is kept. The row is written only when the figures differ, so the
+   `workouts` rev trigger moves for the changed workouts only and the cloud upload (`w.rev > cloud_workout.rev`) re-sends exactly those.
+
+Outcome per workout: `updated`, `unchanged` (the watch's figures equal the stored ones), `no_dynamics` (still on the watch, no running form in its samples), `gone`
+(not listed, or not a workout this watch recorded), `failed`. It runs under the operation lock of a sync (waits for one) and leaves the link state alone.
+
+**How far back the watch keeps workouts is not known and not measured.** What is documented: Huawei's own help says a workout record stays in the watch's "Workout records"
+app after it was synced to Huawei Health ("once synced, records are not synced again", [Workout records on your HUAWEI watch/band](https://consumer.huawei.com/en/support/content/en-us15759699)),
+and the first sync of a new watch pulls "everything it holds" from 2000-01-01 (`WorkoutStore.DEFAULT_START_SEC`). A cap by storage (a number of records or bytes) is
+plausible [INFERENCE]; none is known. The sync's own log line reads the real depth: `History: summary ... oldest stored workout <unix s>` (and a full-history pull
+shows which old workouts the watch still lists: `Workout: N workouts in ...`). A refetch answers per workout, so the answer is `gone` for what rolled off.
+
 ### AGPS / ephemeris (service `1F` + file service `1C`; Android `Ephemeris.kt`, `EphemerisDownload.kt`; iOS `Ephemeris.swift`, `AgpsWire.swift`, `AgpsSource.swift`; UNVERIFIED on the Fit 4 Pro)
 
 Without it an outdoor workout sits on "Locating..." until the watch finds the satellites unaided. The watch drives; the source is

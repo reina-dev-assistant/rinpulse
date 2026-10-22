@@ -15,13 +15,17 @@ import type { RoomCaptureState } from '../../../../modules/ble-sensors/src/BleSe
 
 import { startNightCapture } from '../capture';
 import { pairingVersion } from '../events';
+import type { RoomLink } from '../link';
 import { roomCaptureNative } from '../native';
+import { keepsMiBeacon } from '../roomNative';
 import { captureEnd } from '../nightWindow';
 import { getAutoArm, getWakeHour, setAutoArm, setWakeHour, WAKE_HOURS } from '../settings';
 
 interface NightSectionProps {
   /** Addresses of the paired thermometers. */
   ids: string[];
+  /** How the thermometer is read: a connected-read one has no overnight scan, a bind-key one has it only on a build that keeps MiBeacon frames. */
+  link: RoomLink;
   /** Tells the screen what went wrong (a permission answer, a refusal) so it can say so above. */
   onProblem: (problem: 'permission' | 'off' | 'unavailable' | 'notAllowed' | null) => void;
 }
@@ -32,9 +36,11 @@ const hourLabel = (hour: number): string => fmtClock(new Date(2000, 0, 1, hour))
  * The overnight scan (Android store build): its state, a start and stop button, the automatic start and the hour it ends. Where there is
  * no overnight scan (iPhone, or an Android binary from before it existed) it says so and what that means: readings only while the app is open.
  */
-export function NightSection({ ids, onProblem }: NightSectionProps) {
+export function NightSection({ ids, link, onProblem }: NightSectionProps) {
   const { t } = useTranslation('thermometer');
-  const native = roomCaptureNative();
+  const found = roomCaptureNative();
+  // A connected read cannot run with the app closed; a bind-key unit needs a build whose scan keeps its frames.
+  const native = link === 'gatt' ? null : link === 'bindkey' && found && !keepsMiBeacon(found) ? null : found;
   const [state, setState] = useState<RoomCaptureState | null>(null);
   const [busy, setBusy] = useState(false);
   const [auto, setAuto] = useState(getAutoArm);
@@ -118,7 +124,9 @@ export function NightSection({ ids, onProblem }: NightSectionProps) {
           />
         </>
       ) : (
-        <AppText variant="caption">{t(Platform.OS === 'android' ? 'night.oldBuild' : 'night.ios')}</AppText>
+        <AppText variant="caption">
+          {t(link === 'gatt' ? 'night.gatt' : Platform.OS !== 'android' ? 'night.ios' : link === 'bindkey' && found ? 'night.oldBuildKey' : 'night.oldBuild')}
+        </AppText>
       )}
       <Details>{t('night.explain')}</Details>
     </Section>

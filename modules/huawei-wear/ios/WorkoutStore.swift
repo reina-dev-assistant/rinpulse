@@ -8,7 +8,7 @@ import HuaweiProtocol
 
 #if canImport(SQLite3) || canImport(CSQLite)
 
-public final class WorkoutStore: WorkoutSink {
+public final class WorkoutStore: WorkoutSink, DynamicsSink {
     /// GB HuaweiWorkoutSyncManager.getStartTimeFromDb fallback: 2022-06-10 00:00:00 UTC.
     public static let defaultStartSec: Int64 = 1_654_819_200
     /// A full-history pull starts here (2000-01-01, the Kotlin `DEFAULT_START_SEC`): everything the watch still holds.
@@ -167,6 +167,36 @@ public final class WorkoutStore: WorkoutSink {
                     while try insert.step() {}
                 }
                 return wasComplete != true
+            }
+        }
+    }
+
+    /// The stored workouts of this watch among `starts` (unix seconds), in the order given; a start this watch has no copy of is left out
+    /// (another watch's, an imported or an unknown one).
+    public func refetchTargets(_ starts: [Int64]) throws -> [RefetchTarget] {
+        try store.read { db in
+            try starts.compactMap { start in
+                try db.query(
+                    "SELECT start, end, workout_number FROM workouts WHERE start = ? AND device = ? AND imported = 0",
+                    [.int(start), .text(address)]
+                ) { RefetchTarget(start: $0.int64(0), end: $0.int64(1), number: $0.int(2)) }.first
+            }
+        }
+    }
+
+    /// Puts the running form read from the watch into the stored summary of the workout at `start` and nothing else (points, totals and every
+    /// other summary field stay). The row is only written when the form differs, so a second refetch does not move its `rev` and the cloud
+    /// copy is replaced for the workouts that changed only.
+    public func mergeSummary(start: Int64, _ edit: (String) -> SummaryEdit?) throws -> DynamicsMerge {
+        try store.read { db in
+            try db.transaction { () throws -> DynamicsMerge in
+                let stored = try db.query(
+                    "SELECT summary_json FROM workouts WHERE start = ? AND device = ? AND imported = 0", [.int(start), .text(address)]
+                ) { $0.text(0) }.first ?? nil
+                guard let stored, let edited = edit(stored) else { return .notStored }
+                if !edited.changed { return .unchanged }
+                try db.run("UPDATE workouts SET summary_json = ? WHERE start = ?", [.text(edited.json), .int(start)])
+                return .updated
             }
         }
     }

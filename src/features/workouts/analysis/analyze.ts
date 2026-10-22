@@ -46,7 +46,7 @@ export interface AnalyzeInput {
   workout: WorkoutRow;
   summary: WorkoutSummary;
   points: readonly AnalysisPoint[];
-  /** The person's heart-rate zones (`@/features/hrzones`): the zone limits, and where the maximum comes from. */
+  /** The person's heart-rate zones (`@/features/hrzones`): what the zone time, the burn split and the coaching read. Strain and load take only `zones.maxHr`. */
   zones: HrZones;
   /** Per-minute samples of the workout's day, oldest first, for `effort.addedToDay`. */
   daySamples: readonly StepSample[];
@@ -212,7 +212,7 @@ export function analyzeWorkout(input: AnalyzeInput, options: AnalyzeOptions): Wo
   });
 
   const hrPoints = points.filter((p) => p.hr !== null && p.hr >= MIN_BPM && p.hr <= MAX_BPM);
-  const strain = workoutStrain(hrPoints, input.zones);
+  const strain = workoutStrain(hrPoints, input.zones.maxHr);
 
   const profile = grid.altRaw ? elevationProfile(grid.altRaw, grid.stepSec) : null;
   const splitGrid: SplitGrid = {
@@ -258,10 +258,10 @@ export function analyzeWorkout(input: AnalyzeInput, options: AnalyzeOptions): Wo
     series: buildSeries(grid, options),
     splits,
     laps: buildLaps(summary.laps, workout.start, splitGrid, hasPace(kind), options.includeHr),
-    hrZones: options.includeHr && strain ? hrZones(strain, input.zones) : null,
+    hrZones: options.includeHr && strain ? hrZones(hrPoints, input.zones) : null,
     paceZones: threshold !== null && grid.pace ? paceZones(grid.pace, grid.stepSec, grid.elapsedSec, threshold) : null,
     bestEfforts: efforts,
-    effort: options.includeHr && strain ? buildEffort(strain, workout, input.daySamples, input.zones) : null,
+    effort: options.includeHr && strain ? buildEffort(strain, workout, input.daySamples, input.zones.maxHr) : null,
     load: options.includeHr && strain ? buildLoad(strain.trimp, workout.start, history.trimps, summary) : null,
     calories:
       workout.calories > 0

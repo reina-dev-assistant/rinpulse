@@ -695,6 +695,11 @@
       "huawei": "Jam Huawei tidak bisa menerima strap dari luar. Strap dipakai oleh latihan yang direkam di HP."
     }
   },
+  "gpsAssist": {
+    "body": "Lokasi presisi belum diizinkan. Tanpa itu HP tidak bisa meminjamkan posisinya ke jam saat lari di luar ruangan, jadi GPS jam bisa butuh beberapa menit untuk mengunci. Lokasi hanya dipakai selama latihan dan tidak disimpan.",
+    "allow": "Izinkan lokasi",
+    "openSettings": "Buka pengaturan"
+  },
   "agps": {
     "title": "Data satelit (A-GPS)",
     "lastUpdated": "Terakhir diperbarui",

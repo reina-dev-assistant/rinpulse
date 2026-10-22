@@ -289,14 +289,17 @@ Weigh-ins follow Huawei's `BroadBodyFat` description: `bodyWeight` (kg), `bodyFa
 `basalMetabolism`, `visceralFatLevel`, `proteinRate`, `bodyAge`, `bmi`, `impedance`; fat and water in kilograms, skeletal and
 per-limb values, scores and ratios are not `ReportedBody` fields and are dropped, a fraction (0.21) is read as a percentage, a
 weight of 10 000-500 000 as grams, a weigh-in without a plausible weight (10-500 kg) is not stored. A real export had 22
-weigh-ins, all weight and BMI only (from the phone's manual entry, no scale). They show in the scale history and are sent
+weigh-ins, all weight and BMI only (from the phone's manual entry, no scale). They show in the weigh-in history of Settings > Scale
+(labelled "From Huawei Health export", 40 at a time with a *Show more* button) and are sent
 to JoyoRogo's weight history on their real days (see "To JoyoRogo"). A weigh-in within a minute and 0.3 kg of one already
-in `scale_reading` is skipped.
+in `scale_reading` is skipped. The first version of the import wrote its rows `skipped` without an error (not sent on purpose);
+`ensureScaleSchema` turns those into `pending` whenever the database opens, so they are sent too.
 
 **To JoyoRogo** (`src/features/huaweiimport/rogoQueue.ts`, server `docs/history-import.md` in the JoyoRogo repo). The native import never calls
 the network: it writes weigh-ins into `scale_reading` (`rogo_state = 'pending'`) and meals and water days into `rogo_import_queue`
-(`kind`, `key`, `payload`, `state`; created by native code and by `ensureRogoImportQueueSchema`). When an import ends, and from the *Send to
-JoyoRogo* button, JS sends what is pending through `weight.importHistory`, `food.importHistory` and `water.importHistory` (batches of 100,
+(`kind`, `key`, `payload`, `state`; created by native code and by `ensureRogoImportQueueSchema`). When an import ends, from the *Send to
+JoyoRogo* button, and whenever the person signs in to JoyoRogo or the app opens or returns to the foreground signed in (`ScaleProvider`,
+`pushImportedHistory`; a refusal is a line in the Log screen), JS sends what is pending, one run at a time (`syncImportedToRogo`), through `weight.importHistory`, `food.importHistory` and `water.importHistory` (batches of 100,
 idempotent, past days only, never over a day or meal the person has; offline or signed out leaves the rows pending, a server answer that is
 an error is kept on the rows and shown, for example the 404 of a JoyoRogo not yet updated). The Bluetooth scale's own push
 (`pendingWeighIns`, `weight.checkIn`, which writes over a day) skips imported rows. Imported meals and weigh-ins are `source = "huawei"`
@@ -375,7 +378,8 @@ in the zones card (the burn section only adds the fat and carbohydrate grams) an
 for a session that has no analysis card (a logged strength session, or an analysis that failed). Sections, each only when the data exists:
 
 - **Summary strip and map.** Distance, time, moving time, pace or speed, elevation. A tile map of the route (OpenFreeMap vector tiles drawn with
-  react-native-svg, no native module, `src/features/map/`; cached on the phone) with a km marker per kilometre.
+  react-native-svg, no native module, `src/features/map/`; cached on the phone) with km markers: the smallest of every 1, 2, 5, 10, 20, 50 ... km that leaves at most 12
+  on screen and none overlapping (`pickKmPills`), so zooming in brings the in-between kilometres back.
 - **Scrubber charts.** Pace or speed, heart rate, elevation, cadence, step length and power on one shared time grid; touching a chart moves a dot on the map and fills a
   readout. The screen's scroll freezes while a chart is touched.
 - **Splits and laps.** Per kilometre (pace, heart rate, climb, cadence, and step length when the row has room) and the watch's or FIT file's laps.
@@ -434,6 +438,25 @@ file (`strava/cadenceFields.ts`: session and lap cadence, `avg_step_length`, per
   covers a workout without samples.
 - **Phone recording.** Cadence and steps come from a paired running pod, else from the phone's own step counter (docs/sensors.md); never a per-sample step
   length (derived on the card).
+- **Running dynamics (watch runs and walks).** The inner part of a workout data sample (service `0x17`, `WorkoutData`, inner bitmap bits 2, 9, 13, 14, 15) carries ground
+  contact time (ms), hang time (ms), vertical oscillation (`vo`, wire / 10), ground contact balance (`gtb`, wire / 100) and vertical ratio (`vr`, wire / 10); the
+  sync used to parse them and drop all but the contact time. `RunDynamics` (`RunDynamics.kt`, `RunDynamics.swift`) now stores the means of the readings that exist
+  under `summary.samples` (`avgGroundContactTime`, `avgVerticalOscillation`, `avgVerticalRatio`, `avgGroundContactBalance`, `avgHangTimeMs`) and a per-minute series in
+  `summary.dynamics` (`start`, `stepSec: 60`, `gct`, `vo`, `vr`, `gtb`, `hang`, null for a gap). The workout screen's "Dinamika lari" card
+  (`ui/RunningDynamicsSection.tsx`, `dynamics.ts`) shows the means and one line per metric with at least 3 minutes of readings, and nothing when the watch sent none.
+  Phone-only in the screens: the shared (JoyoRogo) analysis, its strict server schema and the share card carry none of it; the values only travel inside `summary_json`, an opaque string to the JoyoFit sync server. Units and the side of `gtb` are read from Gadgetbridge's decoder, not checked
+  against Huawei Health [INFERENCE]; impact, swing angle and eversion are averaged natively but not shown (unit unknown). Needs a build with the native change for
+  everything but contact time: a workout synced before it has only the old contact-time mean (that mean may include zero readings), so its card shows that one figure.
+- **Ambil ulang dari jam (runs synced before the dynamics were kept).** A run or walk the connected watch recorded whose summary has no `dynamics` series and none of the four newer
+  means (`lacksDynamics`, `refetchDynamics.ts`) can ask the watch for its sample data again: `HuaweiWear.refetchWorkoutData(starts)` (Kotlin `WorkoutSync.refetchDynamics`, Swift
+  port; the protocol is in `protocol/README.md`, "Reading a stored workout again") reads only the `17/0A` frames of each listed workout and merges the running form into
+  `summary.samples` and `summary.dynamics`, nothing else (`RunDynamics.merge`, the row is written only when the figures differ). The workout screen shows a small notice with the
+  action above the Dinamika lari card (`ui/RefetchDynamics.tsx`) only when the binary has the native function (`hasNative('refetchWorkoutData')`, so an older build hides it), the link is
+  connected and idle, and the workout's `device` is the connected watch; Settings > Riwayat jam has the same for every such run ("3 dari 12" while it runs, then `3 lari diperbarui,
+  5 sudah tidak ada di jam`). One workout is asked at a time, so a dropped link keeps what was merged. A workout the watch answered `no_dynamics` or `gone` for is remembered in the
+  kv-store (`workouts.dynamicsRefetchSettled`) and not offered again; a `failed` one is. Only the summaries that changed move their `rev`, so the cloud upload re-sends exactly those
+  workouts, and nothing triggers a full re-upload. How far back the watch keeps workouts is not known (protocol/README.md); runs it rolled off are counted as gone. Tests: Kotlin
+  `WorkoutRefetchMergeTest`, `WorkoutSyncTest` (refetch cases), Swift `RunDynamicsMergeTests`, `WorkoutSyncTests` (refetch), `WorkoutStoreTests` (mergeSummary), bun `refetchDynamics.test.ts`.
 - **Cloud and share.** The cloud document carries the samples (`cadence`, `stride`) and `summary_json` verbatim, so a restore recomputes the same figures; the
   shared analysis carries `stats.avgCad`, `maxCad`, `avgStrideM` and the cadence series, which JoyoRogo's web feed and fit viewer show in the summary.
 - **Not recoverable.** The raw FIT file is not kept. A file imported before per-sample cadence existed has none, and one whose only step length was the
@@ -456,7 +479,7 @@ the watch gave none, JoyoFit's estimate is shown and labelled "perkiraan". Nothi
 | Training status | | ACWR on TRIMP (Gabbett 2016): mean daily TRIMP of the last 7 days ÷ the last 28; above 1.5 overreaching, 1.1 to 1.5 productive, 0.8 to 1.1 maintaining, 0.5 to 0.8 recovery, below 0.5 detraining. The same ratio feeds the Readiness load signal (`fitness/trainingLoad.ts`; it used to average the saturated 0 to 21 strain instead) | 14 days with heart rate |
 | Race predictions | | Riegel 1981: T2 = T1 × (D2/D1)^1.06 from the best 5K, 10K or half effort of the last 90 days' runs (`bestEffortsForHistory` of the workout analysis), the base closest to each target | 3 runs with a 5 km effort (GPS) |
 | HRV status | | mean ln(RMSSD) of the last 7 nights against the mean ± 1 SD of the 60 days before them (Plews 2013, Buchheit 2014; spread floor 0.05): inside balanced, below low, above unbalanced | Android night HRV: 14 baseline nights, 3 recent; iPhone shows the "not read on iPhone yet" note |
-| Intensity minutes | | Monday to Sunday: minutes in Edwards zones 2 and 3 (60 to 80 % of max HR) count 1, zones 4 and 5 count 2; target 150 (WHO 2020, ACSM 2018) | per-minute heart rate |
+| Intensity minutes | | Monday to Sunday: minutes in Edwards zones 2 and 3 (60 to 80 % of max HR) count 1, zones 4 and 5 count 2, fixed whatever HR zone method is set; target 150 (WHO 2020, ACSM 2018) | per-minute heart rate |
 | Sleep need tonight | | `readiness.ts`: 7 h 30 min + up to 1 h from today's strain ÷ 21 + a quarter of the 7-night sleep debt (at most 1 h) | 3 nights for the debt |
 | Sleep of the day | | `stats.ts` `lastSleepSession` (Today summary, readiness sleep signal, JoyoRogo `sleepPct`) and `nights.ts` `sleepByDay` (debt, trend, Sleep screen need %, JoyoRogo `sleepHours`, today's and each earlier day of the week's): night plus naps, a nap belonging to the day it ends on like the main sleep, overlaps counted once; the watch's sleep score, stages and awakenings stay on the main sleep; a day with only naps has no night for debt, trend and `sleepHours` | |
 | Energi Tubuh | | 0 to 100, own model: wake level 30 + 60 × min(1, asleep ÷ need) + up to ±10 from the HRV z-score, minus 0.8 per hour awake, minus up to 55 from strain since waking, minus up to 1 per hour from stress above 40, plus 5 per hour of naps and 0.4 per hour of still minutes near resting HR; clamped | last night's sleep |

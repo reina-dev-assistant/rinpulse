@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 
 import {
   getLatestHeartRate,
-  listDayHeartLoad,
+  listDayStrainLoad,
   listHrvReadingsSince,
   listRestingHeartRateByDay,
   listSleepScores,
@@ -18,8 +18,7 @@ import { startOfLocalDay } from '@/features/today/stats';
 import { withRideLoad } from '@/features/cycling/load';
 import { strainFromLoads, type DayStrain } from '@/features/today/strain';
 import { dayBounds, dayStarts } from '@/features/trends/series';
-import { userHrZones } from '@/features/hrzones/settings';
-import type { HrZones } from '@/features/hrzones/zones';
+import { userMaxHr } from '@/features/hrzones/settings';
 import type { SleepSegment, StepSample } from '@/wear';
 
 /** Sleep older than this is not "last night"; the session picker only looks this far back. */
@@ -35,8 +34,8 @@ export interface TodayData {
   dayStart: number;
   /** Samples from `dayStart` onwards, oldest first. Only today's per-minute rows are read; history is aggregated in SQL. */
   samples: StepSample[];
-  /** The person's heart-rate zones the strain below was computed with. */
-  zones: HrZones;
+  /** The maximum heart rate the strain below was computed with (Edwards' fixed %HRmax zones, whatever zones the person set). */
+  maxHr: number;
   /** Strain per day from `HISTORY_DAYS` days before `dayStart` through today, oldest first; days without heart rate are absent. */
   strain: DayStrain[];
   /** The watch's resting heart rate per local day over the same span (readiness baseline). */
@@ -67,11 +66,11 @@ export function useTodayData(dataVersion: number): TodayState {
       let cancelled = false;
       const nowSec = Math.floor(Date.now() / 1000);
       const dayStart = startOfLocalDay(nowSec);
-      const zones = userHrZones();
+      const maxHr = userMaxHr();
       const bounds = dayBounds(dayStarts(dayStart, HISTORY_DAYS + 1));
       Promise.all([
         listStepSamplesSince(db, dayStart),
-        listDayHeartLoad(db, bounds, zones.bounds),
+        listDayStrainLoad(db, bounds, maxHr),
         listRestingHeartRateByDay(db, bounds),
         listSleepSince(db, nowSec - SLEEP_LOOKBACK_SEC),
         getLatestHeartRate(db),
@@ -81,7 +80,7 @@ export function useTodayData(dataVersion: number): TodayState {
         async ([samples, loads, resting, sleep, latestHeart, sleepScores, hrv]) => {
           const strain = await withRideLoad(db, strainFromLoads(loads), nowSec);
           if (!cancelled) {
-            setState({ data: { dayStart, nowSec, samples, zones, strain, resting, sleep, sleepScores, latestHeart, hrv }, error: null });
+            setState({ data: { dayStart, nowSec, samples, maxHr, strain, resting, sleep, sleepScores, latestHeart, hrv }, error: null });
           }
         },
         (e: unknown) => {

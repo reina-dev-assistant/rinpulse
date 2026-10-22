@@ -80,3 +80,81 @@ describe('ThermometerSampler', () => {
     expect(s.accept(advert(T0 + MIN, 1))).not.toBeNull();
   });
 });
+
+/** Synthetic MiBeacon v5 frames (key below, MAC A4:C1:38:02:83:F4) encrypted with Node's crypto; see miBeacon.test.ts. */
+const KEY = '00112233445566778899aabbccddeeff';
+const MI = 'A4:C1:38:02:83:F4';
+const FRAME_TH = '58585b0509f4830238c1a446f5b48dae6c8b0102033f3edee9'; // counter 9, 0x100D: 27.2 C / 49 %
+const FRAME_T = '58585b050af4830238c1a41126c09dcb010204cc9db9a4'; // counter 10, 0x1004: 25.4 C
+const FRAME_BATT = '58585b050bf4830238c1a4867216e301020580628699'; // counter 11, 0x100A: 90 %
+const FRAME_H = '58585b050cf4830238c1a445871853e8010206e5a78aa5'; // counter 12, 0x1006: 46.7 %
+
+const mi = (ts: number, hex: string, id = MI) => ({ id, ts, serviceData: { fe95: hex } });
+
+describe('stock firmware (MiBeacon with a bind key)', () => {
+  it('reads nothing without a key, and nothing for an unpaired sensor', () => {
+    const s = new ThermometerSampler();
+    s.setPaired([MI]);
+    expect(s.accept(mi(T0, FRAME_TH))).toBeNull();
+    s.setBindkey(MI, KEY);
+    expect(s.accept(mi(T0, FRAME_TH, 'A4:C1:38:00:00:01'))).toBeNull();
+  });
+
+  it('takes a reading from a frame with both objects', () => {
+    const s = new ThermometerSampler();
+    s.setPaired([MI]);
+    s.setBindkey(MI, KEY);
+    expect(s.accept(mi(T0, FRAME_TH))?.sample).toEqual({ sensorId: MI, ts: T0, tempC: 27.2, rhPct: 49, batteryPct: null });
+  });
+
+  it('puts one-object frames together: temperature, battery, then humidity', () => {
+    const s = new ThermometerSampler();
+    s.setPaired([MI]);
+    s.setBindkey(MI, KEY);
+    expect(s.accept(mi(T0, FRAME_T))).toBeNull();
+    expect(s.accept(mi(T0 + 1000, FRAME_BATT))).toBeNull();
+    expect(s.accept(mi(T0 + 2000, FRAME_H))?.sample).toEqual({ sensorId: MI, ts: T0 + 2000, tempC: 25.4, rhPct: 46.7, batteryPct: 90 });
+  });
+
+  it('does not pair a temperature with a humidity heard more than ten minutes apart', () => {
+    const s = new ThermometerSampler();
+    s.setPaired([MI]);
+    s.setBindkey(MI, KEY);
+    expect(s.accept(mi(T0, FRAME_T))).toBeNull();
+    expect(s.accept(mi(T0 + 11 * MIN, FRAME_H))).toBeNull();
+  });
+
+  it('keeps the five minute throttle and the counter dedupe', () => {
+    const s = new ThermometerSampler();
+    s.setPaired([MI]);
+    s.setBindkey(MI, KEY);
+    expect(s.accept(mi(T0, FRAME_TH))).not.toBeNull();
+    expect(s.accept(mi(T0 + MIN, FRAME_TH))).toBeNull();
+    expect(s.accept(mi(T0 + 6 * MIN, FRAME_TH))).toBeNull(); // the same frame again
+    expect(s.accept(mi(T0 + 6 * MIN, FRAME_H))).not.toBeNull();
+  });
+
+  it('ignores a frame of another key and forgets the key with the sensor', () => {
+    const s = new ThermometerSampler();
+    s.setPaired([MI]);
+    s.setBindkey(MI, 'ffeeddccbbaa99887766554433221100');
+    expect(s.accept(mi(T0, FRAME_TH))).toBeNull();
+    s.setBindkey(MI, KEY);
+    expect(s.accept(mi(T0, FRAME_TH))).not.toBeNull();
+    s.setBindkey(MI, null);
+    expect(s.accept(mi(T0 + 10 * MIN, FRAME_H))).toBeNull();
+    s.setBindkey(MI, KEY);
+    s.setPaired([]);
+    s.setPaired([MI]);
+    expect(s.accept(mi(T0 + 20 * MIN, FRAME_H))).toBeNull(); // the key went with the pairing
+  });
+
+  it('drains an overnight batch the way a live stream would', () => {
+    const s = new ThermometerSampler();
+    s.setPaired([MI]);
+    s.setBindkey(MI, KEY);
+    expect(s.accept(mi(T0, FRAME_T))).toBeNull();
+    expect(s.accept(mi(T0 + 500, FRAME_H))?.sample.tempC).toBe(25.4);
+  });
+});
+

@@ -3,7 +3,7 @@ import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 
 import {
-  listDayHeartLoad,
+  listDayStrainLoad,
   listHrvReadingsSince,
   listMetricSince,
   listRestingHeartRateByDay,
@@ -19,8 +19,7 @@ import { withRideLoad } from '@/features/cycling/load';
 import { strainFromLoads, type DayStrain } from '@/features/today/strain';
 import { addDays, dayBounds, dayStarts } from '@/features/trends/series';
 import { parseSummary, type WorkoutSummary } from '@/features/workouts/summary';
-import { userHrZones } from '@/features/hrzones/settings';
-import type { HrZones } from '@/features/hrzones/zones';
+import { userMaxHr } from '@/features/hrzones/settings';
 import type { SleepSegment, StepSample } from '@/wear';
 
 /** `today` is what the Today cards need; `full` adds the longer history the Kebugaran screen works from. */
@@ -41,8 +40,8 @@ export interface FitnessWorkout {
 export interface FitnessData {
   nowSec: number;
   dayStart: number;
-  /** The person's heart-rate zones the strain below was computed with. */
-  zones: HrZones;
+  /** The maximum heart rate the strain below was computed with (Edwards' fixed %HRmax zones, whatever zones the person set). */
+  maxHr: number;
   /** Per day with heart rate, oldest first. */
   strain: DayStrain[];
   resting: Map<number, number>;
@@ -64,11 +63,11 @@ interface FitnessState {
 /** Reads what the fitness metrics need at `nowSec` (the queries of {@link useFitnessData}, also used by Joyo AI's data tools). */
 export async function readFitnessData(db: SQLiteDatabase, scope: FitnessScope, nowSec = Math.floor(Date.now() / 1000)): Promise<FitnessData> {
   const dayStart = startOfLocalDay(nowSec);
-  const zones = userHrZones();
+  const maxHr = userMaxHr();
   const depth = DEPTH[scope];
   const bounds = dayBounds(dayStarts(dayStart, depth.strainDays + 1));
   const [loads, resting, workouts, hrv, sleep, samples, stress] = await Promise.all([
-    listDayHeartLoad(db, bounds, zones.bounds),
+    listDayStrainLoad(db, bounds, maxHr),
     listRestingHeartRateByDay(db, bounds),
     listWorkoutsSince(db, nowSec - depth.workoutDays * 86400, nowSec + 1, -1),
     listHrvReadingsSince(db, dayStart - depth.hrvDays * 86400),
@@ -80,7 +79,7 @@ export async function readFitnessData(db: SQLiteDatabase, scope: FitnessScope, n
   return {
     nowSec,
     dayStart,
-    zones,
+    maxHr,
     strain,
     resting,
     workouts: workouts.map(({ workout, summaryJson }) => ({ workout, summary: parseSummary(summaryJson) })),

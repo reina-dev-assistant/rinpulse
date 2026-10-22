@@ -2,7 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { ACTIVE_STEPS_PER_MIN, cleanUnstagedSleep, workoutSpan, type SleepEvidence } from '@/features/sleep/cleanSleep';
 import type { SleepSpan } from '@/features/today/stats';
-import type { DayHeartLoad } from '@/features/today/strain';
+import { zoneThresholds, type DayHeartLoad } from '@/features/today/strain';
 import type { SleepSegment, StepSample } from '@/wear';
 
 export async function getLastSync(db: SQLiteDatabase, address: string): Promise<number | null> {
@@ -289,10 +289,19 @@ export async function listWorkoutsSince(
   return rows.map(({ summaryJson, ...rest }) => ({ workout: toWorkout(rest), summaryJson }));
 }
 
+/** Heart-rate seconds per local day in a set of zones, as `listDayHeartLoad` returns them. */
+export interface DayZoneSeconds {
+  /** Local midnight, unix seconds. */
+  day: number;
+  /** One entry per threshold given, zone 1 first. */
+  zoneSeconds: number[];
+  coveredSeconds: number;
+}
+
 /**
- * Heart-rate load per local day, aggregated in SQL so long ranges never put per-minute rows through JS. It is
- * `dailyStrain`'s arithmetic: a reading counts until the next reading (of any day), at most 600 s, never past
- * `day + 86400`, and at least 1 s; seconds are summed per Edwards zone. `bounds` are consecutive local midnights (day `i`
+ * Heart-rate time per local day in whatever zones `thresholds` describe, aggregated in SQL so long ranges never put per-minute rows through JS.
+ * It is `dailyStrain`'s arithmetic: a reading counts until the next reading (of any day), at most 600 s, never past
+ * `day + 86400`, and at least 1 s; seconds are summed per zone. `bounds` are consecutive local midnights (day `i`
  * spans `bounds[i]` up to `bounds[i + 1]`), and `thresholds` are the lowest bpm of every zone (`HrZones.bounds`: five, six for the reserve method).
  * Everything is integer arithmetic, so there is no division to truncate. Days without heart rate are absent.
  */
@@ -300,7 +309,7 @@ export async function listDayHeartLoad(
   db: SQLiteDatabase,
   bounds: readonly number[],
   thresholds: readonly number[],
-): Promise<DayHeartLoad[]> {
+): Promise<DayZoneSeconds[]> {
   const days: number[] = [];
   for (let i = 0; i + 1 < bounds.length; i++) days.push(bounds[i], bounds[i + 1]);
   if (days.length === 0) return [];
@@ -327,6 +336,15 @@ export async function listDayHeartLoad(
     [...days, ...thresholds],
   );
   return rows.map((r) => ({ day: r.day, zoneSeconds: thresholds.map((_, i) => r[`z${i + 1}`] as number), coveredSeconds: r.covered }));
+}
+
+/**
+ * `listDayHeartLoad` in the fixed Edwards zones of `maxHr` (`zoneThresholds`): the per-day load strain, the strain-based training load and
+ * the intensity minutes are made of. Never given the person's zones; the display of time in their zones uses `listDayHeartLoad` directly.
+ */
+export async function listDayStrainLoad(db: SQLiteDatabase, bounds: readonly number[], maxHr: number): Promise<DayHeartLoad[]> {
+  const loads = await listDayHeartLoad(db, bounds, zoneThresholds(maxHr));
+  return loads.map(({ day, zoneSeconds: [z1 = 0, z2 = 0, z3 = 0, z4 = 0, z5 = 0], coveredSeconds }) => ({ day, zoneSeconds: [z1, z2, z3, z4, z5], coveredSeconds }));
 }
 
 /**

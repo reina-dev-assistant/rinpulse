@@ -94,6 +94,8 @@
     "stageEstimate": "Stages estimated on the phone from movement and heart rate, not by the watch.",
     "napsIncluded": "includes naps, {{duration}}",
     "needSummary": "needed {{need}}, got {{percent}}%",
+    "room": "Room {{temp}} °C ({{tempMin}}–{{tempMax}}) · {{rh}}% RH ({{rhMin}}–{{rhMax}})",
+    "roomA11y": "Room: average temperature {{temp}} degrees Celsius, {{tempMin}} to {{tempMax}}; average humidity {{rh}} percent, {{rhMin}} to {{rhMax}}",
     "detailsAsleep": "Asleep time excludes time awake.",
     "detailsScore": "Score is the watch's.",
     "detailsScoreEfficiency": "Score is the watch's, {{efficiency}}% of the time in bed asleep.",
@@ -295,7 +297,7 @@
         "breakdown": "{{moderate}} moderate minutes + 2 x {{vigorous}} vigorous minutes. Estimate.",
         "chart": "Intensity minutes per day, Monday to Sunday",
         "endLabel": "Sunday",
-        "how": "A JoyoFit estimate from the per-minute heart rate the watch stored (maximum {{maxHr}} bpm). Minutes in zones 2 and 3 (60 to 80 percent of maximum by default) count 1, minutes in zones 4 and 5 (80 percent and above) count 2. The week runs Monday to Sunday. The target of 150 minutes a week follows WHO 2020 and ACSM 2018 advice.",
+        "how": "A JoyoFit estimate from the per-minute heart rate the watch stored (maximum {{maxHr}} bpm). Minutes at 60 to 80 percent of maximum (zones 2 and 3) count 1, minutes at 80 percent and above (zones 4 and 5) count 2. The thresholds are fixed percentages of your maximum, whichever heart-rate zones you set. The week runs Monday to Sunday. The target of 150 minutes a week follows WHO 2020 and ACSM 2018 advice.",
         "minutes": "{{value}} min"
       }
     }

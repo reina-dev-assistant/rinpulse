@@ -11,8 +11,10 @@ class RoomScanLogicTest {
   fun pickPrefersEnvironmentalServiceDataThenBthome() {
     assertEquals("181a" to "aa", RoomScanLogic.pickServiceData(mapOf("fcd2" to "bb", "181a" to "aa")))
     assertEquals("fcd2" to "bb", RoomScanLogic.pickServiceData(mapOf("fcd2" to "bb", "fe95" to "cc")))
-    assertNull(RoomScanLogic.pickServiceData(mapOf("fe95" to "cc")))
+    assertEquals("fe95" to "cc", RoomScanLogic.pickServiceData(mapOf("fe95" to "cc")))
+    assertNull(RoomScanLogic.pickServiceData(mapOf("fe96" to "cc")))
     assertNull(RoomScanLogic.pickServiceData(emptyMap()))
+    assertEquals(listOf("181a", "fcd2", "fe95"), RoomScanLogic.KEPT_SERVICES)
   }
 
   @Test
@@ -80,5 +82,41 @@ class RoomScanLogicTest {
     assertNull(RoomCaptureConfig.fromMap(ok + ("untilMs" to "soon")))
     assertNull(RoomCaptureConfig.fromMap(ok + ("ids" to "nonsense")))
     assertEquals("", RoomCaptureConfig.fromMap(ok - "title")?.title)
+  }
+
+  @Test
+  fun miBeaconThrottleKeepsTheDistinctFramesOfAWindowAndDropsRepeats() {
+    val t = MiBeaconThrottle()
+    val start = 1_000_000L
+    assertTrue(t.shouldKeep("A", start, "t")) // temperature frame
+    assertTrue(t.shouldKeep("A", start + 1_000, "h")) // humidity frame
+    assertTrue(t.shouldKeep("A", start + 2_000, "b")) // battery frame
+    assertFalse(t.shouldKeep("A", start + 3_000, "t")) // the same payload again
+    assertFalse(t.shouldKeep("A", start + 4_000, "h"))
+    assertTrue(t.shouldKeep("A", start + 5_000, "t2")) // a new measurement
+  }
+
+  @Test
+  fun miBeaconThrottleCapsAWindowAndStartsAnotherAfterFiveMinutes() {
+    val t = MiBeaconThrottle()
+    val start = 1_000_000L
+    for (i in 0 until MiBeaconThrottle.BURST) assertTrue(t.shouldKeep("A", start + i, "f$i"))
+    assertFalse(t.shouldKeep("A", start + 100, "extra"))
+    assertFalse(t.shouldKeep("A", start + 5 * 60_000L - 1, "extra"))
+    assertTrue(t.shouldKeep("A", start + 5 * 60_000L, "extra"))
+    // The same payload as in the earlier window is a new frame in the new one.
+    assertFalse(t.shouldKeep("A", start + 5 * 60_000L + 1, "extra"))
+    assertTrue(t.shouldKeep("A", start + 10 * 60_000L, "f0"))
+  }
+
+  @Test
+  fun miBeaconThrottleIsPerSensorAndKeepsALateOlderFrame() {
+    val t = MiBeaconThrottle()
+    assertTrue(t.shouldKeep("A", 10_000_000, "x"))
+    assertTrue(t.shouldKeep("B", 10_000_001, "x"))
+    assertFalse(t.shouldKeep("B", 10_000_002, "x"))
+    assertTrue(t.shouldKeep("A", 1_000_000, "x")) // heard before the window of the last kept one
+    t.clear()
+    assertTrue(t.shouldKeep("B", 10_000_002, "x"))
   }
 }

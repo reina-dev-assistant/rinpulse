@@ -35,6 +35,9 @@ HTTP, Caches copy), `AgpsStore.swift`, `AgpsReachability.swift`, and in `HuaweiP
 - Service `0x18` (`GpsAndTime`, `SendGpsDataRequest`) is something else: the phone's *location* streamed to the watch during a workout. The Fit 4
   Pro asks for it about every 20 s while an outdoor workout runs (`LiveWorkout.gpsPing`). It is what speeds up the first fix without any
   satellite file (Gadgetbridge reports 1 to 2 minutes instead of 10 or more).
+  Android only: that stream needs precise location, and the one-time explanation at first launch is easy to dismiss with "Nanti saja", so the Watch tab shows
+  `GpsAssistNotice` (a paired watch and no `ACCESS_FINE_LOCATION`) with an "Izinkan lokasi" button, or "Buka pengaturan" after "don't ask again". The stream runs in the
+  `connectedDevice` foreground service, not one of type `location`; whether Android lets it keep reading GPS with the screen off is unverified [INFERENCE].
 
 ## What kinds the watch asks for
 

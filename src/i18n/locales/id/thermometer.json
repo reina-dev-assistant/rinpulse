@@ -9,12 +9,39 @@
   },
   "card": {
     "empty": "Belum ada termometer. Cari termometermu di bawah.",
-    "reading": "{{temp}} °C, kelembapan {{rh}}%",
+    "a11y": "{{temp}} °C, {{tempStatus}}. {{rh}}% RH, {{rhStatus}}.",
+    "tempUnit": "°C",
+    "rhUnit": "% RH",
     "noReading": "Belum ada pembacaan. Dekatkan HP ke termometer dan biarkan JoyoFit terbuka sebentar.",
     "lastAt": "Pembacaan terakhir {{ago}}",
+    "lastAtBattery": "Pembacaan terakhir {{ago}} · {{battery}}",
     "forget": "Lupakan",
     "forgetTitle": "Lupakan termometer ini?",
-    "forgetMessage": "Pembacaan suhu dan kelembapan yang tersimpan di HP ini ikut dihapus. Rata-rata malam yang sudah terkirim ke Wawasan tidur tidak berubah."
+    "forgetMessage": "Pembacaan suhu dan kelembapan yang tersimpan di HP ini ikut dihapus. Rata-rata malam yang sudah terkirim ke Wawasan tidur tidak berubah.",
+    "noReadingKey": "Belum ada pembacaan. Termometer menyiarkan suhu dan kelembapan terpisah; biasanya muncul dalam semenit kalau HP dekat dan JoyoFit terbuka.",
+    "noReadingGatt": "Belum ada pembacaan. Tekan Baca sekarang dengan HP dekat termometer.",
+    "readNow": "Baca sekarang",
+    "link": {
+      "bindkey": "Dibaca dari siaran terenkripsi dengan bindkey-mu, tanpa menyambung.",
+      "gatt": "Dibaca lewat sambungan singkat tiap 10 menit selama JoyoFit terbuka."
+    }
+  },
+  "ideal": {
+    "temp": {
+      "cold": "Terlalu dingin untuk tidur",
+      "cool": "Agak dingin untuk tidur",
+      "ideal": "Pas untuk tidur",
+      "warm": "Agak hangat untuk tidur",
+      "hot": "Terlalu panas untuk tidur"
+    },
+    "humidity": {
+      "dry": "Terlalu kering",
+      "ideal": "Pas",
+      "damp": "Agak lembap",
+      "wet": "Terlalu lembap"
+    },
+    "tempRange": "Ideal {{from}}–{{to}} °C",
+    "humidityRange": "Ideal {{from}}–{{to}}% RH"
   },
   "picker": {
     "title": "Cari termometer",
@@ -28,12 +55,12 @@
     "pick": "Pakai ini",
     "chosen": "Dipakai",
     "unnamed": "Tanpa nama",
-    "reading": "Terbaca {{temp}} °C, {{rh}}%",
-    "unreadable": "Belum bisa dibaca: firmware bawaan Xiaomi tidak menyiarkan angkanya secara terbuka. Pasang firmware komunitas (lihat di bawah)."
+    "reading": "Terbaca {{temp}} °C · {{rh}}% RH",
+    "unreadable": "Firmware bawaan Xiaomi: angkanya tidak disiarkan terbuka. Pilih salah satu cara di bawah, atau pasang firmware komunitas."
   },
   "firmware": {
     "title": "Syarat termometer",
-    "body": "JoyoFit membaca Xiaomi LYWSD03MMC (atau yang sejenis) yang sudah dipasangi firmware komunitas pvvx/ATC_MiThermometer, dari siarannya saja, tanpa menyambung. Formatnya ATC1441, PVVX custom, atau BTHome v2. Firmware bawaan Xiaomi menyiarkan datanya terenkripsi dan kuncinya hanya ada di aplikasi Xiaomi, jadi tidak bisa dibaca. Firmware komunitas dipasang dari peramban lewat Bluetooth. Cek versi hardware dulu: unit yang dijual sejak Maret 2025 (B1.5 dan B1.6) tidak disarankan oleh pembuat firmware."
+    "body": "JoyoFit membaca Xiaomi LYWSD03MMC (dan MHO-C401, CGG1 sejenis) dengan tiga cara. Firmware komunitas pvvx/ATC_MiThermometer (ATC1441, PVVX custom, BTHome v2): dari siarannya, tanpa menyambung. Firmware bawaan Xiaomi: siarannya terenkripsi dengan bindkey yang disimpan Xiaomi, jadi JoyoFit bisa membukanya kalau kamu memasukkan bindkey-nya, atau tersambung singkat tiap 10 menit selama aplikasi terbuka tanpa kunci. Firmware komunitas dipasang dari peramban lewat Bluetooth; cek versi hardware dulu, unit yang dijual sejak Maret 2025 (B1.5 dan B1.6) tidak disarankan oleh pembuat firmware."
   },
   "night": {
     "title": "Pantau semalaman",
@@ -46,7 +73,9 @@
     "oldBuild": "Pemantauan semalaman butuh pembaruan aplikasi dari toko, bukan pembaruan cepat. Sampai saat itu JoyoFit hanya membaca termometer saat aplikasi terbuka.",
     "auto": "Mulai otomatis malam hari",
     "autoHint": "Kalau kamu membuka JoyoFit antara pukul 19.00 dan pagi, pemantauan mulai sendiri. Notifikasi tetap muncul selama berjalan.",
-    "until": "Berhenti pukul"
+    "until": "Berhenti pukul",
+    "gatt": "Termometer ini dibaca lewat sambungan dan hanya saat JoyoFit terbuka. Untuk memantau semalaman, pakai bindkey.",
+    "oldBuildKey": "Memantau semalaman dengan bindkey butuh pembaruan aplikasi dari toko, bukan pembaruan cepat. Sampai saat itu JoyoFit hanya membaca termometer saat aplikasi terbuka."
   },
   "privacy": {
     "title": "Data kamarmu",
@@ -57,6 +86,47 @@
       "title": "Memantau suhu kamar",
       "text": "JoyoFit mendengarkan termometer kamarmu sampai pagi.",
       "stop": "Berhenti"
+    }
+  },
+  "stock": {
+    "choose": "Termometer ini memakai firmware bawaan Xiaomi. Pilih cara membacanya:",
+    "direct": "Hubungkan langsung",
+    "bindkey": "Pakai bindkey",
+    "connecting": "Menyambung…",
+    "gatt": {
+      "unreachable": "Tidak bisa tersambung. Termometer hanya melayani satu sambungan: tutup Mi Home / Xiaomi Home (atau matikan Bluetooth di HP lain yang memegangnya), dekatkan HP, lalu coba lagi.",
+      "noService": "Tersambung, tetapi termometer ini tidak punya layanan baca bawaan Xiaomi. Coba Pakai bindkey, atau pasang firmware komunitas.",
+      "noData": "Tersambung, tetapi termometer tidak mengirim angka. Coba lagi sebentar lagi.",
+      "bluetooth": "Bluetooth mati. Nyalakan dulu, lalu coba lagi.",
+      "permission": "JoyoFit belum boleh memakai Bluetooth. Buka pengaturan HP untuk mengizinkan.",
+      "error": "Gagal membaca termometer. Coba lagi."
+    },
+    "key": {
+      "label": "Bindkey (32 digit heksadesimal)",
+      "length": "{{length}} dari 32 digit",
+      "show": "Tampilkan",
+      "hide": "Sembunyikan",
+      "save": "Simpan dan pakai",
+      "back": "Kembali",
+      "invalid": "Itu bukan bindkey. Bindkey terdiri dari 32 digit heksadesimal (0-9 dan a-f).",
+      "wrongKey": "Bindkey ini bukan milik termometer ini: siarannya tidak terbuka dengannya. Periksa lagi, satu digit salah saja sudah gagal.",
+      "noFrames": "Belum ada siaran yang bisa diperiksa. Dekatkan HP ke termometer, tunggu beberapa detik, lalu coba lagi.",
+      "unsupported": "Termometer ini memakai MiBeacon versi lama (kunci 24 digit) atau tidak menyertakan alamatnya, dan itu belum didukung. Coba Hubungkan langsung."
+    },
+    "help": {
+      "title": "Cara mendapatkan bindkey",
+      "where": "Bindkey dibuat Xiaomi saat termometer didaftarkan di Mi Home / Xiaomi Home. Hanya kamu yang memilikinya, lewat salah satu dua cara ini:",
+      "extractor": "1. Xiaomi Cloud Tokens Extractor: skrip di komputer. Masuk dengan akun Xiaomi-mu, ia menampilkan BLE key tiap perangkat. Tidak mengubah apa pun di termometer.",
+      "openExtractor": "Buka Xiaomi Cloud Tokens Extractor",
+      "flasher": "2. Telink Flasher (di Chrome, lewat Bluetooth): hubungkan termometer lalu pilih Get Mi Bind Key.",
+      "openFlasher": "Buka Telink Flasher",
+      "warning": "Telink Flasher melepas termometer dari Mi Home. Sesudahnya Mi Home tidak lagi menampilkannya; kalau kamu mendaftarkannya lagi, Xiaomi membuat bindkey baru dan yang tersimpan di JoyoFit tidak berlaku lagi.",
+      "privacy": "Bindkey itu rahasia. JoyoFit hanya menyimpannya di Keychain / Keystore HP ini, tidak pernah mencatatnya di log, mengirimnya, atau ikut tersinkron."
+    },
+    "compare": {
+      "title": "Mana yang cocok?",
+      "direct": "Hubungkan langsung: tanpa kunci. JoyoFit tersambung beberapa detik tiap 10 menit selama aplikasi terbuka lalu melepasnya. Tidak berjalan semalaman, dan selama tersambung Mi Home tidak bisa membacanya.",
+      "bindkey": "Pakai bindkey: JoyoFit hanya mendengar siaran, tidak menyambung, sehingga Mi Home tetap bisa dipakai. Bisa juga semalaman dengan aplikasi dari toko. Butuh bindkey dari langkah di atas."
     }
   }
 }

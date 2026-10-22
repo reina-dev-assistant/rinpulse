@@ -1,8 +1,8 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import { listDayHeartLoad, listDayTotals, listHrvReadingsSince, listRestingHeartRateByDay, listSleepScores, listSleepSince, listWorkoutPoints, listWorkoutsSince, type WorkoutRow } from '@/db/queries';
+import { listDayStrainLoad, listDayTotals, listHrvReadingsSince, listRestingHeartRateByDay, listSleepScores, listSleepSince, listWorkoutPoints, listWorkoutsSince, type WorkoutRow } from '@/db/queries';
 import { withRideLoad } from '@/features/cycling/load';
-import { userHrZones } from '@/features/hrzones/settings';
+import { userMaxHr } from '@/features/hrzones/settings';
 import { localDate } from '@/features/meals/mealMap';
 import { buildNights, nightHasStages, sleepByDay } from '@/features/sleep/nights';
 import { startOfLocalDay } from '@/features/today/stats';
@@ -34,10 +34,10 @@ export async function readDailyRows(db: SQLiteDatabase, from: string, to: string
   const count = Math.max(1, Math.min(120, Math.round((last - first) / DAY_SEC) + 1));
   const starts = dayStarts(last, count);
   const bounds = dayBounds(starts);
-  const zones = userHrZones();
+  const maxHr = userMaxHr();
   const windowStart = starts[0]!;
   const [loads, resting, totals, hrv, sleep, scores, workouts] = await Promise.all([
-    listDayHeartLoad(db, bounds, zones.bounds),
+    listDayStrainLoad(db, bounds, maxHr),
     listRestingHeartRateByDay(db, bounds),
     listDayTotals(db, bounds),
     listHrvReadingsSince(db, windowStart),
@@ -118,7 +118,7 @@ export async function readWorkoutDetail(db: SQLiteDatabase, id: string): Promise
   const { workout }: { workout: WorkoutRow } = row;
   const summary = parseSummary(row.summaryJson);
   const points = await listWorkoutPoints(db, workout.id);
-  const strain = workoutStrain(points.map((p) => ({ ts: p.ts, hr: p.hr })), userHrZones());
+  const strain = workoutStrain(points.map((p) => ({ ts: p.ts, hr: p.hr })), userMaxHr());
   const splits = (summary.paceBlocks ?? [])
     .filter((b) => b.type === 0 && b.correction === null)
     .slice(0, 25)

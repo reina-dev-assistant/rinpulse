@@ -1,3 +1,5 @@
+import { decodeMiBeacon, SERVICE_MIBEACON } from '@/features/sensors/miBeacon';
+import { MiBeaconTracker } from '@/features/sensors/miBeaconTracker';
 import { CounterDeduper, decodeThermometerAdvert, type ThermometerFrame, type ThermometerReading } from '@/features/sensors/thermometerAdvert';
 
 import { SAMPLE_INTERVAL_MS, type EnvSample } from './store';
@@ -28,6 +30,9 @@ export class ThermometerSampler {
   /** Normalised id to the id as it was paired (what samples are stored under). */
   private paired = new Map<string, string>();
   private readonly counters = new CounterDeduper();
+  /** Normalised id to the bind key (32 hex digits) of a stock-firmware sensor. Memory only: the key lives in the secure store. */
+  private readonly bindkeys = new Map<string, string>();
+  private readonly mi = new MiBeaconTracker();
   private readonly lastTaken = new Map<string, number>();
 
   constructor(private readonly intervalMs: number = SAMPLE_INTERVAL_MS) {}
@@ -39,9 +44,23 @@ export class ThermometerSampler {
       if (!next.has(id)) {
         this.counters.forget(id);
         this.lastTaken.delete(id);
+        this.bindkeys.delete(id);
+        this.mi.forget(id);
       }
     }
     this.paired = next;
+  }
+
+  /** The bind key of a paired stock-firmware sensor, or null to stop reading its MiBeacon frames. */
+  setBindkey(sensorId: string, bindkey: string | null): void {
+    const id = key(sensorId);
+    if (bindkey === null) {
+      this.bindkeys.delete(id);
+      this.mi.forget(id);
+    } else if (this.bindkeys.get(id) !== bindkey) {
+      this.bindkeys.set(id, bindkey);
+      this.mi.forget(id);
+    }
   }
 
   /** The time of the newest stored sample, so a restart does not take a second one within the interval. */
@@ -55,7 +74,7 @@ export class ThermometerSampler {
     const id = key(advert.id);
     const sensorId = this.paired.get(id);
     if (sensorId === undefined) return null;
-    const reading = decodeThermometerAdvert(advert);
+    const reading = decodeThermometerAdvert(advert) ?? this.decodeStock(id, advert);
     if (!reading || !this.counters.isNew(id, reading.counter)) return null;
     const last = this.lastTaken.get(id);
     if (last !== undefined && advert.ts >= last && advert.ts - last < this.intervalMs) return null;
@@ -64,5 +83,14 @@ export class ThermometerSampler {
       reading,
       sample: { sensorId, ts: advert.ts, tempC: reading.tempC, rhPct: reading.rhPct, batteryPct: reading.batteryPct },
     };
+  }
+
+  /** The reading a MiBeacon frame completes, for a sensor that has a bind key; null for anything else (a frame that is one half, a wrong key, no MiBeacon). */
+  private decodeStock(id: string, advert: ThermometerAdvert): ThermometerReading | null {
+    const bindkey = this.bindkeys.get(id);
+    const hex = advert.serviceData[SERVICE_MIBEACON];
+    if (bindkey === undefined || hex === undefined) return null;
+    const frame = decodeMiBeacon(hex, bindkey, advert.id);
+    return frame.ok ? this.mi.feed(id, frame, advert.ts) : null;
   }
 }

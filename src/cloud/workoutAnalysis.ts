@@ -28,7 +28,7 @@ export async function loadStoredWorkout(db: SQLiteDatabase, workoutId: number): 
   const daySamples = (await listStepSamplesSince(db, day)).filter((s) => s.timestamp < day + 86400);
   const zones = userHrZones();
   const summary = parseSummary(found.summaryJson);
-  const history = await loadAnalysisHistory(db, found.workout, summary, zones);
+  const history = await loadAnalysisHistory(db, found.workout, summary, zones.maxHr);
   const analysis = analyzeWorkout(
     { workout: found.workout, summary, points, zones, daySamples, history },
     { includeHr: true, includeRoute: true, includeComparison: true },

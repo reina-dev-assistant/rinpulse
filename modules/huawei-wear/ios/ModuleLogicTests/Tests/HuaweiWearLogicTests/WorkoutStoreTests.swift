@@ -177,6 +177,58 @@ final class WorkoutStoreTests: XCTestCase {
         XCTAssertGreaterThan(second, first)
     }
 
+    // MARK: refetch of running dynamics (mergeSummary, refetchTargets)
+
+    private func addDynamics(_ stored: String) -> SummaryEdit? {
+        SummaryEdit(json: stored.replacingOccurrences(of: "}", with: ",\"dynamics\":{\"stepSec\":60}}"), changed: true)
+    }
+
+    func testMergeSummaryChangesOnlyTheSummaryAndMovesRevOnlyWhenTheEditChangedSomething() throws {
+        let store = SyncStore(url: temporaryDatabaseURL())
+        let workouts = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
+        _ = try workouts.save(record(points: [WorkoutPoint(ts: 1, lat: 1.5, lon: 2.5, alt: nil, hr: 120, cadence: 160)]))
+        let columns = "SELECT distance, calories, avg_hr, complete, device FROM workouts"
+        func snapshot() throws -> [String] { try rows(store, columns) { "\($0.int(0)),\($0.int(1)),\($0.optionalInt(2) ?? -1),\($0.int(3)),\($0.text(4) ?? "-")" } }
+        let others = try snapshot()
+        let rev = try rows(store, "SELECT rev FROM workouts") { $0.int(0) }[0]
+
+        XCTAssertEqual(try workouts.mergeSummary(start: 1_700_000_000, addDynamics), .updated)
+
+        XCTAssertEqual(try rows(store, "SELECT summary_json FROM workouts") { $0.text(0) }, ["{\"kind\":\"RUNNING\",\"dynamics\":{\"stepSec\":60}}"])
+        XCTAssertGreaterThan(try rows(store, "SELECT rev FROM workouts") { $0.int(0) }[0], rev)
+        XCTAssertEqual(try snapshot(), others)
+        XCTAssertEqual(try rows(store, "SELECT ts, lat, hr, cadence FROM workout_points") { [Double($0.int(0)), $0.double(1), Double($0.int(2)), Double($0.int(3))] }, [[1, 1.5, 120, 160]])
+
+        let afterRev = try rows(store, "SELECT rev FROM workouts") { $0.int(0) }[0]
+        XCTAssertEqual(try workouts.mergeSummary(start: 1_700_000_000, { SummaryEdit(json: $0, changed: false) }), .unchanged)
+        XCTAssertEqual(try rows(store, "SELECT rev FROM workouts") { $0.int(0) }[0], afterRev)
+    }
+
+    func testMergeSummaryLeavesAnotherWatchsAnImportedAndAnUnknownWorkoutAlone() throws {
+        let store = SyncStore(url: temporaryDatabaseURL())
+        _ = try WorkoutStore(store, address: "AA:AA:AA:AA:AA:01").save(record())
+        let other = WorkoutStore(store, address: "BB:BB:BB:BB:BB:02")
+
+        XCTAssertEqual(try other.mergeSummary(start: 1_700_000_000, addDynamics), .notStored)
+        XCTAssertEqual(try WorkoutStore(store, address: "AA:AA:AA:AA:AA:01").mergeSummary(start: 5, addDynamics), .notStored)
+        XCTAssertEqual(try WorkoutStore(store, address: "AA:AA:AA:AA:AA:01").mergeSummary(start: 1_700_000_000, { _ in nil }), .notStored)
+        try store.read { try $0.run("UPDATE workouts SET imported = 1") }
+        XCTAssertEqual(try WorkoutStore(store, address: "AA:AA:AA:AA:AA:01").mergeSummary(start: 1_700_000_000, addDynamics), .notStored)
+        XCTAssertEqual(try rows(store, "SELECT summary_json FROM workouts") { $0.text(0) }, ["{\"kind\":\"RUNNING\"}"])
+    }
+
+    func testRefetchTargetsAreThisWatchsStoredWorkoutsInTheOrderAsked() throws {
+        let store = SyncStore(url: temporaryDatabaseURL())
+        let mine = WorkoutStore(store, address: "AA:AA:AA:AA:AA:01")
+        _ = try mine.save(record(start: 1_700_000_000, end: 1_700_000_600))
+        _ = try mine.save(record(start: 1_800_000_000, end: 1_800_000_600))
+        _ = try WorkoutStore(store, address: "BB:BB:BB:BB:BB:02").save(record(start: 1_900_000_000, end: 1_900_000_600))
+
+        let targets = try mine.refetchTargets([1_800_000_000, 1_900_000_000, 7, 1_700_000_000])
+
+        XCTAssertEqual(targets, [RefetchTarget(start: 1_800_000_000, end: 1_800_000_600, number: 5), RefetchTarget(start: 1_700_000_000, end: 1_700_000_600, number: 5)])
+    }
+
     // MARK: what the JS Strava code reads from the rows this store writes
 
     /// `listAutoUploadCandidates` in src/db/strava.ts, verbatim: the JS app decides on its own what to send after a sync.

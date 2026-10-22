@@ -29,7 +29,8 @@ export const TEMP_MAX_C = 60;
 export const RH_MIN_PCT = 0;
 export const RH_MAX_PCT = 100;
 
-export type ThermometerFormat = 'atc1441' | 'pvvx' | 'bthome';
+/** `mibeacon`: the stock Xiaomi firmware (bind key or plaintext), `gatt`: a sample read over a connection. Neither comes through `decodeThermometerAdvert`. */
+export type ThermometerFormat = 'atc1441' | 'pvvx' | 'bthome' | 'mibeacon' | 'gatt';
 
 export interface ThermometerReading {
   format: ThermometerFormat;
@@ -211,7 +212,7 @@ export function hasThermometerService(frame: ThermometerFrame): boolean {
 }
 
 /** Names the community firmware and the stock units advertise: `ATC_8D18B2`, `LYWSD03MMC`, `MJ_HT_V1`, ... */
-const THERMOMETER_NAME = /^(?:(?:ATC|PVVX|BTH)_[0-9A-F]{4,6}|LYWSD03MMC|LYWSDCGQ(?:\/01ZM)?|MJ_HT_V1|CGG1|CGDK2|CGD1|CGP1W|LYWSD02|XMWSDJ04MMC)$/i;
+const THERMOMETER_NAME = /^(?:(?:ATC|PVVX|BTH)_[0-9A-F]{4,6}|LYWSD03MMC|MHO-C401|MHO-C303|LYWSDCGQ(?:\/01ZM)?|MJ_HT_V1|CGG1|CGDK2|CGD1|CGP1W|LYWSD02|XMWSDJ04MMC)$/i;
 
 /** Whether an advertised name looks like a Xiaomi/ATC/PVVX thermometer. */
 export function isThermometerName(name: string | null | undefined): boolean {

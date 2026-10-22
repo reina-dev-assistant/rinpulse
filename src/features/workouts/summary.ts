@@ -1,6 +1,8 @@
 import type { WorkoutPointRow } from '@/db/queries';
 import { fmtDecimal, fmtDistance, fmtInt, t } from '@/i18n';
 
+import type { DynamicsJson } from './dynamics';
+
 /** One pace block of the watch: per-km (type 0) or per-mile (type 1) split. */
 export interface PaceBlock {
   type: number;
@@ -95,6 +97,8 @@ export interface WorkoutSummary {
     avgSwolf?: number;
   };
   samples?: Record<string, number>;
+  /** Per-minute running form (contact time, vertical oscillation and ratio, balance) of a watch run, from the sync builds that read it. */
+  dynamics?: DynamicsJson;
   /** Extension values of the watch's totals, all sent as strings (`WorkoutRecord.kt`): `lthrHr` and `lthrPace` are the lactate threshold the watch worked out (builds from the lactate-threshold commit on). */
   additional?: Record<string, string>;
   paceBlocks?: PaceBlock[];

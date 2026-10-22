@@ -143,4 +143,40 @@ class WorkoutRecordTest {
     assertEquals(165.0, averages.getDouble("avgCadence"), 1e-9)
     assertEquals(75.0, averages.getDouble("avgStepLength"), 1e-9)
   }
+
+  @Test
+  fun runningFormIsAveragedOverReadingsAndKeptAsAPerMinuteSeries() {
+    val t0 = 1_700_000_000
+    val samples = arrayOf(
+      data(t0) { groundContactTime = 240; vo = 8.4f; vr = 7.1f; gtb = 50.2f; hangTime = 120 },
+      data(t0 + 30) { groundContactTime = 260; vo = 9.0f; vr = 7.5f; gtb = 49.8f },
+      // No reading: the unset markers (-1 shorts, 0 floats) and a zero contact time stay out of every mean.
+      data(t0 + 45) { groundContactTime = 0 },
+      data(t0 + 70) { groundContactTime = 300; vo = 10.0f },
+    )
+    val json = org.json.JSONObject()
+    SampleStats.of(parts(1, false, *samples), "RUNNING").putAverages(json)
+    val averages = json.getJSONObject("samples")
+    assertEquals(266.666, averages.getDouble("avgGroundContactTime"), 1e-2)
+    assertEquals(9.133, averages.getDouble("avgVerticalOscillation"), 1e-2)
+    assertEquals(7.3, averages.getDouble("avgVerticalRatio"), 1e-4)
+    assertEquals(50.0, averages.getDouble("avgGroundContactBalance"), 1e-4)
+    assertEquals(120.0, averages.getDouble("avgHangTimeMs"), 1e-9)
+
+    val series = json.getJSONObject("dynamics")
+    assertEquals(t0.toLong(), series.getLong("start"))
+    assertEquals(60, series.getInt("stepSec"))
+    assertEquals(250.0, series.getJSONArray("gct").getDouble(0), 1e-9)
+    assertEquals(300.0, series.getJSONArray("gct").getDouble(1), 1e-9)
+    assertEquals(8.7, series.getJSONArray("vo").getDouble(0), 1e-9)
+    assertTrue(series.getJSONArray("vr").isNull(1))
+  }
+
+  @Test
+  fun aWatchThatSendsNoRunningFormLeavesNoDynamics() {
+    val json = org.json.JSONObject()
+    SampleStats.of(parts(1, false, data(1_700_000_000) { cadence = 170 }), "RUNNING").putAverages(json)
+    assertTrue(!json.has("dynamics"))
+    assertTrue(!json.getJSONObject("samples").has("avgVerticalOscillation"))
+  }
 }

@@ -253,6 +253,11 @@ public final class HuaweiWearModule: Module {
             try await wearCall { try await runtime.link.syncActivity(fullHistory: true).toJS() }
         }
 
+        // The running form of stored runs read from the watch again, merged into their summaries (WorkoutSync.refetchDynamics).
+        AsyncFunction("refetchWorkoutData") { (starts: [Double]) async throws -> [String: Any] in
+            try await wearCall { try await runtime.link.refetchWorkoutData(starts.map { Int64($0) }).toJS() }
+        }
+
         AsyncFunction("forgetDevice") { (address: String) async throws -> Void in
             runtime.forget(address)
         }
@@ -591,6 +596,12 @@ public final class HuaweiWearModule: Module {
         // Reads what Huawei Health wrote into Apple Health, once; asks for read permission only now. Same progress event and summary as the ZIP import.
         AsyncFunction("importAppleHealthHistory") { () async throws -> [String: Any] in
             try await wearCall { try await WearApp.appleHealthImport.run { bridge.huaweiImportProgress($0) } }
+        }
+
+        // A picker file URL already ends in the sender's file name, so this is that last path component (null when there is none).
+        AsyncFunction("huaweiExportDisplayName") { (uri: String) -> String? in
+            guard let name = URL(string: uri)?.lastPathComponent.removingPercentEncoding, !name.isEmpty, name != "/" else { return nil }
+            return name
         }
 
         Function("cancelHuaweiImport") { () -> Void in

@@ -164,3 +164,17 @@ export async function pushImportedToRogo(db: QueueDb, client: ImportClient, isUn
   }
   return outcome;
 }
+
+let lastRun: Promise<unknown> = Promise.resolve();
+
+/**
+ * `pushImportedToRogo`, one run at a time. The sign-in, the app coming back to the foreground (`ScaleProvider`) and the Huawei import
+ * screen all ask for it, and a run that starts while another is still sending must see the rows the first one had not read yet.
+ * Nothing in the queue is lost when two runs would overlap (the endpoints are idempotent); this only keeps the counts and the
+ * rows' states from being written twice.
+ */
+export function syncImportedToRogo(db: QueueDb, client: ImportClient, isUnavailable: (error: unknown) => boolean): Promise<ImportPushOutcome> {
+  const run = lastRun.then(() => pushImportedToRogo(db, client, isUnavailable));
+  lastRun = run.catch(() => undefined);
+  return run;
+}

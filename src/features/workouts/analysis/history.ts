@@ -1,7 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { listWorkoutPoints, listWorkoutsSince, type WorkoutRow } from '@/db/queries';
-import type { HrZones } from '@/features/hrzones/zones';
 import { workoutStrain } from '@/features/today/strain';
 import { parseSummary, type WorkoutSummary } from '@/features/workouts/summary';
 
@@ -28,7 +27,7 @@ const MAX_BPM = 250;
  * of every workout of the last 28 days (newest 60). One summary query, then each workout's points once and in turn: only
  * for the best efforts not read before and for the TRIMP set.
  */
-export async function loadAnalysisHistory(db: SQLiteDatabase, workout: WorkoutRow, summary: WorkoutSummary, zones: HrZones): Promise<AnalysisHistory> {
+export async function loadAnalysisHistory(db: SQLiteDatabase, workout: WorkoutRow, summary: WorkoutSummary, maxHr: number): Promise<AnalysisHistory> {
   const rows = (await listWorkoutsSince(db, workout.start - HISTORY_DAYS * DAY_SEC, workout.start, workout.id)).map((r) => ({
     ...r,
     summary: parseSummary(r.summaryJson),
@@ -76,7 +75,7 @@ export async function loadAnalysisHistory(db: SQLiteDatabase, workout: WorkoutRo
     if (wantsTrimp) {
       const strain = workoutStrain(
         points.filter((p) => p.hr !== null && p.hr >= MIN_BPM && p.hr <= MAX_BPM),
-        zones,
+        maxHr,
       );
       if (strain) trimps.push({ start: w.start, trimp: strain.trimp });
     }

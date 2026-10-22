@@ -43,6 +43,7 @@ class RoomScanService : Service() {
   private var callback: ScanCallback? = null
   private var config: RoomCaptureConfig? = null
   private val throttle = RoomAdvertThrottle()
+  private val miThrottle = MiBeaconThrottle()
   private var retryAttempt = 0
   private var receiverRegistered = false
 
@@ -84,6 +85,7 @@ class RoomScanService : Service() {
     }
     config = request
     throttle.clear()
+    miThrottle.clear()
     retryAttempt = 0
     registerRadioReceiver()
     getSystemService(AlarmManager::class.java)?.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, request.untilMs, RoomCapture.endIntent(this))
@@ -209,7 +211,8 @@ class RoomScanService : Service() {
       result.scanRecord?.serviceData?.forEach { (uuid, bytes) -> serviceData[ScaleLogic.normalize(uuid.uuid)] = SensorProfile.toHex(bytes) }
       val (uuid, hex) = RoomScanLogic.pickServiceData(serviceData) ?: continue
       val heardAt = RoomScanLogic.heardAtMs(nowMs, nowElapsed, result.timestampNanos)
-      if (!throttle.shouldKeep(address, heardAt)) continue
+      val keep = if (uuid == RoomScanLogic.SERVICE_MIBEACON) miThrottle.shouldKeep(address, heardAt, hex) else throttle.shouldKeep(address, heardAt)
+      if (!keep) continue
       try {
         log.append(RoomAdvert(address, heardAt, uuid, hex))
       } catch (e: java.io.IOException) {

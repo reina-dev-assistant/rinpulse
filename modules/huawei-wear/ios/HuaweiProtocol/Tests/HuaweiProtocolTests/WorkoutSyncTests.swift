@@ -613,3 +613,152 @@ final class WorkoutSyncTests: XCTestCase {
         XCTAssertEqual(try summary(record)["gps"] as? String, "failed")
     }
 }
+
+/// Stored summaries by start, edited the way the app's store does: only when the edit changed something.
+final class MemoryDynamics: DynamicsSink {
+    var summaries: [Int64: String]
+    private(set) var writes = 0
+
+    init(_ summaries: [Int64: String]) { self.summaries = summaries }
+
+    func mergeSummary(start: Int64, _ edit: (String) -> SummaryEdit?) throws -> DynamicsMerge {
+        guard let stored = summaries[start], let edited = edit(stored) else { return .notStored }
+        if !edited.changed { return .unchanged }
+        summaries[start] = edited.json
+        writes += 1
+        return .updated
+    }
+}
+
+/// refetchDynamics: only the data samples are read again, and only the running form reaches the sink.
+extension WorkoutSyncTests {
+    /// Two samples a minute apart with ground contact 240/260 ms, vertical oscillation 8.4/9.0 cm, ratio 7.1/7.5 %, balance 50.2/49.8 %, hang 120/130 ms.
+    private func formTlv(number: Int16 = 5, index: Int16 = 0) -> HuaweiTLV {
+        var header = Bytes()
+        header.appendBE(UInt16(bitPattern: number))
+        header.appendBE(UInt16(bitPattern: index))
+        header.appendBE(UInt32(1_700_000_000))
+        header.append(60)
+        header.appendBE(UInt16(2))
+        header.append(10)
+        header.appendBE(UInt16(0x0040))
+        var raw = Bytes()
+        for sample in [[240, 120, 84, 5020, 71], [260, 130, 90, 4980, 75]] {
+            for value in sample { raw.appendBE(UInt16(value)) }
+        }
+        return WorkoutWatchScript.box {
+            $0.put(0x02, short: number)
+            $0.put(0x03, short: index)
+            $0.put(0x04, bytes: header)
+            $0.put(0x05, bytes: raw)
+            $0.put(0x08, int: 10)
+            $0.put(0x09, int: 57860)
+        }
+    }
+
+    private func held(number: Int16 = 5, start s: Int32 = 1_700_000_000, data: [HuaweiTLV]) -> WorkoutWatchScript.Workout {
+        WorkoutWatchScript.Workout(
+            number: number, start: s, end: s + 600, totals: refetchTotals(number: number, start: s), data: data, trajectories: 0
+        )
+    }
+
+    private func refetchTotals(number: Int16, start s: Int32) -> HuaweiTLV {
+        WorkoutWatchScript.box {
+            $0.put(0x02, short: number)
+            $0.put(0x03, byte: 1)
+            $0.put(0x04, int: s)
+            $0.put(0x05, int: s + 600)
+            $0.put(0x12, int: 600)
+            $0.put(0x14, byte: 1)
+        }
+    }
+
+    private func refetchSetup(_ workouts: [WorkoutWatchScript.Workout]) -> (harness: SleepFilesHarness, script: WorkoutWatchScript, sync: WorkoutSync) {
+        let h = SleepFilesHarness()
+        let script = WorkoutWatchScript()
+        h.watch.responder = script.respond
+        script.workouts = workouts
+        return (h, script, WorkoutSync(session: h.session, caps: DeviceCaps(), log: h.log.sink))
+    }
+
+    private var target: RefetchTarget { RefetchTarget(start: 1_700_000_000, end: 1_700_000_600, number: 5) }
+    private var stored: String { #"{"kind":"RUNNING","dataSamples":2,"samples":{"avgHr":150.0}}"# }
+
+    func testRefetchReadsOnlyTheDataFramesAndMergesTheRunningForm() async throws {
+        let r = refetchSetup([held(data: [formTlv()])])
+        let sink = MemoryDynamics([1_700_000_000: stored])
+
+        let outcomes = try await r.sync.refetchDynamics(targets: [target], sink: sink)
+
+        XCTAssertEqual(outcomes, [1_700_000_000: .updated])
+        let summary = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(try XCTUnwrap(sink.summaries[1_700_000_000]).utf8)) as? [String: Any])
+        let samples = try XCTUnwrap(summary["samples"] as? [String: Any])
+        XCTAssertEqual(try XCTUnwrap(samples["avgGroundContactTime"] as? Double), 250.0, accuracy: 1e-9)
+        XCTAssertEqual(try XCTUnwrap(samples["avgVerticalRatio"] as? Double), 7.3, accuracy: 1e-5)
+        XCTAssertEqual(try XCTUnwrap(samples["avgHr"] as? Double), 150.0, accuracy: 1e-9)
+        XCTAssertEqual((summary["dynamics"] as? [String: Any])?["stepSec"] as? Int, 60)
+        // Count, totals and data: no pace, swim, SpO2, sections or GPS file.
+        let requests = r.harness.watch.requests
+        XCTAssertEqual(Set(requests.filter { $0.service == 0x17 }.map(\.command)), [0x07, 0x08, 0x0a])
+        XCTAssertTrue(requests.allSatisfy { $0.service == 0x17 })
+        XCTAssertEqual(r.script.countRequests.map(\.start), [1_700_000_000 - 60])
+        XCTAssertEqual(r.script.countRequests.map(\.end), [1_700_000_600 + 60])
+    }
+
+    func testRefetchAsksTheStoredNumberFirstAndNeverMergesAnotherRun() async throws {
+        // The watch reused number 5 for a later run; the run stored as number 5 is listed under number 9 now.
+        let r = refetchSetup([held(number: 5, start: 1_700_099_000, data: [formTlv(number: 5)]), held(number: 9, data: [formTlv(number: 9)])])
+        let sink = MemoryDynamics([1_700_000_000: stored])
+
+        let outcomes = try await r.sync.refetchDynamics(targets: [target], sink: sink)
+
+        XCTAssertEqual(outcomes[1_700_000_000], .updated)
+        XCTAssertEqual(r.script.totalsRequests, [5: 1, 9: 1])
+    }
+
+    func testAWorkoutTheWatchNoLongerListsIsGoneAndNothingIsRead() async throws {
+        let r = refetchSetup([])
+        let sink = MemoryDynamics([1_700_000_000: stored])
+
+        let outcomes = try await r.sync.refetchDynamics(targets: [target], sink: sink)
+
+        XCTAssertEqual(outcomes, [1_700_000_000: .gone])
+        XCTAssertEqual(sink.writes, 0)
+        XCTAssertEqual(r.harness.watch.requests.filter { $0.command == 0x0a }.count, 0)
+    }
+
+    func testAWorkoutWithoutRunningFormInItsSamplesIsReportedAndNotMerged() async throws {
+        let r = refetchSetup([held(data: [dataTlv()])])
+        let sink = MemoryDynamics([1_700_000_000: stored])
+
+        let outcomes = try await r.sync.refetchDynamics(targets: [target], sink: sink)
+
+        XCTAssertEqual(outcomes, [1_700_000_000: .noDynamics])
+        XCTAssertEqual(sink.summaries[1_700_000_000], stored)
+    }
+
+    func testARefusedDataFrameLeavesTheStoredWorkoutAsItWas() async throws {
+        let r = refetchSetup([held(data: [formTlv()])])
+        r.script.brokenData = ["5/0"]
+        let sink = MemoryDynamics([1_700_000_000: stored])
+
+        let outcomes = try await r.sync.refetchDynamics(targets: [target], sink: sink)
+
+        XCTAssertEqual(outcomes, [1_700_000_000: .failed])
+        XCTAssertEqual(sink.summaries[1_700_000_000], stored)
+    }
+
+    func testRefetchReportsWhatTheSinkSaidAndCountsTheUnknownStartsAsGone() async throws {
+        let r = refetchSetup([held(data: [formTlv()])])
+        let sink = MemoryDynamics([1_700_000_000: stored])
+        _ = try await r.sync.refetchDynamics(targets: [target], sink: sink)
+        let again = try await r.sync.refetchDynamics(targets: [target], sink: sink)
+
+        let report = RefetchReport(requested: [1_700_000_000, 42], read: again)
+
+        XCTAssertEqual(report.count(.unchanged), 1)
+        XCTAssertEqual(report.count(.gone), 1)
+        XCTAssertEqual(report.toJS()["requested"] as? Int, 2)
+        XCTAssertEqual((report.toJS()["results"] as? [[String: Any]])?.compactMap { $0["outcome"] as? String }, ["unchanged", "gone"])
+    }
+}

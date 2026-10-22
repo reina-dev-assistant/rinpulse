@@ -347,4 +347,44 @@ final class WorkoutRecordTests: XCTestCase {
         walking.newSteps = false
         XCTAssertEqual(WorkoutBuilder.points(walking).map(\.cadence), [99, 99])
     }
+
+    func testRunningFormIsAveragedOverReadingsAndKeptAsAPerMinuteSeries() throws {
+        let t0: Int32 = 1_700_000_000
+        func form(_ ts: Int32, gct: Int16 = -1, vo: Float = 0, vr: Float = 0, gtb: Float = 0, hang: Int16 = -1) -> Workout.WorkoutData.Response.Data {
+            var d = sample(timestamp: ts)
+            d.groundContactTime = gct
+            d.vo = vo
+            d.vr = vr
+            d.gtb = gtb
+            d.hangTime = hang
+            return d
+        }
+        let parts = WorkoutParts(totals: try totalsResponse { $0.put(0x14, byte: 1) })
+        parts.samples = [
+            form(t0, gct: 240, vo: 8.4, vr: 7.1, gtb: 50.2, hang: 120),
+            form(t0 + 30, gct: 260, vo: 9.0, vr: 7.5, gtb: 49.8),
+            form(t0 + 45, gct: 0),
+            form(t0 + 70, gct: 300, vo: 10.0),
+        ]
+        let summary = try json(WorkoutBuilder.build(parts, complete: true))
+        let averages = try XCTUnwrap(summary["samples"] as? [String: Any])
+        XCTAssertEqual(try XCTUnwrap(averages["avgGroundContactTime"] as? Double), 266.666, accuracy: 1e-2)
+        XCTAssertEqual(try XCTUnwrap(averages["avgVerticalOscillation"] as? Double), 9.133, accuracy: 1e-2)
+        XCTAssertEqual(try XCTUnwrap(averages["avgVerticalRatio"] as? Double), 7.3, accuracy: 1e-4)
+        XCTAssertEqual(try XCTUnwrap(averages["avgGroundContactBalance"] as? Double), 50.0, accuracy: 1e-4)
+        XCTAssertEqual(averages["avgHangTimeMs"] as? Double, 120.0)
+
+        let series = try XCTUnwrap(summary["dynamics"] as? [String: Any])
+        XCTAssertEqual(series["start"] as? Int, Int(t0))
+        XCTAssertEqual(series["stepSec"] as? Int, 60)
+        XCTAssertEqual((series["gct"] as? [Any])?.compactMap { $0 as? Double }, [250.0, 300.0])
+        XCTAssertEqual((series["vo"] as? [Any])?.first as? Double, 8.7)
+        XCTAssertTrue((series["vr"] as? [Any])?.last is NSNull)
+
+        let none = WorkoutParts(totals: try totalsResponse { $0.put(0x14, byte: 1) })
+        none.samples = [sample(cadence: 170)]
+        let plain = try json(WorkoutBuilder.build(none, complete: true))
+        XCTAssertNil(plain["dynamics"])
+        XCTAssertNil((plain["samples"] as? [String: Any])?["avgVerticalOscillation"])
+    }
 }

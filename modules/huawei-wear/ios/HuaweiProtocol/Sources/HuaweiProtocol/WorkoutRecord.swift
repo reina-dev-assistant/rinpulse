@@ -482,8 +482,11 @@ struct SampleStats {
 
     private var averages: [(String, Double)] = []
     private var extremes: [(String, Int)] = []
+    /// Per-minute running form for the chart (`summary_json.dynamics`); nil without enough readings.
+    private var dynamics: SummaryJSON?
 
     func putAverages(_ json: inout SummaryObject) {
+        if let dynamics { json.put("dynamics", dynamics) }
         if averages.isEmpty && extremes.isEmpty { return }
         var out = SummaryObject()
         for (k, v) in averages { out.put(k, v) }
@@ -600,6 +603,13 @@ struct SampleStats {
         if minPower != Int.max { s.extremes.append(("minPower", minPower)) }
         if maxPower != Int.min { s.extremes.append(("maxPower", maxPower)) }
         if maxFrequency > 0 { s.extremes.append(("maxJumpRate", maxFrequency)) }
+        // Running form: means over the readings that exist (replaces the contact-time mean above, which also counted zeros) and the chart series.
+        if let dyn = RunDynamics.of(samples) {
+            for (k, v) in dyn.averages {
+                if let i = s.averages.firstIndex(where: { $0.0 == k }) { s.averages[i].1 = v } else { s.averages.append((k, v)) }
+            }
+            s.dynamics = dyn.series
+        }
         return s
     }
 }

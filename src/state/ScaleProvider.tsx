@@ -6,8 +6,10 @@ import { AppState } from 'react-native';
 
 import { BleSensors } from '@/ble';
 import { NotSignedInError } from '@/cloud/api';
+import { authClient } from '@/cloud/auth';
 import { RogoError, rogo } from '@/cloud/rogo';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { syncImportedToRogo, type QueueDb } from '@/features/huaweiimport/rogoQueue';
 import { captureFinal, confirmPending, type CaptureContext, type LastSaved, type PendingWeighIn } from '@/features/scale/capture';
 import type { Reference } from '@/features/scale/guard';
 import { scaleHub } from '@/features/scale/instance';
@@ -19,6 +21,7 @@ import {
   latestWeighIn,
   listScales,
   listWeighIns,
+  pendingImportedWeighIns,
   pendingWeighIns,
   removeScale,
   renameScale,
@@ -98,6 +101,27 @@ const traceDirection = { tx: 'tx', rx: 'rx', info: 'info', error: 'error' } as c
 /** Offline, signed out, a timeout: quiet, the weigh-in stays pending. A server answer (RogoError) is a real error and is kept on the row. */
 const isUnavailable = (error: unknown): boolean => error instanceof NotSignedInError || !(error instanceof RogoError);
 
+/** How many weigh-ins the history in Pengaturan > Timbangan keeps in memory (the list shows them a page at a time). */
+const WEIGH_IN_LIMIT = 500;
+
+/**
+ * Sends what a Huawei Health import left waiting for JoyoRogo (weigh-ins, meals, water; `rogo_state` / `rogo_import_queue` are the record of
+ * what went, so a row goes once and a failed one is tried again). Offline or signed out is quiet; a refusal from the server is a line in the
+ * Log screen, and stays on the rows for the import screen to show.
+ */
+async function pushImportedHistory(db: QueueDb): Promise<void> {
+  const log = (direction: 'info' | 'error', message: string) =>
+    pushLog({ ts: Date.now(), direction, serviceId: null, commandId: null, hex: null, message });
+  try {
+    const out = await syncImportedToRogo(db, rogo, isUnavailable);
+    if (out.error) log('error', `JoyoRogo import: ${out.error}`);
+    const added = out.weighIns.added + out.meals.added + out.water.added;
+    if (added > 0) log('info', `JoyoRogo import: sent ${out.weighIns.added} weigh-ins, ${out.meals.added} meals, ${out.water.added} water days`);
+  } catch (e) {
+    log('error', `JoyoRogo import: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
 function problemOf(code: string | null): ScaleProblem {
   if (code === 'ERR_BLUETOOTH_PERMISSION') return 'permission';
   if (code === 'ERR_BLUETOOTH_OFF') return 'off';
@@ -140,26 +164,39 @@ export function ScaleProvider({ children }: { children: ReactNode }) {
   const chain = useRef<Promise<void>>(Promise.resolve());
 
   const reload = useCallback(async () => {
-    const [scales, rows, waiting] = await Promise.all([listScales(db), listWeighIns(db, 40), pendingWeighIns(db)]);
+    const [scales, rows, waiting, waitingImported] = await Promise.all([
+      listScales(db),
+      listWeighIns(db, WEIGH_IN_LIMIT),
+      pendingWeighIns(db),
+      pendingImportedWeighIns(db),
+    ]);
     if (!alive.current) return;
     setScale(scales[0] ?? null);
     setWeighIns(rows);
-    setRogoWaiting(waiting.length);
+    setRogoWaiting(waiting.length + waitingImported.length);
     setLoaded(true);
   }, [db]);
 
   const pushNow = useCallback(async () => {
-    if (!settingsRef.current.pushToRogo) return;
     try {
-      await pushPendingWeighIns(db, rogo.checkInWeight, isUnavailable);
+      if (settingsRef.current.pushToRogo) await pushPendingWeighIns(db, rogo.checkInWeight, isUnavailable);
+      await pushImportedHistory(db);
     } finally {
       await reload();
     }
   }, [db, reload]);
 
+  const session = authClient.useSession();
+  const signedIn = session.data?.user != null;
+  // Signing in (or opening the app already signed in) and every return to the app send what is waiting for JoyoRogo, the weigh-ins,
+  // meals and water of a Huawei Health import included: a person who imported before signing in gets them without a button.
+  useEffect(() => {
+    if (signedIn) void pushNow();
+  }, [signedIn, pushNow]);
+
   useEffect(() => {
     alive.current = true;
-    void reload().then(pushNow);
+    void reload();
     const sub = AppState.addEventListener('change', (state) => {
       setAppActive(state === 'active');
       if (state === 'active') void pushNow();

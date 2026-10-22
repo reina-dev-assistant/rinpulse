@@ -1,5 +1,5 @@
 import * as Linking from 'expo-linking';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
@@ -11,21 +11,19 @@ import { Notice } from '@/components/States';
 import { JOYOROGO_URL } from '@/cloud/config';
 import { Bullet, StepIntro } from '@/features/onboarding/StepIntro';
 import { fetchProConfig, priceLine, proOffer, scansLine, type ProConfig } from '@/features/onboarding/pro';
+import { openProUpgrade, proUpgradeAction } from '@/features/pro/offer';
 import { useCloud } from '@/state/CloudProvider';
 import { spacing } from '@/theme';
 import { HuaweiWear } from '@/wear';
 
-/** utm convention: docs/utm.md in the joyorogo repo. The Play listing takes the tags in `referrer`. */
-const PRO_URL = 'https://joyorogo.com/pro?from=joyofit&utm_source=joyofit&utm_medium=app&utm_campaign=evergreen-onboarding';
-const PLAY_URL =
-  'https://play.google.com/store/apps/details?id=com.joyodigitama.joyorogo&referrer=utm_source%3Djoyofit%26utm_medium%3Dapp%26utm_campaign%3Devergreen-onboarding';
-
-const OFFER = proOffer(isIos ? 'ios' : 'android', HuaweiWear.distribution);
+const PLATFORM = isIos ? 'ios' : 'android';
+const OFFER = proOffer(PLATFORM, HuaweiWear.distribution);
 
 /**
- * JoyoRogo Pro, described honestly and never required. What may be shown depends on the store (see `proOffer`): the price and a link to
- * the web page only in a build outside Google Play, a link to the JoyoRogo app's Play listing in a Play build, and plain text on iOS.
- * Prices and limits come from JoyoRogo's live config, never from this app's code.
+ * JoyoRogo Pro, described honestly and never required. The button goes through `openProUpgrade` like every other Pro offer in JoyoFit: the
+ * JoyoRogo app's own Pro screen when it is installed (the purchase and the signed-in account are already there), else the Play listing in a
+ * Play build or, in a sideloaded build, the web page; plain text on iOS (see `proOffer` for the stores' rules). Prices and limits come
+ * from JoyoRogo's live config, never from this app's code.
  */
 export function ProStep() {
   const { t } = useTranslation('onboarding');
@@ -40,6 +38,7 @@ export function ProStep() {
     };
   }, []);
 
+  const action = useMemo(() => proUpgradeAction(PLATFORM, HuaweiWear.distribution, 'onboarding'), []);
   const price = OFFER === 'web' ? priceLine(config) : null;
   const active = cloud.signedIn && !cloud.locked && cloud.lastSyncAt !== null;
 
@@ -76,9 +75,9 @@ export function ProStep() {
         <Notice icon="lock-closed">{t('pro.locked')}</Notice>
       ) : null}
       {!cloud.signedIn ? <Notice icon="information-circle">{t('pro.signInFirst')}</Notice> : null}
-      {OFFER === 'web' ? <Button label={t('pro.see')} variant="secondary" icon="open-outline" onPress={() => void Linking.openURL(PRO_URL)} /> : null}
+      {OFFER === 'web' ? <Button label={t('pro.see')} variant="secondary" icon="open-outline" onPress={() => void openProUpgrade(action, Linking.openURL)} /> : null}
       {OFFER === 'store' ? (
-        <Button label={t('pro.getOnPlay')} variant="secondary" icon="logo-google-playstore" onPress={() => void Linking.openURL(PLAY_URL)} />
+        <Button label={t('pro.getOnPlay')} variant="secondary" icon="logo-google-playstore" onPress={() => void openProUpgrade(action, Linking.openURL)} />
       ) : null}
     </>
   );

@@ -45,6 +45,8 @@ import { workoutElevation } from '@/features/workouts/analysis/elevation';
 import type { SportKind, WorkoutAnalysis } from '@/features/workouts/analysis/types';
 import { WorkoutAnalysisView, useAnalysisT, type ExtraStat } from '@/features/workouts/analysis/ui';
 import { DeleteWorkoutDialog } from '@/features/workouts/ui/DeleteWorkoutDialog';
+import { RefetchDynamicsAction } from '@/features/workouts/ui/RefetchDynamics';
+import { RunningDynamicsSection } from '@/features/workouts/ui/RunningDynamicsSection';
 import { MenuSheet, type MenuItem } from '@/features/strength/ui/Sheet';
 import { sportIcon } from '@/features/workouts/sportIcon';
 import { sportLabel } from '@/features/workouts/sportLabel';
@@ -148,6 +150,11 @@ export default function WorkoutDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>({ status: 'pending' });
   const [scrubbing, setScrubbing] = useState(false);
+  // After a refetch from the watch changed the stored summary: read just the summary again (the analysis does not use the running form).
+  const refreshSummary = useCallback(async () => {
+    const found = await getWorkout(db, Number(id));
+    if (found) setLoaded((prev) => (prev ? { ...prev, summary: parseSummary(found.summaryJson) } : prev));
+  }, [db, id]);
   const palette = useAnalysisPalette();
   const mapTheme = useMapTheme();
   const { t } = useTranslation('workouts');
@@ -183,7 +190,7 @@ export default function WorkoutDetailScreen() {
           }
           try {
             const zones = userHrZones();
-            const history = await loadAnalysisHistory(db, value.workout, value.summary, zones);
+            const history = await loadAnalysisHistory(db, value.workout, value.summary, zones.maxHr);
             // Let the summary paint before the analysis blocks the JS thread.
             await new Promise<void>((resolve) => setTimeout(resolve, 0));
             if (cancelled) return;
@@ -214,8 +221,8 @@ export default function WorkoutDetailScreen() {
   }, [loaded, zones]);
   const strain = useMemo(() => {
     if (!loaded) return null;
-    return workoutStrain(loaded.points, zones);
-  }, [loaded, zones]);
+    return workoutStrain(loaded.points, zones.maxHr);
+  }, [loaded, zones.maxHr]);
   const effect = useMemo(() => trainingEffect(loaded?.summary ?? {}, strain?.trimp ?? null), [loaded, strain]);
   const vo2 = plausibleVo2(loaded?.summary.vo2max);
   const effectShown =
@@ -472,6 +479,17 @@ export default function WorkoutDetailScreen() {
         <Skeleton width="100%" height={320} radius="card" />
       )}
       {summary.gps === 'failed' ? <Notice icon="location-outline">{t('detail.gpsFailed')}</Notice> : null}
+      {kind === 'run' || kind === 'walk' ? (
+        <>
+          <RefetchDynamicsAction
+            start={workout.start}
+            sportName={workout.sportName}
+            summary={summary}
+            onChanged={() => void refreshSummary()}
+          />
+          <RunningDynamicsSection summary={summary} />
+        </>
+      ) : null}
       <CoachFeedbackSection workoutStart={workout.start} analysis={sharedAnalysis} />
 
       {effectShown ? (

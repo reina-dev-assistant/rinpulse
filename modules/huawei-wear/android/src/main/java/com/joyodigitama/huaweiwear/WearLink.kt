@@ -924,6 +924,32 @@ internal class WearLink(
     return sync.saved
   }
 
+  /**
+   * Reads the running form of workouts this watch recorded and the phone already holds ([starts], unix seconds) from the watch again
+   * and merges it into their stored summaries (`refetchWorkoutData`). Nothing else of a workout changes; one the watch no longer
+   * holds is reported, not an error. Runs under the operation lock like a sync, so it waits for one in progress. A lost link
+   * throws; workouts done before it stay merged.
+   */
+  suspend fun refetchWorkoutData(starts: List<Long>): RefetchReport {
+    val connection = requireConnected()
+    return try {
+      connection.operationLock.withLock {
+        val workouts = WorkoutStore(syncStore, connection.address)
+        val targets = workouts.refetchTargets(starts)
+        val read = WorkoutSync(connection.session, events).refetchDynamics(targets, workouts)
+        val report = RefetchReport(starts, read)
+        events.log(
+          LogDirection.INFO, null, null, null,
+          "Workout refetch: ${starts.size} asked, ${report.count(RefetchOutcome.UPDATED)} updated, ${report.count(RefetchOutcome.UNCHANGED)} unchanged, " +
+            "${report.count(RefetchOutcome.NO_DYNAMICS)} without running form, ${report.count(RefetchOutcome.GONE)} gone, ${report.count(RefetchOutcome.FAILED)} failed",
+        )
+        report
+      }
+    } catch (e: SQLiteException) {
+      throw WearException(ErrorCodes.STORAGE, "Database error: ${e.message}", e)
+    }
+  }
+
   /** The morning summary notification, after the night's sleep and HRV are stored; never fails the sync. */
   private suspend fun postMorningSummary() {
     try {

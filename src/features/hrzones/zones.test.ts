@@ -4,13 +4,13 @@ import { openMemoryDb } from '@/cloud/syncTestKit';
 import { listDayHeartLoad } from '@/db/queries';
 import { heartZone } from '@/features/live/liveWorkout';
 import { hrZoneName } from './names';
-import { dailyStrain, strainFromLoads, workoutStrain } from '@/features/today/strain';
+import { workoutStrain } from '@/features/today/strain';
+import { hrZones } from '@/features/workouts/analysis/zones';
 
 import {
   DEFAULT_HR_ZONE_SETTINGS,
   estimateLthr,
   HR_ZONE_COUNT,
-  intensityZones,
   LTHR_MIN,
   MAX_HR_MAX,
   MAX_HR_MIN,
@@ -177,31 +177,29 @@ describe('zone ranges and indexes', () => {
   });
 });
 
-describe('zones feed the computations', () => {
+describe('zones feed the zone-time displays', () => {
   const hrr = resolveHrZones(settings({ method: 'hrr', maxHr: 190, restingHr: 55 }), 35);
   const points = Array.from({ length: 11 }, (_, i) => ({ ts: 1_760_000_000 + i * 60, hr: 140 as number | null }));
 
-  it('workout strain follows the limits: 140 bpm is zone 3 by max%, zone 2 (aerobic base) by reserve', () => {
-    expect(workoutStrain(points, hrZonesForMax(190))?.zoneMinutes).toEqual([0, 0, 10, 0, 0]);
-    expect(workoutStrain(points, hrr)?.zoneMinutes).toEqual([0, 10, 0, 0, 0, 0]);
+  it('workout zone time follows the limits: 140 bpm is zone 3 by max%, zone 2 (aerobic base) by reserve', () => {
+    expect(hrZones(points, hrZonesForMax(190)).sec).toEqual([0, 0, 600, 0, 0]);
+    expect(hrZones(points, hrr).sec).toEqual([0, 600, 0, 0, 0, 0]);
   });
 
   it('hand-edited limits move the same minutes to another zone', () => {
     const edited = resolveHrZones(settings({ maxHr: 190, limits: [95, 114, 145, 155, 171] }), 35);
-    expect(workoutStrain(points, edited)?.zoneMinutes).toEqual([0, 10, 0, 0, 0]);
+    expect(hrZones(points, edited).sec).toEqual([0, 600, 0, 0, 0]);
   });
 
-  it('the SQL day load and the JS day strain agree for default and custom limits', async () => {
+  it('the SQL day load counts seconds in whatever zones it is given', async () => {
     const { raw, db } = openMemoryDb();
     const day = 1_760_000_000 - (1_760_000_000 % 86400);
     const rates = [60, 100, 120, 135, 150, 165, 175, 185];
     rates.forEach((hr, i) => raw.query('INSERT INTO step_samples (timestamp, steps, calories, distance, heart_rate) VALUES (?, 0, 0, 0, ?)').run(day + i * 60, hr));
-    const samples = rates.map((hr, i) => ({ timestamp: day + i * 60, heartRate: hr }));
     for (const zones of [hrZonesForMax(190), hrr, resolveHrZones(settings({ maxHr: 190, limits: [90, 110, 130, 150, 170] }), 35)]) {
-      const sql = strainFromLoads(await listDayHeartLoad(db, [day, day + 86400], zones.bounds));
-      const js = dailyStrain(samples, zones);
-      expect(sql[0]?.zoneMinutes).toEqual(js[0]?.zoneMinutes as never);
-      expect(sql[0]?.trimp).toBe(js[0]?.trimp as number);
+      const sql = await listDayHeartLoad(db, [day, day + 86400], zones.bounds);
+      const expected = zones.bounds.map((_, i) => rates.filter((hr) => zoneIndex(hr, zones) === i + 1).length * 60);
+      expect(sql[0]?.zoneSeconds).toEqual(expected);
     }
   });
 
@@ -290,9 +288,10 @@ describe('reserve method zones, numbered as the watch and Huawei Health do (a ru
     expect(zoneRange(6, zones)).toEqual({ from: 184, to: 190 });
   });
 
-  it('weights the minutes by the zone number: an hour at 140 bpm is TRIMP 120, not the old 60', () => {
+  it('does not weight strain by the zone number: an hour at 140 bpm is Edwards zone 3, TRIMP 180, under the reserve zones too', () => {
     const points = Array.from({ length: 61 }, (_, i) => ({ ts: 1_760_000_000 + i * 60, hr: 140 as number | null }));
-    expect(workoutStrain(points, zones)?.trimp).toBeCloseTo(120, 6);
+    expect(workoutStrain(points, zones.maxHr)?.trimp).toBeCloseTo(180, 6);
+    expect(hrZones(points, zones).sec).toEqual([0, 3600, 0, 0, 0, 0]);
   });
 
   it('a limit edited under the warm-up pulls the warm-up start down; the watch still gets Huawei\'s five limits', () => {
@@ -351,7 +350,7 @@ describe('lthr method (Friel zones from the lactate threshold heart rate)', () =
     const zones = resolveHrZones(settings({ method: 'lthr', lthr: 168, maxHr: 190 }), 35);
     expect([100, 120, 145, 155, 165, 175].map((hr) => zoneIndex(hr, zones))).toEqual([0, 1, 2, 3, 4, 5]);
     expect(new Set([1, 2, 3, 4, 5].map((z) => hrZoneName('lthr', z))).size).toBe(5);
-    expect(intensityZones('lthr')).toEqual(intensityZones('max'));
+    expect(heartZone(160, zones)?.zone).toBe(4);
   });
 
   it('goes to the watch as the maximum-heart-rate set with the zones as computed', () => {

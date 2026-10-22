@@ -984,7 +984,8 @@
       "startLabel": "Zone {{n}} starts at (bpm)",
       "custom": "You changed the zone limits by hand.",
       "resetLimits": "Restore",
-      "details": "The bpm and percent boxes are where each zone starts: tap a box and type to change it. Changing the method, max HR or resting HR works them out again. Workout analysis, strain, the daily heart-rate chart, Coach and the watch's workout screen use the same limits. Workouts already uploaded to JoyoRogo are not recalculated.",
+      "scope": "Applies to past workouts too (time per zone, Coach). Strain and intensity minutes always use % of max HR.",
+      "details": "The bpm and percent boxes are where each zone starts: tap a box and type to change it. Changing the method, max HR or resting HR works them out again. Time per zone in workouts, the daily heart-rate chart, Coach and the watch's workout screen use these limits. Strain, training load and intensity minutes always use fixed percentages of max HR (Edwards: 50, 60, 70, 80, 90), so changing the zones never changes them. Workouts already uploaded to JoyoRogo keep the zone time they were uploaded with.",
       "head": {
         "zone": "Zone",
         "bpm": "Heart rate (bpm)",

@@ -16,6 +16,86 @@ public protocol WorkoutSink: AnyObject {
     func save(_ record: WorkoutRecord) throws -> Bool
 }
 
+/// What `DynamicsSink.mergeSummary` did with the running form of one stored workout.
+public enum DynamicsMerge: Sendable, Equatable {
+    case updated
+    case unchanged
+    case notStored
+}
+
+/// A stored summary with the running form put in; `changed` is false when it already had exactly that.
+public struct SummaryEdit: Sendable {
+    public let json: String
+    public let changed: Bool
+
+    public init(json: String, changed: Bool) {
+        self.json = json
+        self.changed = changed
+    }
+}
+
+/// Where `WorkoutSync.refetchDynamics` puts the running form it read again; only the dynamics of the stored summary are touched.
+public protocol DynamicsSink: AnyObject {
+    /// Hands the stored `summary_json` of the workout at `start` (one this watch recorded) to `edit`, and stores what it returns when it
+    /// changed. `notStored` when there is no such workout or `edit` gives nothing.
+    func mergeSummary(start: Int64, _ edit: (String) -> SummaryEdit?) throws -> DynamicsMerge
+}
+
+/// A stored workout to read from the watch again: its start (unix seconds, the key), end and the watch's own number when it was stored.
+public struct RefetchTarget: Sendable, Equatable {
+    public let start: Int64
+    public let end: Int64
+    public let number: Int
+
+    public init(start: Int64, end: Int64, number: Int) {
+        self.start = start
+        self.end = end
+        self.number = number
+    }
+}
+
+/// How one workout of `WorkoutSync.refetchDynamics` ended.
+public enum RefetchOutcome: String, Sendable, Equatable {
+    /// The watch sent running form and the stored summary now has it.
+    case updated
+    /// The watch sent running form and the summary already had exactly that.
+    case unchanged
+    /// The watch still has the workout but its samples carry no running form.
+    case noDynamics = "no_dynamics"
+    /// The watch no longer lists the workout (or this phone has no copy recorded by this watch).
+    case gone
+    /// The watch did not answer usably, or the workout could not be stored; asking again may work.
+    case failed
+}
+
+/// What a refetch did, per requested start (`WorkoutRefetchReport` in HuaweiWear.types.ts). A start the phone has no copy of that this
+/// watch recorded is `gone` too: there is nothing on the phone to merge into.
+public struct RefetchReport: Sendable, Equatable {
+    public let outcomes: [(start: Int64, outcome: RefetchOutcome)]
+
+    public init(requested: [Int64], read: [Int64: RefetchOutcome]) {
+        outcomes = requested.map { (start: $0, outcome: read[$0] ?? .gone) }
+    }
+
+    public static func == (a: RefetchReport, b: RefetchReport) -> Bool {
+        a.outcomes.count == b.outcomes.count && zip(a.outcomes, b.outcomes).allSatisfy { $0.start == $1.start && $0.outcome == $1.outcome }
+    }
+
+    public func count(_ outcome: RefetchOutcome) -> Int { outcomes.filter { $0.outcome == outcome }.count }
+
+    public func toJS() -> [String: Any] {
+        [
+            "requested": outcomes.count,
+            "updated": count(.updated),
+            "unchanged": count(.unchanged),
+            "noDynamics": count(.noDynamics),
+            "gone": count(.gone),
+            "failed": count(.failed),
+            "results": outcomes.map { ["start": $0.start, "outcome": $0.outcome.rawValue] as [String: Any] },
+        ]
+    }
+}
+
 /// Port of HuaweiWorkoutSyncManager. GB drives callbacks through a request queue; here each step is an `await` with the same order and the same
 /// retry rules:
 ///
@@ -47,6 +127,8 @@ public final class WorkoutSync: @unchecked Sendable {
     private static let maxRetries = 3
     private static let maxSmallerTimeslotDepth = 5
     private static let sectionsNormalError: Int32 = 0x0001_E079
+    /// A refetch lists the workouts of its stored start..end padded by this much, whether the watch filters the count by start or by end.
+    private static let refetchSlackSec: Int64 = 60
     /// GB uses 5 s for every workout request; the Fit 4 answers the data requests slowly, so more room here.
     private static let defaultWorkoutMs = 10_000
 
@@ -63,10 +145,84 @@ public final class WorkoutSync: @unchecked Sendable {
     private func info(_ message: String) { log(LogEntry(.info, message)) }
 
     public func sync(startSec: Int, endSec: Int, sink: WorkoutSink) async throws {
+        guard serviceOffered() else { return }
+        let newSteps = try await queryNewSteps()
+        info("Workout: from=\(startSec) to=\(endSec) newSteps=\(newSteps)")
+        try await listWorkouts(startSec: startSec, endSec: endSec) { numbers in
+            for n in numbers { try await self.syncWorkout(n, newSteps: newSteps, sink: sink) }
+        }
+    }
+
+    /// Reads only the data samples (17/0A) of the stored workouts in `targets` again and hands the running form in them to `sink`, which
+    /// leaves everything else of the stored workout alone. A workout is found with a WorkoutCount (17/07) over its own time (the watch
+    /// keeps the list of what it holds; one that rolled off is not in it), then the watch's totals (17/08) must say the same start, so a
+    /// recycled workout number never merges another run's form. Nothing but the dynamics is downloaded: no pace, sections, SpO2 or GPS.
+    /// A workout whose frames did not arrive is left as it was (`failed`): a series built from a gap would start in the wrong minute.
+    /// A lost link throws, as in `sync`.
+    public func refetchDynamics(targets: [RefetchTarget], sink: DynamicsSink) async throws -> [Int64: RefetchOutcome] {
+        var outcomes: [Int64: RefetchOutcome] = [:]
+        guard serviceOffered() else {
+            for t in targets { outcomes[t.start] = .gone }
+            return outcomes
+        }
+        let newSteps = try await queryNewSteps()
+        for target in targets {
+            outcomes[target.start] = try await refetchOne(target, newSteps: newSteps, sink: sink)
+        }
+        return outcomes
+    }
+
+    private func refetchOne(_ target: RefetchTarget, newSteps: Bool, sink: DynamicsSink) async throws -> RefetchOutcome {
+        let from = Int(max(0, min(target.start - Self.refetchSlackSec, Int64(Int32.max))))
+        let to = Int(max(0, min(target.end + Self.refetchSlackSec, Int64(Int32.max))))
+        let unreadable = Flag()
+        let match = Match()
+        do {
+            try await listWorkouts(startSec: from, endSec: to) { listed in
+                // The stored number first: nearly always the one, so the totals of the others are not asked for.
+                let ordered = listed.filter { Int($0.workoutNumber) == target.number } + listed.filter { Int($0.workoutNumber) != target.number }
+                for n in ordered {
+                    if match.value != nil { return }
+                    guard let totals = try await self.readTotals(n) else {
+                        unreadable.value = true
+                        continue
+                    }
+                    if Int64(UInt32(bitPattern: totals.startTime)) == target.start { match.value = (n, totals) }
+                }
+            }
+        } catch let e as WearError where e.code == .protocolError {
+            // A watch that answers the count with errors all the way down ends here; a lost link is not this and still throws.
+            info("refetch \(target.start): \(e.message)")
+            return .failed
+        }
+        guard let (numbers, totals) = match.value else { return unreadable.value ? .failed : .gone }
+
+        let parts = WorkoutParts(totals: totals)
+        parts.newSteps = newSteps
+        try await downloadData(numbers, parts)
+        if parts.missingData {
+            info("refetch \(target.start): some data frames did not arrive, the stored workout is left as it was")
+            return .failed
+        }
+        guard let dynamics = RunDynamics.of(parts.samples) else {
+            info("refetch \(target.start): \(parts.samples.count) samples, no running form in them")
+            return .noDynamics
+        }
+        let merged = try sink.mergeSummary(start: target.start) { stored in
+            RunDynamics.merge(summaryJson: stored, result: dynamics).map { SummaryEdit(json: $0.json, changed: $0.changed) }
+        }
+        switch merged {
+        case .updated: return .updated
+        case .unchanged: return .unchanged
+        case .notStored: return .failed
+        }
+    }
+
+    private func serviceOffered() -> Bool {
         let supportedServices = caps.supportedCommands
         if !supportedServices.isEmpty && supportedServices[Self.service] == nil {
             info("Workout: service 0x17 not offered by the watch, workout sync skipped")
-            return
+            return false
         }
         let commands17 = supportedServices[Self.service].map { $0.map { $0.hex2 }.joined(separator: " ") } ?? "none"
         info(
@@ -74,10 +230,15 @@ public final class WorkoutSync: @unchecked Sendable {
                 + "17/0A=\(caps.supports(Self.service, 0x0A)) 17/15=\(caps.supports(Self.service, 0x15)) "
                 + "gpsNewSync(SettingRelated)=\(caps.gpsNewSync) commands17=[\(commands17)]"
         )
+        return true
+    }
 
-        let newSteps = try await queryNewSteps()
-        info("Workout: from=\(startSec) to=\(endSec) newSteps=\(newSteps)")
-
+    /// WorkoutCount (17/07) over a window, as the sync asks it: an error answer or a count that does not match the list asks twice for each
+    /// half of the window instead (at most `maxSmallerTimeslotDepth` levels deep). `onRange` gets the listed workouts of every range that
+    /// answered, sorted by workout number (GB: the timestamp based sync state depends on it).
+    private func listWorkouts(
+        startSec: Int, endSec: Int, _ onRange: ([Workout.WorkoutCount.Response.WorkoutNumbers]) async throws -> Void
+    ) async throws {
         var queue = [Range(start: startSec, end: endSec, depth: 0)]
         while !queue.isEmpty {
             let range = queue.removeFirst()
@@ -105,12 +266,12 @@ public final class WorkoutSync: @unchecked Sendable {
                 continue
             }
 
-            // GB: sorted by workout number, the timestamp based sync state depends on it. Stable, like Kotlin's sortedBy.
+            // Stable, like Kotlin's sortedBy.
             let numbers = listed.enumerated().sorted { a, b in
                 a.element.workoutNumber != b.element.workoutNumber ? a.element.workoutNumber < b.element.workoutNumber : a.offset < b.offset
             }.map { $0.element }
             info("Workout: \(numbers.count) workouts in \(range.start)..\(range.end): \(numbers.map { describe($0) }.joined(separator: ", "))")
-            for n in numbers { try await syncWorkout(n, newSteps: newSteps, sink: sink) }
+            try await onRange(numbers)
         }
     }
 
@@ -132,10 +293,11 @@ public final class WorkoutSync: @unchecked Sendable {
         return response?.supportNewStep == true
     }
 
-    private func syncWorkout(_ numbers: Workout.WorkoutCount.Response.WorkoutNumbers, newSteps: Bool, sink: WorkoutSink) async throws {
+    /// The watch's totals (17/08) of one listed workout, repeated up to `maxRetries` times on an error answer; nil when it never answered usably.
+    private func readTotals(_ numbers: Workout.WorkoutCount.Response.WorkoutNumbers) async throws -> Workout.WorkoutTotals.Response? {
         let wn = numbers.workoutNumber
         let label = "workout \(wn)"
-        let totals: Workout.WorkoutTotals.Response? = try await retrying("WorkoutTotals \(wn)") { attempt in
+        return try await retrying("WorkoutTotals \(wn)") { attempt in
             let r: Workout.WorkoutTotals.Response? = try await self.requestOrNil(Workout.WorkoutTotals.request(number: wn), "WorkoutTotals \(wn)")
             guard let r else { return nil }
             if let error = r.error {
@@ -148,6 +310,12 @@ public final class WorkoutSync: @unchecked Sendable {
             }
             return r
         }
+    }
+
+    private func syncWorkout(_ numbers: Workout.WorkoutCount.Response.WorkoutNumbers, newSteps: Bool, sink: WorkoutSink) async throws {
+        let wn = numbers.workoutNumber
+        let label = "workout \(wn)"
+        let totals = try await readTotals(numbers)
         guard let totals else {
             info("\(label): totals failed after \(Self.maxRetries) retries, moving to the next workout")
             return
@@ -190,10 +358,9 @@ public final class WorkoutSync: @unchecked Sendable {
         if let failure { throw failure }
     }
 
-    private func downloadParts(_ numbers: Workout.WorkoutCount.Response.WorkoutNumbers, _ parts: WorkoutParts) async throws {
+    /// The data samples (17/0A) of one workout, frame by frame; a frame the watch refused flags `missingData`.
+    private func downloadData(_ numbers: Workout.WorkoutCount.Response.WorkoutNumbers, _ parts: WorkoutParts) async throws {
         let wn = numbers.workoutNumber
-        let label = "workout \(wn)"
-
         for i in 0..<max(Int(numbers.dataCount), 0) {
             let l = "WorkoutData \(wn)/\(i)"
             let r: Workout.WorkoutData.Response? = try await retrying(l) { attempt in
@@ -220,6 +387,13 @@ public final class WorkoutSync: @unchecked Sendable {
             info("\(l): \(r.dataList.count) samples, interval \(r.header?.interval ?? 0)s, bitmap \(r.header?.bitmap ?? 0), inner bitmap \(r.innerBitmap)")
             parts.samples.append(contentsOf: r.dataList)
         }
+    }
+
+    private func downloadParts(_ numbers: Workout.WorkoutCount.Response.WorkoutNumbers, _ parts: WorkoutParts) async throws {
+        let wn = numbers.workoutNumber
+        let label = "workout \(wn)"
+
+        try await downloadData(numbers, parts)
 
         for i in 0..<max(Int(numbers.paceCount), 0) {
             let l = "WorkoutPace \(wn)/\(i)"
@@ -323,6 +497,10 @@ public final class WorkoutSync: @unchecked Sendable {
 
     private final class Flag: @unchecked Sendable {
         var value = false
+    }
+
+    private final class Match: @unchecked Sendable {
+        var value: (Workout.WorkoutCount.Response.WorkoutNumbers, Workout.WorkoutTotals.Response)?
     }
 
     /// GB finishSingleWorkoutSync -> downloadWorkoutGpsFiles.
