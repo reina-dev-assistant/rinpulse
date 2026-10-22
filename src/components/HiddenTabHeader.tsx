@@ -2,11 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { HIT, spacing, useTheme } from '@/theme';
 
-/** Back arrow (or Today when there is no history) for a header that has none of its own. */
+/**
+ * Back arrow (or Today when there is no history) for a header that has none of its own. On iOS it copies the native back
+ * item: a chevron in a square box with no side margin, so the system's round glass background is a circle like the pushed
+ * screens' back button instead of a stretched capsule.
+ */
 export function HeaderBackButton() {
   const router = useRouter();
   const { t } = useTranslation('common');
@@ -17,8 +21,8 @@ export function HeaderBackButton() {
       accessibilityLabel={t('actions.back')}
       hitSlop={8}
       onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-      style={styles.back}>
-      <Ionicons name="arrow-back" size={24} color={colors.foreground} />
+      style={Platform.OS === 'ios' ? styles.backIos : styles.back}>
+      <Ionicons name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'} size={24} color={colors.foreground} />
     </Pressable>
   );
 }
@@ -47,5 +51,6 @@ export function HiddenTabHeader({ title, right }: { title: string; right?: React
 
 const styles = StyleSheet.create({
   back: { width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.xs },
+  backIos: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   right: { marginRight: spacing.lg },
 });

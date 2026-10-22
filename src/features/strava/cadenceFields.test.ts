@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import type { WorkoutRow } from '@/db/queries';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 import { analyzeWorkout, type AnalyzeInput } from '@/features/workouts/analysis/analyze';
 import { straightRun, T0, workoutRow } from '@/features/workouts/analysis/fixtures';
 import type { AnalysisPoint } from '@/features/workouts/analysis/series';
@@ -31,7 +32,7 @@ function input(over: { cadence?: (t: number) => number | null; summary?: Workout
 
 /** What the workout screen shows for the same workout. */
 function shown(c: Case) {
-  const analyzed: AnalyzeInput = { ...c, maxHr: 190, daySamples: [], history: { efforts: [], trimps: [], similar: [] } };
+  const analyzed: AnalyzeInput = { ...c, zones: hrZonesForMax(190), daySamples: [], history: { efforts: [], trimps: [], similar: [] } };
   return analyzeWorkout(analyzed, { includeHr: true, includeRoute: true, includeComparison: false }).stats;
 }
 

@@ -8,23 +8,47 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import org.json.JSONObject
 
-/** How a Huawei sport id of the export becomes a JoyoFit sport (the watch's own ids, see [WorkoutSportTypes]). */
+/**
+ * How a Huawei sport id of the export (`subType` of a record, the `Sport type` sheet of the field description) becomes a
+ * JoyoFit sport (the watch's own ids, see [WorkoutSportTypes]). Huawei's list and the watch's share ids from 140 up to 216
+ * and 223 (strength training 140, HIIT 143, boxing 149 ...); the first ones differ and are listed here. Ids the watch has no
+ * sport for (free weights 117 is strength training, the rest stay unnamed) keep their Huawei id in the summary.
+ */
 internal object HuaweiExportSports {
   /** The sport id for ones the export has but this table does not know: GB's catch-all `EXERCISE`. */
   const val OTHER = 255
 
-  /**
-   * Only the ids community converters agree on: 3 cycling, 4 running, 5 walking (m1ty/huawei2gpx, driemekasten/
-   * hhealth2zepp, JordyThien/Huawei-Health-Importer). Which other ids exist, and whether they share one id space with
-   * the watch's workout list, is unverified: everything else stays an unnamed workout and keeps its Huawei id in the
-   * summary.
-   */
-  private val KNOWN: Map<Int, Int> = mapOf(3 to 3, 4 to 1, 5 to 2)
+  private val SPECIAL: Map<Int, Int> = mapOf(
+    1 to 177, // climbing stairs
+    2 to 4, // mountain climbing
+    3 to 3, // outdoor cycling
+    4 to 1, // outdoor running
+    5 to 2, // outdoor walking (the id 5 is in the data and not in Huawei's sheet; every converter reads it as walking)
+    9 to 8, // swimming
+    101 to 5, // indoor running
+    102 to 6, // pool swimming
+    103 to 7, // indoor cycling
+    104 to 8, // open water
+    105 to 128, 106 to 129, 107 to 130, 108 to 131, 109 to 132, 110 to 133, // racket and ball sports
+    111 to 134, 112 to 135, 113 to 136, // elliptical, rowing machine, stepmill
+    114 to 137, 115 to 138, 116 to 139, // yoga, pilates, aerobics
+    117 to 140, // free weights: strength training
+    118 to 11, // trail run
+    281 to 13, // indoor walking
+    282 to 14, // hiking
+    287 to 22, 288 to 23, 289 to 24, 291 to 25, // free diving, breath-hold training and test, scuba
+  )
 
-  fun joyofitType(huaweiType: Int?): Int = huaweiType?.let { KNOWN[it] } ?: OTHER
+  fun joyofitType(huaweiType: Int?): Int {
+    if (huaweiType == null) return OTHER
+    SPECIAL[huaweiType]?.let { return it }
+    return if ((huaweiType in 140..216 || huaweiType == 223) && WorkoutSportTypes.sport(huaweiType) != null) huaweiType else OTHER
+  }
 
-  fun name(huaweiType: Int?): String =
-    if (huaweiType != null && huaweiType in KNOWN) WorkoutSportTypes.name(KNOWN.getValue(huaweiType)) else "Workout (Huawei type ${huaweiType ?: "unknown"})"
+  fun name(huaweiType: Int?): String {
+    val type = joyofitType(huaweiType)
+    return if (type != OTHER) WorkoutSportTypes.name(type) else "Workout (Huawei type ${huaweiType ?: "unknown"})"
+  }
 }
 
 /** One GPS fix of a track; [startsSegment] after a pause marker. */
@@ -38,6 +62,8 @@ internal class MotionTrack(
   val heartRates: List<SensorReading>,
   val altitudes: List<SensorReading>,
   val cadences: List<SensorReading>,
+  /** `tp=rs`: [SensorReading.ts] is the offset in seconds from the workout's start, the value metres per second. */
+  val speeds: List<SensorReading> = emptyList(),
 )
 
 /** The fields of one `Motion path detail data` object that the importer reads. Times are milliseconds. */
@@ -50,8 +76,10 @@ internal class RawMotionPath(
   val totalCalories: Double?,
   val totalTime: Double?,
   val timeZone: String?,
-  /** The `HW_EXT_TRACK_DETAIL@i...` text, one record per line. */
+  /** The track text (`detailData`, once `attribute`), one record per line. */
   val attribute: String,
+  /** The parsed `summaryData` JSON: heart-rate figures, pace, climb. */
+  val summary: JSONObject? = null,
 )
 
 /**
@@ -75,23 +103,40 @@ internal object HuaweiMotionPathParser {
   private const val HR_RANGE_MAX = 250
   private const val CADENCE_RANGE_MAX = 300
 
-  /** No human burns more than this many kcal a minute, so a larger figure is not kcal. */
-  private const val MAX_KCAL_PER_MINUTE = 40.0
+  /** 100 m/s: nothing a person moves at on land. */
+  private const val SPEED_MAX_DM_PER_SEC = 1000.0
 
   /** Elevation changes under this many metres are barometer noise. */
   private const val ELEVATION_NOISE_M = 3.0
 
-  fun fromJson(obj: JSONObject): RawMotionPath = RawMotionPath(
-    startMs = HuaweiExportJson.epochMs(obj.opt("startTime")),
-    endMs = HuaweiExportJson.epochMs(obj.opt("endTime")),
-    sportType = HuaweiExportJson.number(obj.opt("sportType"))?.roundToInt(),
-    totalSteps = HuaweiExportJson.number(obj.opt("totalSteps") ?: obj.opt("steps")),
-    totalDistance = HuaweiExportJson.number(obj.opt("totalDistance") ?: obj.opt("distance")),
-    totalCalories = HuaweiExportJson.number(obj.opt("totalCalories") ?: obj.opt("calorie") ?: obj.opt("calories")),
-    totalTime = HuaweiExportJson.number(obj.opt("totalTime") ?: obj.opt("duration")),
-    timeZone = obj.optString("timeZone", "").ifEmpty { null },
-    attribute = obj.optString("attribute", ""),
-  )
+  /**
+   * One record of a real export: `{startTime, endTime, subType (the sport id), timeZone, summaryData: "<JSON text>", detailData:
+   * "<track text>"}`. The totals live in `summaryData` (`totalDistance` m, `totalSteps`, `totalCalories` cal, `totalTime` ms);
+   * records in the layout community converters describe carry them, and `attribute` for the track, at the top.
+   */
+  fun fromJson(obj: JSONObject): RawMotionPath {
+    val summary = HuaweiExportJson.embeddedObject(obj.opt("summaryData"))
+    fun total(vararg names: String): Double? {
+      for (name in names) {
+        HuaweiExportJson.number(summary?.opt(name))?.let { return it }
+        HuaweiExportJson.number(obj.opt(name))?.let { return it }
+      }
+      return null
+    }
+    val track = obj.optString("detailData", "").ifEmpty { obj.optString("attribute", "") }
+    return RawMotionPath(
+      startMs = HuaweiExportJson.epochMs(obj.opt("startTime")),
+      endMs = HuaweiExportJson.epochMs(obj.opt("endTime")),
+      sportType = HuaweiExportJson.number(obj.opt("subType") ?: obj.opt("sportType"))?.roundToInt(),
+      totalSteps = total("totalSteps", "steps"),
+      totalDistance = total("totalDistance", "distance"),
+      totalCalories = total("totalCalories", "calorie", "calories"),
+      totalTime = total("totalTime", "duration"),
+      timeZone = obj.optString("timeZone", "").ifEmpty { null },
+      attribute = track,
+      summary = summary,
+    )
+  }
 
   /** Regex fallback for a record that is not valid JSON; null when not even a start time can be found. */
   fun fromBrokenText(text: String): RawMotionPath? {
@@ -118,6 +163,7 @@ internal object HuaweiMotionPathParser {
     val heartRates = ArrayList<SensorReading>()
     val altitudes = ArrayList<SensorReading>()
     val cadences = ArrayList<SensorReading>()
+    val speeds = ArrayList<SensorReading>()
     var pendingBreak = false
     for (line in attribute.split('\n')) {
       val at = line.indexOf("tp=")
@@ -158,14 +204,21 @@ internal object HuaweiMotionPathParser {
           val spm = HuaweiExportJson.number(fields["v"])?.roundToInt()
           if (ms != null && spm != null && spm in 1..CADENCE_RANGE_MAX) cadences.add(SensorReading((ms / 1000.0).toLong(), spm.toDouble()))
         }
+        "rs" -> {
+          val offset = HuaweiExportJson.number(fields["k"])
+          val dmPerSec = HuaweiExportJson.number(fields["v"])
+          // -1 is "no speed" (indoor and strength workouts write the series anyway); decimetres per second to metres.
+          if (offset != null && dmPerSec != null && offset >= 0 && dmPerSec in 0.0..SPEED_MAX_DM_PER_SEC) speeds.add(SensorReading(offset.toLong(), dmPerSec / 10.0))
+        }
       }
     }
-    return MotionTrack(gps, heartRates, altitudes, cadences)
+    return MotionTrack(gps, heartRates, altitudes, cadences, speeds)
   }
 
   /** The workout [raw] describes, or null when it has no usable start or no duration at all. */
   fun build(raw: RawMotionPath): ImportedWorkout? {
     val track = parseTrack(raw.attribute)
+    fun summaryHr(name: String): Int? = HuaweiExportJson.number(raw.summary?.opt(name))?.roundToInt()?.takeIf { it in HR_RANGE_MIN..HR_RANGE_MAX }
     val trackTimes = track.gps.map { it.ts } + track.heartRates.map { it.ts } + track.altitudes.map { it.ts } + track.cadences.map { it.ts }
     val start = raw.startMs?.div(1000) ?: trackTimes.minOrNull() ?: return null
     val elapsedMs = raw.endMs?.let { it - start * 1000 }
@@ -177,8 +230,9 @@ internal object HuaweiMotionPathParser {
 
     val distance = (raw.totalDistance?.takeIf { it > 0 } ?: trackDistance(track.gps)).roundToInt()
     val heartRates = track.heartRates.map { it.value.toInt() }
-    val avgHr = if (heartRates.isEmpty()) null else heartRates.average().roundToInt()
-    val maxHr = heartRates.maxOrNull()
+    // The track's own readings first; the summary's figures for a workout whose track has none.
+    val avgHr = if (heartRates.isEmpty()) summaryHr("avgHeartRate") else heartRates.average().roundToInt()
+    val maxHr = heartRates.maxOrNull() ?: summaryHr("maxHeartRate")
     val kind = WorkoutSportTypes.kind(HuaweiExportSports.joyofitType(raw.sportType))
 
     val points = ArrayList<WorkoutPoint>(track.gps.size + track.heartRates.size + track.altitudes.size + track.cadences.size)
@@ -186,6 +240,7 @@ internal object HuaweiMotionPathParser {
     for (h in track.heartRates) points.add(WorkoutPoint(h.ts, null, null, null, h.value.toInt()))
     for (a in track.altitudes) points.add(WorkoutPoint(a.ts, null, null, a.value, null))
     for (c in track.cadences) points.add(WorkoutPoint(c.ts, null, null, null, null, cadence = c.value.toInt()))
+    for (v in track.speeds) points.add(WorkoutPoint(start + v.ts, null, null, null, null, speed = v.value))
     // Stable: GPS fixes before sensor readings of the same second.
     val sorted = points.sortedBy { it.ts }
 
@@ -196,7 +251,7 @@ internal object HuaweiMotionPathParser {
       sportName = HuaweiExportSports.name(raw.sportType),
       duration = duration,
       distance = distance,
-      calories = kcal(raw.totalCalories, duration),
+      calories = kcal(raw.totalCalories),
       steps = raw.totalSteps?.roundToInt()?.coerceAtLeast(0) ?: 0,
       avgHr = avgHr,
       maxHr = maxHr,
@@ -206,15 +261,10 @@ internal object HuaweiMotionPathParser {
   }
 
   /**
-   * Huawei's `totalCalories` is kcal in some exports and thousandths of one (small calories) in others. A figure that
-   * would be more than [MAX_KCAL_PER_MINUTE] over the workout cannot be kcal, so it is divided by 1000. Whether other
-   * scales exist is unknown until a real export is compared with the watch's own figure.
+   * `totalCalories` is in small calories (cal, 1/1000 kcal) as the field description says; on a real export the 103 workouts
+   * come to a median of 7.8 kcal per minute that way (and to nonsense in any other unit).
    */
-  fun kcal(raw: Double?, durationSec: Int): Int {
-    if (raw == null || raw <= 0.0) return 0
-    val perMinute = raw / (durationSec / 60.0)
-    return (if (durationSec > 0 && perMinute > MAX_KCAL_PER_MINUTE) raw / 1000.0 else raw).roundToInt()
-  }
+  fun kcal(raw: Double?): Int = if (raw == null || raw <= 0.0) 0 else (raw / 1000.0).roundToInt()
 
   /** `totalTime` in seconds, reading it as the unit (ms or s) that lands closer to the elapsed time; ms without one. */
   private fun totalTimeSeconds(totalTime: Double?, elapsedMs: Long?): Long? {
@@ -286,6 +336,11 @@ internal object HuaweiMotionPathParser {
       if (WorkoutSportTypes.isPace(kind)) json.put("avgPaceSecPerKm", 1000.0 / avgSpeed)
     }
     heartRates.minOrNull()?.let { json.put("minHr", it) }
+    // `creepingWave` (climb) and `mTotalDescent` are decimetres, 0 or -1 when the watch had no barometer reading.
+    if (track.altitudes.isEmpty()) {
+      HuaweiExportJson.number(raw.summary?.opt("creepingWave"))?.takeIf { it > 0 }?.let { json.put("elevationGain", it / 10.0) }
+      HuaweiExportJson.number(raw.summary?.opt("mTotalDescent"))?.takeIf { it > 0 }?.let { json.put("elevationLoss", it / 10.0) }
+    }
     if (track.altitudes.isNotEmpty()) {
       val values = track.altitudes.map { it.value }
       json.put("minAltitude", values.min())

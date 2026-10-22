@@ -184,7 +184,9 @@ export function buildRunSubject(input: RunSubjectInput, locale: 'id' | 'en' | Lo
 
   const zones = analysis?.hrZones;
   if (hasHr && zones && zones.sec.length >= 5) {
+    // The templates draw five zones: the reserve method's sixth (anaerobic advance) joins the fifth.
     const sec = zones.sec.slice(0, 5).map((s) => (pos(s) ? s : 0));
+    if (pos(zones.sec[5])) sec[4] += zones.sec[5] as number;
     const total = sec.reduce((a, b) => a + b, 0);
     if (total > 0) {
       run.hrZoneSec = sec;

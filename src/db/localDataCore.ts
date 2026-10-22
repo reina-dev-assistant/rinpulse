@@ -55,6 +55,7 @@ export const USER_DATA_TABLES = [
   'workout_deleted',
   'coach_doc',
   'sync_item',
+  'rogo_import_queue',
 ] as const;
 
 /** Tables whose rows say the phone holds something worth asking about before another account takes over. */

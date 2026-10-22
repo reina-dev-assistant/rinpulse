@@ -18,6 +18,7 @@ import {
 } from '@/db/cloud';
 import { ensureCoachSchema } from '@/features/coach/store';
 import { ensureGearSchema, saveGear } from '@/features/gear/store';
+import { ensureRogoImportQueueSchema } from '@/features/huaweiimport/rogoQueue';
 import { ensureDeletedSchema } from '@/features/workouts/deleteCore';
 import { ensureStrengthSchema, putRecord, setStrengthMeta, listDirty } from '@/features/strength/store';
 import { ANALYSIS_ENGINE_REV } from '@/features/workouts/analysis/engineRev';
@@ -36,6 +37,7 @@ async function phone(): Promise<Phone> {
   await ensureCoachSchema(db);
   await ensureSyncItemSchema(db);
   await ensureDeletedSchema(db);
+  await ensureRogoImportQueueSchema(db);
   raw.exec('CREATE TABLE IF NOT EXISTS strength_kcal_sent (workout_id TEXT PRIMARY KEY NOT NULL, external_id TEXT NOT NULL, date TEXT NOT NULL, kcal INTEGER NOT NULL, sent_at INTEGER NOT NULL)');
   return { raw, db };
 }

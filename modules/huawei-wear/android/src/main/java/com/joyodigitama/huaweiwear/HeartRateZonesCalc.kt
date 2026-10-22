@@ -1,9 +1,10 @@
 // Derived from Gadgetbridge (AGPL-3.0-or-later; see NOTICE): devices/huawei/{HuaweiHeartRateZones,HuaweiHeartRateZonesSpec},
 // model/heartratezones/{HeartRateZones,HeartRateZonesConfig,HeartRateZonesUtils} and the TLV layout of
-// service/devices/huawei/p2p/HuaweiP2PTrackService.getHRZonesData. Only GB's defaults are ported (no user-edited zones).
+// service/devices/huawei/p2p/HuaweiP2PTrackService.getHRZonesData. GB's defaults are ported as they are; user-edited zones
+// (Huawei Health's zone screen, [UserZones]) are JoyoFit's own addition on top of the same Config/TLV layout.
 package com.joyodigitama.huaweiwear
 
-/** Default heart-rate zones of GB's Huawei spec and the TLV the watch's `hw.unitedevice.track` module takes. Pure, no Android. */
+/** Default (or user-configured, [UserZones]) heart-rate zones and the TLV the watch's `hw.unitedevice.track` module takes. Pure, no Android. */
 internal object HeartRateZonesCalc {
   const val MAXIMUM_HEART_RATE = 220
   const val DEFAULT_REST_HEART_RATE = 60
@@ -57,6 +58,40 @@ internal object HeartRateZonesCalc {
     fun isValid(): Boolean = checkValue(warningHRLimit) && warningHRLimit > 0 && zones.isNotEmpty() && zones.all { it.isValid() }
   }
 
+  /**
+   * The zones the user set in the app (`HeartRateZonesConfig` in `HuaweiWear.types.ts`): [method] is [Method.MHR] (max-HR %) or
+   * [Method.HRR] (HR reserve), [zones] the lowest bpm of Z1..Z5.
+   */
+  data class UserZones(
+    val method: Method,
+    val maxHr: Int,
+    val restingHr: Int,
+    val zones: List<Int>,
+    val warningEnabled: Boolean,
+    val warningLimit: Int,
+  ) {
+    /** What is wrong with the values, or null when the watch can take them. */
+    fun problem(): String? = when {
+      method != Method.MHR && method != Method.HRR -> "Zone method must be max or hrr"
+      maxHr !in MAX_HR_RANGE -> "Max heart rate must be ${MAX_HR_RANGE.first} to ${MAX_HR_RANGE.last} bpm"
+      restingHr !in RESTING_HR_RANGE -> "Resting heart rate must be ${RESTING_HR_RANGE.first} to ${RESTING_HR_RANGE.last} bpm"
+      restingHr >= maxHr -> "Resting heart rate must be below the max heart rate"
+      zones.size != 5 -> "Zones must be the lowest bpm of five zones"
+      zones[0] < MIN_ZONE_HR -> "Zone 1 must start at $MIN_ZONE_HR bpm or more"
+      zones.zipWithNext().any { (a, b) -> a >= b } -> "Zone limits must rise strictly"
+      zones[4] >= maxHr -> "Zone 5 must start below the max heart rate"
+      warningLimit !in MAX_HR_RANGE -> "Heart-rate limit must be ${MAX_HR_RANGE.first} to ${MAX_HR_RANGE.last} bpm"
+      else -> null
+    }
+
+    /** The user's own set for [method]. */
+    fun zonesOf(): Zones = Zones(method, maxHr, restingHr, zones[0], zones[1], zones[2], zones[3], zones[4])
+  }
+
+  val MAX_HR_RANGE = 100..219
+  val RESTING_HR_RANGE = 30..110
+  const val MIN_ZONE_HR = 30
+
   fun checkValue(v: Int): Boolean = v >= 0 && v < MAXIMUM_HEART_RATE
 
   /** `Math.round(((float) (x * pct)) / 100.0f)`, the float arithmetic of HuaweiHeartRateZones. */
@@ -101,15 +136,36 @@ internal object HeartRateZonesCalc {
   }
 
   /**
-   * HuaweiHeartRateZonesSpec.getDeviceConfig for [age]: with Track all four postures; without Track but with the zone
-   * command only upright (MHR, plus HRR when [extended]); otherwise nothing.
+   * The same user values for every posture, no posture correction. The user's method carries [UserZones.zonesOf], the other
+   * method the defaults for max/resting. [simpleOnly] (07/13: the packet has one MHR array) makes the MHR set the user's
+   * whatever the method.
    */
-  fun deviceConfig(age: Int, track: Boolean, simpleCommand: Boolean, extended: Boolean): List<Config> {
+  private fun userConfig(posture: Posture, user: UserZones, methods: List<Method>, simpleOnly: Boolean): Config = Config(
+    posture,
+    warningEnable = user.warningEnabled,
+    warningHRLimit = user.warningLimit,
+    currentMethod = if (simpleOnly) Method.MHR else user.method,
+    zones = methods.map {
+      when {
+        simpleOnly -> user.zonesOf().copy(method = Method.MHR)
+        it == user.method -> user.zonesOf()
+        else -> zones(it, user.maxHr, user.restingHr)
+      }
+    },
+  )
+
+  /**
+   * HuaweiHeartRateZonesSpec.getDeviceConfig for [age]: with Track all four postures; without Track but with the zone
+   * command only upright (MHR, plus HRR when [extended]); otherwise nothing. With [user] the postures carry the user's zones
+   * instead of the age defaults (the single place the user's config becomes [Config]s).
+   */
+  fun deviceConfig(age: Int, track: Boolean, simpleCommand: Boolean, extended: Boolean, user: UserZones? = null): List<Config> {
     if (!track && simpleCommand) {
-      return listOf(config(Posture.UPRIGHT, age, if (extended) listOf(Method.MHR, Method.HRR) else listOf(Method.MHR)))
+      val methods = if (extended) listOf(Method.MHR, Method.HRR) else listOf(Method.MHR)
+      return listOf(if (user != null) userConfig(Posture.UPRIGHT, user, methods, simpleOnly = !extended) else config(Posture.UPRIGHT, age, methods))
     }
     if (!track) return emptyList()
-    return Posture.values().map { config(it, age, methodsFor(it)) }
+    return Posture.values().map { if (user != null) userConfig(it, user, methodsFor(it), simpleOnly = false) else config(it, age, methodsFor(it)) }
   }
 
   /**

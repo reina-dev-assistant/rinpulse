@@ -16,6 +16,16 @@ class UserProfileRecord : Record {
   @Field var dailyStepGoal: Int = 0
 }
 
+/** `HeartRateZonesConfig` in `HuaweiWear.types.ts`. */
+class HeartRateZonesRecord : Record {
+  @Field var method: String = "max"
+  @Field var maxHr: Int = 0
+  @Field var restingHr: Int = 0
+  @Field var zones: List<Int> = emptyList()
+  @Field var warningEnabled: Boolean = true
+  @Field var warningLimit: Int = 0
+}
+
 /** `HealthSensorsUpdate` in `HuaweiWear.types.ts`. */
 class HealthSensorsRecord : Record {
   @Field var automaticHeartRate: Boolean = true
@@ -126,6 +136,15 @@ class HuaweiWearModule : Module() {
     sex = record.sex,
     dailyStepGoal = record.dailyStepGoal,
   )
+
+  private fun zonesOf(record: HeartRateZonesRecord): HeartRateZonesCalc.UserZones {
+    val method = when (record.method) {
+      "max" -> HeartRateZonesCalc.Method.MHR
+      "hrr" -> HeartRateZonesCalc.Method.HRR
+      else -> throw WearException(ErrorCodes.INVALID_ARGUMENT, "Zone method must be max or hrr")
+    }
+    return HeartRateZonesCalc.UserZones(method, record.maxHr, record.restingHr, record.zones, record.warningEnabled, record.warningLimit)
+  }
 
   override fun definition() = ModuleDefinition {
     Name("HuaweiWear")
@@ -307,6 +326,15 @@ class HuaweiWearModule : Module() {
 
     AsyncFunction("setUserProfile") Coroutine { profile: UserProfileRecord ->
       runtime().setUserProfile(profileOf(profile))
+    }
+
+    // The heart-rate zones the user set (HeartRateZonesCalc.kt, HeartRateZonesSync.kt); null = back to the defaults for the profile age.
+    Function("getHeartRateZonesStatus") {
+      runtime().heartRateZonesStatus()
+    }
+
+    AsyncFunction("setHeartRateZones") Coroutine { config: HeartRateZonesRecord? ->
+      runtime().setHeartRateZones(config?.let(::zonesOf))
     }
 
     // The language the watch is told (service 0C): the app's pinned language, or null for the phone's (WatchLanguage.kt).

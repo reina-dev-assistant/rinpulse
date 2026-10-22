@@ -1,6 +1,6 @@
 # JoyoFit
 
-> JoyoFit adalah aplikasi open source (AGPL-3.0) untuk Android dan iPhone yang menggantikan Huawei Health (dan juga pencatat latihan beban yang jalan tanpa jam): jam Huawei terhubung langsung lewat Bluetooth ke HP, dan langkah, detak jantung, tidur, SpO2, dan olahraga disimpan di HP. Baru Huawei Watch Fit 4 Pro yang sudah diuji; jam Huawei dan Honor lain eksperimen. Cloud opsional. Protokol jamnya adalah port dari Gadgetbridge.
+> JoyoFit adalah aplikasi open source (AGPL-3.0) untuk Android dan iPhone yang menggantikan Huawei Health (dan juga pencatat latihan beban yang jalan tanpa jam): jam Huawei terhubung langsung lewat Bluetooth ke HP, dan langkah, detak jantung, tidur, SpO2, dan olahraga disimpan di HP. Yang sudah diuji: Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2; jam Huawei dan Honor lain eksperimen. Cloud opsional. Protokol jamnya adalah port dari Gadgetbridge.
 
 ## Halaman
 

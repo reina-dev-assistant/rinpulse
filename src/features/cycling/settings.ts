@@ -3,7 +3,7 @@ import Storage from 'expo-sqlite/kv-store';
 import { notePrefChanged } from '@/cloud/prefsSync';
 
 import { userEnergyProfile } from '@/features/strength/profile';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { userHrZones } from '@/features/hrzones/settings';
 
 import { FTP_MAX_W, FTP_MIN_W } from './power';
 import type { RideProfile } from './types';
@@ -42,5 +42,5 @@ export function setEbike(workoutStart: number, on: boolean): void {
 /** Everything the ride analysis needs to know about the person. */
 export function rideProfile(): RideProfile {
   const energy = userEnergyProfile();
-  return { weightKg: energy.weightKg, age: energy.age, sex: energy.sex, maxHr: userMaxHr(), ftp: getFtp() };
+  return { weightKg: energy.weightKg, age: energy.age, sex: energy.sex, zones: userHrZones(), ftp: getFtp() };
 }

@@ -32,6 +32,12 @@ public final class WearSettings: @unchecked Sendable {
         static let lowHrAlert = "low_hr_alert"
         static let stressEnabled = "stress_enabled"
         static let watchLanguage = "watch_language"
+        static let zonesMethod = "hr_zones_method"
+        static let zonesMaxHr = "hr_zones_max"
+        static let zonesRestingHr = "hr_zones_rest"
+        static let zonesLimits = "hr_zones_limits"
+        static let zonesWarning = "hr_zones_warning"
+        static let zonesWarningLimit = "hr_zones_warning_limit"
         static let stressCalibration = "stress_calibration"
         static let autoStressListed = "stress_auto_listed"
     }
@@ -120,6 +126,34 @@ public final class WearSettings: @unchecked Sendable {
     public var watchLanguage: String? {
         get { defaults.string(forKey: Key.watchLanguage) }
         set { set(newValue, forKey: Key.watchLanguage) }
+    }
+
+    /// The heart-rate zones the user configured (`setHeartRateZones`), sent at every connect; nil sends GB's defaults for the profile age.
+    public var heartRateZones: HeartRateZonesCalc.UserZones? {
+        get {
+            guard let method = defaults.string(forKey: Key.zonesMethod), method == "max" || method == "hrr",
+                let limits = defaults.array(forKey: Key.zonesLimits) as? [Int], defaults.object(forKey: Key.zonesMaxHr) != nil,
+                defaults.object(forKey: Key.zonesRestingHr) != nil, defaults.object(forKey: Key.zonesWarningLimit) != nil
+            else { return nil }
+            return HeartRateZonesCalc.UserZones(
+                method: method == "hrr" ? .hrr : .mhr, maxHr: defaults.integer(forKey: Key.zonesMaxHr), restingHr: defaults.integer(forKey: Key.zonesRestingHr),
+                zones: limits, warningEnabled: defaults.bool(forKey: Key.zonesWarning), warningLimit: defaults.integer(forKey: Key.zonesWarningLimit)
+            )
+        }
+        set {
+            guard let zones = newValue else {
+                for key in [Key.zonesMethod, Key.zonesMaxHr, Key.zonesRestingHr, Key.zonesLimits, Key.zonesWarning, Key.zonesWarningLimit] {
+                    defaults.removeObject(forKey: key)
+                }
+                return
+            }
+            defaults.set(zones.method == .hrr ? "hrr" : "max", forKey: Key.zonesMethod)
+            defaults.set(zones.maxHr, forKey: Key.zonesMaxHr)
+            defaults.set(zones.restingHr, forKey: Key.zonesRestingHr)
+            defaults.set(zones.zones, forKey: Key.zonesLimits)
+            defaults.set(zones.warningEnabled, forKey: Key.zonesWarning)
+            defaults.set(zones.warningLimit, forKey: Key.zonesWarningLimit)
+        }
     }
 
     /// The watch's automatic stress switch as the user last set it here (GB PREF_HUAWEI_STRESS_SWITCH).

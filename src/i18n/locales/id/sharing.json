@@ -104,13 +104,6 @@
     },
     "timeA11y": "Waktu {{value}}",
     "zone": "Zona {{zone}} · {{label}}",
-    "zones": {
-      "warmup": "Pemanasan",
-      "fatBurning": "Pembakaran lemak",
-      "aerobic": "Aerobik",
-      "anaerobic": "Anaerobik",
-      "extreme": "Ekstrem"
-    },
     "tiles": {
       "distance": "Jarak",
       "speed": "Kecepatan",
@@ -142,6 +135,7 @@
       "anaerobicEffect": "Efek anaerobik",
       "waiting": "Menunggu angka pertama dari jam.",
       "ended": "Catatan lengkap (rute, split, grafik detak jantung) tiba pada sinkronisasi berikutnya dan muncul di Latihan."
-    }
+    },
+    "logStrength": "Catat sebagai latihan beban"
   }
 }

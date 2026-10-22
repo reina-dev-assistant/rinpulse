@@ -6,7 +6,7 @@ import { simplifyRoute, type RoutePoint, type SavedRoute } from '@/features/rout
 import { loadRoute } from '@/features/routes/routeStore';
 import { useRecorder } from '@/state/RecorderProvider';
 import { useSensors } from '@/state/SensorsProvider';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { userHrZones } from '@/features/hrzones/settings';
 import { userEnergyProfile } from '@/features/strength/profile';
 import { SPORT_ROWS } from '@/features/workouts/manual';
 import { sportLabel } from '@/features/workouts/sportLabel';
@@ -105,7 +105,7 @@ export function BikeRideProvider({ children }: { children: ReactNode }) {
       everConnected.current = new Set();
       const next = new BikeSession({
         settings: () => bikeSettingsStore.get(),
-        profile: () => ({ weightKg: userEnergyProfile().weightKg, maxHr: userMaxHr(), ftp: getFtp() }),
+        profile: () => ({ weightKg: userEnergyProfile().weightKg, maxHr: userHrZones().maxHr, ftp: getFtp() }),
         route: loaded ? { id: loaded.route.id, points: loaded.points } : null,
         actions: { pause: () => actions.current.pause(), resume: () => actions.current.resume(), lap: () => actions.current.lap() },
         battery: () => ({ pct: batteryRef.current, charging: charging.current }),

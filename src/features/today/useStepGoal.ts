@@ -1,17 +1,22 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 
+import { stepGoalOf, type StepGoal } from '@/features/today/stepGoal';
 import { HuaweiWear } from '@/wear';
 
-/** Goal shown before a profile has been saved; the same default the profile form starts from. */
-export const DEFAULT_STEP_GOAL = 8000;
+function readGoal(): StepGoal {
+  return stepGoalOf(HuaweiWear.getUserProfile()?.dailyStepGoal);
+}
 
 /** The daily step goal from the saved profile, re-read whenever the screen gains focus. */
-export function useStepGoal(): number {
-  const [goal, setGoal] = useState(() => HuaweiWear.getUserProfile()?.dailyStepGoal ?? DEFAULT_STEP_GOAL);
+export function useStepGoal(): StepGoal {
+  const [goal, setGoal] = useState(readGoal);
   useFocusEffect(
     useCallback(() => {
-      setGoal(HuaweiWear.getUserProfile()?.dailyStepGoal ?? DEFAULT_STEP_GOAL);
+      setGoal((prev) => {
+        const next = readGoal();
+        return prev.goal === next.goal && prev.isDefault === next.isDefault ? prev : next;
+      });
     }, []),
   );
   return goal;

@@ -12,7 +12,7 @@ import { Notice, Skeleton } from '@/components/States';
 import { markSession } from '@/features/coach/actions';
 import { StrengthSessionSection } from '@/features/coach/ui/StrengthSessionSection';
 import { liveDone } from '@/features/coach/doc';
-import { sessionTitle, spanText, whatText, zoneBpm } from '@/features/coach/format';
+import { sessionTitle, spanText, whatText } from '@/features/coach/format';
 import { paceTarget } from '@/features/coach/pace';
 import { allSessions, generatePlan } from '@/features/coach/plans/generate';
 import type { PlannedSession } from '@/features/coach/plans/types';
@@ -21,7 +21,8 @@ import { CoachGate } from '@/features/coach/ui/CoachGate';
 import { useCoach, type CoachState } from '@/features/coach/useCoach';
 import { useThresholdPace } from '@/features/coach/useThresholdPace';
 import { useNightHrvAvailability } from '@/features/today/useNightHrvAvailability';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { useHrZones } from '@/features/hrzones/settings';
+import { zoneRange } from '@/features/hrzones/zones';
 import { formatPace as paceClock } from '@/features/workouts/analysis/types';
 import { fmtDay, fmtDistance, fmtInt, useLocale } from '@/i18n';
 import { useCloud } from '@/state/CloudProvider';
@@ -66,13 +67,13 @@ function SessionDetail({ session, coach }: { session: PlannedSession; coach: Coa
   const cloud = useCloud();
   const threshold = useThresholdPace(db, coach.data.workouts, coach.data.nowSec);
   const steps = useSteps(session);
-  const maxHr = useMemo(() => userMaxHr(), []);
+  const zones = useHrZones();
 
   const status = sessionStatus(session, coach.doc.done, coach.today);
   const entry = liveDone(coach.doc.done)[session.key];
   const run = session.run;
   const zone = run?.zone ?? null;
-  const range = zone ? zoneBpm(zone, maxHr) : null;
+  const range = zone ? zoneRange(zone, zones) : null;
   const pace = run && threshold ? paceTarget(run.type, threshold) : null;
 
   const mark = (kind: 'done' | 'skipped' | 'undo') => {

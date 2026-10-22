@@ -224,6 +224,19 @@ Only after section 3 or 4 proves the carrier. If neither does, keep Option A of 
 - Capture how-to: bluetooth.com/blog/a-new-way-to-debug-iosbluetooth-applications, novelbits.io/debugging-sniffing-secure-ble-ios, man page `idevicebtlogger(1)`, Apple Developer Forums threads 80811 and 770914.
 - Local: `watch-fit/docs/ios.md`, `protocol/README.md`, `modules/huawei-wear/ios/{WatchNotifications.swift,HuaweiWearModule.swift,HuaweiProtocol/Sources/HuaweiProtocol/Packets/NotificationPackets.swift}`.
 
+## 7b. Implementation status (2026-10-22)
+
+Built as the plan in section 5 allowed for an unproven carrier: the list ships, the switches stay off, and a test on the user's own watch finds the
+encoding. Details and the safety rules are in `docs/ios.md` (Per-app notification switches). In short:
+
+- `Notifications.AppSwitches` (02/0B) in `NotificationPackets.swift`, golden frames built with the real Java TLV encoder (`GoldenNotifications.java`).
+- `ios/NotificationAppFilter.swift`: ExpandCapability 161 gate (logged at every connect), the four candidate encodings (A bundle id 1 = off, B bundle id
+  0 = off, C1 and C2 Huawei numbers), one-entry probes, the switch-back written down before each probe, stored encoding and choices.
+- Section 3's test is the in-app "Uji filter" flow, with a second message after switching back as the confirmation. It answers the polarity and id
+  style questions for Messages (and, for A and B, any catalogue app); it does **not** answer "Other" (the row sends the guess `other`).
+- Still open until a TestFlight run: bit 161 on the Fit 4 Pro (logged), whether the watch replies to 02/0B at all (the answer code is logged), and
+  every encoding question above. The result line goes to the support report.
+
 ## 8. Confidence summary
 
 | Claim | Level |

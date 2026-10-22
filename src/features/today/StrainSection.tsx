@@ -45,8 +45,8 @@ export function StrainSection({ days, dayStart, maxHr }: { days: readonly DayStr
   const today = byDay.get(dayStart) ?? null;
   const scrub = useBarScrub(week.length, dayStart);
   const picked = scrub.selected !== null ? week[scrub.selected]! : null;
-  const hard = today ? Math.round(today.zoneMinutes[2] + today.zoneMinutes[3] + today.zoneMinutes[4]) : 0;
-  const easy = today ? Math.round(today.zoneMinutes[0] + today.zoneMinutes[1]) : 0;
+  const hard = today ? Math.round(today.zoneMinutes.slice(2).reduce((a, b) => a + b, 0)) : 0;
+  const easy = today ? Math.round(today.zoneMinutes.slice(0, 2).reduce((a, b) => a + b, 0)) : 0;
 
   return (
     <Section title={t('strain.title')} icon="flash" tint="workouts">

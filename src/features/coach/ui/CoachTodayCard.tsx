@@ -11,6 +11,7 @@ import type { NightHrvAvailability } from '@/features/today/nightHrv';
 import { spacing } from '@/theme';
 import { useCoach } from '../useCoach';
 import { useCoachAccess } from '../useCoachAccess';
+import { AiInsightInline, AiInsightStandalone } from '@/features/ai/ui/AiInsight';
 import { UpgradeCard } from '@/features/pro/UpgradeCard';
 import { CoachSignIn } from './CoachGate';
 import { FeelPicker } from './FeelPicker';
@@ -28,6 +29,7 @@ function ProCard({ dataVersion, availability }: { dataVersion: number; availabil
         <PressableScale accessibilityRole="button" accessibilityLabel={t('card.details')} onPress={() => router.push('/coach')} scaleTo={0.99}>
           <SuggestionBlock suggestion={coach.suggestion} maxReasons={2} />
         </PressableScale>
+        <AiInsightInline coach={coach} />
         {coach.needsFeel ? <FeelPicker feel={coach.feel} onChange={coach.setFeel} /> : null}
         <View style={styles.actions}>
           <Button label={t('card.details')} variant="secondary" icon="chevron-forward" onPress={() => router.push('/coach')} style={styles.action} />
@@ -43,12 +45,21 @@ function ProCard({ dataVersion, availability }: { dataVersion: number; availabil
  * Pro accounts get the suggestion; a signed-out person is asked to sign in and a free account sees the Pro upsell.
  * In the account-free mode (Settings > Coach) everyone gets the suggestion, since it needs no server.
  * Renders nothing while the account is still being checked.
+ *
+ * Joyo AI's opt-in summary (own key, off by default) sits under the headline for Pro. A signed-out or free account does not see the
+ * Coach card, so the summary is its own small card above the sign-in or upsell card; it needs no JoyoRogo account.
  */
 export function CoachTodayCard({ dataVersion, availability }: { dataVersion: number; availability: NightHrvAvailability | null }) {
   const access = useCoachAccess();
   if (access === 'checking') return null;
-  if (access === 'signedOut') return <CoachSignIn />;
-  if (access === 'free') return <UpgradeCard moment="coach-today" dismissible />;
+  if (access === 'signedOut' || access === 'free') {
+    return (
+      <>
+        <AiInsightStandalone dataVersion={dataVersion} availability={availability} />
+        {access === 'signedOut' ? <CoachSignIn /> : <UpgradeCard moment="coach-today" dismissible />}
+      </>
+    );
+  }
   return <ProCard dataVersion={dataVersion} availability={availability} />;
 }
 

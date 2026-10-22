@@ -1,4 +1,5 @@
 import type { WorkoutPointRow } from '@/db/queries';
+import { zoneIndex, type HrZones } from '@/features/hrzones/zones';
 
 /**
  * Fat and carbohydrate burned, estimated by JoyoFit (the watch reports neither). Same model as the live screen
@@ -23,10 +24,6 @@ const REST_HR = 60;
 /** A gap longer than this between heart-rate samples is a pause; it gets no weight. */
 const MAX_GAP_SEC = 120;
 
-export function maxHeartRate(age: number): number {
-  return Math.min(220, Math.max(120, 220 - age));
-}
-
 /** Share of energy from fat (0..1) at `heartRate`. */
 export function fatShare(heartRate: number, maxHr: number): number {
   const pctHrMax = (100 * heartRate) / maxHr;
@@ -43,7 +40,7 @@ export function fatShare(heartRate: number, maxHr: number): number {
   return Math.min(1, Math.max(0, (1 - rer) / 0.3));
 }
 
-/** Time and burn in one heart-rate zone (Huawei's: 50/60/70/80/90 % of maximum; zone 0 is below 50 %). */
+/** Time and burn in one heart-rate zone (the person's zones, `@/features/hrzones`; zone 0 is below zone 1). */
 export interface ZoneBurn {
   zone: number;
   seconds: number;
@@ -60,20 +57,13 @@ export interface SubstrateSplit {
   zones: ZoneBurn[];
 }
 
-/** Huawei's zones by share of maximum heart rate: 50, 60, 70, 80, 90 %. */
-export function zoneOf(heartRate: number, maxHr: number): number {
-  const pct = heartRate / maxHr;
-  if (pct < 0.5) return 0;
-  return Math.min(5, Math.floor((pct - 0.5) / 0.1) + 1);
-}
-
 /**
  * Splits a finished workout's `calories` (kcal) between fat and carbohydrate from the time actually spent at each heart
  * rate: every heart-rate sample covers the time to the next one (gaps over two minutes are pauses and count for nothing),
  * gets the calories of that slice in proportion to the effort above rest, then the fat share at that heart rate. Null
  * when there are no heart-rate samples to work from; an average is never used.
  */
-export function splitWorkout(calories: number, points: readonly WorkoutPointRow[], maxHr: number): SubstrateSplit | null {
+export function splitWorkout(calories: number, points: readonly WorkoutPointRow[], hrZones: HrZones): SubstrateSplit | null {
   if (calories <= 0) return null;
   const samples = points.filter((p) => p.hr !== null && p.hr > 0).sort((a, b) => a.ts - b.ts);
   const slices: { hr: number; dt: number; weight: number }[] = [];
@@ -91,9 +81,9 @@ export function splitWorkout(calories: number, points: readonly WorkoutPointRow[
   let fatKcal = 0;
   for (const s of slices) {
     const kcal = (calories * s.weight) / weightSum;
-    const fat = kcal * fatShare(s.hr, maxHr);
+    const fat = kcal * fatShare(s.hr, hrZones.maxHr);
     fatKcal += fat;
-    const z = zoneOf(s.hr, maxHr);
+    const z = zoneIndex(s.hr, hrZones);
     const entry = zones.get(z) ?? { zone: z, seconds: 0, fatGrams: 0, carbGrams: 0 };
     entry.seconds += s.dt;
     entry.fatGrams += fat / KCAL_PER_G_FAT;

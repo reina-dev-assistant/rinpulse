@@ -49,7 +49,12 @@ function PreviewHalf({ theme, palette, scheme, fontsReady }: { theme: Theme; pal
         <View style={[styles.titleBar, { backgroundColor: palette.foreground }]} />
         <View style={[styles.captionBar, { backgroundColor: palette.mutedForeground }]} />
       </View>
-      <View style={[styles.tile, { backgroundColor: palette.card, borderRadius: Math.min(theme.radius.tile, 14) }]}>
+      <View
+        style={[
+          styles.tile,
+          { backgroundColor: palette.card, borderRadius: Math.min(theme.radius.tile, 14) },
+          theme.outlined ? { borderWidth: StyleSheet.hairlineWidth, borderColor: palette.hairline } : null,
+        ]}>
         {/* Mounted only once the fonts are registered, and keyed on it: Android measures a Text with the face it has at first layout and
             does not re-measure when the face arrives later, which cut '6:42' to '6:4' and left a gap before the unit. Until then a box of the
             same height keeps the tile from jumping. */}

@@ -13,6 +13,7 @@ import { elevationProfile, workoutElevation } from './elevation';
 import { row, T0, workoutRow } from './fixtures';
 import { altitudeGrid, elapsedOf, gridStep, type AnalysisPoint } from './series';
 import { FLAT_WALK, GENTLE_WALK, WALK } from './stravaWalks.fixture';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 
 /**
  * The owner's walk of 2026-10-18 07:35 against what Strava shows for it (activity 20628405451): 2.01 km, moving 25:26,
@@ -62,7 +63,7 @@ const summary = {
   elevationGain: WALK.before.gainM,
   elevationLoss: WALK.before.lossM,
 };
-const analysis = analyzeWorkout({ workout, summary, points, maxHr: 190, daySamples: [], history: NO_HISTORY }, ALL);
+const analysis = analyzeWorkout({ workout, summary, points, zones: hrZonesForMax(190), daySamples: [], history: NO_HISTORY }, ALL);
 
 /** The `run.*` numbers of the sticker for the walk. */
 const sticker = () => buildRunSubject({ workout, summary, analysis, route: [], gearLine: null }, 'id').data.run as Record<string, unknown>;
@@ -143,7 +144,7 @@ describe('the run of 19 Oct: 655 s elapsed, 653 s on the watch', () => {
     duration: 653,
     distance: 1010,
   });
-  const runAnalysis = analyzeWorkout({ workout: run, summary: {}, points: [], maxHr: 190, daySamples: [], history: NO_HISTORY }, ALL);
+  const runAnalysis = analyzeWorkout({ workout: run, summary: {}, points: [], zones: hrZonesForMax(190), daySamples: [], history: NO_HISTORY }, ALL);
 
   it('shows 10:53 and 10\'47"/km on the header, the analysis and the sticker, with 10:55 as the total', () => {
     expect(workoutTimes(run)).toEqual({ elapsedSec: 655, movingSec: 653 });

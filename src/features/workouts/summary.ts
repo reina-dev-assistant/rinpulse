@@ -95,6 +95,8 @@ export interface WorkoutSummary {
     avgSwolf?: number;
   };
   samples?: Record<string, number>;
+  /** Extension values of the watch's totals, all sent as strings (`WorkoutRecord.kt`): `lthrHr` and `lthrPace` are the lactate threshold the watch worked out (builds from the lactate-threshold commit on). */
+  additional?: Record<string, string>;
   paceBlocks?: PaceBlock[];
   sections?: SummarySection[];
   paceFastestSecPerKm?: number;

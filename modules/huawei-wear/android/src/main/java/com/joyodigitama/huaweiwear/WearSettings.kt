@@ -147,6 +147,35 @@ internal class WearSettings(context: Context) {
     get() = prefs.getInt(KEY_NIGHT_HRV_RULES, 0)
     set(value) = prefs.edit().putInt(KEY_NIGHT_HRV_RULES, value).apply()
 
+  /**
+   * The heart-rate zones the user set in the app (`setHeartRateZones`), sent to the watch at every connect; null = GB's defaults
+   * for the profile age. Stored as one string: `method;maxHr;restingHr;z1,z2,z3,z4,z5;warningEnabled;warningLimit`.
+   */
+  var heartRateZones: HeartRateZonesCalc.UserZones?
+    get() {
+      val parts = prefs.getString(KEY_HR_ZONES, null)?.split(';') ?: return null
+      if (parts.size != 6) return null
+      val method = when (parts[0]) {
+        "max" -> HeartRateZonesCalc.Method.MHR
+        "hrr" -> HeartRateZonesCalc.Method.HRR
+        else -> return null
+      }
+      val zones = parts[3].split(',').map { it.toIntOrNull() ?: return null }
+      val user = HeartRateZonesCalc.UserZones(
+        method, parts[1].toIntOrNull() ?: return null, parts[2].toIntOrNull() ?: return null, zones, parts[4] == "1",
+        parts[5].toIntOrNull() ?: return null,
+      )
+      return if (user.problem() == null) user else null
+    }
+    set(value) = prefs.edit().apply {
+      if (value == null) {
+        remove(KEY_HR_ZONES)
+      } else {
+        val method = if (value.method == HeartRateZonesCalc.Method.HRR) "hrr" else "max"
+        putString(KEY_HR_ZONES, "$method;${value.maxHr};${value.restingHr};${value.zones.joinToString(",")};${if (value.warningEnabled) 1 else 0};${value.warningLimit}")
+      }
+    }.apply()
+
   var profile: UserProfileData?
     get() {
       if (!prefs.contains(KEY_PROFILE_HEIGHT)) return null
@@ -189,6 +218,7 @@ internal class WearSettings(context: Context) {
     private const val KEY_MORNING_SUMMARY_DAY = "morning_summary_day"
     private const val KEY_APPS_ON = "notification_apps_on"
     private const val KEY_APPS_OFF = "notification_apps_off"
+    private const val KEY_HR_ZONES = "heart_rate_zones"
     private const val KEY_PROFILE_HEIGHT = "profile_height_cm"
     private const val KEY_PROFILE_WEIGHT = "profile_weight_kg"
     private const val KEY_PROFILE_BIRTH_YEAR = "profile_birth_year"

@@ -12,6 +12,7 @@ import { isIos } from '@/components/IosUnavailable';
 import { KeyValue } from '@/components/KeyValue';
 import { Metric } from '@/components/Metric';
 import { HeaderIconButton } from '@/components/HeaderIconButton';
+import { AskJoyoAction } from '@/features/ai/ui/AskJoyoButton';
 import { Card, Screen, Section } from '@/components/Screen';
 import { useToast } from '@/components/Toast';
 import { Notice, Skeleton } from '@/components/States';
@@ -61,7 +62,8 @@ import { averagePaceSec, averageSpeedMs, workoutTimes } from '@/features/workout
 import { sourceLabel } from '@/features/fitness/format';
 import { effectWord, trainingEffect } from '@/features/fitness/trainingEffect';
 import { plausibleVo2 } from '@/features/fitness/vo2max';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { hrZoneName } from '@/features/hrzones/names';
+import { useHrZones, userHrZones } from '@/features/hrzones/settings';
 import { useStrengthHistory } from '@/features/strength/history';
 import { getStrengthWorkoutByStart } from '@/features/strength/store';
 import type { StrengthWorkout } from '@/features/strength/types';
@@ -180,13 +182,13 @@ export default function WorkoutDetailScreen() {
             return;
           }
           try {
-            const maxHr = userMaxHr();
-            const history = await loadAnalysisHistory(db, value.workout, value.summary, maxHr);
+            const zones = userHrZones();
+            const history = await loadAnalysisHistory(db, value.workout, value.summary, zones);
             // Let the summary paint before the analysis blocks the JS thread.
             await new Promise<void>((resolve) => setTimeout(resolve, 0));
             if (cancelled) return;
             const analysis = analyzeWorkout(
-              { workout: value.workout, summary: value.summary, points: value.points, maxHr, daySamples: value.daySamples, history },
+              { workout: value.workout, summary: value.summary, points: value.points, zones, daySamples: value.daySamples, history },
               { includeHr: true, includeRoute: true, includeComparison: true },
             );
             setAnalysisState({ status: 'ready', analysis });
@@ -205,15 +207,15 @@ export default function WorkoutDetailScreen() {
   );
 
   const route = useMemo(() => (loaded ? routePoints(loaded.points) : []), [loaded]);
-  const maxHr = useMemo(() => userMaxHr(), []);
+  const zones = useHrZones();
   const burn = useMemo(() => {
     if (!loaded) return null;
-    return splitWorkout(loaded.workout.calories, loaded.points, maxHr);
-  }, [loaded, maxHr]);
+    return splitWorkout(loaded.workout.calories, loaded.points, zones);
+  }, [loaded, zones]);
   const strain = useMemo(() => {
     if (!loaded) return null;
-    return workoutStrain(loaded.points, maxHr);
-  }, [loaded, maxHr]);
+    return workoutStrain(loaded.points, zones);
+  }, [loaded, zones]);
   const effect = useMemo(() => trainingEffect(loaded?.summary ?? {}, strain?.trimp ?? null), [loaded, strain]);
   const vo2 = plausibleVo2(loaded?.summary.vo2max);
   const effectShown =
@@ -401,6 +403,7 @@ export default function WorkoutDetailScreen() {
             </AppText>
           </View>
         </View>
+        <AskJoyoAction seed={{ seed: 'workout', ref: `w:${workout.start}`, label: `${sport}, ${formatDateTime(workout.start)}` }} />
         {fallbackFigures}
         {rideInput !== null ? <EbikeRow workoutStart={workout.start} /> : null}
         {bare ? null : (
@@ -517,7 +520,7 @@ export default function WorkoutDetailScreen() {
           </View>
           <FuelBar fatShare={burn.fatShare} />
           {burn.zones.map((z) => {
-            const zoneName = t(`detail.burn.zone.${z.zone as 0 | 1 | 2 | 3 | 4 | 5}`);
+            const zoneName = z.zone === 0 ? t('detail.burn.below') : hrZoneName(zones.method, z.zone);
             return (
               <KeyValue
                 key={z.zone}
@@ -526,7 +529,7 @@ export default function WorkoutDetailScreen() {
               />
             );
           })}
-          <Details title={t('detail.burn.how')}>{t('detail.burn.explain', { kcal: formatCount(workout.calories), maxHr })}</Details>
+          <Details title={t('detail.burn.how')}>{t('detail.burn.explain', { kcal: formatCount(workout.calories), maxHr: zones.maxHr })}</Details>
         </Section>
       ) : null}
 

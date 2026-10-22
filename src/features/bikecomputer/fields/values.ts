@@ -4,6 +4,7 @@
  */
 import { zoneBounds } from '@/features/cycling/power';
 import { heartZone } from '@/features/live/liveWorkout';
+import type { HrZones } from '@/features/hrzones/zones';
 import type { LiveStats } from '@/features/record/recorder';
 import { formatElapsed, workoutDistanceParts } from '@/features/workouts/summary';
 import { fmtClock, fmtDecimal, fmtInt, t } from '@/i18n';
@@ -16,7 +17,7 @@ export interface FieldContext {
   live: LiveStats;
   metrics: BikeMetricsSnapshot;
   nav: NavSnapshot | null;
-  maxHr: number;
+  zones: HrZones;
   ftp: number | null;
   /** Phone battery percent, null when unknown. */
   batteryPct: number | null;
@@ -79,7 +80,7 @@ export function fieldValue(id: FieldId, ctx: FieldContext): FieldValue {
     case 'avgHr':
       return bpm(m.avgHr);
     case 'hrZone': {
-      const zone = live.hr !== null ? heartZone(live.hr, ctx.maxHr) : null;
+      const zone = live.hr !== null ? heartZone(live.hr, ctx.zones) : null;
       return zone ? plain(fmtInt(zone.zone), null, zoneTone(zone.zone), zone.label) : none();
     }
     case 'power':

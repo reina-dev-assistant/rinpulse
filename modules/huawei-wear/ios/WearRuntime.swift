@@ -46,6 +46,8 @@ public final class WearRuntime: @unchecked Sendable {
     public private(set) var features: PhoneFeatures!
     /// The watch's notification switch and iOS's ANCS state.
     public private(set) var notifications: WatchNotifications!
+    /// The per-app notification switches (02/0B) and the test that finds the encoding the watch takes.
+    public private(set) var notificationFilter: NotificationAppFilter!
     /// Alarms, health sensor switches, live heart rate, HRV and stress (the watch settings that are plain protocol commands).
     public private(set) var watchSettings: WatchSettingsFeatures!
     /// Weather push (settings, the watch's weather requests, the refresh timer).
@@ -120,6 +122,7 @@ public final class WearRuntime: @unchecked Sendable {
         weatherDefaults: UserDefaults? = nil,
         goalsDefaults: UserDefaults? = nil,
         cycleDefaults: UserDefaults? = nil,
+        notificationFilterDefaults: UserDefaults? = nil,
         liveGps: LiveGpsSource = UnavailableLiveGps(),
         p2pDefaults: UserDefaults? = nil,
         familyDefaults: UserDefaults? = nil,
@@ -147,6 +150,8 @@ public final class WearRuntime: @unchecked Sendable {
         features = PhoneFeatures(link: link, events: fanOut)
         notifications = WatchNotifications(link: link, events: fanOut)
         linkObservers.add(notifications)
+        notificationFilter = NotificationAppFilter(link: link, events: fanOut, settings: NotificationFilterSettings(defaults: notificationFilterDefaults))
+        linkObservers.add(notificationFilter)
         watchSettings = WatchSettingsFeatures(handle: { [link] in link?.handle() }, settings: settings, syncStore: syncStore, events: fanOut)
         linkObservers.add(watchSettings)
         weather = WeatherController(
@@ -392,6 +397,7 @@ public final class WearRuntime: @unchecked Sendable {
             transport: .le,
             identifiers: identifiers,
             extraSummary: weather.supportSummary(caps: link.lastCaps)
+                + notificationFilter.supportSummary(caps: link.lastCaps)
                 + [SupportReport.nightHrvLine(listed: settings.autoStressListed, enabled: settings.stressEnabled)]
         )
     }
@@ -502,16 +508,58 @@ public final class WearRuntime: @unchecked Sendable {
 
     // MARK: profile
 
-    /// Stores the profile; true when it also reached the connected watch.
+    /// Stores the profile; true when it also reached the connected watch. The heart-rate zones follow it: the defaults depend on the age, and
+    /// zones the user configured go out again with the same values.
     public func setUserProfile(_ profile: UserProfileData, thisYear: Int = Calendar.current.component(.year, from: Date())) async throws -> Bool {
         if let message = profile.validationError(thisYear: thisYear) { throw WearError(.invalidArgument, message) }
         settings.profile = profile
         guard let handle = link.handle() else { return false }
+        let profileSent: Bool
         do {
-            let sent = try await ProfileSender.sendProfile(session: handle.session, caps: handle.caps, log: events.sink, profile: profile)
-            return sent > 0
+            profileSent = try await ProfileSender.sendProfile(session: handle.session, caps: handle.caps, log: events.sink, profile: profile) > 0
         } catch let e as WearError {
             events.error("Profile not sent: \(e.message)")
+            return false
+        }
+        await sendHeartRateZones(handle)
+        return profileSent
+    }
+
+    // MARK: heart-rate zones
+
+    /// Stores the zones the user configured (nil: back to GB's defaults for the profile age) and sends them when a watch is connected; true when
+    /// they reached the watch. A watch that takes zones neither over P2P nor as FitnessData 07/13|21 gets nothing and resolves false.
+    public func setHeartRateZones(_ zones: HeartRateZonesCalc.UserZones?) async throws -> Bool {
+        if let message = zones?.validationError() { throw WearError(.invalidArgument, message) }
+        settings.heartRateZones = zones
+        guard let handle = link.handle() else { return false }
+        return await sendHeartRateZones(handle)
+    }
+
+    /// `getHeartRateZonesStatus`: whether zones are stored and how the connected watch takes them (`via` null without a watch).
+    public func heartRateZonesStatus() -> [String: Any] {
+        ["configured": settings.heartRateZones != nil, "via": link.handle().map { HeartRateZonesSync.route($0.caps) as Any } ?? NSNull()]
+    }
+
+    /// Sends the stored zones (or the defaults) the way this watch takes them; false when nothing was sent.
+    @discardableResult
+    private func sendHeartRateZones(_ handle: LinkHandle) async -> Bool {
+        if HeartRateZonesSync.supportsTrack(handle.caps) {
+            let sent = p2p.stack?.resendHeartRateZones() ?? false
+            if !sent { events.info("HR zones: not sent, the P2P track service is not registered yet; they go out when it registers") }
+            return sent
+        }
+        do {
+            let sent = try await handle.operationLock.withLock {
+                try await HeartRateZonesSync.sendFitnessData(
+                    session: handle.session, caps: handle.caps, log: events.sink, age: HeartRateZonesSync.age(profile: settings.profile),
+                    user: settings.heartRateZones
+                )
+            }
+            if !sent { events.info("HR zones: not sent, this watch takes no heart-rate zones") }
+            return sent
+        } catch {
+            events.error("HR zones not sent: \(error)")
             return false
         }
     }

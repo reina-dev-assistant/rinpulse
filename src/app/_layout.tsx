@@ -23,6 +23,7 @@ import { serializeQueries } from '@/db/serialize';
 import { DatabaseGate } from '@/features/dbhealth/DatabaseGate';
 import { DbHealthNotice } from '@/features/dbhealth/DbHealthNotice';
 import { FamilyProvider } from '@/features/family/FamilyProvider';
+import { syncHrZonesAtLaunch } from '@/features/hrzones/settings';
 import { BikeRideProvider } from '@/features/bikecomputer/BikeRideProvider';
 import { lockPortrait } from '@/features/bikecomputer/ui/orientation';
 import { flushSupportReports } from '@/features/device/aturReports';
@@ -49,6 +50,8 @@ import { ThemeProvider, useTheme } from '@/theme';
 
 // Stored language choice (or the phone's) applies before the first screen is drawn.
 initLocale();
+// Heart-rate zones the person set reach the native module (and a connected watch) once per launch.
+syncHrZonesAtLaunch();
 
 /**
  * The schema is built before this handle opens (`DatabaseGate`, which repairs a damaged file first); from here on one query at a
@@ -258,6 +261,8 @@ function RootNavigator() {
                     <Tabs.Screen name="readiness" options={{ href: null }} />
                     <Tabs.Screen name="trends" options={{ href: null }} />
                     <Tabs.Screen name="fitness" options={{ href: null }} />
+                    <Tabs.Screen name="lactate-test" options={{ href: null }} />
+                    <Tabs.Screen name="steps" options={{ href: null }} />
                     {/* Opens by itself when a workout starts on the watch (LiveWorkoutProvider). */}
                     <Tabs.Screen name="workout-live" options={{ href: null, tabBarStyle: { display: 'none' } }} />
                     {/* Family monitoring: opened from Today, More and notifications; its stack draws its own headers. */}
@@ -266,6 +271,8 @@ function RootNavigator() {
                     <Tabs.Screen name="routes" options={{ href: null }} />
                     {/* Coach (Pro): plan, session details and setup; its stack draws its own headers. */}
                     <Tabs.Screen name="coach" options={{ href: null }} />
+                    {/* Joyo AI: the history of chats with the chat on top of it, so Back from a chat shows the history first; its own stack so the Coach screen is never underneath. */}
+                    <Tabs.Screen name="joyo" options={{ href: null }} />
                     {/* "Main di web": the phone as the sensor bridge of the browser game; its stack draws its own headers. */}
                     <Tabs.Screen name="ride" options={{ href: null }} />
                     {/* Strength logger (workout, routines, history); its stack draws its own headers. */}

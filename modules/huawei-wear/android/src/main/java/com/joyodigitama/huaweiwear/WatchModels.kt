@@ -80,8 +80,8 @@ internal object WatchModels {
   private fun br(name: String, prefix: String, honorSdp: Boolean = false, crypted: Boolean = true, pake: Boolean = false, tested: Boolean = false) =
     WatchModel(name, prefix, ModelTransport.BR, honorSdp, crypted, pake, tested)
 
-  private fun le(name: String, prefix: String, aw: Boolean = false, newHonorProtocol: Boolean = false) =
-    WatchModel(name, prefix, ModelTransport.LE, aw = aw, newHonorProtocol = newHonorProtocol)
+  private fun le(name: String, prefix: String, aw: Boolean = false, newHonorProtocol: Boolean = false, tested: Boolean = false) =
+    WatchModel(name, prefix, ModelTransport.LE, tested = tested, aw = aw, newHonorProtocol = newHonorProtocol)
 
   val all: List<WatchModel> = listOf(
     br("Huawei Watch Fit 4 Pro", HuaweiConstants.HU_JOYOFIT4PRO_NAME, tested = true),
@@ -89,7 +89,7 @@ internal object WatchModels {
     br("Huawei Watch Fit 5", HuaweiConstants.HU_JOYOFIT5_NAME),
     br("Huawei Watch Fit 5 Pro", HuaweiConstants.HU_JOYOFIT5PRO_NAME),
     br("Huawei Watch Fit 3", HuaweiConstants.HU_JOYOFIT3_NAME),
-    br("Huawei Watch Fit 2", HuaweiConstants.HU_JOYOFIT2_NAME),
+    br("Huawei Watch Fit 2", HuaweiConstants.HU_JOYOFIT2_NAME, tested = true),
     br("Huawei Watch GT 2", HuaweiConstants.HU_WATCHGT2_NAME),
     br("Huawei Watch GT 2 Pro", HuaweiConstants.HU_WATCHGT2PRO_NAME),
     br("Huawei Watch GT 3", HuaweiConstants.HU_WATCHGT3_NAME),
@@ -136,7 +136,7 @@ internal object WatchModels {
     le("Huawei Band 4e", HuaweiConstants.HU_BAND4E_NAME, aw = true),
     le("Huawei Band 6", HuaweiConstants.HU_BAND6_NAME),
     le("Huawei Band 7", HuaweiConstants.HU_BAND7_NAME),
-    le("Huawei Band 8", HuaweiConstants.HU_BAND8_NAME),
+    le("Huawei Band 8", HuaweiConstants.HU_BAND8_NAME, tested = true),
     le("Huawei Band 8", "huawei b8-"),
     le("Huawei Band 8", "band 8-"),
     le("Huawei Band 9", HuaweiConstants.HU_BAND9_NAME),
@@ -147,7 +147,7 @@ internal object WatchModels {
     le("Huawei Band 10", "huawei band 10"),
     le("Huawei Band 10", "band 10-"),
     le("Huawei Band 11", HuaweiConstants.HU_BAND11_NAME),
-    le("Huawei Band 11 Pro", HuaweiConstants.HU_BAND11PRO_NAME),
+    le("Huawei Band 11 Pro", HuaweiConstants.HU_BAND11PRO_NAME, tested = true),
     le("Honor Band 3", HuaweiConstants.HO_BAND3_NAME),
     le("Honor Band 4", HuaweiConstants.HO_BAND4_NAME),
     le("Honor Band 5", HuaweiConstants.HO_BAND5_NAME),

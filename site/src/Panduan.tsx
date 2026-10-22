@@ -134,7 +134,7 @@ const FAQ: readonly FaqItem[] = [
       id: (
         <>
           JoyoFit tidak memakai kode QR: pairing-nya lewat Bluetooth, lalu konfirmasi di layar jam. Layar QR itu datang dari jam,
-          bukan dari JoyoFit, dan kami belum bisa memastikan perilakunya di tiap model (hanya Watch Fit 4 Pro yang sudah diuji).
+          bukan dari JoyoFit, dan kami belum bisa memastikan perilakunya di tiap model (baru Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2 yang diuji).
           Yang bisa dicoba: pastikan jam tidak sedang terhubung ke HP atau aplikasi lain, buka tab <B>Watch</B> → <B>Scan nearby
           devices</B> (atau pasangkan di Pengaturan Bluetooth Android), ketuk <B>Connect</B>, lalu setujui permintaan di jam dalam
           30 detik. Kalau jam tetap tidak muncul, <a className={link} href={WATCH_REPORT_FORM_URL} target="_blank" rel="noopener">kirim laporan jam</a>{" "}
@@ -144,7 +144,7 @@ const FAQ: readonly FaqItem[] = [
       en: (
         <>
           JoyoFit does not use QR codes: pairing goes over Bluetooth and is confirmed on the watch screen. The QR screen comes
-          from the watch, not from JoyoFit, and we cannot yet say how it behaves on every model (only the Watch Fit 4 Pro has
+          from the watch, not from JoyoFit, and we cannot yet say how it behaves on every model (only the Watch Fit 4 Pro, Band 8, Band 11 Pro and Watch Fit 2 have
           been tested). What to try: make sure the watch is not connected to another phone or app, open <B>Watch</B> → <B>Scan
           nearby devices</B> (or pair it in Android Bluetooth settings), tap <B>Connect</B>, then accept the prompt on the watch
           within 30 seconds. If it still does not appear, <a className={link} href={WATCH_REPORT_FORM_URL} target="_blank" rel="noopener">send a watch report</a>{" "}
@@ -500,16 +500,16 @@ function Watches({ lang }: { lang: Lang }) {
       <p>
         {id ? (
           <>
-            Baru <B>Huawei Watch Fit 4 Pro</B> yang sudah diuji. JoyoFit bisa mencoba {JAM_BISA_DICOBA} model jam dan band Huawei
+            Yang sudah diuji: <B>Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2</B>. JoyoFit bisa mencoba {JAM_BISA_DICOBA} model jam dan band Huawei
             dan Honor, tapi model lainnya masih eksperimen: secara teori didukung, belum ada yang mencobanya. Punya model
-            eksperimen? Sambungkan sekali, lalu kirim laporan (tab Watch → Help support your watch → Report on GitHub) supaya
+            eksperimen? Sambungkan sekali, lalu kirim laporan (tab Watch → Bantu dukung jam-mu → Kirim laporan) supaya
             modelnya bisa ditandai teruji.
           </>
         ) : (
           <>
-            Only the <B>Huawei Watch Fit 4 Pro</B> has been tested. JoyoFit can attempt {JAM_BISA_DICOBA} Huawei and Honor watch
+            Tested so far: the <B>Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro and Watch Fit 2</B>. JoyoFit can attempt {JAM_BISA_DICOBA} Huawei and Honor watch
             and band models, but the others are experimental: supported in theory, not tried by anyone yet. Have an experimental
-            model? Connect once, then send a report (Watch tab → Help support your watch → Report on GitHub) so it can be marked
+            model? Connect once, then send a report (Watch tab → Help support your watch → Send report) so it can be marked
             tested.
           </>
         )}

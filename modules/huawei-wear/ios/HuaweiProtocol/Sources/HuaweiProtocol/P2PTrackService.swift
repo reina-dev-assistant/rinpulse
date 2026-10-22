@@ -1,6 +1,7 @@
 // Port of TrackService (HeartRateZonesSync.kt, derived from GB's HuaweiP2PTrackService): P2P module `hw.unitedevice.track`, watch package
 // `hw.watch.health.p2p`, fingerprint `SystemApp`. On registration the phone sends the heart-rate zone TLV in a type-2 `P2PSubMsg`. `age` is read
-// at each send, so `resend` picks up a changed profile.
+// at each send, so `resend` picks up a changed profile; `user` likewise returns the zones the user configured
+// (nil: GB's defaults for `age`).
 import Foundation
 
 public final class P2PTrackService: P2PService, @unchecked Sendable {
@@ -10,10 +11,15 @@ public final class P2PTrackService: P2PService, @unchecked Sendable {
 
     private let log: LogSink
     private let age: @Sendable () -> Int
+    private let user: @Sendable () -> HeartRateZonesCalc.UserZones?
 
-    public init(manager: P2PManager, log: @escaping LogSink, age: @escaping @Sendable () -> Int) {
+    public init(
+        manager: P2PManager, log: @escaping LogSink, age: @escaping @Sendable () -> Int,
+        user: @escaping @Sendable () -> HeartRateZonesCalc.UserZones? = { nil }
+    ) {
         self.log = log
         self.age = age
+        self.user = user
         super.init(manager: manager)
     }
 
@@ -30,9 +36,11 @@ public final class P2PTrackService: P2PService, @unchecked Sendable {
     /// GB `sendHeartZoneConfig`.
     public func resend() {
         let years = age()
-        let configs = HeartRateZonesCalc.deviceConfig(age: years, track: true, simpleCommand: false, extended: false)
+        let userZones = user()
+        let source = userZones.map { "your zones (\($0.logText))" } ?? "age \(years)"
+        let configs = HeartRateZonesCalc.deviceConfig(age: years, track: true, simpleCommand: false, extended: false, user: userZones)
         guard let pairs = HeartRateZonesCalc.trackTlv(configs) else {
-            log(LogEntry(.error, service: 0x34, command: 0x01, "HR zones: not sent, the zones for age \(years) are not valid"))
+            log(LogEntry(.error, service: 0x34, command: 0x01, "HR zones: not sent, the zones for \(source) are not valid"))
             return
         }
         var tlv = HuaweiTLV()
@@ -43,7 +51,7 @@ public final class P2PTrackService: P2PService, @unchecked Sendable {
         log(
             LogEntry(
                 .info, service: 0x34, command: 0x01,
-                "HR zones: sent via \(P2PTrackService.moduleName) for age \(years), upright MHR \(mhr.zone1)/\(mhr.zone2)/\(mhr.zone3)/\(mhr.zone4)/\(mhr.zone5) of \(mhr.threshold), "
+                "HR zones: sent via \(P2PTrackService.moduleName) for \(source), upright MHR \(mhr.zone1)/\(mhr.zone2)/\(mhr.zone3)/\(mhr.zone4)/\(mhr.zone5) of \(mhr.threshold), "
                     + "HRR \(hrr.zone1)/\(hrr.zone2)/\(hrr.zone3)/\(hrr.zone4)/\(hrr.zone5) resting \(hrr.resting), warning \(upright.warningHRLimit), \(packet.bytes.count) bytes"
             )
         )

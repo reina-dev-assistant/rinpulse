@@ -305,6 +305,7 @@
     "startOnWatch": "Also start on the watch",
     "startOnWatchHint": "When you start a strength workout on the phone, the watch starts Strength training too, pauses when you pause and stops when you finish. The watch's heart rate and calories join your workout after the next sync.",
     "startOnWatchOffline": "Applies while the watch is connected. It is not connected right now.",
+    "startOnWatchRefused": "This watch refused the start command from the phone, so it cannot be started from here. Start Strength training on the watch, JoyoFit follows automatically.",
     "startOnWatchUnsupported": "This watch cannot be started from the phone. Start Strength training on the watch if you want its heart rate recorded."
   },
   "watch": {
@@ -317,6 +318,15 @@
     "refusedCode": "The watch refused the start command (code {{code}}). Start Strength training on the watch if you want its heart rate recorded.",
     "notWorn": "The watch says it is not on your wrist and refused to start the workout (code {{code}}). Put it on snugly and tap Try again, or start Strength training on the watch if you want its heart rate recorded.",
     "lost": "This workout was started on the watch before the app restarted, so it cannot be stopped from here. Stop it on the watch when you finish.",
-    "retry": "Try again"
+    "gated": "This watch cannot be started from the phone. Start Strength training on the watch, JoyoFit follows automatically.",
+    "recording": "Watch recording",
+    "retry": "Try again",
+    "endedOnWatch": "The workout stopped on the watch. Finish this one here once all sets are logged; the watch data joins after the next sync."
+  },
+  "watchPick": {
+    "title": "Pick a routine",
+    "intro": "The watch is recording Strength training. Pick a routine to tick off here; the watch's heart rate and time show in the header.",
+    "start": "Start with this routine",
+    "none": "No routine"
   }
 }

@@ -8,6 +8,7 @@ import { Alert, AppState, PermissionsAndroid, Platform } from 'react-native';
 import { t } from '@/i18n';
 import { rememberedWatch } from '@/features/device/rememberedWatch';
 import { isActive } from '@/features/live/liveWorkout';
+import { isStrengthSport } from '@/features/strength/watchLive';
 import { useWatch } from '@/state/WatchProvider';
 import { HuaweiWear, type LiveWorkout } from '@/wear';
 
@@ -69,10 +70,14 @@ export function LiveWorkoutProvider({ children }: { children: ReactNode }) {
   }, [db, linked]);
 
   const activeId = isActive(live) ? live.id : null;
+  // A strength workout on the watch opens the strength logger (the routine picker first when none is in progress), not the generic screen.
+  const strength = isActive(live) && isStrengthSport(live.sportType);
   useEffect(() => {
     if (activeId === null || opened.current === activeId || !foreground || !navigatorReady) return;
     opened.current = activeId;
-    router.navigate('/workout-live');
+    router.navigate(strength ? '/strength/watch-pick' : '/workout-live');
+    // `strength` is read once per workout: the type may arrive a poll later and must not open a second screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, foreground, navigatorReady, router]);
 
   return <LiveWorkoutContext.Provider value={live}>{children}</LiveWorkoutContext.Provider>;

@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useSQLiteContext } from 'expo-sqlite';
+import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { useCallback, useState } from 'react';
 
 import {
@@ -16,10 +16,11 @@ import {
 import { errorMessage } from '@/format';
 import { startOfLocalDay } from '@/features/today/stats';
 import { withRideLoad } from '@/features/cycling/load';
-import { strainFromLoads, zoneThresholds, type DayStrain } from '@/features/today/strain';
+import { strainFromLoads, type DayStrain } from '@/features/today/strain';
 import { addDays, dayBounds, dayStarts } from '@/features/trends/series';
 import { parseSummary, type WorkoutSummary } from '@/features/workouts/summary';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { userHrZones } from '@/features/hrzones/settings';
+import type { HrZones } from '@/features/hrzones/zones';
 import type { SleepSegment, StepSample } from '@/wear';
 
 /** `today` is what the Today cards need; `full` adds the longer history the Kebugaran screen works from. */
@@ -40,7 +41,8 @@ export interface FitnessWorkout {
 export interface FitnessData {
   nowSec: number;
   dayStart: number;
-  maxHr: number;
+  /** The person's heart-rate zones the strain below was computed with. */
+  zones: HrZones;
   /** Per day with heart rate, oldest first. */
   strain: DayStrain[];
   resting: Map<number, number>;
@@ -59,6 +61,36 @@ interface FitnessState {
   error: string | null;
 }
 
+/** Reads what the fitness metrics need at `nowSec` (the queries of {@link useFitnessData}, also used by Joyo AI's data tools). */
+export async function readFitnessData(db: SQLiteDatabase, scope: FitnessScope, nowSec = Math.floor(Date.now() / 1000)): Promise<FitnessData> {
+  const dayStart = startOfLocalDay(nowSec);
+  const zones = userHrZones();
+  const depth = DEPTH[scope];
+  const bounds = dayBounds(dayStarts(dayStart, depth.strainDays + 1));
+  const [loads, resting, workouts, hrv, sleep, samples, stress] = await Promise.all([
+    listDayHeartLoad(db, bounds, zones.bounds),
+    listRestingHeartRateByDay(db, bounds),
+    listWorkoutsSince(db, nowSec - depth.workoutDays * 86400, nowSec + 1, -1),
+    listHrvReadingsSince(db, dayStart - depth.hrvDays * 86400),
+    listSleepSince(db, nowSec - SLEEP_DAYS * 86400),
+    listStepSamplesSince(db, dayStart),
+    listMetricSince(db, 'emotion', addDays(dayStart, -1)),
+  ]);
+  const strain = await withRideLoad(db, strainFromLoads(loads), nowSec);
+  return {
+    nowSec,
+    dayStart,
+    zones,
+    strain,
+    resting,
+    workouts: workouts.map(({ workout, summaryJson }) => ({ workout, summary: parseSummary(summaryJson) })),
+    hrv,
+    sleep,
+    samples,
+    stress,
+  };
+}
+
 /** Reads what the fitness metrics need whenever the screen gains focus or `dataVersion` changes (after a sync). */
 export function useFitnessData(dataVersion: number, scope: FitnessScope): FitnessState {
   const db = useSQLiteContext();
@@ -67,38 +99,9 @@ export function useFitnessData(dataVersion: number, scope: FitnessScope): Fitnes
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      const nowSec = Math.floor(Date.now() / 1000);
-      const dayStart = startOfLocalDay(nowSec);
-      const maxHr = userMaxHr();
-      const depth = DEPTH[scope];
-      const bounds = dayBounds(dayStarts(dayStart, depth.strainDays + 1));
-      Promise.all([
-        listDayHeartLoad(db, bounds, zoneThresholds(maxHr)),
-        listRestingHeartRateByDay(db, bounds),
-        listWorkoutsSince(db, nowSec - depth.workoutDays * 86400, nowSec + 1, -1),
-        listHrvReadingsSince(db, dayStart - depth.hrvDays * 86400),
-        listSleepSince(db, nowSec - SLEEP_DAYS * 86400),
-        listStepSamplesSince(db, dayStart),
-        listMetricSince(db, 'emotion', addDays(dayStart, -1)),
-      ]).then(
-        async ([loads, resting, workouts, hrv, sleep, samples, stress]) => {
-          const strain = await withRideLoad(db, strainFromLoads(loads), nowSec);
-          if (cancelled) return;
-          setState({
-            data: {
-              nowSec,
-              dayStart,
-              maxHr,
-              strain,
-              resting,
-              workouts: workouts.map(({ workout, summaryJson }) => ({ workout, summary: parseSummary(summaryJson) })),
-              hrv,
-              sleep,
-              samples,
-              stress,
-            },
-            error: null,
-          });
+      readFitnessData(db, scope).then(
+        (data) => {
+          if (!cancelled) setState({ data, error: null });
         },
         (e: unknown) => {
           if (!cancelled) setState({ data: null, error: errorMessage(e) });

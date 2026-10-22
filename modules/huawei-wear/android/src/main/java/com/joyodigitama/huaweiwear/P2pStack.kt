@@ -33,6 +33,8 @@ internal class P2pStack(
   private val healthModelFactory: (HuaweiP2PManager) -> HealthModelService,
   /** Age for the default heart-rate zones, read at each send (the profile can change). */
   private val heartRateAge: () -> Int,
+  /** The zones the user set in the app, read at each send; null = the age defaults. */
+  private val heartRateUser: () -> HeartRateZonesCalc.UserZones?,
   /** The quick replies service when this watch takes them; the controller owns the stored list. */
   private val quickRepliesFactory: (HuaweiP2PManager) -> QuickRepliesService,
 ) : HuaweiP2PManager.Transport {
@@ -129,7 +131,7 @@ internal class P2pStack(
 
     log(HeartRateZonesSync.capsLine())
     if (HeartRateZonesSync.supportsTrack) {
-      val service = TrackService(manager, events, heartRateAge)
+      val service = TrackService(manager, events, heartRateAge, heartRateUser)
       trackService = service
       service.register()
     }
@@ -146,12 +148,8 @@ internal class P2pStack(
     service.register()
   }
 
-  /** Re-sends the zones after the profile age changed; false when this watch takes them another way. */
-  fun resendHeartRateZones(): Boolean {
-    val service = trackService ?: return false
-    service.resend()
-    return true
-  }
+  /** Re-sends the zones after the profile age or the zone configuration changed; false when nothing went out (another way, or invalid). */
+  fun resendHeartRateZones(): Boolean = trackService?.resend() ?: false
 
   fun close() {
     subscription?.close()

@@ -118,8 +118,29 @@ describe('themes', () => {
   test('dark themes pin dark, the pastel and cream ones pin light, the rest follow the phone', () => {
     for (const id of ['sport', 'amoled', 'neon', 'sunset', 'rosegold'] as const) expect(getTheme(id).appearance).toBe('dark');
     for (const id of ['retro', 'peach', 'strawberry', 'matcha'] as const) expect(getTheme(id).appearance).toBe('light');
-    for (const id of ['classic', 'ocean', 'sogan', 'forest', 'soft', 'mono', 'sakura', 'lavender'] as const) {
+    for (const id of ['classic', 'ocean', 'sogan', 'forest', 'soft', 'mono', 'sakura', 'lavender', 'titik'] as const) {
       expect(getTheme(id).appearance).toBe('system');
+    }
+  });
+
+  test('titik: dot-matrix figures, dots decoration, outlined cards, red only as primary and live states', () => {
+    const titik = getTheme('titik');
+    expect(titik.type.fonts.numeral).toBe('Doto_900Black');
+    expect(titik.type.fonts.headline).toBe('Doto_900Black');
+    expect(titik.type.fonts.regular).toBe('SpaceGrotesk_500Medium');
+    expect(titik.decoration).toBe('dots');
+    expect(titik.outlined).toBe(true);
+    expect(titik.dottedRings).toBe(true);
+    // Dot-matrix glyphs lose their shape when small: no numeral under 20.
+    for (const size of Object.values(titik.type.numeral)) expect(size.size).toBeGreaterThanOrEqual(20);
+    expect(titik.palettes.dark.background).toBe('#000000');
+    // Only the heart and awake stage share the primary's hue family; steps, sleep, workouts and link are grey.
+    for (const palette of [titik.palettes.light, titik.palettes.dark]) {
+      for (const tint of ['steps', 'sleep', 'workouts', 'link'] as const) {
+        const hex = palette[tint];
+        const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+        expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeLessThanOrEqual(4);
+      }
     }
   });
 
@@ -186,6 +207,7 @@ describe('fonts', () => {
       'BebasNeue_400Regular',
       'SpaceGrotesk_700Bold',
       'JetBrainsMono_800ExtraBold',
+      'Doto_900Black',
     ]);
     for (const theme of THEMES) expect(tabular.has(theme.type.fonts.numeral)).toBe(true);
   });

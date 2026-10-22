@@ -12,9 +12,9 @@ import {
 import { errorMessage } from '@/format';
 import { startOfLocalDay } from '@/features/today/stats';
 import { withRideLoad } from '@/features/cycling/load';
-import { strainFromLoads, zoneThresholds, type DayStrain } from '@/features/today/strain';
+import { strainFromLoads, type DayStrain } from '@/features/today/strain';
 import { addDays, dayBounds, dayStarts, type TrendRange } from '@/features/trends/series';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { userHrZones } from '@/features/hrzones/settings';
 import type { SleepSegment } from '@/wear';
 
 /** Days of HRV before the first charted day that recovery compares against. */
@@ -50,9 +50,9 @@ export function useTrendsData(range: TrendRange, dataVersion: number): TrendsSta
     useCallback(() => {
       let cancelled = false;
       const days = dayStarts(startOfLocalDay(Math.floor(Date.now() / 1000)), range);
-      const maxHr = userMaxHr();
+      const zones = userHrZones();
       Promise.all([
-        listDayHeartLoad(db, dayBounds([addDays(days[0], -1), ...days]), zoneThresholds(maxHr)),
+        listDayHeartLoad(db, dayBounds([addDays(days[0], -1), ...days]), zones.bounds),
         listRestingHeartRateByDay(db, dayBounds(days)),
         listHrvReadingsSince(db, addDays(days[0], -BASELINE_DAYS)),
         // A night that ends on the first day started the evening before.
@@ -60,7 +60,7 @@ export function useTrendsData(range: TrendRange, dataVersion: number): TrendsSta
       ]).then(
         async ([loads, resting, hrv, sleep]) => {
           const strain = await withRideLoad(db, strainFromLoads(loads), Math.floor(Date.now() / 1000));
-          if (!cancelled) setState({ data: { range, days, maxHr, strain, resting, hrv, sleep }, error: null });
+          if (!cancelled) setState({ data: { range, days, maxHr: zones.maxHr, strain, resting, hrv, sleep }, error: null });
         },
         (e: unknown) => {
           if (!cancelled) setState({ data: null, error: errorMessage(e) });

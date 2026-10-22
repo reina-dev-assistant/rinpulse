@@ -17,10 +17,11 @@ import type { RoutePoint, WorkoutSummary } from '@/features/workouts/summary';
 import { buildThreadsRun, buildThreadsStrength, weeklyContext, type ThreadsContext } from '../data/threads';
 import type { StickerSubject } from '../subject';
 import { loopRoute } from './routes';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 
 const NO_HISTORY: AnalysisHistory = { efforts: [], trimps: [], similar: [] };
 const DAY = 86_400;
-const MAX_HR = 188;
+const ZONES = hrZonesForMax(188);
 
 /** Deterministic wobble in [-1, 1]. */
 const wobble = (t: number, seed: number) => Math.sin(t / 37 + seed) * 0.6 + Math.sin(t / 11 + seed * 2.3) * 0.4;
@@ -74,7 +75,7 @@ export function runSubject(s: RunScenario): StickerSubject {
     steps: Math.round(synth.distance * 1.22),
   });
   const summary = s.summary ?? {};
-  const analysis = analyzeWorkout({ workout, summary, points: synth.points, maxHr: MAX_HR, daySamples: [], history: NO_HISTORY }, { includeHr: true, includeRoute: true, includeComparison: false });
+  const analysis = analyzeWorkout({ workout, summary, points: synth.points, zones: ZONES, daySamples: [], history: NO_HISTORY }, { includeHr: true, includeRoute: true, includeComparison: false });
   const context: ThreadsContext | null = s.context
     ? weeklyContext({
         workouts: pastWorkouts(T0, s.sportName, [[2, 8.1], [4, 5.2], [7, 12.4], [9, 6], [11, 5], [14, 9.6], [16, 5.3], [19, 7.5], [22, 5], [25, 14.2]]),
@@ -147,7 +148,7 @@ function rideScenario(): { analysis: WorkoutAnalysis; ride: RideAnalysis; workou
     maxHr: 176,
   });
   const points = syntheticPoints(opts).map((p) => ({ ...p, stride: null }));
-  const analysis = analyzeWorkout({ workout, summary: {}, points, maxHr: MAX_HR, daySamples: [], history: NO_HISTORY }, { includeHr: true, includeRoute: true, includeComparison: false });
+  const analysis = analyzeWorkout({ workout, summary: {}, points, zones: ZONES, daySamples: [], history: NO_HISTORY }, { includeHr: true, includeRoute: true, includeComparison: false });
   return { analysis, ride, workout, summary: {} };
 }
 

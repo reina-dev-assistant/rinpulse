@@ -17,10 +17,10 @@ modules/huawei-wear/
     HuaweiWear.podspec            ONE pod, ONE Swift module `HuaweiWear`: ios/*.swift + HuaweiProtocol/Sources/**
     HuaweiProtocol/               SwiftPM package, pure Swift, no dependencies, builds on Linux and macOS/iOS
       Sources/HuaweiProtocol/     crypto, TLV, framing, session, packets, authenticator, initializer, syncs
-      Tests/HuaweiProtocolTests/  716 tests; Fixtures/*.json are generated from the Java the Android app runs
+      Tests/HuaweiProtocolTests/  802 tests; Fixtures/*.json are generated from the Java the Android app runs
       GoldenGen/                  run.sh + Golden*.java: regenerates the fixtures (JDK 17, no Android SDK needed)
     BleTransport.swift ...        CoreBluetooth central, Keychain store, SQLite sync store, HealthKit writer, Expo module
-    ModuleLogicTests/             SwiftPM package compiling the same sources as one module; 434 logic tests on Linux
+    ModuleLogicTests/             SwiftPM package compiling the same sources as one module; 623 logic tests on Linux
     scripts/                      check-api.mjs (JS API coverage), gen-migrations.mjs (embeds schema/joyofit-db-migrations.json)
 ```
 
@@ -44,9 +44,10 @@ with 16-byte IVs) is written out in the package because CryptoKit rejects what t
 | Find my watch (DataSync config 900100002, ExpandCapability 79 and 83) | `FindWatch.swift`, `PhoneFeatures.swift` | Java golden, fake watch |
 | FileUpload (0x28), watch faces (0x27): list, install a `.hwt`, activate, delete; face customization; photo face | `FileUploader.swift`, `WatchfaceOps.swift`, `WatchfacePackage.swift`, `ZipReader.swift`, `WatchfaceCustomizer.swift`, `PhotoFace*.swift`, `PngDecoder.swift`, `ios/WatchfaceController.swift`, `ios/PhotoFaceController.swift` | Java golden for the GB packets, Kotlin test translations, 10 real `.hwt` files, fake watches |
 | Workouts: 17/07..16 packets, GPS file, record builder, sync phase, `workouts` and `workout_points` rows, Apple Health `HKWorkout` + route | `Packets/WorkoutPackets.swift`, `WorkoutSync.swift`, `WorkoutRecord.swift`, `HuaweiGpsParser.swift`, `ios/WorkoutStore.swift`, `HealthKitWriter.swift` | Java golden, fake watch, SQLite tests, plan tests |
-| Alarms (08/01-04), health sensor switches (continuous HR, SpO2, TruSleep, alerts), heart-rate zones, live heart rate, automatic stress, HRV spot measure | `Alarms.swift`, `HealthSensors.swift`, `HeartRateZones.swift`, `StressSwitch.swift`, `HrvSpotCodec.swift`, `ios/WatchSettingsFeatures.swift` | Java golden (the stress model bit for bit), Kotlin test translations, scripted watch |
+| Alarms (08/01-04), health sensor switches (continuous HR, SpO2, TruSleep, alerts), heart-rate zones (the defaults for the age, or the zones set in Settings > Zona HR: `setHeartRateZones`, docs/hr-zones.md), live heart rate, automatic stress, HRV spot measure | `Alarms.swift`, `HealthSensors.swift`, `HeartRateZones.swift`, `StressSwitch.swift`, `HrvSpotCodec.swift`, `ios/WatchSettingsFeatures.swift` | Java golden (the stress model bit for bit), Kotlin test translations, scripted watch |
 | Weather (0x0F, current + 24 h + 8 days, GPS, unit) over Open-Meteo, CoreLocation, URLSession | `Packets/WeatherPackets.swift`, `HuaweiWeather.swift`, `OpenMeteo.swift`, `ios/WeatherController.swift`, `ios/CoreLocationSource.swift` | Java golden, recorded Open-Meteo answers, scripted watch |
 | Notifications: the watch's own switch (02/04) and `CBPeripheral.ancsAuthorized` | `Packets/NotificationPackets.swift`, `ios/WatchNotifications.swift`, `BleTransport.swift` | Java golden, scripted watch |
+| Per-app notification switches (02/0B app list, ExpandCapability 161, the encoding test; **UNVERIFIED on a watch**) | `Packets/NotificationPackets.swift` (`AppSwitches`), `ios/NotificationAppFilter.swift` | Java-built golden (`notifications.json`, the layout of Huawei Health's own sender; Gadgetbridge has no 0B), scripted watch |
 | Strava (Settings → Strava, Send to Strava, automatic upload): JS only, no native call; the native side is the shared SQLite schema: `workouts.imported`, `strava_upload` (migrations 10 and 11) | `WearMigrations.swift`, `ios/WorkoutStore.swift` | SQLite tests: the JS candidate query on rows the Swift store wrote, upgrade of the build 202610160151 database |
 | FIT file import (Settings → Import a FIT file): JS only (`@garmin/fitsdk`, `expo-file-system`), `imported = 1` rows kept out of exports; Info.plist document type for `.fit` (not tried on a device) | `src/features/fitimport/`, `app.json` | bun tests with FIT files from the app's own encoder and the shared schema in SQLite |
 | GPX and TCX routes (Watch → Rute → Impor GPX/TCX, share sheet, Open in): JS only (`src/features/routes/`, files in `Paths.document/routes`); Info.plist document types and imported UTIs `com.joyodigitama.joyofit.gpx` and `.tcx` (not tried on a device) | `src/features/routes/`, `src/features/sharedfile/`, `app.json` | bun tests with Strava-style and Garmin-style GPX and TCX fixtures |
@@ -70,28 +71,56 @@ Not ported: night HRV (`NightHrv.kt`; the app says "Night HRV is not read on iPh
 waiting for a night that never arrives, and the iOS support report has a `Night HRV: not read on iPhone` line) and the once-a-day "Morning
 summary" local notification (it needs the notification permission prompt; not part of this round), Android's ongoing live-workout
 notification (same reason). What iOS cannot do at all: forwarding other apps'
-notifications and the per-app list (see below), find my phone, calls and call control, SOS text messages.
+notifications (the per-app switches of the watch are separate, see below), find my phone, calls and call control, SOS text messages.
 
 ## Features iOS cannot do, and what the app says
 
-- **Notifications.** iOS gives an app no access to other apps' notifications, so there is no forwarding and no per-app list. The watch reads
+- **Notifications.** iOS gives an app no access to other apps' notifications, so there is no forwarding. The watch reads
   the iPhone's notifications itself over ANCS once the user allows it (Settings > Bluetooth > the watch > Show Notifications, or the system
   prompt). JoyoFit switches the watch's own notification setting (02/04, only after the user chose in the app, so a switch set elsewhere is
   left alone) and shows `CBPeripheral.ancsAuthorized` as "iPhone shares notifications with the watch" (log line `ANCS ... authorized`).
 - **Find my phone, calls, call control.** iOS suspends the app and gives it no call access, so the Settings screen explains this instead of
   offering switches. **SOS text messages**: iOS does not let an app send an SMS by itself.
-- **Per-app notification filter.** There is no watch-side command for it: the 02 service has only the on/off switch (02/04), constraints,
-  capabilities and per-notification push/remove/reply (`Notifications.java`); Android's per-app choice is purely phone-side, applied before
-  forwarding. On iOS the filter is iOS's own (Settings > Notifications > each app), so the app list stays an explanation.
+- **Per-app notification switches (UNVERIFIED on a watch).** There is a watch-side per-app command after all: 02/0B,
+  `81{82{03 app id string, 04 one byte}...}` (Huawei Health 17.0.8.300's own wire schema; Gadgetbridge has no class for it, so the golden is built
+  with the real Java TLV encoder in `GoldenNotifications.java`). It is gated by ExpandCapability 161; every connect logs
+  `Notifications: ExpandCapability 161 = yes/no, 02/0B listed/not listed` and the support report has a `Notification app switches (02/0B)` line
+  (the Fit 4 Pro is evidenced by Huawei Health Android sending it, not by JoyoFit). What is **not** known for an iPhone: which id string the watch
+  matches (iOS bundle ids, or Huawei's own catalogue numbers) and which byte means "off" (Huawei Health's decompile says 1, the schema's field name
+  and huac say 0): `docs/ios-notification-app-switches.md`. So the app ships the list but keeps the switches **off until a test on the user's own
+  watch proved an encoding** (`NotificationAppFilter.swift`, screen `NotificationAppListIos.tsx`, Settings > Notifikasi > Aplikasi notifikasi):
+  - Encodings tried, in order: **A** bundle id, 1 = off; **B** bundle id, 0 = off; **C1** Huawei number, 1 = off; **C2** Huawei number, 0 = off. The
+    numbers are known for Messages only (`appid` 1), so another app is tried with A and B.
+  - One app is tested (Messages by default). A probe is **one entry for that app, never the list** (a wrong polarity for the whole list would silence
+    every app). The person sends one message to that app from another phone (not from this iPhone: the test ends when JoyoFit leaves the screen or the
+    foreground) and answers "masih muncul / tidak muncul". "Masih muncul": next candidate, nothing to switch back. "Tidak muncul": the app is switched
+    back and the person answers whether a second message comes through; only then is the encoding stored (a message that never arrived for another
+    reason must not become a stored encoding). No candidate hid the app: nothing stored.
+  - The entry that switches the app back is written to the defaults **before** each probe is sent (`watch_notification_filter_pending_restore`) and
+    resent at the next connect when the test never finished (app killed, link lost), so an interrupted test cannot leave an app hidden. Leaving
+    the screen and `OnAppEntersBackground` send it at once. Known gap: an unanswered probe is switched back with the value that undoes it *if it
+    worked*; with the wrong polarity that value hides the app. The next test run sets the value explicitly, and the screen warns ("a test was cut off").
+  - After a winner the stored encoding (`watch_notification_filter_encoding`) and the person's switches (`watch_notification_filter_choices`, only
+    what they changed; all else on) are sent as one 02/0B with every app the encoding has an id for, then at every connect (once the person changed
+    something, as for 02/04) and on every change. "Other" (`other`) is a guess for the id and is not covered by the test; the row says so.
+  - Not synced with the account (`src/cloud/syncInventory.ts` lists it): the list lives on one watch's firmware, and the encoding is only proven for the
+    phone and watch that ran the test.
+  - The test result is one line in the support log (`Notification filter test: winner|none|inconclusive|cancelled|failed app=... tried=[A=hidden, ...]`
+    with the encoding, `gate161`, `ancs`, the watch's answer code), kept in the defaults and in the support report summary, and the screen can send it with
+    "Kirim laporan" (Atur). No message text is ever read.
+  - The catalogue is the common apps whose iOS bundle ids exist in the App Store (iTunes lookup, Indonesian storefront, 2026-10-22). Phone calls are not
+    in it (system id `com.apple.mobilephone` cannot be looked up; the watch's call switch is 02/04's second flag).
+  - Old binaries (OTA before the store build): `hasNative('getNotificationFilter')` is false and the screen keeps its old explanation.
 - **SOS text messages.** The watch's SOS request is still answered ("nothing was sent", status 1) so the person is not left waiting.
 - The morning summary notification shows "not available on iOS yet".
 
 ## The JS API on iOS
 
 All 98 members of the Android module's TS interface exist (`node modules/huawei-wear/ios/scripts/check-api.mjs` prints the split): 87
-implemented, 3 inert getters (morning summary, notification apps, SOS relay test), 1 no-op, 5 off-switches (`false` resolves, `true` rejects:
-find my phone, calls, call control, SOS relay, morning summary) and 2 that reject `ERR_UNSUPPORTED` (the Android notification access screen and
-the per-app switch). The screens of those say why on iOS instead of offering the control (`src/components/IosUnavailable.tsx`). Nothing
+implemented, 2 inert getters (morning summary, SOS relay test), 1 no-op, 5 off-switches (`false` resolves, `true` rejects:
+find my phone, calls, call control, SOS relay, morning summary) and 1 that rejects `ERR_UNSUPPORTED` (the Android notification access screen). The
+per-app list (`getNotificationApps`, `setNotificationAppEnabled`) is live on iOS, with four iOS-only members: `getNotificationFilter`,
+`startNotificationFilterTest`, `answerNotificationFilterTest`, `cancelNotificationFilterTest`. The screens of those say why on iOS instead of offering the control (`src/components/IosUnavailable.tsx`). Nothing
 claims to have reached the watch unless it did.
 
 ## iOS specifics
@@ -182,9 +211,9 @@ claims to have reached the watch unless it did.
 
 ```bash
 export PATH=$HOME/.local/swift-6.4/usr/bin:$HOME/jdk17/bin:$PATH
-bun run test:ios-protocol            # swift test in HuaweiProtocol (716 tests)
+bun run test:ios-protocol            # swift test in HuaweiProtocol (802 tests)
 bun run golden:ios                   # regenerate the Java golden fixtures (then re-run the tests)
-cd modules/huawei-wear/ios/ModuleLogicTests && ./link-sources.sh && JOYOFIT_REPO_ROOT=$PWD/../../../.. swift test   # 434 tests
+cd modules/huawei-wear/ios/ModuleLogicTests && ./link-sources.sh && JOYOFIT_REPO_ROOT=$PWD/../../../.. swift test   # 623 tests
 scripts/build-ios-linux.sh --dev     # signed JoyoFit-dev.ipa (docs/ios-linux.md)
 ```
 

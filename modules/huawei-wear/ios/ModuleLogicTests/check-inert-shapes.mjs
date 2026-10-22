@@ -37,6 +37,8 @@ const sources = {
   RunningCoursePushResult: 'HuaweiWearP2p.types',
   RoutesStatus: 'HuaweiWearRoutes.types',
   RoutePushResult: 'HuaweiWearRoutes.types',
+  NotificationFilterStatus: 'HuaweiWearNotifications.types',
+  NotificationFilterTest: 'HuaweiWearNotifications.types',
 };
 const core = 'HuaweiWear.types';
 

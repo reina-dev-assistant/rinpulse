@@ -246,6 +246,17 @@ describe('hrGradientStops', () => {
   });
 });
 
+describe('hrGradientStops with six zones (reserve method)', () => {
+  it('paints every zone, Z6 at the top', () => {
+    const colors = ['z1', 'z2', 'z3', 'z4', 'z5', 'z6'];
+    const stops = hrGradientStops([100, 120, 140, 160, 180, 190, 200], colors, { min: 100, max: 200, invert: false });
+    expect(stops).toHaveLength(12);
+    expect(stops[0]).toEqual({ offset: 0, color: 'z6' });
+    expect(stops[1]).toEqual({ offset: 0.1, color: 'z6' });
+    expect(stops[11]).toEqual({ offset: 1, color: 'z1' });
+  });
+});
+
 describe('readoutAt', () => {
   it('collects every metric at an index and clamps it', () => {
     const s = series({ cad: Array.from({ length: 11 }, () => 168), power: null });

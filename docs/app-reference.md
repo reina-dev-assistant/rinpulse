@@ -240,31 +240,111 @@ Shoes, bikes and other gear with a lifetime distance and time, a retirement dist
 A one-time import of the history Huawei Health holds in your Huawei account, so you do not start from an empty
 JoyoFit after switching. It reads Huawei's own **Privacy Centre export**, on the phone, and calls no Huawei server.
 
-1. At `privacy.consumer.huawei.com` (or Huawei Health → Me → your account → Privacy Center) choose **Request Your Data**,
-   tick **Health**, set a **ZIP password**, and wait for the email (up to 7 days; the link works 21 days).
+1. At `privacy.consumer.huawei.com` (South-East Asia accounts: `privacy-sg.consumer.huawei.com/privacycenter`; or Huawei Health →
+   Me → your account → Privacy Center) choose **Request Your Data** (the data copy), tick **Health**, set a **ZIP password**,
+   and wait for the email (up to 7 days; the link works 21 days). The file is `HUAWEI_HEALTH_<timestamp>.zip`.
 2. Before unbinding the watch from Huawei Health, sync it there once more (data only on the watch is lost on unbind).
-3. In JoyoFit pick the ZIP, type the password (kept in memory only), tap **Import**.
+3. In JoyoFit pick the ZIP (or open it from the email / Files app and choose JoyoFit), type the password (kept in memory
+   only), tap **Import**. **Keep JoyoFit open until it finishes** (minutes for a large export; the screen is held on during the
+   import and the screen says so). The ZIP is opened in place, never copied, and every file is streamed.
 
-What is read (`HuaweiExportImporter.kt` and the parsers beside it; the file is streamed, one bad record is skipped and
-counted, never fatal):
+The ZIP is AES-256 encrypted with that password (WinZip AES, all members); `HuaweiExportZip.kt` reads it with zip4j.
+Inside, as the Privacy Centre writes them (checked on a real export, 181 files, Nov 2020 to Oct 2026; folder names are matched
+case-insensitively, the typo `SportsHealth data & desciption` is Huawei's):
+
+| Folder | Content | JoyoFit |
+| --- | --- | --- |
+| `Health detail data & description/*.json` | records `{type, startTime, endTime, timeZone, samplePoints:[{key, startTime, endTime, value}]}`, times in epoch ms | table below |
+| `Sport per minute merged data & description/*.json` | one record per day, per-minute `steps`, `distance`, `calorie` (small calories) | `step_samples` |
+| `Motion path detail data & description/*.json` | one object per tracked workout: `subType` (sport id), `summaryData` (JSON text: totals, heart-rate figures), `detailData` (track text: GPS, heart rate, cadence, speed) | `workouts`, `workout_points` |
+| `Sample sequence data & description/*.json` | records by sequence `type`; strings for numbers | 700013 sleep details → `sleep_scores`; the rest below |
+| `SportsHealth data & desciption/SportsHealth-Data.xls` | 77 sheets, mostly account data; sheet `10-user sport daily statistics` has one row per day | the day totals (below), read by `HuaweiXlsReader.kt` (OLE2 + BIFF8, no library) |
+| `User int run plan data`, `User route data`, `User run plan data`, `HUAWEI_HEALTH-Agreement Signing-Data`, every `Data Field Description` spreadsheet | plans, routes, consent log, documentation | not read (see "Not imported") |
+
+`Health detail data` keys. The same reading usually comes twice under two numeric `type`s (heart rate `7` and `500023`, blood
+oxygen `16` with `avgSaturation` and `400021` with `spo2`, stress `11` and `500026`, resting `7` and `500024`, weight `8` and
+`10006`), so a point is recognised by its `key` plus the fields either generation uses, and the first reading per minute (or per
+metric and second) wins.
 
 | Huawei export | JoyoFit |
 | --- | --- |
-| `Health detail data`: `DATA_POINT_DYNAMIC_HEARTRATE` | `step_samples.heart_rate` of that minute |
-| `DATA_POINT_REST_HEARTRATE`, `DATA_POINT_NEW_REST_HEARTRATE` | `step_samples.resting_heart_rate` |
-| `BLOOD_OXYGEN_SATURATION` (`avgSaturation`) | `step_samples.spo2` |
+| `DATA_POINT_DYNAMIC_HEARTRATE`, `DYNAMIC_HEART_RATE` (`bpm`) | `step_samples.heart_rate` of that minute |
+| `DATA_POINT_REST_HEARTRATE`, `DATA_POINT_NEW_REST_HEARTRATE`, `RESTING_HEART_RATE` (`restBpm`, `oldRestBpm`) | `step_samples.resting_heart_rate` |
+| `BLOOD_OXYGEN_SATURATION` (`avgSaturation`, `spo2`) | `step_samples.spo2` |
 | `PROFESSIONAL_SLEEP_SHALLOW`/`DEEP`/`DREAM`/`WAKE`/`NOON` | `sleep_segments` (raw kinds 0x06, 0x07, 0x5656, 0x5658, 0x5659) |
-| `STRESS_DATA` (`score`) | `health_metrics` type `emotion` |
-| `Sport per minute merged data`: `steps`, `distance` | `step_samples.steps` / `distance` (largest value per minute) |
-| `Motion path detail data`: one object per workout, `attribute` track (`lbs` GPS, `h-r` heart rate, `alti` altitude) | `workouts` (`complete = 1`) and `workout_points` |
+| `STRESS_DATA` (`score`), `STRESS` (`stressScore`) | `health_metrics` type `emotion` |
+| `HEART_RATE_VARIABILITY` (`heartRateVariabilityRMSSD`) | `health_metrics` type `hrv` (ms) |
+| `OBSTRUCTIVE_SLEEP_APNEA` (`osaLevel`) | `health_metrics` type `sleep_apnea` |
+| `SKIN_TEMPERATURE`, `VASCULAR_HEALTH` (`pulseWaveVelocity`), `ARRHYTHMIA_RESULT` | `health_metrics` types `skin_temperature`, `arterial_stiffness`, `arrhythmia` |
+| `WEIGHT_BODYFAT_BROAD` (and any key naming weight, body fat, body composition or BMI; `HuaweiWeightParser.kt`) | `scale_reading`: `scale_id = 'huawei-health-export'`, `weight_kg`, `impedance_ohm`, `reported` = the `ReportedBody` JSON |
+| `Sport per minute`: `steps`, `distance`, `calorie` | `step_samples.steps` / `distance` / `calories` (largest value per minute; `calories` in small calories, 1/1000 kcal, like the watch's own; checked: a day's minutes sum to 110 000 for 2 829 steps) |
+| `Motion path`: `summaryData` totals, `detailData` lines `tp=lbs` (GPS), `h-r` (heart rate), `s-r` (cadence), `rs` (speed, dm/s from the start), `alti` | `workouts` (`complete = 1`, calories kcal = `totalCalories` / 1000) and `workout_points` |
+| `Sample sequence` type 700013 (`sleepScore`, `sleepEfficiency`) | `sleep_scores` (start / end of the record) |
+| `NUTRITION_RECORD` (`dietaryEnergy` kcal, macros, `meal` slot code, `mealEatTime`) | JoyoRogo diary through `food.importHistory` (queued first, see "To JoyoRogo") |
+| `DRINK_WATER` (`drinkWater` ml per drink) | JoyoRogo water log through `water.importHistory`, glasses of 250 ml per local day |
+| `USER_HEIGHT`, and the `height` / `gender` / `age` a weigh-in carries | the profile, only when the phone has none (see "To JoyoRogo") |
+| `SportsHealth-Data.xls` sheet 10 (`recordDay`, `timeZone`, `{steps, distance, calorie}`) | the part of each day's total the day's `step_samples` rows do not add up to, as one row from noon (`imported = 1`; an hour chart shows it at 12:00) |
 
-Not imported: per-minute calories (the scale differs by firmware, so imported minutes keep `calories = 0`), weight and
-body composition, exercise intensity, water, anything else. Workout calories are imported (kcal; a total that cannot be
-kcal is read as small calories and divided by 1000). Only sport ids 3 (cycling), 4 (running) and 5 (walking) are named;
-other workouts import as unnamed workouts with the Huawei id in `summary_json`.
+Weigh-ins follow Huawei's `BroadBodyFat` description: `bodyWeight` (kg), `bodyFatRate`, `moistureRate`, `muscleMass`, `boneSalt`,
+`basalMetabolism`, `visceralFatLevel`, `proteinRate`, `bodyAge`, `bmi`, `impedance`; fat and water in kilograms, skeletal and
+per-limb values, scores and ratios are not `ReportedBody` fields and are dropped, a fraction (0.21) is read as a percentage, a
+weight of 10 000-500 000 as grams, a weigh-in without a plausible weight (10-500 kg) is not stored. A real export had 22
+weigh-ins, all weight and BMI only (from the phone's manual entry, no scale). They show in the scale history and are sent
+to JoyoRogo's weight history on their real days (see "To JoyoRogo"). A weigh-in within a minute and 0.3 kg of one already
+in `scale_reading` is skipped.
+
+**To JoyoRogo** (`src/features/huaweiimport/rogoQueue.ts`, server `docs/history-import.md` in the JoyoRogo repo). The native import never calls
+the network: it writes weigh-ins into `scale_reading` (`rogo_state = 'pending'`) and meals and water days into `rogo_import_queue`
+(`kind`, `key`, `payload`, `state`; created by native code and by `ensureRogoImportQueueSchema`). When an import ends, and from the *Send to
+JoyoRogo* button, JS sends what is pending through `weight.importHistory`, `food.importHistory` and `water.importHistory` (batches of 100,
+idempotent, past days only, never over a day or meal the person has; offline or signed out leaves the rows pending, a server answer that is
+an error is kept on the rows and shown, for example the 404 of a JoyoRogo not yet updated). The Bluetooth scale's own push
+(`pendingWeighIns`, `weight.checkIn`, which writes over a day) skips imported rows. Imported meals and weigh-ins are `source = "huawei"`
+there and do not count toward streaks or challenge days; an old weight cannot replace a newer one because every reader takes the newest
+day and an imported day is only added where there was none. Meals have no name in the export (it holds kcal and macros), so the diary
+row is called "Makanan dari Huawei Health"; the slot comes from `meal` (10 breakfast, 20 lunch, 30 dinner, 11 / 21 / 31 snack, read off the
+eaten times of a real export), the day from the record's own `timeZone`. The 1 500 ml entries of `DRINK_WATER` are summed like the
+rest (it is not known whether Huawei writes a day's goal there). The profile is filled (`profileFromExport`) only when Settings > Profile was
+never saved: height from `USER_HEIGHT`, weight of the newest weigh-in, sex from `gender`, birth year as the year of that weigh-in minus its `age`
+(off by one before the birthday); without all of height, weight and birth year nothing is saved. JoyoRogo's own profile height is not
+touched: its profile always has one. The iOS ZIP import (`HuaweiImportController.swift`) is a port of the first Kotlin version and has none of
+this yet.
+
+Sport ids (`subType`, the `Sport type` sheet): 3 cycling, 4 running, 5 walking, 1 stairs, 2 mountain climbing, 101 indoor
+running, 102 pool swimming, 103 indoor cycling, 104 open water, 105-116 racket / ball sports, machines, yoga, pilates, aerobics,
+117 free weights (strength training), 118 trail run, 281 indoor walking, 282 hiking, 287-291 diving, and 140-216 and 223 as the
+watch's own ids (strength 140, HIIT 143 ...) map to the watch's table; others (a real export has id 283, which Huawei's sheet
+does not list) import as an unnamed workout with the Huawei id in `summary_json`.
+
+**Times.** Every Huawei timestamp is epoch milliseconds, so nothing is shifted: a record's `timeZone` (`+0700`) is only the
+zone the phone was in, and JoyoFit shows times in the phone's zone like for watch data. The `.xls` day rows are local dates;
+their day bounds use the zone in the row.
+
+**When something shows as unreadable.** The summary's *Unreadable skipped* count has a *What was unreadable* breakdown: the
+key, why (no time, no number, value out of range, impossible time span, no usable weight), how often and the first
+offending value, plus which kinds of unreadable records there were and which sample keys the file has that JoyoFit does not
+store (*In the file but not stored by JoyoFit*). The same lines go to logcat under the tag `HuaweiImport`
+(`adb logcat -s HuaweiImport`). Only keys, reasons and counts are logged, plus the first offending value per reason.
+
+**Not imported, with the reason** (counted per key in the summary):
+
+| In the export | Why not |
+| --- | --- |
+| `EMOTION` (valence / arousal, 1 202), `EXERCISE_INTENSITY`, `ACTIVE_HOUR`, `SPORT_GOAL_ACHIEVEMENT_DATA`, `FOUR_LEAF_ACHIEVEMENT_DATA`, `PREDICTED_TIMES`, `TRAINING_RECOVERY_TIME` | Huawei's own scores, rings and predictions: JoyoFit computes its own load, recovery and goals. `emotion` in JoyoFit is the stress score, so the valence of `EMOTION` would not fit it. |
+| `BASAL_METABOLISM`, `CURRENT_BASAL_METABOLISM`, `BASAL_METABOLISM_AFTER_EXERCISE` | derived values (in thousandths of a kcal); JoyoFit takes basal energy from the profile. |
+| `SLEEP_RECORD`, `SLEEP_ON_OFF_BED_RECORD`, `LOW_BLOOD_OXYGEN`, `BLOOD_OXYGEN_REMIND`, `BREATH_TRAIN` | single-purpose flags and alerts with no screen in JoyoFit (the low-oxygen readings are already in the blood-oxygen series). |
+| `DIET_RECORD` | an empty marker (`{"dietRecord":0}`, 123 in a real export) with nothing to import. |
+| `Sample sequence` 700021 (RRI beat intervals, 2 886 one-minute windows) | the derived RMSSD of each window is imported (`hrv`); the raw intervals have no consumer. |
+| `Sample sequence` ECG and arrhythmia PPG waveforms | no ECG viewer or storage. |
+| `User int run plan data` (one 5-week plan), `User run plan data`, `User route data` | training plans and saved routes: JoyoFit has no plan import (its plans are its own). |
+| `SportsHealth-Data.xls` sheets other than 10 (weight and goals are the account's current values, device list, medals, health trend reports) | not history; the daily statistics of sheet 9 are aggregates of data imported above. |
+| `Health detail` types that are only in newer app versions (blood glucose, blood pressure, ECG ...) | none in the tested export; they would show in the *left out* list. |
 
 How imported data is kept apart: migration `imported` adds `imported INTEGER NOT NULL DEFAULT 0` to `step_samples`,
-`sleep_segments` and `workouts`; the importer inserts with `imported = 1`.
+`sleep_segments` and `workouts`; the importer inserts with `imported = 1`. `health_metrics`, `sleep_scores` and `scale_reading` have no
+such column: imported rows there are added with the same insert-or-ignore rules (a watch row of the same type and second, or the
+same night start, stays), they follow those tables' own sync (the cloud health sync carries `health_metrics` and
+`sleep_scores`), and weigh-ins wait as `pending` for JoyoRogo until JS has sent them (`sent`) or JoyoRogo cannot take the weight (`skipped` with the reason).
 
 - **Watch data wins.** Nothing existing is replaced. A minute the watch stored only gets heart rate, SpO2 and resting heart
   rate filled in where they are NULL; sleep segments that overlap a watch-synced one and workouts starting within two
@@ -274,8 +354,14 @@ How imported data is kept apart: migration `imported` adds `imported INTEGER NOT
   a minute, sleep segment or workout the watch later syncs travels like a watch row. `WorkoutStore.syncStart` ignores
   imported workouts when it decides what to ask the watch for.
 
-The format is undocumented and was written from what community converters report (`NOTICE` credits them); it has not
-been checked against a real export yet. The first real file may need field-name or scale adjustments.
+The format is undocumented; the first version was written from what community converters report (`NOTICE` credits them) and
+then corrected against a real export (Oct 2026). That export had been imported with the first version: it read 5 521 readings
+as unreadable (every `BLOOD_OXYGEN_SATURATION` record of type `400021` names its field `spo2`, not `avgSaturation`) and stored
+the 103 workouts with start, end and heart-rate-less duration only (the real layout is `summaryData` / `detailData` / `subType`,
+not `attribute` / `sportType`), with no distance, calories, route or heart rate. Importing the same file again with the
+current version fills those workouts in (`workoutsUpdated`) and the per-minute calories of the minutes the first import stored
+with 0. `HuaweiRealExportHarnessTest` (set `HUAWEI_EXPORT_DIR` to an extracted export) runs the importer over a real export on
+the shipped schema, twice; it is skipped without that variable and nothing of an export is in the repository.
 
 ## Workout analysis (Workouts → a workout)
 
@@ -293,7 +379,7 @@ for a session that has no analysis card (a logged strength session, or an analys
 - **Scrubber charts.** Pace or speed, heart rate, elevation, cadence, step length and power on one shared time grid; touching a chart moves a dot on the map and fills a
   readout. The screen's scroll freezes while a chart is touched.
 - **Splits and laps.** Per kilometre (pace, heart rate, climb, cadence, and step length when the row has room) and the watch's or FIT file's laps.
-- **Heart-rate zones, pace zones, best efforts** (400 m, 1 km, 1 mile, 5 km, 10 km, half marathon, ranked against the same sport of the last 120 days),
+- **Heart-rate zones** follow the person's setting (Settings > Zona HR: max-HR or heart-rate-reserve method, maximum and resting rate, hand-edited limits; docs/hr-zones.md), **pace zones, best efforts** (400 m, 1 km, 1 mile, 5 km, 10 km, half marathon, ranked against the same sport of the last 120 days),
   **effort** (JoyoFit workout strain), **training load** (acute against chronic, with the watch's own training effect and recovery time when it reports them)
   and **comparison** with similar earlier workouts.
 
@@ -502,6 +588,7 @@ Seventeen themes, in `src/theme/themes.ts` (pure data, tested in `themes.test.ts
 - **Why a restart.** Everything that holds a theme's values (navigator options, native header configs, `StyleSheet`s, the system bars) would have to be told about a live switch, and one that is missed keeps the old look. Two causes were found: expo-router mounts the navigation container with React Navigation's stock light theme and never reads ours (`src/theme/NavigationTheme.tsx` now provides the palette and fonts to every navigator), and on Android the system navigation bar's light/dark appearance (the scrim and the button color of the 3-button bar) is set once, when the activity is created, from the phone's night mode (React Native's `enableEdgeToEdge`); the activity declares `uiMode` in `configChanges`, so a runtime scheme change never re-applies it. No JavaScript API in this build can set it (that needs `expo-navigation-bar` or a small native module, which changes the fingerprint), so a pinned theme on a phone set to the opposite scheme can show a nav bar of the other kind until a native build ships.
 - **Hero gradient.** `Colors.heroEnd` equals `hero` except in Sunset and Rose Gold, where the big hero panels (Today watch panel, watch status card, live recording card, strength summary) draw a `hero` to `heroEnd` gradient (`src/components/HeroGradient.tsx`, react-native-svg). Small `hero` surfaces (toasts, pills, banners) stay flat.
 - **Header decorations.** A theme may name a `decoration` (`DecorationId`): Sogan a kawung batik (a lattice of circles overlapping in pairs, turned 45 degrees: outlined lenses, filled seeds with a gold dot), Sakura cherry blossoms and loose petals, Forest a leafy branch, Neon the bend of a running track. The geometry is drawn in `src/theme/decorations.ts` (pure, tested in `decorations.test.ts`: plain circles, arcs and bezier curves, merged into a few dozen SVG paths by tone and opacity step), rendered by `src/components/ThemeDecoration.tsx` (react-native-svg). `Screen` draws it with `decorated` (the three Today variants) as the first child of the scroll content: it sits in the top-right corner of the content, 232 by 168 dp, behind the title, caption and share button, scrolls away with the header, fades toward the left and the bottom (each piece's opacity falls with its distance from the corner) and is covered by the hero panel, so no text sits on it. It is static, with no animation, so reduced motion needs no special case; dark palettes draw it at 0.8 strength. The picker previews draw it in a 120 by 64 corner of each miniature, behind a mini page header.
+- **Titik.** Black and off-white (light and dark follow the phone), greys for everything and one red (`primary`, heart, awake stage) for what is live. Figures and titles are Doto 900 (OFL, monospaced at 0.6 em, so it has tabular digits; its dots need size, so the smallest numeral is 20), body is Space Grotesk. Two theme flags: `outlined` (`Card`, `groupedRowStyle` and `StatTile` draw a hairline border around a canvas-colored fill; other card-like surfaces keep the fill only, which is a shade off the canvas) and `dottedRings` (`Ring` draws a ring of dots: the track as dots, the progress as a solid arc masked by the same dot pattern, so it still animates and is static under reduced motion; it lights whole dots only, at least one for any progress and all of them only at the goal, `components/ringMath.ts`). Doto is as wide as its character count, so `Metric` shrinks a figure to the room it has (`fit` for the ring centre, `numeralFit.ts`; `adjustsFontSizeToFit` for the rest): 100,000 steps stay inside the hero ring and the tiles. The `dots` decoration is a grey dot grid in the Today header. Bar charts and the sleep, strain and route graphics stay thin solid. `docs/screenshots/titik-preview.png` is an HTML render of the theme data (not an app screenshot).
 - **Preview.** `docs/screenshots/themes-preview.png` is a render of the theme data (palette, radii, font pair, hero panel, tab bar) for every theme and scheme, not a screenshot of the app.
 
 ## Tab bar
@@ -512,7 +599,7 @@ Four tabs and a centre button, in this order: **Hari ini** (Today), **Latihan** 
 
 **Centre button.** A 56 dp circle in `colors.primary` with a play glyph in `colors.primaryForeground`, inside a 4 dp ring in the pill's colour that notches the pill, raised 20 dp above it (the one element with the stronger shadow, elevation 10). The pill reserves a 72 dp slot between the two halves of the tabs. It is not a tab: a tap opens the one "Mulai latihan" sheet (`StartWorkoutSheet`: record on the phone, strength logger, workout by hand, FIT file, Loop) over whatever screen is showing, through `useStartWorkout()` from `StartWorkoutProvider` (`src/features/workouts/StartWorkoutProvider.tsx`, mounted above the tab navigator; it owns the sheet, the FIT file picker and its error dialog). The Workouts list has no start button of its own. Its accessibility label is `nav.start`. The button lives in the strip above the pill, not inside it: Android only delivers touches inside a parent's bounds, so the raised half has to lie inside the absolutely positioned strip, whose top padding is the rise (same approach as JoyoRogo's camera button). There is no long-press action (JoyoFit stores no last-used sport to start).
 
-**More (`settings` route).** The fourth tab is the Settings stack, so `/settings` and every `/settings/*` link are unchanged. Its index lists the account row first, then **Target & tubuh** (Goals & body), then one **Jam** (Watch) row whose subtitle is the watch's name and link state ("Seiya-B29F · Terhubung", or "Belum ada jam") and which opens the Watch hub (the connected-watch card, faces, photo face, alarms, Rute and the other watch pages live there; More shows no watch card), then **Pengaturan jam** (sync, notifications, weather, safety, meals) and the other settings groups. The Watch hub (`/watch`, `/watch/*`) is a hidden tab route reached from there; it, Rute (`/routes`), Family and the Today cards editor are detail screens without the bar, and the tabs navigator uses `backBehavior="history"` so back returns to where the screen was opened from. The old Watch tab had no badge or dot, so none moved. In the docs below, "Settings → X" means More → X.
+**More (`settings` route).** The fourth tab is the Settings stack, so `/settings` and every `/settings/*` link are unchanged. Its index lists the account row first, then **Target & tubuh** (Goals & body, with **Zona HR**), then one **Jam** (Watch) row whose subtitle is the watch's name and link state ("Seiya-B29F · Terhubung", or "Belum ada jam") and which opens the Watch hub (the connected-watch card, faces, photo face, alarms, Rute and the other watch pages live there; More shows no watch card), then **Pengaturan jam** (sync, notifications, weather, safety, meals) and the other settings groups. The Watch hub (`/watch`, `/watch/*`) is a hidden tab route reached from there; it, Rute (`/routes`), Family and the Today cards editor are detail screens without the bar, and the tabs navigator uses `backBehavior="history"` so back returns to where the screen was opened from. The old Watch tab had no badge or dot, so none moved. In the docs below, "Settings → X" means More → X.
 
 ## Deep links (`joyofit://`)
 

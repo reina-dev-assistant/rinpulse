@@ -104,13 +104,6 @@
     },
     "timeA11y": "Time {{value}}",
     "zone": "Zone {{zone}} · {{label}}",
-    "zones": {
-      "warmup": "Warm-up",
-      "fatBurning": "Fat burning",
-      "aerobic": "Aerobic",
-      "anaerobic": "Anaerobic",
-      "extreme": "Extreme"
-    },
     "tiles": {
       "distance": "Distance",
       "speed": "Speed",
@@ -142,6 +135,7 @@
       "anaerobicEffect": "Anaerobic effect",
       "waiting": "Waiting for the first numbers from the watch.",
       "ended": "The full record (route, splits, heart-rate chart) arrives with the next sync and appears under Workouts."
-    }
+    },
+    "logStrength": "Log as strength workout"
   }
 }

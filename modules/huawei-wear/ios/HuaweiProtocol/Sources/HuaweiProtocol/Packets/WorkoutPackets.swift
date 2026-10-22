@@ -8,7 +8,7 @@ public enum Workout {
     public static let id: UInt8 = 0x17
 
     /// `huaweiIdToKey`: the totals' additional values the watch sends as strings.
-    static let huaweiIdToKey: [Int32: String] = [300_010_027: "waterType", 300_010_024: "avgDepth", 300_010_037: "postureType"]
+    static let huaweiIdToKey: [Int32: String] = [300_010_027: "waterType", 300_010_024: "avgDepth", 300_010_037: "postureType", 300_010_035: "lthrHr", 300_010_036: "lthrPace"]
 
     /// A request whose TLV is built by `body`; Java default flags (encrypted, sliced).
     private static func request(_ command: UInt8, _ body: (inout HuaweiTLV) -> Void) -> HuaweiPacket {

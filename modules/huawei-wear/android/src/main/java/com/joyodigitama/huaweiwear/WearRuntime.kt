@@ -525,13 +525,43 @@ internal class WearRuntime private constructor(context: Context) {
       val sent = ProfileSender.sendProfile(handle.session, events, profile) > 0
       // The zones depend on the age; Track watches get them again over P2P.
       if (p2p.stack()?.resendHeartRateZones() != true) {
-        HeartRateZonesSync.sendFitnessData(handle.session, events, HeartRateZonesSync.age(profile))
+        HeartRateZonesSync.sendFitnessData(handle.session, events, HeartRateZonesSync.age(profile), settings.heartRateZones)
       }
       sent
     } catch (e: CancellationException) {
       throw e
     } catch (e: WearException) {
       events.log(LogDirection.ERROR, null, null, null, "Profile not sent: ${e.message}")
+      false
+    }
+  }
+
+  // Heart-rate zones
+
+  /** `configured`: zones stored; `via`: how this watch takes them (null when no watch is connected). */
+  fun heartRateZonesStatus(): Map<String, Any?> = mapOf(
+    "configured" to (settings.heartRateZones != null),
+    "via" to if (link.handle() != null) HeartRateZonesSync.route() else null,
+  )
+
+  fun validate(zones: HeartRateZonesCalc.UserZones) {
+    zones.problem()?.let { throw WearException(ErrorCodes.INVALID_ARGUMENT, it) }
+  }
+
+  /** Stores the zones (null = back to the defaults) and sends them to the connected watch; true when something was sent. */
+  suspend fun setHeartRateZones(zones: HeartRateZonesCalc.UserZones?): Boolean {
+    if (zones != null) validate(zones)
+    settings.heartRateZones = zones
+    val handle = link.handle() ?: return false
+    return try {
+      val sent = p2p.stack()?.resendHeartRateZones() == true ||
+        HeartRateZonesSync.sendFitnessData(handle.session, events, HeartRateZonesSync.age(settings.profile), zones)
+      if (!sent) events.log(LogDirection.INFO, null, null, null, "HR zones: stored, but this watch takes zones neither over P2P Track nor FitnessData 07/13|21 (${HeartRateZonesSync.capsLine()})")
+      sent
+    } catch (e: CancellationException) {
+      throw e
+    } catch (e: WearException) {
+      events.log(LogDirection.ERROR, null, null, null, "HR zones not sent: ${e.message}")
       false
     }
   }

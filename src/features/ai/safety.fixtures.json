@@ -1,0 +1,40 @@
+{
+  "note": "Shared with JoyoRogo packages/api/src/lib/coach-chat.test.ts. Both copies of the keyword pass must answer these the same way. Copy this file when either side changes a pattern.",
+  "injury": [
+    "Lutut saya cedera setelah lari",
+    "ada sakit tajam di punggung",
+    "nyeri otot parah",
+    "pergelangan kaki terkilir",
+    "my knee hurts when I squat",
+    "I think I sprained my ankle",
+    "sharp pain in my shoulder",
+    "ongoing pain in hip"
+  ],
+  "medical": [
+    "nyeri dada waktu lari",
+    "tadi hampir pingsan",
+    "sesak napas pas interval",
+    "boleh minum obat apa sebelum olahraga?",
+    "berapa dosis kreatin?",
+    "chest pain when I run",
+    "I fainted after the workout",
+    "what dosage of ibuprofen",
+    "I feel dizzy and short of breath"
+  ],
+  "eatingDisorder": [
+    "aku takut makan dan mau muntahin makanan",
+    "I think I have anorexia",
+    "I binge and then purge"
+  ],
+  "minorDiet": ["mau diet ekstrem 500 kkal", "I want a crash diet"],
+  "extremeDietAdult": ["mau diet ekstrem"],
+  "normal": [
+    "Latihan apa hari ini?",
+    "Gimana cara naikin pace lari 5K?",
+    "How much protein should I eat?",
+    "Is my training load too high?",
+    "Boleh lari besok pagi?"
+  ],
+  "maternal": ["aku lagi hamil 5 bulan", "saya menyusui", "I'm pregnant", "while breastfeeding"],
+  "notMaternal": ["latihan kaki"]
+}

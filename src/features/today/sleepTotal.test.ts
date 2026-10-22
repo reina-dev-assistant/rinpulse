@@ -35,7 +35,7 @@ const sleepSignal = (segments: SleepSegment[]) =>
     resting: new Map(),
     strain: [],
     sleep: lastSleepSession(segments),
-    hrv: { missing: 'HRV: nothing' },
+    hrv: { missing: 'HRV: nothing', wait: { kind: 'none' } },
   }).signals.find((s) => s.key === 'sleep');
 
 describe('the day total of sleep includes naps', () => {

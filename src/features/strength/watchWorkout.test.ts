@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 
 import type { WatchWorkoutOutcome, WatchWorkoutResult, WatchWorkoutStatus } from '../../../modules/huawei-wear/src/HuaweiWear.types';
-import { refusedNoticeKey, StrengthWatchSession, watchWorkoutAvailability, type WatchWorkoutNative } from './watchWorkout';
+import { isGatedRefusal, refusedNoticeKey, StrengthWatchSession, watchWorkoutAvailability, type WatchWorkoutNative } from './watchWorkout';
 
 const STRENGTH = 140;
 
@@ -167,5 +167,15 @@ describe('a refused start', () => {
     expect(refusedNoticeKey(123002, true)).toBe('watch.refusedCode');
     expect(refusedNoticeKey(123002, null)).toBe('watch.refusedCode');
     expect(refusedNoticeKey(null, null)).toBe('watch.refused');
+  });
+});
+
+describe('isGatedRefusal', () => {
+  it('a refusal while worn (or with no wear answer) is remembered, a not-worn one and other failures are not', () => {
+    expect(isGatedRefusal('refused', true)).toBe(true);
+    expect(isGatedRefusal('refused', null)).toBe(true);
+    expect(isGatedRefusal('refused', false)).toBe(false);
+    expect(isGatedRefusal('not_connected', null)).toBe(false);
+    expect(isGatedRefusal(null, null)).toBe(false);
   });
 });

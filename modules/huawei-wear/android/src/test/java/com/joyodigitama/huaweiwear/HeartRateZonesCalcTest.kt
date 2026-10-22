@@ -92,4 +92,93 @@ class HeartRateZonesCalcTest {
     val config = HeartRateZonesCalc.deviceConfig(0, track = true, simpleCommand = false, extended = false)
     assertNull(HeartRateZonesCalc.trackTlv(config))
   }
+
+  private val userMax = HeartRateZonesCalc.UserZones(Method.MHR, 190, 55, listOf(95, 114, 133, 152, 171), warningEnabled = true, warningLimit = 190)
+  private val userHrr = HeartRateZonesCalc.UserZones(Method.HRR, 190, 55, listOf(100, 120, 140, 160, 175), warningEnabled = false, warningLimit = 180)
+
+  private fun userTrack(user: HeartRateZonesCalc.UserZones) =
+    HeartRateZonesCalc.deviceConfig(35, track = true, simpleCommand = false, extended = false, user = user)
+
+  @Test
+  fun userZonesMaxMethodTlv() {
+    val tlv = HeartRateZonesCalc.trackTlv(userTrack(userMax))
+    // default HRR for max 190 / rest 55: reserve 135 -> 59/74/84/88/95 % = 79.65, 99.9, 113.4, 118.8, 128.25 plus 55
+    val hrr = listOf(135, 155, 168, 174, 183)
+    val mhr = listOf(95, 114, 133, 152, 171)
+    val expected = listOf(
+      0x02 to 95, 0x03 to 114, 0x04 to 133, 0x05 to 152, 0x06 to 171, 0x07 to 190, 0x08 to 1, 0x09 to 190, 0x0a to 0, 0x0b to 190,
+      0x0c to 55, 0x0d to 135, 0x0e to 155, 0x0f to 168, 0x10 to 174, 0x11 to 183,
+      // LTHR 55 + 135 * 85 % = 169.75 -> 170; 67/80/89/97/102 % of it
+      0x3f to 170, 0x40 to 173, 0x41 to 165, 0x42 to 151, 0x43 to 136, 0x44 to 114,
+    ) + listOf(0x12, 0x21, 0x30).flatMap { base ->
+      // switch, method, limit, MHR zones + threshold, resting, HRR zones
+      listOf(base to 1, base + 1 to 0, base + 2 to 190) + mhr.mapIndexed { i, v -> base + 3 + i to v } + listOf(base + 8 to 190, base + 9 to 55) +
+        hrr.mapIndexed { i, v -> base + 10 + i to v }
+    }
+    assertEquals(expected, tlv)
+  }
+
+  @Test
+  fun userZonesHrrMethodCarriesTheUserSetAndMhrDefaults() {
+    val configs = userTrack(userHrr)
+    for (c in configs) {
+      assertEquals(false, c.warningEnable)
+      assertEquals(180, c.warningHRLimit)
+      assertEquals(Method.HRR, c.currentMethod)
+      assertEquals(HeartRateZonesCalc.Zones(Method.HRR, 190, 55, 100, 120, 140, 160, 175), c.byMethod(Method.HRR))
+      assertEquals(HeartRateZonesCalc.Zones(Method.MHR, 190, 55, 95, 114, 133, 152, 171), c.byMethod(Method.MHR))
+      assertTrue(c.isValid())
+    }
+    assertEquals(Posture.values().toList(), configs.map { it.posture })
+    assertNotNull(configs.first { it.posture == Posture.UPRIGHT }.byMethod(Method.LTHR))
+    assertNull(configs.first { it.posture == Posture.SITTING }.byMethod(Method.LTHR))
+    val tlv = HeartRateZonesCalc.trackTlv(configs)!!.toMap()
+    // method HRR (1) and switch off in all four postures, the user's HRR zones at 0x0d.. and 0x1c..
+    assertEquals(listOf(1, 1, 1, 1), listOf(0x0a, 0x13, 0x22, 0x31).map { tlv[it] })
+    assertEquals(listOf(0, 0, 0, 0), listOf(0x08, 0x12, 0x21, 0x30).map { tlv[it] })
+    assertEquals(listOf(100, 120, 140, 160, 175), (0x0d..0x11).map { tlv[it] })
+    assertEquals(listOf(100, 120, 140, 160, 175), (0x1c..0x20).map { tlv[it] })
+  }
+
+  @Test
+  fun userZonesSimpleRouteSendsTheEffectiveZonesWhateverTheMethod() {
+    val simple = HeartRateZonesCalc.deviceConfig(35, track = false, simpleCommand = true, extended = false, user = userHrr).single()
+    assertEquals(
+      listOf(100, 120, 140, 160, 175, 190),
+      simple.byMethod(Method.MHR)!!.asArray().toList(),
+    )
+    assertEquals(false, simple.warningEnable)
+    assertEquals(180, simple.warningHRLimit)
+
+    val ext = HeartRateZonesCalc.deviceConfig(35, track = false, simpleCommand = true, extended = true, user = userHrr).single()
+    assertEquals(Method.HRR, ext.currentMethod)
+    assertEquals(listOf(95, 114, 133, 152, 171, 190), ext.byMethod(Method.MHR)!!.asArray().toList())
+    assertEquals(listOf(100, 120, 140, 160, 175, 55), ext.byMethod(Method.HRR)!!.asArray().toList())
+    val extMax = HeartRateZonesCalc.deviceConfig(35, track = false, simpleCommand = true, extended = true, user = userMax).single()
+    assertEquals(listOf(95, 114, 133, 152, 171, 190), extMax.byMethod(Method.MHR)!!.asArray().toList())
+    assertEquals(listOf(135, 155, 168, 174, 183, 55), extMax.byMethod(Method.HRR)!!.asArray().toList())
+  }
+
+  @Test
+  fun withoutUserZonesTheDefaultsAreUnchanged() {
+    assertEquals(track35, HeartRateZonesCalc.deviceConfig(35, track = true, simpleCommand = false, extended = false, user = null))
+  }
+
+  @Test
+  fun userZonesValidation() {
+    assertNull(userMax.problem())
+    assertNull(userHrr.problem())
+    fun bad(u: HeartRateZonesCalc.UserZones) = assertNotNull(u.problem())
+    bad(userMax.copy(maxHr = 99))
+    bad(userMax.copy(maxHr = 220, zones = listOf(95, 114, 133, 152, 171)))
+    bad(userMax.copy(restingHr = 29))
+    bad(userMax.copy(restingHr = 111))
+    bad(userMax.copy(maxHr = 100, restingHr = 100, zones = listOf(31, 32, 33, 34, 35)))
+    bad(userMax.copy(zones = listOf(95, 114, 133, 152)))
+    bad(userMax.copy(zones = listOf(29, 114, 133, 152, 171)))
+    bad(userMax.copy(zones = listOf(95, 114, 114, 152, 171)))
+    bad(userMax.copy(zones = listOf(95, 114, 133, 152, 190)))
+    bad(userMax.copy(warningLimit = 99))
+    bad(userMax.copy(warningLimit = 220))
+  }
 }

@@ -36,19 +36,18 @@
     "low": "Terendah",
     "high": "Tertinggi",
     "noHeart": "Belum ada detak jantung tersimpan hari ini.",
-    "stepsTitle": "Langkah per jam",
+    "stepsTitle": "Langkah",
     "sleepTitle": "Ringkasan tidur",
     "healthTitle": "Metrik kesehatan",
     "healthSubtitle": "Suhu kulit, HRV, stres, dan lainnya",
     "aboutTitle": "Tentang angka-angka ini",
     "aboutWatch": "Kalori dan jarak sesuai laporan jam saat sinkron terakhir. Tarik ke bawah untuk sinkron.",
     "aboutSamples": "Kalori dan jarak dijumlahkan dari sampel per menit yang tersimpan. Tarik ke bawah untuk sinkron.",
-    "aboutNone": "Belum ada data tersimpan untuk hari ini. Sinkron untuk mengambil data hari ini dari jam. Tarik ke bawah untuk sinkron."
+    "aboutNone": "Belum ada data tersimpan untuk hari ini. Sinkron untuk mengambil data hari ini dari jam. Tarik ke bawah untuk sinkron.",
+    "strengthOnWatch": "Latihan beban berjalan di jam"
   },
   "hourly": {
-    "peak_other": "Jam tersibuk {{hour}}, {{steps}} langkah",
-    "empty": "Belum ada langkah tercatat hari ini.",
-    "bar_other": "{{steps}} langkah"
+    "peak_other": "Jam tersibuk {{hour}}, {{steps}} langkah"
   },
   "sleep": {
     "emptyTitle": "Tidak ada tidur tersimpan",
@@ -76,7 +75,17 @@
     "recovery": "Pemulihan",
     "readiness": "Kesiapan",
     "strain": "Strain",
-    "sleep": "Tidur"
+    "sleep": "Tidur",
+    "hint": {
+      "nights_other": "butuh {{count}} malam lagi",
+      "readings_other": "butuh {{count}} pengukuran lagi",
+      "hrvOff": "HRV malam mati",
+      "spot": "Butuh pengukuran HRV 1 menit",
+      "recoveryNone": "Belum ada HRV semalam",
+      "recoveryPrefix": "Pemulihan: {{hint}}",
+      "strainNone": "Belum ada detak jantung hari ini",
+      "sleepNone": "Tidur semalam belum tercatat"
+    }
   },
   "readiness": {
     "title": "Kesiapan",
@@ -328,9 +337,9 @@
     "emptyToday": "Belum ada detak jantung tersimpan hari ini. Sinkron untuk mengambil dari jam.",
     "emptyPast": "Tidak ada detak jantung tersimpan pada tanggal ini.",
     "zonesTitle": "Waktu di tiap zona",
-    "zone": "Zona {{n}}",
+    "zone": "Z{{n}} {{name}}",
     "zoneRange": "{{from}} bpm ke atas",
-    "zonesNote": "Warna garis di grafik mengikuti zona, dihitung dari detak jantung maksimal perkiraanmu ({{max}} bpm). Celah di grafik berarti jam tidak mencatat.",
+    "zonesNote": "Warna garis di grafik mengikuti zona detak jantungmu (HR maks {{max}} bpm; bisa diubah di Pengaturan > Zona HR). Celah di grafik berarti jam tidak mencatat.",
     "loadError": "Gagal membaca detak jantung: {{error}}",
     "chartLabel": "Grafik detak jantung {{day}}"
   },
@@ -347,15 +356,68 @@
       "scores": "Pemulihan, strain, dan tidur",
       "activity": "Kalori dan jarak",
       "heart": "Detak jantung",
-      "steps": "Langkah per jam",
+      "steps": "Langkah, 7 hari terakhir",
       "sleep": "Ringkasan tidur",
       "energy": "Energi Tubuh",
-      "fitness": "Kebugaran",
+      "fitness": "Intensitas mingguan dan Kebugaran",
       "coach": "Saran Coach",
       "checkin": "Check-in pagi",
       "family": "Pantau kabar keluarga",
       "loop": "Loop baru dari rumah",
       "health": "Metrik kesehatan"
+    }
+  },
+  "week": {
+    "bar_other": "{{steps}} langkah",
+    "detail": "Detail",
+    "detailA11y": "Buka langkah per hari, minggu, bulan, dan tahun",
+    "left": "{{value}} lagi hari ini",
+    "reached": "Target hari ini tercapai",
+    "total": "{{value}} dalam 7 hari",
+    "legend": "Garis putus-putus: target langkah harianmu",
+    "legendDefault": "Garis putus-putus: target harian bawaan. Atur targetmu di Profil."
+  },
+  "steps": {
+    "title": "Langkah",
+    "unit": "langkah",
+    "unitPerDay": "langkah / hari",
+    "perDay": "{{value}} langkah / hari",
+    "steps_other": "{{value}} langkah",
+    "average_other": "Rata-rata per hari, dari {{count}} hari yang ada langkahnya",
+    "daysAtGoal_other": "{{hit}} dari {{days}} hari capai target",
+    "empty": "Belum ada langkah tersimpan untuk periode ini. Sinkronkan jam untuk mengisinya.",
+    "noData": "Tidak ada data",
+    "loadError": "Tidak bisa membaca langkah tersimpan: {{error}}",
+    "goalTitle": "Target harian",
+    "goalValue": "{{value}} langkah",
+    "goalDefault": "Bawaan. Ketuk untuk mengatur sendiri.",
+    "about": "Langkah dijumlahkan dari menit yang disimpan jam; hari tanpa menit tersimpan berarti tidak ada data, bukan nol langkah. Minggu mulai hari Senin. Garis target memakai target hari ini untuk semua hari, karena perubahan target tidak disimpan."
+  },
+  "setup": {
+    "title": "Selesaikan penyiapan",
+    "dismiss": "Sembunyikan daftar penyiapan",
+    "done": "selesai",
+    "rows": {
+      "pair": {
+        "title": "Pasangkan jam",
+        "hint": "Tanpa jam, tidak ada data harian untuk ditampilkan."
+      },
+      "sync": {
+        "title": "Jalankan sinkron pertama",
+        "hint": "Menarik langkah, tidur, dan detak jantung dari jam."
+      },
+      "health": {
+        "title": "Tulis ke {{store}}",
+        "hint": "Agar JoyoRogo dan aplikasi lain bisa membaca data jammu."
+      },
+      "account": {
+        "title": "Masuk ke JoyoRogo",
+        "hint": "Mengirim energi latihan dan skor ke diary JoyoRogo."
+      },
+      "profile": {
+        "title": "Isi profil dan target",
+        "hint": "Tinggi, berat, dan tahun lahir menyesuaikan zona detak jantung dan kalori denganmu."
+      }
     }
   }
 }

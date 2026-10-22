@@ -217,6 +217,134 @@ final class HealthSensorsTests: XCTestCase {
         XCTAssertEqual(tlv.map { "\($0.tag):\($0.value)" }, expected.map { "\($0.0):\($0.1)" })
     }
 
+    // MARK: user-configured zones (HeartRateZonesCalcTest.user*)
+
+    private let userMax = HeartRateZonesCalc.UserZones(
+        method: .mhr, maxHr: 190, restingHr: 55, zones: [95, 114, 133, 152, 171], warningEnabled: true, warningLimit: 190
+    )
+    private let userHrr = HeartRateZonesCalc.UserZones(
+        method: .hrr, maxHr: 190, restingHr: 55, zones: [100, 120, 140, 160, 180], warningEnabled: false, warningLimit: 200
+    )
+
+    private func userTrack(_ user: HeartRateZonesCalc.UserZones) -> [HeartRateZonesCalc.Config] {
+        HeartRateZonesCalc.deviceConfig(age: 35, track: true, simpleCommand: false, extended: false, user: user)
+    }
+
+    private func text(_ tlv: [(tag: Int, value: Int)]) -> [String] { tlv.map { "\($0.tag):\($0.value)" } }
+
+    func testUserZonesForMethodMaxGiveTheExactTrackTlv() throws {
+        let tlv = try XCTUnwrap(HeartRateZonesCalc.trackTlv(userTrack(userMax)))
+        let expected: [(Int, Int)] = [
+            (0x02, 95), (0x03, 114), (0x04, 133), (0x05, 152), (0x06, 171), (0x07, 190), (0x08, 1), (0x09, 190), (0x0a, 0), (0x0b, 190),
+            (0x0c, 55), (0x0d, 135), (0x0e, 155), (0x0f, 168), (0x10, 174), (0x11, 183),
+            (0x3f, 170), (0x40, 173), (0x41, 165), (0x42, 151), (0x43, 136), (0x44, 114),
+            (0x12, 1), (0x13, 0), (0x14, 190), (0x15, 95), (0x16, 114), (0x17, 133), (0x18, 152), (0x19, 171), (0x1a, 190),
+            (0x1b, 55), (0x1c, 135), (0x1d, 155), (0x1e, 168), (0x1f, 174), (0x20, 183),
+            (0x21, 1), (0x22, 0), (0x23, 190), (0x24, 95), (0x25, 114), (0x26, 133), (0x27, 152), (0x28, 171), (0x29, 190),
+            (0x2a, 55), (0x2b, 135), (0x2c, 155), (0x2d, 168), (0x2e, 174), (0x2f, 183),
+            (0x30, 1), (0x31, 0), (0x32, 190), (0x33, 95), (0x34, 114), (0x35, 133), (0x36, 152), (0x37, 171), (0x38, 190),
+            (0x39, 55), (0x3a, 135), (0x3b, 155), (0x3c, 168), (0x3d, 174), (0x3e, 183),
+        ]
+        XCTAssertEqual(text(tlv), expected.map { "\($0.0):\($0.1)" })
+    }
+
+    func testUserZonesForMethodHrrGiveTheExactTrackTlv() throws {
+        let tlv = try XCTUnwrap(HeartRateZonesCalc.trackTlv(userTrack(userHrr)))
+        let expected: [(Int, Int)] = [
+            (0x02, 95), (0x03, 114), (0x04, 133), (0x05, 152), (0x06, 171), (0x07, 190), (0x08, 0), (0x09, 200), (0x0a, 1), (0x0b, 190),
+            (0x0c, 55), (0x0d, 100), (0x0e, 120), (0x0f, 140), (0x10, 160), (0x11, 180),
+            (0x3f, 170), (0x40, 173), (0x41, 165), (0x42, 151), (0x43, 136), (0x44, 114),
+            (0x12, 0), (0x13, 1), (0x14, 200), (0x15, 95), (0x16, 114), (0x17, 133), (0x18, 152), (0x19, 171), (0x1a, 190),
+            (0x1b, 55), (0x1c, 100), (0x1d, 120), (0x1e, 140), (0x1f, 160), (0x20, 180),
+            (0x21, 0), (0x22, 1), (0x23, 200), (0x24, 95), (0x25, 114), (0x26, 133), (0x27, 152), (0x28, 171), (0x29, 190),
+            (0x2a, 55), (0x2b, 100), (0x2c, 120), (0x2d, 140), (0x2e, 160), (0x2f, 180),
+            (0x30, 0), (0x31, 1), (0x32, 200), (0x33, 95), (0x34, 114), (0x35, 133), (0x36, 152), (0x37, 171), (0x38, 190),
+            (0x39, 55), (0x3a, 100), (0x3b, 120), (0x3c, 140), (0x3d, 160), (0x3e, 180),
+        ]
+        XCTAssertEqual(text(tlv), expected.map { "\($0.0):\($0.1)" })
+    }
+
+    func testAllFourPosturesCarryTheUserValuesWithoutCorrection() {
+        let configs = userTrack(userMax)
+        XCTAssertEqual(configs.map(\.posture), [.upright, .sitting, .swimming, .other])
+        for config in configs {
+            XCTAssertEqual(config.warningHRLimit, 190)
+            XCTAssertTrue(config.warningEnable)
+            XCTAssertEqual(config.currentMethod, .mhr)
+            XCTAssertEqual(z(config, .mhr), [95, 114, 133, 152, 171, 190])
+            XCTAssertTrue(config.zones.allSatisfy { $0.resting == 55 })
+            XCTAssertTrue(config.isValid())
+        }
+        XCTAssertEqual(configs[0].zones.map(\.method), [.mhr, .hrr, .lthr])
+        XCTAssertEqual(configs[1].zones.map(\.method), [.mhr, .hrr])
+    }
+
+    func testTheOtherMethodKeepsTheDefaultsForTheUsersMaxAndResting() {
+        let upright = userTrack(userMax)[0]
+        XCTAssertEqual(z(upright, .hrr), [135, 155, 168, 174, 183, 190])
+        XCTAssertEqual(z(upright, .lthr), [114, 136, 151, 165, 173, 170])
+        let hrr = userTrack(userHrr)[0]
+        XCTAssertEqual(hrr.currentMethod, .hrr)
+        XCTAssertFalse(hrr.warningEnable)
+        XCTAssertEqual(hrr.warningHRLimit, 200)
+        XCTAssertEqual(z(hrr, .mhr), [95, 114, 133, 152, 171, 190])
+        XCTAssertEqual(z(hrr, .hrr), [100, 120, 140, 160, 180, 190])
+        XCTAssertEqual(hrr.byMethod(.hrr)?.resting, 55)
+    }
+
+    func testSimpleRouteSendsTheUsersEffectiveZonesWhateverTheMethod() throws {
+        for (user, expected) in [(userMax, [95, 114, 133, 152, 171, 190]), (userHrr, [100, 120, 140, 160, 180, 190])] {
+            let simple = HeartRateZonesCalc.deviceConfig(age: 35, track: false, simpleCommand: true, extended: false, user: user)
+            XCTAssertEqual(simple.map(\.posture), [.upright])
+            XCTAssertEqual(simple[0].zones.map(\.method), [.mhr])
+            XCTAssertEqual(simple[0].byMethod(.mhr)?.asArray(), expected)
+            XCTAssertEqual(simple[0].warningEnable, user.warningEnabled)
+            XCTAssertEqual(simple[0].warningHRLimit, user.warningLimit)
+        }
+    }
+
+    func testExtendedRouteHasTheMhrAndHrrSetsAndTheUsersMethod() throws {
+        let max = HeartRateZonesCalc.deviceConfig(age: 35, track: false, simpleCommand: true, extended: true, user: userMax)[0]
+        XCTAssertEqual(max.currentMethod, .mhr)
+        XCTAssertEqual(max.byMethod(.mhr)?.asArray(), [95, 114, 133, 152, 171, 190])
+        XCTAssertEqual(max.byMethod(.hrr)?.asArray(), [135, 155, 168, 174, 183, 55])
+        let hrr = HeartRateZonesCalc.deviceConfig(age: 35, track: false, simpleCommand: true, extended: true, user: userHrr)[0]
+        XCTAssertEqual(hrr.currentMethod, .hrr)
+        XCTAssertEqual(hrr.byMethod(.mhr)?.asArray(), [95, 114, 133, 152, 171, 190])
+        XCTAssertEqual(hrr.byMethod(.hrr)?.asArray(), [100, 120, 140, 160, 180, 55])
+        XCTAssertTrue(HeartRateZonesCalc.deviceConfig(age: 35, track: false, simpleCommand: false, extended: false, user: userMax).isEmpty)
+    }
+
+    func testWithoutUserZonesTheDefaultsAreUnchanged() throws {
+        XCTAssertEqual(HeartRateZonesCalc.deviceConfig(age: 35, track: true, simpleCommand: false, extended: false, user: nil), track35)
+        let simple = HeartRateZonesCalc.deviceConfig(age: 35, track: false, simpleCommand: true, extended: true, user: nil)
+        XCTAssertEqual(simple, HeartRateZonesCalc.deviceConfig(age: 35, track: false, simpleCommand: true, extended: true))
+        XCTAssertEqual(simple[0].warningHRLimit, 185)
+    }
+
+    func testUserZonesValidationRejectsValuesOutsideTheirRanges() {
+        XCTAssertNil(userMax.validationError())
+        XCTAssertNil(userHrr.validationError())
+        func bad(_ change: (inout HeartRateZonesCalc.UserZones) -> Void, _ why: String, file: StaticString = #filePath, line: UInt = #line) {
+            var copy = userMax
+            change(&copy)
+            XCTAssertNotNil(copy.validationError(), why, file: file, line: line)
+        }
+        bad({ $0.maxHr = 99 }, "max below 100")
+        bad({ $0.maxHr = 220; $0.zones = [95, 114, 133, 152, 171] }, "max above 219")
+        bad({ $0.restingHr = 29 }, "rest below 30")
+        bad({ $0.restingHr = 111 }, "rest above 110")
+        bad({ $0.maxHr = 100; $0.restingHr = 100; $0.zones = [40, 50, 60, 70, 80] }, "rest not below max")
+        bad({ $0.zones = [95, 114, 133, 152] }, "four zones")
+        bad({ $0.zones = [95, 114, 133, 152, 171, 180] }, "six zones")
+        bad({ $0.zones = [95, 114, 114, 152, 171] }, "not strictly rising")
+        bad({ $0.zones = [29, 114, 133, 152, 171] }, "first zone below 30")
+        bad({ $0.zones = [95, 114, 133, 152, 190] }, "last zone not below max")
+        bad({ $0.warningLimit = 99 }, "limit below 100")
+        bad({ $0.warningLimit = 220 }, "limit above 219")
+        bad({ $0.method = .lthr }, "method lthr")
+    }
+
     func testZonesOutsideTheByteRangeAreRefusedLikeGb() {
         XCTAssertNil(HeartRateZonesCalc.trackTlv(HeartRateZonesCalc.deviceConfig(age: 0, track: true, simpleCommand: false, extended: false)))
     }

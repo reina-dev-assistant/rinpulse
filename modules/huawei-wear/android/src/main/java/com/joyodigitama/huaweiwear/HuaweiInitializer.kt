@@ -47,6 +47,8 @@ internal class HuaweiInitializer(
   private val pinnedLanguage: String? = null,
   /** The phone's first language. */
   private val phoneLocale: Locale = Locale.getDefault(),
+  /** The heart-rate zones the user set in the app; null = GB's defaults for the profile age. */
+  private val heartRateZones: HeartRateZonesCalc.UserZones? = null,
 ) {
   private val params get() = session.params
 
@@ -215,7 +217,7 @@ internal class HuaweiInitializer(
 
     // SendHeartRateZonesConfig: the zones the workout screen shows; Track watches get them over P2P once it registers.
     events.log(LogDirection.INFO, null, null, null, HeartRateZonesSync.capsLine())
-    soft("HeartRateZones") { HeartRateZonesSync.sendFitnessData(session, events, HeartRateZonesSync.age(profile)) }
+    soft("HeartRateZones") { HeartRateZonesSync.sendFitnessData(session, events, HeartRateZonesSync.age(profile), heartRateZones) }
 
     // The heart-rate capability notifications and the sensor switches. GB sends none of these at init
     // (only when a setting changes, all off by default), so a wiped watch never records heart rate.

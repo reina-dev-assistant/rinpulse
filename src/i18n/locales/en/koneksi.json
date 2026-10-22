@@ -1,5 +1,5 @@
 {
-  "title": "AI connections",
+  "title": "Connect ChatGPT or Claude",
   "subtitle": "AI apps allowed to read your JoyoRogo data. Read-only: nothing can be changed or deleted through a connection.",
   "connector": {
     "title": "Connector address",
@@ -76,7 +76,7 @@
     }
   },
   "row": {
-    "title": "AI connections",
+    "title": "Connect ChatGPT or Claude",
     "subtitle": "Claude, ChatGPT and other AI apps allowed to read your data"
   },
   "signedOut": {

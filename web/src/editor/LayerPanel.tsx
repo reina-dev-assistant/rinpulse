@@ -223,7 +223,7 @@ export function LayerPanel() {
       </div>
 
       {adding && (
-        <div className={cn("panel-scroll mx-3 mb-2 shrink-0 overflow-y-auto rounded-2xl bg-card p-3 ring-1 ring-border", tab === "fields" ? "max-h-[75%]" : "max-h-[60%]")}>
+        <div className={cn("mx-3 mb-2 shrink-0 overflow-y-auto rounded-2xl bg-card p-3 ring-1 ring-border", tab === "fields" ? "max-h-[75%]" : "max-h-[60%]")}>
           <div role="tablist" aria-label={t("layers.addTabs")} className="mb-3 grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
             {(["elements", "fields"] as const).map((tabName) => (
               <button
@@ -246,7 +246,7 @@ export function LayerPanel() {
         </div>
       )}
 
-      <ul className="panel-scroll min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-3" data-testid="layers">
+      <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-3" data-testid="layers">
         {rows.map((el) => {
           const look = lookOf(el);
           const index = elements.indexOf(el);

@@ -7,7 +7,7 @@ import { Field } from '@/components/Input';
 import { Card } from '@/components/Screen';
 import { Notice } from '@/components/States';
 import { parseWeightKg, withWeight } from '@/features/onboarding/weight';
-import { DEFAULT_STEP_GOAL } from '@/features/today/useStepGoal';
+import { DEFAULT_STEP_GOAL } from '@/features/today/stepGoal';
 import { errorMessage } from '@/format';
 import { spacing } from '@/theme';
 import { HuaweiWear, type UserProfile } from '@/wear';

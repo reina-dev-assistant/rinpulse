@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Details } from '@/components/Details';
+import { hrZoneName } from '@/features/hrzones/names';
 import { fmtPercent } from '@/i18n';
 
 import { formatDuration, formatPace, type PaceZoneKey, type WorkoutAnalysis } from '../types';
@@ -9,6 +10,7 @@ import { shares } from './chartMath';
 import { useAnalysisContext } from './context';
 import { Bar, Card, Note, Txt } from './primitives';
 import type { AnalysisTextKey } from './text';
+import { hrZoneColor } from './theme';
 
 const ZONE_NAME: Record<PaceZoneKey, AnalysisTextKey> = {
   recovery: 'zone.recovery',
@@ -17,8 +19,6 @@ const ZONE_NAME: Record<PaceZoneKey, AnalysisTextKey> = {
   threshold: 'zone.threshold',
   vo2: 'zone.vo2',
 };
-
-const HR_ZONE_KEYS: readonly PaceZoneKey[] = ['recovery', 'endurance', 'tempo', 'threshold', 'vo2'];
 
 interface ZoneRowProps {
   n: number;
@@ -72,15 +72,15 @@ function HrZonesCardImpl({ analysis }: { analysis: WorkoutAnalysis }) {
       <Txt size={12} muted style={styles.lead}>
         {t(zones.source === 'age' ? 'zones.maxHrAge' : 'zones.maxHrSetting', { value: zones.maxHr })}
       </Txt>
-      {HR_ZONE_KEYS.map((key, i) => (
+      {zones.sec.map((_, i) => (
         <ZoneRow
-          key={key}
+          key={i}
           n={i + 1}
-          name={t(ZONE_NAME[key])}
+          name={hrZoneName(zones.method ?? 'max', i + 1)}
           range={t('zones.hrRange', { from: zones.bounds[i]!, to: zones.bounds[i + 1]! })}
           sec={zones.sec[i] ?? 0}
           share={fractions[i] ?? 0}
-          color={palette.zones[i]!}
+          color={hrZoneColor(palette, i + 1)}
         />
       ))}
       {zones.belowSec > 0 ? (

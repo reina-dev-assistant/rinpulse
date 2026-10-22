@@ -77,7 +77,8 @@ public final class P2pController: LinkObserver, @unchecked Sendable {
                     goals: { HealthGoals() }, nowMs: nowMs
                 )
             },
-            heartRateAge: { HeartRateZonesSync.age(profile: wearSettings.profile) }
+            heartRateAge: { HeartRateZonesSync.age(profile: wearSettings.profile) },
+            heartRateZones: { wearSettings.heartRateZones }
         )
         lock.locked { _stack = created }
         await created.start()

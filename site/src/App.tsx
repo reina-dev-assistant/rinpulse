@@ -416,7 +416,7 @@ function Hero() {
           )}
         </div>
         <p className="hero-rise mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground [--i:3]">
-          Gratis dan open source. Diuji di Huawei Watch Fit 4 Pro, jam lain eksperimen.{" "}
+          Gratis dan open source. Diuji di Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2, jam lain eksperimen.{" "}
           <a
             href={DUKUNG_JAM_PATH}
             className="font-semibold text-foreground underline underline-offset-4"
@@ -1550,7 +1550,7 @@ function JamTeaser() {
     <section data-section="jam" className="border-t border-border/70 py-14 md:py-16">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 md:flex-row md:items-center md:justify-between md:px-6">
         <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-          Diuji di Watch Fit 4 Pro, puluhan jam Huawei dan Honor lain bisa dicoba.
+          Diuji di Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2. Puluhan jam Huawei dan Honor lain bisa dicoba.
         </p>
         <div className="flex shrink-0 flex-wrap gap-3">
           <ButtonLink variant="secondary" href={JAM_PATH}>
@@ -2171,7 +2171,7 @@ function JamPage() {
           Jam Huawei dan Honor yang didukung JoyoFit
         </h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Baru Huawei Watch Fit 4 Pro yang sudah kami uji. Jam dan band lain di daftar Gadgetbridge masih
+          Empat model sudah kami uji: Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2. Jam dan band lain di daftar Gadgetbridge masih
           eksperimen: jalur sambungannya ada, tapi belum pernah dicoba dengan JoyoFit.{" "}
           <a
             href={DUKUNG_JAM_PATH}
@@ -2213,10 +2213,11 @@ function JamPage() {
         </div>
         <p className="mt-6 max-w-3xl text-[0.9375rem] leading-relaxed text-muted-foreground">
           Jam Huawei atau Honor yang tidak ada di daftar tetap dicoba, tapi mungkin tidak jalan.
-          Punya jam eksperimen? Sambungkan sekali, lalu di aplikasi buka tab Watch, pilih Help
-          support your watch, dan ketuk Report on GitHub. Aplikasi membuka GitHub issue yang sudah
-          terisi, dan laporan lengkapnya disalin ke clipboard untuk ditempel di kolom Log. Laporannya
-          teks biasa tanpa alamat Bluetooth dan nomor seri. Daftar issue ada di{" "}
+          Punya jam eksperimen? Sambungkan sekali, lalu di aplikasi buka tab Watch, pilih Bantu
+          dukung jam-mu, dan ketuk Kirim laporan. Pesan dan email boleh kamu isi, boleh dikosongkan. Laporan
+          langsung sampai ke tim JoyoFit dan mendapat nomor laporan; tanpa internet, laporan menunggu di HP
+          sampai bisa terkirim. Isinya teks biasa tanpa alamat Bluetooth dan nomor seri. Kamu juga bisa
+          memilih laporan lewat GitHub atau membagikannya. Daftar issue ada di{" "}
           <a
             href={`${GITHUB_URL}/issues`}
             target="_blank"
@@ -2239,8 +2240,8 @@ function JamPage() {
             Gadgetbridge
           </a>
           , proyek open source yang punya dukungan jam Huawei dan Honor. Daftar di atas mengikuti daftar jam
-          Gadgetbridge, jadi ada di daftar Gadgetbridge belum berarti sudah diuji di JoyoFit: baru Watch Fit 4 Pro
-          yang diuji. JoyoFit adalah turunannya, bukan Gadgetbridge itu sendiri. Aplikasinya menambahkan layar
+          Gadgetbridge, jadi ada di daftar Gadgetbridge belum berarti sudah diuji di JoyoFit: baru Watch Fit 4 Pro,
+          Band 8, Band 11 Pro, dan Watch Fit 2 yang diuji. JoyoFit adalah turunannya, bukan Gadgetbridge itu sendiri. Aplikasinya menambahkan layar
           harian, olahraga langsung, ekspor ke Health Connect dan Strava, cloud opsional, dan versi iPhone.
           Mau mencoba tanpa Huawei Health? Ikuti{" "}
           <a href={PANDUAN_PATH} className="font-semibold text-foreground underline underline-offset-4">
@@ -2274,7 +2275,7 @@ function DukungJamPage() {
           Bantu kami mendukung jam-mu
         </h1>
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          JoyoFit dibuat dan diuji dengan satu jam, Huawei Watch Fit 4 Pro. Jam lain masuk daftar karena
+          JoyoFit sejauh ini diuji dengan empat jam: Huawei Watch Fit 4 Pro, Band 8, Band 11 Pro, dan Watch Fit 2. Jam lain masuk daftar karena
           Gadgetbridge sudah punya modelnya, tapi tanpa jam asli kami tidak bisa memastikan apa yang jalan dan
           apa yang tidak. Ada tiga cara membantu, dari yang paling murah.
         </p>
@@ -2287,8 +2288,9 @@ function DukungJamPage() {
             <h2 className="mt-4 text-xl font-extrabold tracking-tight">Laporkan dari aplikasi</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Kalau kamu punya jamnya, ini yang paling berguna dan tidak memakan biaya. Sambungkan jam sekali, lalu
-              buka tab Watch, pilih Help support your watch, dan ketuk Report on GitHub. Laporannya teks biasa,
-              tanpa alamat Bluetooth dan nomor seri. Tulis juga apa yang jalan dan apa yang tidak.
+              buka tab Watch, pilih Bantu dukung jam-mu, dan ketuk Kirim laporan. Pesan dan email boleh diisi, boleh
+              dikosongkan. Laporan langsung sampai ke tim JoyoFit dan mendapat nomor laporan. Teksnya biasa, tanpa
+              alamat Bluetooth dan nomor seri. Tulis juga apa yang jalan dan apa yang tidak.
             </p>
             <div className="mt-auto flex flex-col gap-2 pt-6">
               <ButtonLink
@@ -2297,11 +2299,11 @@ function DukungJamPage() {
                 rel="noopener"
                 {...goal("watch_report_click", "dukung-jam")}
               >
-                Buka formulir laporan
+                Atau laporkan lewat GitHub
               </ButtonLink>
               <p className="text-xs text-muted-foreground">
-                Formulir ini paling enak diisi dari tombol di aplikasi, karena kolom ringkasan dan log terisi
-                otomatis.
+                Jalur GitHub membuat issue publik. Tombol Kirim laporan di aplikasi lebih mudah karena ringkasan
+                dan log terisi otomatis.
               </p>
             </div>
           </div>

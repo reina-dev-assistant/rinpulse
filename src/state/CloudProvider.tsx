@@ -17,6 +17,8 @@ import { CloudLockedError } from '@/cloud/api';
 import { authClient } from '@/cloud/auth';
 import { APP_BUILD } from '@/cloud/build';
 import { CLOUD_CONFIGURED } from '@/cloud/config';
+import { signInWithNativeGoogle } from '@/cloud/googleNative';
+import { nativeGoogleAvailable, requestGoogleIdToken } from '@/cloud/googleNativeDevice';
 import { loadOverview, type CloudOverview } from '@/cloud/overview';
 import { forgetRecordSync, syncRecords } from '@/cloud/recordSync';
 import { restoreHealthWindow } from '@/cloud/healthSync';
@@ -439,8 +441,23 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async () => {
     setError(null);
     try {
-      const result = await authClient.signIn.social({ provider: 'google', callbackURL: Linking.createURL('/') });
-      if (result.error) setError(result.error.message ?? t('common:errors.signInFailed'));
+      // Android: Google's account picker (Play services) and the ID token to better-auth; the browser flow only for
+      // binaries without the native module and installs where native sign-in cannot work.
+      const outcome = await signInWithNativeGoogle({
+        available: nativeGoogleAvailable,
+        requestIdToken: requestGoogleIdToken,
+        exchange: (token) => authClient.signIn.social({ provider: 'google', idToken: { token } }),
+        log: (message) => cloudLog(message, 'error'),
+      });
+      if (outcome.kind === 'cancelled') return;
+      if (outcome.kind === 'failed') {
+        setError(outcome.reason || t('common:errors.signInFailed'));
+        return;
+      }
+      if (outcome.kind === 'fallback') {
+        const result = await authClient.signIn.social({ provider: 'google', callbackURL: Linking.createURL('/') });
+        if (result.error) setError(result.error.message ?? t('common:errors.signInFailed'));
+      }
     } catch (e) {
       setError(errorMessage(e));
     }

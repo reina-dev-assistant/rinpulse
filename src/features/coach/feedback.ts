@@ -65,13 +65,13 @@ function zoneLine(session: PlannedSession, analysis: WorkoutAnalysis): FeedbackL
     case 'long':
     case 'recovery': {
       const limit = run.type === 'recovery' ? 1 : 2;
-      const above = share(sec, belowSec, limit + 1, 5);
+      const above = share(sec, belowSec, limit + 1, sec.length);
       const verdict: Verdict = above >= EASY_ABOVE_OVER ? 'over' : 'on';
       return { key: 'zone', verdict, values: { target: limit, aboveShare: Math.round(above * 100) } };
     }
     case 'tempo': {
       const inRange = share(sec, belowSec, 3, 4);
-      const z5 = share(sec, belowSec, 5, 5);
+      const z5 = share(sec, belowSec, 5, sec.length);
       const verdict: Verdict = z5 >= TEMPO_Z5_OVER ? 'over' : inRange >= TEMPO_IN_ON ? 'on' : 'under';
       return { key: 'zone', verdict, values: { target: 3, inShare: Math.round(inRange * 100), z5Share: Math.round(z5 * 100) } };
     }
@@ -79,12 +79,12 @@ function zoneLine(session: PlannedSession, analysis: WorkoutAnalysis): FeedbackL
       const spec = run.intervals;
       if (!spec) return null;
       const planned = spec.reps * spec.workSec;
-      const hard = (sec[3] ?? 0) + (sec[4] ?? 0);
+      const hard = sec.slice(3).reduce((a, b) => a + b, 0);
       const verdict: Verdict = hard >= planned * INTERVAL_HARD_SHARE ? 'on' : 'under';
       return { key: 'zone', verdict, values: { target: 4, hardSec: Math.round(hard), plannedSec: planned } };
     }
     case 'walkrun': {
-      const above = share(sec, belowSec, 4, 5);
+      const above = share(sec, belowSec, 4, sec.length);
       return { key: 'zone', verdict: above >= WALKRUN_OVER ? 'over' : 'on', values: { target: 3, aboveShare: Math.round(above * 100) } };
     }
     default:

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 
 import { applyLocale } from '@/i18n';
 import { energyNow, energyWord, wakeLevel, type EnergyInput } from './energy';
+import { hrZonesForMax } from '@/features/hrzones/zones';
 
 const H = 3600;
 const WAKE = 1_000_000 * 1 - (1_000_000 % 3600);
@@ -11,7 +12,7 @@ const base: EnergyInput = {
   asleepSec: 7.5 * H,
   needSec: 7.5 * H,
   recoveryZ: null,
-  maxHr: 190,
+  zones: hrZonesForMax(190),
   samples: [],
   stress: [],
   naps: [],

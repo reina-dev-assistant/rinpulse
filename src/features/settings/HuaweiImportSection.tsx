@@ -12,8 +12,9 @@ import { KeyValue } from '@/components/KeyValue';
 import { Section } from '@/components/Screen';
 import { Notice } from '@/components/States';
 import { useHuaweiImport } from '@/features/settings/useHuaweiImport';
-import { formatCount, formatDateTime } from '@/format';
+import { formatCount, formatDate } from '@/format';
 import { radius, spacing, useColors } from '@/theme';
+import type { RogoSendState } from '@/features/settings/useHuaweiImport';
 import type { HuaweiImportSummary } from '@/wear';
 
 const REQUEST_URL_SEA = 'https://privacy-sg.consumer.huawei.com/privacycenter';
@@ -27,7 +28,7 @@ const HEALTH_APP = isIos ? 'Apple Health' : 'Health Connect';
  */
 export function HuaweiImportSection() {
   const { t } = useTranslation(['settings', 'common']);
-  const { file, password, setPassword, running, progress, summary, error, pick, select, start, cancel } = useHuaweiImport();
+  const { file, password, setPassword, running, progress, summary, error, pick, select, start, cancel, rogoSend, sendToRogo, profileFilled } = useHuaweiImport();
   const { uri } = useLocalSearchParams<{ uri?: string }>();
   const handled = useRef<string | null>(null);
   // A ZIP opened with or shared to JoyoFit arrives here from `+native-intent` with its address in `uri`.
@@ -88,6 +89,7 @@ export function HuaweiImportSection() {
           editable={!running}
         />
         {error ? <Notice tone="danger">{error}</Notice> : null}
+        <Notice icon="information-circle">{t('huaweiImport.keepOpen')}</Notice>
         {running ? (
           <>
             <ProgressBar fraction={progress?.fraction ?? 0} />
@@ -107,7 +109,8 @@ export function HuaweiImportSection() {
         <Details>{t('huaweiImport.details', { app: HEALTH_APP })}</Details>
       </Section>
 
-      {summary ? <Summary summary={summary} /> : null}
+      {summary ? <Summary summary={summary} profileFilled={profileFilled} /> : null}
+      <RogoSendSection state={rogoSend} summary={summary} onSend={() => void sendToRogo()} />
     </>
   );
 }
@@ -165,11 +168,11 @@ function Counts({ summary }: { summary: HuaweiImportSummary }) {
   );
 }
 
-function Summary({ summary }: { summary: HuaweiImportSummary }) {
+function Summary({ summary, profileFilled }: { summary: HuaweiImportSummary; profileFilled: number | null }) {
   const { t } = useTranslation('settings');
   const range =
     summary.oldestSec !== null && summary.newestSec !== null
-      ? t('huaweiImport.range', { from: formatDateTime(summary.oldestSec), to: formatDateTime(summary.newestSec) })
+      ? t('huaweiImport.range', { from: formatDate(summary.oldestSec), to: formatDate(summary.newestSec) })
       : null;
   const skippedWorkouts = summary.workoutsFound - summary.workoutsAdded;
   const skippedSleep = summary.sleepSegmentsFound - summary.sleepSegmentsAdded;
@@ -188,6 +191,13 @@ function Summary({ summary }: { summary: HuaweiImportSummary }) {
         <Pair label={t('huaweiImport.restingHr')} value={formatCount(summary.restingHeartRateReadings)} />
         <Pair label={t('huaweiImport.spo2')} value={formatCount(summary.spo2Readings)} />
         <Pair label={t('huaweiImport.stressAdded')} value={formatCount(summary.stressAdded)} />
+        {summary.weighInsFound ? <Pair label={t('huaweiImport.weighIns')} value={formatCount(summary.weighInsAdded ?? 0)} /> : null}
+        {summary.mealsFound ? <Pair label={t('huaweiImport.meals')} value={formatCount(summary.mealsFound)} /> : null}
+        {summary.waterDaysFound ? <Pair label={t('huaweiImport.waterDays')} value={formatCount(summary.waterDaysFound)} /> : null}
+        {summary.sleepScoresFound ? <Pair label={t('huaweiImport.sleepScores')} value={formatCount(summary.sleepScoresAdded ?? 0)} /> : null}
+        {summary.metricsFound ? <Pair label={t('huaweiImport.metrics')} value={formatCount(summary.metricsAdded ?? 0)} /> : null}
+        {summary.dayTotalsFound ? <Pair label={t('huaweiImport.dayTotals')} value={formatCount(summary.dayTotalsAdded ?? 0)} /> : null}
+        {summary.workoutsUpdated ? <Pair label={t('huaweiImport.workoutsUpdated')} value={formatCount(summary.workoutsUpdated)} /> : null}
         <Pair label={t('huaweiImport.minutes')} value={formatCount(summary.minutesWritten)} />
         {skippedWorkouts > 0 ? <Pair label={t('huaweiImport.alreadyHere')} value={formatCount(skippedWorkouts)} /> : null}
         {skippedSleep > 0 ? <Pair label={t('huaweiImport.sleepSkipped')} value={formatCount(skippedSleep)} /> : null}
@@ -200,8 +210,79 @@ function Summary({ summary }: { summary: HuaweiImportSummary }) {
           {t('huaweiImport.filesFailed', { count: summary.filesFailed })}
         </Notice>
       ) : null}
+      {profileFilled !== null ? <Notice icon="information-circle">{t('huaweiImport.profileFilled', { height: profileFilled })}</Notice> : null}
+      <Breakdown summary={summary} />
       <Details>{t('huaweiImport.summaryDetails')}</Details>
     </Section>
+  );
+}
+
+/**
+ * What the export holds for JoyoRogo's own history (weigh-ins, meals, water) and where it stands: sent (`weight.importHistory`,
+ * `food.importHistory`, `water.importHistory`), waiting because the phone is offline or signed out, or refused with the server's message.
+ */
+function RogoSendSection({ state, summary, onSend }: { state: RogoSendState; summary: HuaweiImportSummary | null; onSend: () => void }) {
+  const { t } = useTranslation('settings');
+  const outcome = state.outcome;
+  if (!summary && state.waiting === 0 && !outcome) return null;
+  const sent = outcome ? outcome.weighIns.added + outcome.meals.added + outcome.water.added : 0;
+  return (
+    <Section title={t('huaweiImport.rogoTitle')} icon="cloud-upload" tint="heart">
+      {state.sending ? <AppText variant="caption" muted>{t('huaweiImport.rogoSending')}</AppText> : null}
+      {outcome && !state.sending ? (
+        <View style={styles.grid}>
+          <Pair label={t('huaweiImport.rogoWeighIns')} value={t('huaweiImport.rogoSentOf', { sent: formatCount(outcome.weighIns.added), found: formatCount(outcome.weighIns.added + outcome.weighIns.skipped + outcome.weighIns.waiting) })} />
+          <Pair label={t('huaweiImport.rogoMeals')} value={t('huaweiImport.rogoSentOf', { sent: formatCount(outcome.meals.added), found: formatCount(outcome.meals.added + outcome.meals.skipped + outcome.meals.waiting) })} />
+          <Pair label={t('huaweiImport.rogoWater')} value={t('huaweiImport.rogoSentOf', { sent: formatCount(outcome.water.added), found: formatCount(outcome.water.added + outcome.water.skipped + outcome.water.waiting) })} />
+        </View>
+      ) : null}
+      {outcome && !state.sending && sent === 0 && state.waiting === 0 ? <AppText variant="caption" muted>{t('huaweiImport.rogoNothingNew')}</AppText> : null}
+      {outcome?.error ? <Notice tone="danger">{t('huaweiImport.rogoError', { message: outcome.error })}</Notice> : null}
+      {state.waiting > 0 && !state.sending ? (
+        <>
+          <Notice icon="information-circle">{t('huaweiImport.rogoWaiting', { count: state.waiting })}</Notice>
+          <Button label={t('huaweiImport.rogoSend')} variant="secondary" icon="cloud-upload" onPress={onSend} />
+        </>
+      ) : null}
+      <Details>{t('huaweiImport.rogoDetails')}</Details>
+    </Section>
+  );
+}
+
+/** Why readings were skipped and which kinds the file has that JoyoFit does not store: what a user needs to report a gap. */
+function Breakdown({ summary }: { summary: HuaweiImportSummary }) {
+  const { t } = useTranslation('settings');
+  const rejected = summary.rejectedReasons ?? [];
+  const bad = summary.badRecordReasons ?? [];
+  const leftOut = summary.unmappedKeys ?? [];
+  if (rejected.length + bad.length + leftOut.length === 0) return null;
+  return (
+    <Details title={t('huaweiImport.unreadableTitle')}>
+      <View style={styles.steps}>
+        {rejected.map((r) => (
+          <AppText key={`${r.key}|${r.reason}`} variant="caption" muted>
+            {r.sample
+              ? t('huaweiImport.unreadableLine', { key: r.key, reason: t(`huaweiImport.reasons.${r.reason}`, { defaultValue: r.reason }), count: r.count, sample: r.sample })
+              : t('huaweiImport.unreadableLineNoSample', { key: r.key, reason: t(`huaweiImport.reasons.${r.reason}`, { defaultValue: r.reason }), count: r.count })}
+          </AppText>
+        ))}
+        {bad.map((b) => (
+          <AppText key={b.reason} variant="caption" muted>
+            {t('huaweiImport.badRecordLine', { reason: b.reason, count: b.count })}
+          </AppText>
+        ))}
+        {leftOut.length > 0 ? (
+          <AppText variant="label" muted>
+            {t('huaweiImport.leftOutTitle')}
+          </AppText>
+        ) : null}
+        {leftOut.map((k) => (
+          <AppText key={k.key} variant="caption" muted>
+            {t('huaweiImport.leftOutLine', { key: k.key, count: k.count })}
+          </AppText>
+        ))}
+      </View>
+    </Details>
   );
 }
 

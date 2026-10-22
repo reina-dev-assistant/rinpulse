@@ -15,7 +15,7 @@ const input: NightHrvInput = {
   nightRowsSinceSetup: 0,
   anyNightRowInHistory: false,
 };
-const missing: RecoveryState = { missing: 'HRV: nothing' };
+const missing: RecoveryState = { missing: 'HRV: nothing', wait: { kind: 'none' } };
 const spot = { recovery: { percent: 60, band: 'yellow', rmssd: 40, source: 'spot', baselineRmssd: 38, z: 0.4, baselineCount: 5 } as Recovery };
 const night = { recovery: { ...spot.recovery, source: 'night' } as Recovery };
 

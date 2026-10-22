@@ -11,6 +11,7 @@ import { Notice } from '@/components/States';
 import { SwitchRow } from '@/components/SwitchRow';
 import { Pair, PairGrid } from '@/features/settings/PairGrid';
 import { useNativeRefresh } from '@/features/settings/useNativeRefresh';
+import { MAX_STEP_GOAL, MIN_STEP_GOAL, parseStepGoal } from '@/features/today/stepGoal';
 import { errorMessage, formatDateTime } from '@/format';
 import { t } from '@/i18n';
 import { HuaweiWear, type ActivityGoals } from '@/wear';
@@ -49,7 +50,7 @@ function whole(text: string, min: number, max: number, what: string): number | s
 
 /** The four goals from the form, or the first message that explains what is out of range. */
 function parseFields(fields: Fields, reminders: Pick<ActivityGoals, 'remindStand' | 'remindProgress' | 'remindGoalReached'>): ActivityGoals | string {
-  const steps = whole(fields.steps, 1000, 100_000, t('settings:goals.errors.steps'));
+  const steps = parseStepGoal(fields.steps) ?? t('settings:goals.errors.whole', { what: t('settings:goals.errors.steps'), min: MIN_STEP_GOAL, max: MAX_STEP_GOAL });
   const calories = whole(fields.calories, 50, 10_000, t('settings:goals.errors.calories'));
   const exerciseMinutes = whole(fields.exercise, 1, 600, t('settings:goals.errors.exercise'));
   const standHours = whole(fields.stand, 1, 24, t('settings:goals.errors.stand'));

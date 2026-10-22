@@ -14,7 +14,7 @@ const noScores = (over: Partial<Scores> = {}): Scores => ({
   maxHr: 190,
   strain: [],
   today: null,
-  readiness: { headline: null, signals: [], missing: [], recovery: null, hrvNote: null },
+  readiness: { headline: null, signals: [], missing: [], recovery: null, recoveryWait: null, hrvNote: null },
   ...over,
 });
 

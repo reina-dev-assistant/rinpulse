@@ -35,6 +35,8 @@ export interface AnalysisPalette {
   negative: string;
   /** Heart-rate / pace zones 1 to 5, easy to hard. */
   zones: [string, string, string, string, string];
+  /** The sixth heart-rate zone (the reserve method's anaerobic advance), harder than `zones[4]`. */
+  zoneExtra: string;
   mapRoute: string;
   mapRouteCasing: string;
   fonts?: AnalysisFonts;
@@ -60,6 +62,7 @@ export function defaultPalette(isDark: boolean): AnalysisPalette {
       positive: '#4CD98A',
       negative: '#FF6B62',
       zones: ['#7DA9D6', '#4FC3A1', '#F0C14B', '#F59A4A', '#F0584C'],
+      zoneExtra: '#C65BE0',
       mapRoute: '#FF7A45',
       mapRouteCasing: '#101615',
     };
@@ -82,7 +85,18 @@ export function defaultPalette(isDark: boolean): AnalysisPalette {
     positive: '#17874D',
     negative: '#C93A32',
     zones: ['#6F9BC9', '#3AA586', '#D9A81F', '#E37B26', '#D63D31'],
+    zoneExtra: '#A63BB8',
     mapRoute: '#F0501A',
     mapRouteCasing: '#FFFFFF',
   };
+}
+
+/** The colour of every heart-rate zone of a method: the five of `palette.zones`, and `zoneExtra` as the reserve method's sixth. */
+export function hrZoneColors(palette: Pick<AnalysisPalette, 'zones' | 'zoneExtra'>, count: number): string[] {
+  return count > palette.zones.length ? [...palette.zones, palette.zoneExtra] : [...palette.zones];
+}
+
+/** The colour of heart-rate zone `zone` (1-based, six at most). */
+export function hrZoneColor(palette: Pick<AnalysisPalette, 'zones' | 'zoneExtra'>, zone: number): string {
+  return palette.zones[zone - 1] ?? palette.zoneExtra;
 }

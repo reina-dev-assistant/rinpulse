@@ -42,6 +42,7 @@ public final class P2PStack: @unchecked Sendable {
     private let settings: HealthLivingState
     private let healthModelFactory: @Sendable (P2PManager) -> HealthModelService
     private let heartRateAge: @Sendable () -> Int
+    private let heartRateZones: @Sendable () -> HeartRateZonesCalc.UserZones?
     private let inboundStream: AsyncStream<HuaweiPacket>
     private let inbound: AsyncStream<HuaweiPacket>.Continuation
     private let outboundStream: AsyncStream<HuaweiPacket>
@@ -58,7 +59,8 @@ public final class P2PStack: @unchecked Sendable {
 
     public init(
         session: HuaweiSession, caps: DeviceCaps, log: @escaping LogSink, settings: HealthLivingState,
-        healthModelFactory: @escaping @Sendable (P2PManager) -> HealthModelService, heartRateAge: @escaping @Sendable () -> Int
+        healthModelFactory: @escaping @Sendable (P2PManager) -> HealthModelService, heartRateAge: @escaping @Sendable () -> Int,
+        heartRateZones: @escaping @Sendable () -> HeartRateZonesCalc.UserZones? = { nil }
     ) {
         self.session = session
         self.caps = caps
@@ -66,6 +68,7 @@ public final class P2PStack: @unchecked Sendable {
         self.settings = settings
         self.healthModelFactory = healthModelFactory
         self.heartRateAge = heartRateAge
+        self.heartRateZones = heartRateZones
         (inboundStream, inbound) = AsyncStream<HuaweiPacket>.makeStream()
         (outboundStream, outbound) = AsyncStream<HuaweiPacket>.makeStream()
         manager = P2PManager(transport: Bridge(outbound: outbound, caps: caps, sink: log))
@@ -154,13 +157,13 @@ public final class P2PStack: @unchecked Sendable {
 
         note(HeartRateZonesSync.capsLine(caps))
         if HeartRateZonesSync.supportsTrack(caps) {
-            let service = P2PTrackService(manager: manager, log: sink, age: heartRateAge)
+            let service = P2PTrackService(manager: manager, log: sink, age: heartRateAge, user: heartRateZones)
             lock.p2pLocked { _track = service }
             service.register()
         }
     }
 
-    /// Re-sends the zones after the profile age changed; false when this watch takes them another way.
+    /// Re-sends the zones after the profile age or the configured zones changed; false when this watch takes them another way.
     public func resendHeartRateZones() -> Bool {
         guard let service = lock.p2pLocked({ _track }) else { return false }
         service.resend()

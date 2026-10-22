@@ -235,7 +235,16 @@
       "howNeedDebt": "Sleep debt adds {{duration}}.",
       "howNeedNoDebt": "Sleep debt is not counted yet: it needs at least 3 recorded nights.",
       "navTitle": "Fitness",
-      "navSubtitle": "VO2max, training status, race predictions, HRV, intensity minutes"
+      "intensity": {
+        "title": "Intensity this week",
+        "unit": "min",
+        "of": "of {{target}} · WHO guideline",
+        "left": "{{value}} min to go",
+        "done": "Guideline reached",
+        "dayA11y_one": "{{day}}: {{minutes}} intensity minute",
+        "dayA11y_other": "{{day}}: {{minutes}} intensity minutes",
+        "noHeartRate": "No heart rate stored this week yet. Turn on continuous heart rate and sync."
+      }
     },
     "screen": {
       "loadError": "Could not read stored data: {{error}}",
@@ -286,9 +295,99 @@
         "breakdown": "{{moderate}} moderate minutes + 2 x {{vigorous}} vigorous minutes. Estimate.",
         "chart": "Intensity minutes per day, Monday to Sunday",
         "endLabel": "Sunday",
-        "how": "A JoyoFit estimate from the per-minute heart rate the watch stored (maximum {{maxHr}} bpm). Minutes at 60 to 80 percent of maximum (zones 2 and 3) count 1, minutes at 80 percent and above (zones 4 and 5) count 2. The week runs Monday to Sunday. The target of 150 minutes a week follows WHO 2020 and ACSM 2018 advice.",
+        "how": "A JoyoFit estimate from the per-minute heart rate the watch stored (maximum {{maxHr}} bpm). Minutes in zones 2 and 3 (60 to 80 percent of maximum by default) count 1, minutes in zones 4 and 5 (80 percent and above) count 2. The week runs Monday to Sunday. The target of 150 minutes a week follows WHO 2020 and ACSM 2018 advice.",
         "minutes": "{{value}} min"
       }
+    }
+  },
+  "lactate": {
+    "title": "Lactate threshold test",
+    "intro": "This test measures your lactate threshold from one real run, not from a personal best. The result is your LTHR (heart rate at the threshold) and your threshold pace.",
+    "how": {
+      "title": "How the test works",
+      "body": "1. Pick a flat route or a track without stops. Be rested, and not after a hard day. Wear the watch or heart rate strap snugly.\n2. Run easy for 15 minutes as a warm-up.\n3. Run 30 minutes alone, as hard as you can hold evenly from start to finish. Do not start too fast.\n4. The first 10 minutes do not count. The average heart rate and pace of the last 20 minutes are the result (Joe Friel's protocol).\n5. Jog or walk easily for 10 minutes to cool down.\nRecord the run on the watch or with Record in JoyoFit (phone GPS and strap). The guide here only tells you when to start."
+    },
+    "start": "Start the guide",
+    "cancel": "Cancel the guide",
+    "record": "Open Record",
+    "noCues": "Notifications are off, so the guide cannot call you with the screen off. Keep this screen open.",
+    "phase": {
+      "warmup": "Warm-up",
+      "effort": "30-minute effort",
+      "cooldown": "Cool-down",
+      "done": "Done",
+      "left": "left"
+    },
+    "say": {
+      "warmup": "Run easy. Start recording the run on the watch or in JoyoFit now.",
+      "settle": "Settle into a pace you can hold for 30 minutes. Do not start too fast. This part is not counted yet.",
+      "measure": "Hold the same pace. Heart rate and pace now count.",
+      "cooldown": "Slow down, jog or walk easy. When done, save the workout (sync the watch) and come back here.",
+      "done": "Save the workout (sync the watch), then work out the result below."
+    },
+    "cues": {
+      "channel": "Lactate test guide",
+      "effort": {
+        "title": "Start the 30-minute effort",
+        "body": "Settle into a pace you can hold evenly to the end."
+      },
+      "measure": {
+        "title": "10 minutes in",
+        "body": "Hold the same pace. The last 20 minutes count."
+      },
+      "cooldown": {
+        "title": "Effort done",
+        "body": "Slow down and jog or walk easy for 10 minutes."
+      }
+    },
+    "result": {
+      "title": "Work out the result",
+      "pick": "Pick the run you used for the test. Only runs over 31 minutes in the last 30 days are listed.",
+      "none": "No run long enough yet. Save the run first (sync the watch), then come back.",
+      "runRow": "{{date}} · {{duration}}",
+      "loading": "Reading the workout…",
+      "start": "The 30-minute effort starts {{minute}} minutes into the workout",
+      "startGuide": "From the guide",
+      "startAuto": "Found automatically: the hardest 30 minutes",
+      "earlier": "Start 1 minute earlier",
+      "later": "Start 1 minute later",
+      "lthr": "LTHR",
+      "pace": "Threshold pace",
+      "halves": "First half {{a}} bpm, second half {{b}} bpm",
+      "coverage": "Heart rate read for {{percent}} percent of the last 20 minutes",
+      "noPace": "No pace: this workout has no speed (treadmill or no GPS).",
+      "save": "Save the result",
+      "saved": "Result saved.",
+      "useZones": "Use the LTHR for HR zones",
+      "zonesDone": "HR zones now use an LTHR of {{lthr}} bpm.",
+      "zonesFailed": "Zones are saved on the phone, but the watch did not take them yet."
+    },
+    "problem": {
+      "tooShort": "This workout ends before 30 minutes from the start of the effort. Move the start or pick another run.",
+      "hrGaps": "Heart rate is missing for more than 10 percent of the last 20 minutes, so the result cannot be trusted. Check how the watch or strap fits.",
+      "drift": "Heart rate rose or fell by more than 5 percent between the first and second half: the effort was not even, so the result is less reliable.",
+      "paceVaries": "Pace changed a lot from minute to minute. An even run gives a better threshold pace.",
+      "tooEasy": "The average is under 78 percent of your max HR. The effort may have been too easy, so the LTHR could be too low.",
+      "aboveMax": "The average is above the max HR set in the app. Your max HR may be too low; check it in HR zones."
+    },
+    "card": {
+      "title": "Lactate threshold",
+      "lthr": "LTHR",
+      "pace": "Threshold pace",
+      "fromTest": "From the JoyoFit test, {{date}}",
+      "fromWatch": "From the watch, {{date}}",
+      "other": "{{source}}: {{lthr}} bpm",
+      "otherPace": "{{source}}: {{lthr}} bpm, {{pace}}",
+      "sourceTest": "Test",
+      "sourceWatch": "Watch",
+      "empty": "Nothing yet. Measure it with a 30-minute run, not from a personal best.",
+      "open": "Lactate threshold test",
+      "note": "Watches that support it send their own lactate threshold; JoyoFit uses the newest one."
+    },
+    "clear": "Delete the test result",
+    "unit": {
+      "bpm": "bpm",
+      "pace": "/km"
     }
   }
 }

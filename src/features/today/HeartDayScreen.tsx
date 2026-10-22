@@ -12,7 +12,6 @@ import { Notice, Skeleton } from '@/components/States';
 import { heartDaySeries, bucketStart, type HeartDay } from '@/features/today/heartDay';
 import { loadHeartDay, type HeartDayData } from '@/features/today/heartDayQuery';
 import { startOfLocalDay } from '@/features/today/stats';
-import { zoneThresholds } from '@/features/today/strain';
 import { addDays } from '@/features/trends/series';
 import { useAnalysisPalette } from '@/features/workouts/analysis/palette';
 import { shares } from '@/features/workouts/analysis/ui/chartMath';
@@ -22,7 +21,10 @@ import { AnalysisContext, useAnalysisContext, type AnalysisContextValue } from '
 import { Bar, MIN_HIT, Txt } from '@/features/workouts/analysis/ui/primitives';
 import { createScrubStore, useScrub } from '@/features/workouts/analysis/ui/scrub';
 import { useAnalysisT } from '@/features/workouts/analysis/ui/text';
-import { userMaxHr } from '@/features/workouts/useWorkoutStrain';
+import { hrZoneColor } from '@/features/workouts/analysis/ui/theme';
+import { hrZoneName } from '@/features/hrzones/names';
+import { useHrZones } from '@/features/hrzones/settings';
+import type { HrZoneMethod } from '@/features/hrzones/zones';
 import { errorMessage, formatDuration } from '@/format';
 import { useNow } from '@/hooks/useNow';
 import { fmtClock, fmtDate, useLocale, useTranslation } from '@/i18n';
@@ -156,7 +158,7 @@ function DayChart({ day, dayStart, hrBounds, label }: { day: HeartDay; dayStart:
   );
 }
 
-function Zones({ zoneSeconds, bounds, maxHr }: { zoneSeconds: readonly number[]; bounds: readonly number[]; maxHr: number }) {
+function Zones({ zoneSeconds, bounds, maxHr, method }: { zoneSeconds: readonly number[]; bounds: readonly number[]; maxHr: number; method: HrZoneMethod }) {
   const { palette } = useAnalysisContext();
   const { t } = useTranslation('today');
   const fractions = shares(zoneSeconds);
@@ -164,11 +166,11 @@ function Zones({ zoneSeconds, bounds, maxHr }: { zoneSeconds: readonly number[];
     <View style={styles.zones}>
       <AppText variant="heading">{t('heartDay.zonesTitle')}</AppText>
       {zoneSeconds.map((sec, i) => (
-        <View key={i} style={styles.zone} accessible accessibilityLabel={`${t('heartDay.zone', { n: i + 1 })}, ${formatDuration(sec)}`}>
+        <View key={i} style={styles.zone} accessible accessibilityLabel={`${t('heartDay.zone', { n: i + 1, name: hrZoneName(method, i + 1) })}, ${formatDuration(sec)}`}>
           <View style={styles.zoneHead}>
-            <View style={[styles.swatch, { backgroundColor: palette.zones[i] }]} />
+            <View style={[styles.swatch, { backgroundColor: hrZoneColor(palette, i + 1) }]} />
             <Txt size={13} bold style={styles.zoneName}>
-              {t('heartDay.zone', { n: i + 1 })}
+              {t('heartDay.zone', { n: i + 1, name: hrZoneName(method, i + 1) })}
             </Txt>
             <Txt size={12} muted>
               {t('heartDay.zoneRange', { from: bounds[i] })}
@@ -177,7 +179,7 @@ function Zones({ zoneSeconds, bounds, maxHr }: { zoneSeconds: readonly number[];
               {formatDuration(sec)}
             </Txt>
           </View>
-          <Bar fraction={fractions[i] ?? 0} color={palette.zones[i]!} />
+          <Bar fraction={fractions[i] ?? 0} color={hrZoneColor(palette, i + 1)} />
         </View>
       ))}
       <Details>{t('heartDay.zonesNote', { max: maxHr })}</Details>
@@ -228,15 +230,14 @@ export function HeartDayScreen() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [scrubbing, setScrubbing] = useState(false);
   const [store] = useState(createScrubStore);
-  const maxHr = useMemo(() => userMaxHr(), []);
-  const thresholds = useMemo(() => zoneThresholds(maxHr), [maxHr]);
-  const bounds = useMemo(() => [...thresholds, maxHr], [thresholds, maxHr]);
+  const zones = useHrZones();
+  const bounds = useMemo(() => [...zones.bounds, zones.maxHr], [zones]);
   const context = useMemo<AnalysisContextValue>(() => ({ palette, t: at, store, setScrubActive: setScrubbing }), [palette, at, store]);
 
   useEffect(() => {
     let cancelled = false;
     store.set(null);
-    loadHeartDay(db, dayStart, addDays(dayStart, 1), thresholds).then(
+    loadHeartDay(db, dayStart, addDays(dayStart, 1), zones.bounds).then(
       (data) => {
         if (!cancelled) setLoaded({ dayStart, data, error: null });
       },
@@ -247,7 +248,7 @@ export function HeartDayScreen() {
     return () => {
       cancelled = true;
     };
-  }, [db, dayStart, dataVersion, thresholds, store]);
+  }, [db, dayStart, dataVersion, zones, store]);
 
   const isToday = dayStart >= todayStart;
   const current = loaded?.dayStart === dayStart ? loaded : null;
@@ -309,7 +310,7 @@ export function HeartDayScreen() {
                   />
                 </Card>
                 <Card>
-                  <Zones zoneSeconds={current.data.zoneSeconds} bounds={bounds} maxHr={maxHr} />
+                  <Zones zoneSeconds={current.data.zoneSeconds} bounds={bounds} maxHr={zones.maxHr} method={zones.method} />
                 </Card>
               </>
             ) : (
@@ -344,6 +345,6 @@ const styles = StyleSheet.create({
   zone: { gap: 6 },
   zoneHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   swatch: { width: 10, height: 10, borderRadius: 3 },
-  zoneName: { minWidth: 56 },
+  zoneName: { flexShrink: 1 },
   zoneTime: { marginLeft: 'auto' },
 });

@@ -46,6 +46,35 @@ export function listWatchCaloriesSince(db: SQLiteDatabase, sinceSec: number): Pr
   );
 }
 
+/**
+ * Steps per local day, summed in SQL (every stored minute, whichever watch or import it came from: the merged timeline Today adds up).
+ * `bounds` are consecutive local midnights; day `i` spans `bounds[i]` up to `bounds[i + 1]`. Days without a stored minute are absent.
+ */
+export async function listDailySteps(db: SQLiteDatabase, bounds: readonly number[]): Promise<Map<number, number>> {
+  const days: number[] = [];
+  for (let i = 0; i + 1 < bounds.length; i++) days.push(bounds[i], bounds[i + 1]);
+  if (days.length === 0) return new Map();
+  const rows = await db.getAllAsync<{ day: number; steps: number }>(
+    `WITH days(d0, d1) AS (VALUES ${Array.from({ length: days.length / 2 }, () => '(?, ?)').join(', ')})
+     SELECT d0 AS day, SUM(s.steps) AS steps
+     FROM days JOIN step_samples s ON s.timestamp >= d0 AND s.timestamp < d1
+     GROUP BY d0`,
+    days,
+  );
+  return new Map(rows.map((r) => [r.day, r.steps]));
+}
+
+/** Per-minute rows of `[fromSec, toSec)`, oldest first: one past day's steps by hour. */
+export function listStepSamplesBetween(db: SQLiteDatabase, fromSec: number, toSec: number): Promise<StepSample[]> {
+  return db.getAllAsync<StepSample>(
+    `SELECT timestamp, steps, calories, distance,
+            heart_rate AS heartRate, spo2, resting_heart_rate AS restingHeartRate
+     FROM step_samples WHERE timestamp >= ? AND timestamp < ? ORDER BY timestamp`,
+    fromSec,
+    toSec,
+  );
+}
+
 /** The newest stored heart-rate reading of any day, or null when the watch never recorded one. */
 export function getLatestHeartRate(db: SQLiteDatabase): Promise<{ bpm: number; timestamp: number } | null> {
   return db.getFirstAsync<{ bpm: number; timestamp: number }>(
@@ -264,7 +293,7 @@ export async function listWorkoutsSince(
  * Heart-rate load per local day, aggregated in SQL so long ranges never put per-minute rows through JS. It is
  * `dailyStrain`'s arithmetic: a reading counts until the next reading (of any day), at most 600 s, never past
  * `day + 86400`, and at least 1 s; seconds are summed per Edwards zone. `bounds` are consecutive local midnights (day `i`
- * spans `bounds[i]` up to `bounds[i + 1]`), and `thresholds` come from `zoneThresholds` (lowest bpm of zones 1..5).
+ * spans `bounds[i]` up to `bounds[i + 1]`), and `thresholds` are the lowest bpm of every zone (`HrZones.bounds`: five, six for the reserve method).
  * Everything is integer arithmetic, so there is no division to truncate. Days without heart rate are absent.
  */
 export async function listDayHeartLoad(
@@ -277,7 +306,9 @@ export async function listDayHeartLoad(
   if (days.length === 0) return [];
   // CROSS JOIN pins `days` as the outer loop, so each day is one range seek on the timestamp primary key. LEAD runs over
   // the joined rows of all days in timestamp order, so the last reading of a day sees the next day's first.
-  const rows = await db.getAllAsync<{ day: number; covered: number; z1: number; z2: number; z3: number; z4: number; z5: number }>(
+  const zoneSums = thresholds.map((_, i) => `COALESCE(SUM(CASE WHEN zone = ${i + 1} THEN secs END), 0) AS z${i + 1}`).join(',\n            ');
+  const zoneExpr = thresholds.map(() => '(bpm >= ?)').join(' + ');
+  const rows = await db.getAllAsync<Record<string, number>>(
     `WITH days(d0, d1) AS (VALUES ${Array.from({ length: days.length / 2 }, () => '(?, ?)').join(', ')}),
      hr AS (
        SELECT s.timestamp AS ts, s.heart_rate AS bpm, d.d0 AS d0,
@@ -287,19 +318,15 @@ export async function listDayHeartLoad(
      ),
      cover AS (
        SELECT d0, MAX(1, MIN(COALESCE(nxt, ts + 60), ts + 600, d0 + 86400) - ts) AS secs,
-              (bpm >= ?) + (bpm >= ?) + (bpm >= ?) + (bpm >= ?) + (bpm >= ?) AS zone
+              ${zoneExpr} AS zone
        FROM hr
      )
      SELECT d0 AS day, SUM(secs) AS covered,
-            COALESCE(SUM(CASE WHEN zone = 1 THEN secs END), 0) AS z1,
-            COALESCE(SUM(CASE WHEN zone = 2 THEN secs END), 0) AS z2,
-            COALESCE(SUM(CASE WHEN zone = 3 THEN secs END), 0) AS z3,
-            COALESCE(SUM(CASE WHEN zone = 4 THEN secs END), 0) AS z4,
-            COALESCE(SUM(CASE WHEN zone = 5 THEN secs END), 0) AS z5
+            ${zoneSums}
      FROM cover GROUP BY d0 ORDER BY d0`,
     [...days, ...thresholds],
   );
-  return rows.map((r) => ({ day: r.day, zoneSeconds: [r.z1, r.z2, r.z3, r.z4, r.z5], coveredSeconds: r.covered }));
+  return rows.map((r) => ({ day: r.day, zoneSeconds: thresholds.map((_, i) => r[`z${i + 1}`] as number), coveredSeconds: r.covered }));
 }
 
 /**
@@ -319,6 +346,29 @@ export async function listRestingHeartRateByDay(db: SQLiteDatabase, bounds: read
     days,
   );
   return new Map(rows.map((r) => [r.day, r.bpm]));
+}
+
+/** Workouts the watch recorded (not restored, FIT or Health imports) that started since `sinceSec`. */
+export async function countWatchWorkoutsSince(db: SQLiteDatabase, sinceSec: number): Promise<number> {
+  const row = await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM workouts WHERE start >= ? AND imported = 0 AND complete = 1', sinceSec);
+  return row?.n ?? 0;
+}
+
+/**
+ * Steps and the watch's own active energy per local day, aggregated in SQL (`bounds` as in `listRestingHeartRateByDay`).
+ * `calories` are small calories (1/1000 kcal) of the watch's own minutes (`imported = 0`); a day without samples is absent.
+ */
+export async function listDayTotals(db: SQLiteDatabase, bounds: readonly number[]): Promise<Map<number, { steps: number; calories: number }>> {
+  const days: number[] = [];
+  for (let i = 0; i + 1 < bounds.length; i++) days.push(bounds[i], bounds[i + 1]);
+  if (days.length === 0) return new Map();
+  const rows = await db.getAllAsync<{ day: number; steps: number; calories: number }>(
+    `WITH days(d0, d1) AS (VALUES ${Array.from({ length: days.length / 2 }, () => '(?, ?)').join(', ')})
+     SELECT d0 AS day, SUM(s.steps) AS steps, SUM(CASE WHEN s.imported = 0 THEN s.calories ELSE 0 END) AS calories
+     FROM days JOIN step_samples s ON s.timestamp >= d0 AND s.timestamp < d1 GROUP BY d0`,
+    days,
+  );
+  return new Map(rows.map((r) => [r.day, { steps: r.steps ?? 0, calories: r.calories ?? 0 }]));
 }
 
 /** One `health_metrics` value of `type` (`ts` unix seconds); rows without a number are left out. */
